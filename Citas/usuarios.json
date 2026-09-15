@@ -1,0 +1,4 @@
+[
+  { "id": "Pareja1", "nombre": "Pareja 1", "admin": true },
+  { "id": "Pareja2", "nombre": "Pareja 2", "admin": false }
+]

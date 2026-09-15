@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Citas</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #120e1c;
+    --bg-2: #1a1428;
+    --card: #201933;
+    --card-border: #322a4a;
+    --fg: #f4f1fb;
+    --fg-muted: #a599c7;
+    --coral: #ff6a5c;
+    --teal: #2fd9c7;
+    --amarillo: #f4c94c;
+    --rojo: #ff5c7a;
+  }
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body{
+    margin:0; padding:0; min-height:100%; width:100%;
+    color:var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%),
+      var(--bg);
+  }
+  .eyebrow{
+    font-family:'Chakra Petch', sans-serif;
+    font-size:.8rem; letter-spacing:.3em; text-transform:uppercase;
+    color: var(--fg-muted); margin-bottom:10px;
+  }
+  h1,h2{
+    font-family:'Chakra Petch', sans-serif;
+    font-weight:700; margin:0;
+  }
+  button{
+    font-family:'Chakra Petch', sans-serif;
+    font-weight:700; letter-spacing:.04em;
+    cursor:pointer; border:none; border-radius:14px;
+    transition: transform .15s ease, opacity .2s ease;
+  }
+  button:active{ transform: scale(.97); }
+  input, select, textarea{
+    font-family:'Inter', sans-serif;
+    border-radius:12px; border:1px solid var(--card-border);
+    background: var(--card); color:var(--fg);
+    padding:12px; font-size:1rem; width:100%;
+  }
+  textarea{ resize:vertical; min-height:70px; }
+
+  /* ---------- pantalla: quién eres ---------- */
+  #pantallaUsuario{
+    min-height:100dvh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center; padding:24px;
+  }
+  #pantallaUsuario h1{
+    font-size:1.8rem; margin-bottom:8px;
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  #pantallaUsuario p{ color:var(--fg-muted); margin:0 0 30px; }
+  #listaUsuarios{ display:flex; flex-direction:column; gap:14px; width:100%; max-width:320px; }
+  .btnUsuario{
+    padding:20px; font-size:1.15rem;
+    background: var(--card); color:var(--fg);
+    border:1px solid var(--card-border);
+  }
+  .btnUsuario:active{ border-color: var(--teal); }
+
+  /* ---------- app principal ---------- */
+  #app{ display:none; min-height:100dvh; flex-direction:column; }
+  #encabezado{
+    padding:20px 20px 16px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--card-border);
+  }
+  #encabezado .saludo{ font-size:1.2rem; }
+  #encabezado .saludo span{
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  #btnCambiarUsuario{
+    background:none; color: var(--fg-muted); font-size:.75rem;
+    text-decoration:underline; padding:4px; font-weight:500; font-family:'Inter',sans-serif;
+  }
+
+  #contenido{ flex:1; padding:20px; padding-bottom:110px; }
+
+  #btnNuevaCita{
+    position:fixed; bottom:24px; left:20px; right:20px;
+    padding:18px; font-size:1.05rem;
+    color: var(--bg);
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    max-width:460px; margin:0 auto;
+  }
+
+  #listaCitas{ display:flex; flex-direction:column; gap:16px; max-width:520px; margin:0 auto; }
+  #vacioMsg{ color:var(--fg-muted); text-align:center; margin-top:40px; }
+
+  .cita{
+    background: var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:18px;
+  }
+  .cita .fila-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:6px; }
+  .cita .actividad{ font-size:1.15rem; font-weight:700; font-family:'Chakra Petch',sans-serif; }
+  .badge{
+    font-size:.7rem; font-weight:700; padding:4px 10px; border-radius:20px;
+    white-space:nowrap; text-transform:uppercase; letter-spacing:.04em;
+  }
+  .badge.pendiente{ background: rgba(244,201,76,.15); color: var(--amarillo); }
+  .badge.confirmada{ background: rgba(47,217,199,.15); color: var(--teal); }
+  .badge.rechazada{ background: rgba(255,92,122,.15); color: var(--rojo); }
+
+  .cita .fecha{ color: var(--fg-muted); font-size:.9rem; margin-bottom:8px; }
+  .cita .quien{ color: var(--fg-muted); font-size:.82rem; margin-bottom:10px; }
+  .cita .descripcion{ font-size:.95rem; margin-bottom:10px; white-space:pre-wrap; }
+  .cita .accesorios{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .chip{
+    font-size:.78rem; background: var(--bg-2); border:1px solid var(--card-border);
+    padding:4px 10px; border-radius:20px; color: var(--fg-muted);
+  }
+  .cita .acciones{ display:flex; gap:8px; flex-wrap:wrap; }
+  .cita .acciones button{ flex:1; min-width:90px; padding:12px; font-size:.85rem; }
+  .btnConfirmar{ background: var(--teal); color:#08211d; }
+  .btnModificar{ background: var(--bg-2); color: var(--fg); border:1px solid var(--card-border) !important; }
+  .btnRechazar{ background: var(--rojo); color:#2b0410; }
+  .cita .espera{ color: var(--fg-muted); font-size:.85rem; font-style:italic; }
+
+  /* ---------- overlay formulario ---------- */
+  #overlay{
+    display:none; position:fixed; inset:0; background: rgba(9,7,15,.75);
+    align-items:flex-end; justify-content:center; z-index:50;
+    backdrop-filter: blur(2px);
+  }
+  #formCard{
+    background: var(--bg); border:1px solid var(--card-border);
+    border-radius:22px 22px 0 0; padding:24px; width:100%; max-width:520px;
+    max-height:88dvh; overflow-y:auto;
+  }
+  #formCard h2{ font-size:1.3rem; margin-bottom:18px; }
+  .campo{ margin-bottom:16px; }
+  .campo label{ display:block; font-size:.85rem; color: var(--fg-muted); margin-bottom:6px; }
+  #listaAccesoriosForm{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .checkRow{ display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--card-border); border-radius:10px; padding:10px 12px; }
+  .checkRow input{ width:auto; accent-color: var(--teal); }
+  #formMsg{ color: var(--rojo); font-size:.85rem; min-height:18px; margin-bottom:10px; }
+  #formBotones{ display:flex; gap:10px; margin-top:6px; }
+  #formBotones button{ flex:1; padding:16px; }
+  #btnGuardarCita{ color: var(--bg); background: linear-gradient(90deg, var(--coral), var(--teal)); }
+  #btnCancelarForm{ background: var(--card); color: var(--fg); border:1px solid var(--card-border); }
+</style>
+</head>
+<body>
+
+<!-- ================= PANTALLA: QUIÉN ERES ================= -->
+<div id="pantallaUsuario">
+  <div class="eyebrow">Complicidad en Pareja</div>
+  <h1>¿Quién eres?</h1>
+  <p>Selecciona tu usuario para continuar.</p>
+  <div id="listaUsuarios"></div>
+</div>
+
+<!-- ================= APP PRINCIPAL ================= -->
+<div id="app">
+  <div id="encabezado">
+    <div class="saludo">Hola, <span id="nombreActual"></span></div>
+    <button id="btnCambiarUsuario">Cambiar usuario</button>
+  </div>
+
+  <div id="contenido">
+    <div id="listaCitas"></div>
+    <div id="vacioMsg" style="display:none;">Todavía no hay citas agendadas.</div>
+  </div>
+
+  <button id="btnNuevaCita">+ Agendar cita</button>
+</div>
+
+<!-- ================= OVERLAY: FORMULARIO ================= -->
+<div id="overlay">
+  <div id="formCard">
+    <h2 id="formTitulo">Nueva cita</h2>
+
+    <div class="campo">
+      <label for="fCampoFecha">Fecha y hora</label>
+      <input id="fCampoFecha" type="datetime-local">
+    </div>
+
+    <div class="campo">
+      <label for="fCampoActividad">Actividad</label>
+      <select id="fCampoActividad"></select>
+    </div>
+
+    <div class="campo" id="campoParaWrap" style="display:none;">
+      <label for="fCampoPara">¿Para quién es esta cita?</label>
+      <select id="fCampoPara"></select>
+    </div>
+
+    <div class="campo">
+      <label for="fCampoDescripcion">Descripción / especificaciones</label>
+      <textarea id="fCampoDescripcion" placeholder="Alguna sugerencia o detalle especial..."></textarea>
+    </div>
+
+    <div class="campo">
+      <label>Accesorios (opcional)</label>
+      <div id="listaAccesoriosForm"></div>
+    </div>
+
+    <div id="formMsg"></div>
+
+    <div id="formBotones">
+      <button id="btnCancelarForm">Cancelar</button>
+      <button id="btnGuardarCita">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
+  onSnapshot, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+import firebaseConfig from "../firebase-config.js";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const citasRef = collection(db, "citas");
+
+// ====== ESTADO LOCAL ======
+const CLAVE_LOCAL = "appPareja_quienSoy";
+let usuarios = [];
+let actividades = [];
+let accesoriosCatalogo = [];
+let accesoriosPorActividadCache = {};
+let miIdentidad = null; // { id, nombre }
+let editandoId = null;  // id del doc si estamos modificando una cita existente
+
+// ====== ELEMENTOS ======
+const pantallaUsuario = document.getElementById("pantallaUsuario");
+const listaUsuariosEl = document.getElementById("listaUsuarios");
+
+const appEl = document.getElementById("app");
+const nombreActualEl = document.getElementById("nombreActual");
+const btnCambiarUsuario = document.getElementById("btnCambiarUsuario");
+
+const listaCitasEl = document.getElementById("listaCitas");
+const vacioMsgEl = document.getElementById("vacioMsg");
+const btnNuevaCita = document.getElementById("btnNuevaCita");
+
+const overlay = document.getElementById("overlay");
+const formTitulo = document.getElementById("formTitulo");
+const fCampoFecha = document.getElementById("fCampoFecha");
+const fCampoActividad = document.getElementById("fCampoActividad");
+const campoParaWrap = document.getElementById("campoParaWrap");
+const fCampoPara = document.getElementById("fCampoPara");
+const fCampoDescripcion = document.getElementById("fCampoDescripcion");
+const listaAccesoriosForm = document.getElementById("listaAccesoriosForm");
+const formMsg = document.getElementById("formMsg");
+const btnCancelarForm = document.getElementById("btnCancelarForm");
+const btnGuardarCita = document.getElementById("btnGuardarCita");
+
+// ====== CARGA DE CATÁLOGOS ======
+async function cargarCatalogos(){
+  const [rUsuarios, rActividades, rAccesorios] = await Promise.all([
+    fetch("usuarios.json"),
+    fetch("actividades.json"),
+    fetch("accesorios.json")
+  ]);
+  usuarios = await rUsuarios.json();
+  actividades = await rActividades.json();
+  accesoriosCatalogo = await rAccesorios.json();
+}
+
+// ====== IDENTIDAD ======
+function cargarIdentidadGuardada(){
+  const guardado = localStorage.getItem(CLAVE_LOCAL);
+  if(!guardado) return null;
+  try{ return JSON.parse(guardado); }catch(e){ return null; }
+}
+
+function guardarIdentidad(usuario){
+  localStorage.setItem(CLAVE_LOCAL, JSON.stringify(usuario));
+  miIdentidad = usuario;
+}
+
+function mostrarPantallaUsuario(){
+  listaUsuariosEl.innerHTML = "";
+  usuarios.forEach(u=>{
+    const btn = document.createElement("button");
+    btn.className = "btnUsuario";
+    btn.textContent = u.nombre;
+    btn.onclick = ()=>{
+      guardarIdentidad(u);
+      mostrarApp();
+    };
+    listaUsuariosEl.appendChild(btn);
+  });
+  pantallaUsuario.style.display = "flex";
+  appEl.style.display = "none";
+}
+
+function mostrarApp(){
+  nombreActualEl.textContent = miIdentidad.nombre;
+  pantallaUsuario.style.display = "none";
+  appEl.style.display = "flex";
+}
+
+btnCambiarUsuario.onclick = ()=>{
+  localStorage.removeItem(CLAVE_LOCAL);
+  miIdentidad = null;
+  mostrarPantallaUsuario();
+};
+
+// ====== FORMULARIO: helpers ======
+function llenarSelectActividades(){
+  fCampoActividad.innerHTML = "";
+  actividades.forEach(nombre=>{
+    const opt = document.createElement("option");
+    opt.value = nombre;
+    opt.textContent = nombre;
+    fCampoActividad.appendChild(opt);
+  });
+}
+
+function otrosUsuarios(){
+  return usuarios.filter(u=>u.id !== miIdentidad.id);
+}
+
+function prepararCampoPara(){
+  const otros = otrosUsuarios();
+  if(otros.length === 1){
+    campoParaWrap.style.display = "none";
+    fCampoPara.innerHTML = "";
+    const opt = document.createElement("option");
+    opt.value = otros[0].id;
+    opt.textContent = otros[0].nombre;
+    fCampoPara.appendChild(opt);
+  }else{
+    campoParaWrap.style.display = "block";
+    fCampoPara.innerHTML = "";
+    otros.forEach(u=>{
+      const opt = document.createElement("option");
+      opt.value = u.id;
+      opt.textContent = u.nombre;
+      fCampoPara.appendChild(opt);
+    });
+  }
+}
+
+function llenarAccesoriosForm(seleccionados){
+  seleccionados = seleccionados || [];
+  listaAccesoriosForm.innerHTML = "";
+  accesoriosCatalogo.forEach(nombre=>{
+    const row = document.createElement("label");
+    row.className = "checkRow";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = nombre;
+    input.checked = seleccionados.includes(nombre);
+    const span = document.createElement("span");
+    span.textContent = nombre;
+    row.appendChild(input);
+    row.appendChild(span);
+    listaAccesoriosForm.appendChild(row);
+  });
+  ordenarAccesorios();
+}
+
+function obtenerAccesoriosMarcados(){
+  return Array.from(listaAccesoriosForm.querySelectorAll("input:checked")).map(i=>i.value);
+}
+
+async function obtenerAccesoriosActividad(nombre){
+  if(!nombre) return [];
+  if(accesoriosPorActividadCache[nombre]) return accesoriosPorActividadCache[nombre];
+  try{
+    const r = await fetch(encodeURIComponent(nombre) + ".json");
+    if(!r.ok) return [];
+    const data = await r.json();
+    const arr = Array.isArray(data) ? data : [];
+    accesoriosPorActividadCache[nombre] = arr;
+    return arr;
+  }catch(e){
+    return [];
+  }
+}
+
+async function aplicarAccesoriosDeActividad(nombreActividad, modo){
+  const preset = await obtenerAccesoriosActividad(nombreActividad);
+  Array.from(listaAccesoriosForm.querySelectorAll("input[type=checkbox]")).forEach(input=>{
+    if(modo === "reemplazar"){
+      input.checked = preset.includes(input.value);
+    }else{
+      if(preset.includes(input.value)) input.checked = true;
+    }
+  });
+  ordenarAccesorios();
+}
+
+function ordenarAccesorios(){
+  const nodos = Array.from(listaAccesoriosForm.querySelectorAll(".checkRow"));
+  const marcados = nodos.filter(n=> n.querySelector("input").checked);
+  const sinMarcar = nodos.filter(n=> !n.querySelector("input").checked);
+  marcados.forEach(n=> listaAccesoriosForm.appendChild(n));
+  sinMarcar.forEach(n=> listaAccesoriosForm.appendChild(n));
+}
+
+async function abrirFormulario(modo, citaExistente){
+  formMsg.textContent = "";
+  llenarSelectActividades();
+  prepararCampoPara();
+
+  if(modo === "nueva"){
+    editandoId = null;
+    formTitulo.textContent = "Nueva cita";
+    fCampoFecha.value = "";
+    fCampoActividad.value = actividades[0] || "";
+    fCampoDescripcion.value = "";
+    llenarAccesoriosForm([]);
+    await aplicarAccesoriosDeActividad(fCampoActividad.value, "reemplazar");
+  }else{
+    editandoId = citaExistente.id;
+    formTitulo.textContent = "Modificar cita";
+    fCampoFecha.value = citaExistente.fechaCita || "";
+    fCampoActividad.value = citaExistente.actividad || (actividades[0] || "");
+    fCampoDescripcion.value = citaExistente.descripcion || "";
+    llenarAccesoriosForm(citaExistente.accesorios || []);
+    await aplicarAccesoriosDeActividad(fCampoActividad.value, "unir");
+    // al modificar, el destinatario ya está definido por la cita original
+    campoParaWrap.style.display = "none";
+  }
+
+  overlay.style.display = "flex";
+}
+
+function cerrarFormulario(){
+  overlay.style.display = "none";
+  editandoId = null;
+}
+
+btnCancelarForm.onclick = cerrarFormulario;
+btnNuevaCita.onclick = ()=> abrirFormulario("nueva", null);
+
+fCampoActividad.addEventListener("change", async ()=>{
+  await aplicarAccesoriosDeActividad(fCampoActividad.value, "reemplazar");
+});
+
+listaAccesoriosForm.addEventListener("change", (e)=>{
+  if(e.target && e.target.type === "checkbox") ordenarAccesorios();
+});
+
+btnGuardarCita.onclick = async ()=>{
+  const fecha = fCampoFecha.value;
+  const actividad = fCampoActividad.value;
+  const descripcion = fCampoDescripcion.value.trim();
+  const accesorios = obtenerAccesoriosMarcados();
+
+  if(!fecha){
+    formMsg.textContent = "Elige una fecha y hora.";
+    return;
+  }
+  if(!actividad){
+    formMsg.textContent = "Elige una actividad.";
+    return;
+  }
+
+  btnGuardarCita.disabled = true;
+
+  try{
+    if(editandoId){
+      // Modificar cita existente: se conserva el estado actual (no confirma)
+      await updateDoc(doc(db, "citas", editandoId), {
+        fechaCita: fecha,
+        actividad,
+        descripcion,
+        accesorios,
+        actualizadoEn: serverTimestamp()
+      });
+    }else{
+      const paraId = fCampoPara.value;
+      const paraUsuario = usuarios.find(u=>u.id === paraId);
+
+      await addDoc(citasRef, {
+        proponenteId: miIdentidad.id,
+        proponenteNombre: miIdentidad.nombre,
+        paraId: paraUsuario.id,
+        paraNombre: paraUsuario.nombre,
+        fechaCita: fecha,
+        actividad,
+        descripcion,
+        accesorios,
+        estado: "pendiente",
+        creadoEn: serverTimestamp(),
+        actualizadoEn: serverTimestamp(),
+        ultimaAccionPorId: miIdentidad.id,
+        ultimaAccionPorNombre: miIdentidad.nombre
+      });
+    }
+    cerrarFormulario();
+  }catch(e){
+    formMsg.textContent = "Error al guardar. Revisa tu conexión.";
+    console.error(e);
+  }finally{
+    btnGuardarCita.disabled = false;
+  }
+};
+
+// ====== ACCIONES SOBRE UNA CITA ======
+async function confirmarCita(id){
+  await updateDoc(doc(db, "citas", id), {
+    estado: "confirmada",
+    actualizadoEn: serverTimestamp(),
+    ultimaAccionPorId: miIdentidad.id,
+    ultimaAccionPorNombre: miIdentidad.nombre
+  });
+}
+
+async function rechazarCita(id){
+  await updateDoc(doc(db, "citas", id), {
+    estado: "rechazada",
+    actualizadoEn: serverTimestamp(),
+    ultimaAccionPorId: miIdentidad.id,
+    ultimaAccionPorNombre: miIdentidad.nombre
+  });
+}
+
+async function eliminarCita(id){
+  const confirmado = confirm("¿Seguro que quieres eliminar esta cita? Esta acción no se puede deshacer.");
+  if(!confirmado) return;
+  await deleteDoc(doc(db, "citas", id));
+}
+
+// ====== RENDER ======
+function formatearFecha(valor){
+  if(!valor) return "";
+  const f = new Date(valor);
+  if(isNaN(f.getTime())) return valor;
+  return f.toLocaleString("es-MX", {
+    weekday:"long", day:"numeric", month:"long",
+    hour:"2-digit", minute:"2-digit"
+  });
+}
+
+function renderCitas(docsSnap){
+  listaCitasEl.innerHTML = "";
+
+  if(docsSnap.length === 0){
+    vacioMsgEl.style.display = "block";
+    return;
+  }
+  vacioMsgEl.style.display = "none";
+
+  docsSnap.forEach(docSnap=>{
+    const c = docSnap.data();
+    const id = docSnap.id;
+
+    const soyProponente = c.proponenteId === miIdentidad.id;
+    const soyContraparte = c.paraId === miIdentidad.id;
+
+    const card = document.createElement("div");
+    card.className = "cita";
+
+    const filaTop = document.createElement("div");
+    filaTop.className = "fila-top";
+    const actividadEl = document.createElement("div");
+    actividadEl.className = "actividad";
+    actividadEl.textContent = c.actividad || "";
+    const badge = document.createElement("div");
+    badge.className = "badge " + (c.estado || "pendiente");
+    badge.textContent = c.estado === "confirmada" ? "Confirmada" : (c.estado === "rechazada" ? "Rechazada" : "Pendiente");
+    filaTop.appendChild(actividadEl);
+    filaTop.appendChild(badge);
+    card.appendChild(filaTop);
+
+    const fechaEl = document.createElement("div");
+    fechaEl.className = "fecha";
+    fechaEl.textContent = formatearFecha(c.fechaCita);
+    card.appendChild(fechaEl);
+
+    const quienEl = document.createElement("div");
+    quienEl.className = "quien";
+    quienEl.textContent = "Propuesta por " + c.proponenteNombre + " para " + c.paraNombre;
+    card.appendChild(quienEl);
+
+    if(c.descripcion){
+      const descEl = document.createElement("div");
+      descEl.className = "descripcion";
+      descEl.textContent = c.descripcion;
+      card.appendChild(descEl);
+    }
+
+    if(c.accesorios && c.accesorios.length){
+      const accWrap = document.createElement("div");
+      accWrap.className = "accesorios";
+      c.accesorios.forEach(a=>{
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = a;
+        accWrap.appendChild(chip);
+      });
+      card.appendChild(accWrap);
+    }
+
+    const esAdmin = !!miIdentidad.admin;
+    let yaTieneBotonModificar = false;
+
+    if(c.estado === "pendiente"){
+      if(soyContraparte){
+        const proponenteEsAdmin = !!usuarios.find(u=>u.id === c.proponenteId && u.admin);
+        const acciones = document.createElement("div");
+        acciones.className = "acciones";
+
+        if(proponenteEsAdmin && !esAdmin){
+          const btnEnterado = document.createElement("button");
+          btnEnterado.className = "btnConfirmar";
+          btnEnterado.textContent = "Enterado";
+          btnEnterado.onclick = ()=> confirmarCita(id);
+          acciones.appendChild(btnEnterado);
+        }else{
+          const btnConf = document.createElement("button");
+          btnConf.className = "btnConfirmar";
+          btnConf.textContent = "Confirmar";
+          btnConf.onclick = ()=> confirmarCita(id);
+
+          const btnMod = document.createElement("button");
+          btnMod.className = "btnModificar";
+          btnMod.textContent = "Modificar";
+          btnMod.onclick = ()=> abrirFormulario("modificar", { id, ...c });
+
+          const btnRech = document.createElement("button");
+          btnRech.className = "btnRechazar";
+          btnRech.textContent = "Rechazar";
+          btnRech.onclick = ()=> rechazarCita(id);
+
+          acciones.appendChild(btnConf);
+          acciones.appendChild(btnMod);
+          acciones.appendChild(btnRech);
+        }
+
+        card.appendChild(acciones);
+        yaTieneBotonModificar = true;
+      }else if(soyProponente){
+        const espera = document.createElement("div");
+        espera.className = "espera";
+        espera.textContent = "Esperando respuesta de " + c.paraNombre + "...";
+        card.appendChild(espera);
+      }
+    }else if(c.ultimaAccionPorNombre){
+      const nota = document.createElement("div");
+      nota.className = "espera";
+      nota.textContent = (c.estado === "confirmada" ? "Confirmada" : "Rechazada") + " por " + c.ultimaAccionPorNombre;
+      card.appendChild(nota);
+    }
+
+    if(esAdmin){
+      const accionesAdmin = document.createElement("div");
+      accionesAdmin.className = "acciones";
+
+      if(!yaTieneBotonModificar){
+        const btnModAdmin = document.createElement("button");
+        btnModAdmin.className = "btnModificar";
+        btnModAdmin.textContent = "Modificar";
+        btnModAdmin.onclick = ()=> abrirFormulario("modificar", { id, ...c });
+        accionesAdmin.appendChild(btnModAdmin);
+      }
+
+      const btnElim = document.createElement("button");
+      btnElim.className = "btnRechazar";
+      btnElim.textContent = "Eliminar";
+      btnElim.onclick = ()=> eliminarCita(id);
+      accionesAdmin.appendChild(btnElim);
+
+      card.appendChild(accionesAdmin);
+    }
+
+    listaCitasEl.appendChild(card);
+  });
+}
+
+function escucharCitas(){
+  const q = query(citasRef, orderBy("creadoEn", "desc"));
+  onSnapshot(q, (snapshot)=>{
+    renderCitas(snapshot.docs);
+  }, (error)=>{
+    console.error("Error escuchando citas:", error);
+  });
+}
+
+// ====== INICIO ======
+(async function iniciar(){
+  await cargarCatalogos();
+
+  const guardado = cargarIdentidadGuardada();
+  if(guardado && usuarios.some(u=>u.id === guardado.id)){
+    miIdentidad = usuarios.find(u=>u.id === guardado.id);
+    mostrarApp();
+  }else{
+    mostrarPantallaUsuario();
+  }
+
+  escucharCitas();
+})();
+
+</script>
+
+</body>
+</html>

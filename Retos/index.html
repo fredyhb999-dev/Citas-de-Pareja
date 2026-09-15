@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Retos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #120e1c;
+    --bg-2: #1a1428;
+    --card: #201933;
+    --card-border: #322a4a;
+    --fg: #f4f1fb;
+    --fg-muted: #a599c7;
+    --coral: #ff6a5c;
+    --teal: #2fd9c7;
+    --amarillo: #f4c94c;
+    --rojo: #ff5c7a;
+    --verde: #6dffa0;
+  }
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body{
+    margin:0; padding:0; min-height:100%; width:100%;
+    color:var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%),
+      var(--bg);
+  }
+  .eyebrow{
+    font-family:'Chakra Petch', sans-serif;
+    font-size:.8rem; letter-spacing:.3em; text-transform:uppercase;
+    color: var(--fg-muted); margin-bottom:10px;
+  }
+  h1,h2{
+    font-family:'Chakra Petch', sans-serif;
+    font-weight:700; margin:0;
+  }
+  button{
+    font-family:'Chakra Petch', sans-serif;
+    font-weight:700; letter-spacing:.04em;
+    cursor:pointer; border:none; border-radius:14px;
+    transition: transform .15s ease, opacity .2s ease;
+  }
+  button:active{ transform: scale(.97); }
+  button:disabled{ opacity:.5; cursor:default; }
+  input, select, textarea{
+    font-family:'Inter', sans-serif;
+    border-radius:12px; border:1px solid var(--card-border);
+    background: var(--card); color:var(--fg);
+    padding:12px; font-size:1rem; width:100%;
+  }
+  textarea{ resize:vertical; min-height:70px; }
+
+  /* ---------- pantalla: quién eres ---------- */
+  #pantallaUsuario{
+    min-height:100dvh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center; padding:24px;
+  }
+  #pantallaUsuario h1{
+    font-size:1.8rem; margin-bottom:8px;
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  #pantallaUsuario p{ color:var(--fg-muted); margin:0 0 30px; }
+  #listaUsuarios{ display:flex; flex-direction:column; gap:14px; width:100%; max-width:320px; }
+  .btnUsuario{
+    padding:20px; font-size:1.15rem;
+    background: var(--card); color:var(--fg);
+    border:1px solid var(--card-border);
+  }
+  .btnUsuario:active{ border-color: var(--teal); }
+
+  /* ---------- app principal ---------- */
+  #app{ display:none; min-height:100dvh; flex-direction:column; }
+  #encabezado{
+    padding:20px 20px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border-bottom:1px solid var(--card-border);
+  }
+  #encabezado .saludo{ font-size:1.2rem; }
+  #encabezado .saludo span{
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  #encabezado .derecha{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  #btnVolver, #btnCambiarUsuario{
+    background:none; color: var(--fg-muted); font-size:.75rem;
+    text-decoration:underline; padding:4px; font-weight:500; font-family:'Inter',sans-serif;
+  }
+
+  #contenido{ flex:1; padding:20px; padding-bottom:120px; max-width:560px; width:100%; margin:0 auto; }
+
+  .seccionTitulo{
+    font-family:'Chakra Petch',sans-serif; font-size:.8rem;
+    letter-spacing:.25em; text-transform:uppercase;
+    color: var(--fg-muted); margin:24px 0 12px;
+  }
+
+  #balances{ display:flex; gap:12px; flex-wrap:wrap; }
+  .balCard{
+    flex:1; min-width:150px;
+    background: var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .balNombre{ color: var(--fg-muted); font-size:.8rem; }
+  .balPuntos{
+    font-family:'Chakra Petch',sans-serif; font-size:1.6rem; font-weight:700;
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .balPuntos.negativo{ background: var(--rojo); -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+  #btnProponerReto{
+    position:fixed; bottom:24px; left:20px; right:20px;
+    padding:18px; font-size:1.05rem;
+    color: var(--bg);
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    max-width:560px; margin:0 auto;
+  }
+
+  #listaRetos{ display:flex; flex-direction:column; gap:16px; }
+  #vacioMsg{ color:var(--fg-muted); text-align:center; margin-top:40px; }
+
+  .reto{
+    background: var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:18px;
+  }
+  .reto .fila-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:6px; }
+  .reto .actividad{ font-size:1.15rem; font-weight:700; font-family:'Chakra Petch',sans-serif; }
+  .badge{
+    font-size:.7rem; font-weight:700; padding:4px 10px; border-radius:20px;
+    white-space:nowrap; text-transform:uppercase; letter-spacing:.04em;
+  }
+  .badge.propuesta{ background: rgba(244,201,76,.15); color: var(--amarillo); }
+  .badge.enCurso{ background: rgba(47,217,199,.15); color: var(--teal); }
+  .badge.cumplido{ background: rgba(109,255,160,.15); color: var(--verde); }
+  .badge.cobrada{ background: rgba(47,217,199,.15); color: var(--teal); }
+  .badge.noCumplido{ background: rgba(255,92,122,.15); color: var(--rojo); }
+  .badge.rechazada{ background: rgba(255,92,122,.15); color: var(--rojo); }
+
+  .reto .quien{ color: var(--fg-muted); font-size:.82rem; margin-bottom:10px; }
+  .meta{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .barra{ flex:1; height:8px; border-radius:10px; background: var(--bg-2); overflow:hidden; }
+  .barra i{ display:block; height:100%; border-radius:10px; background: linear-gradient(90deg, var(--coral), var(--teal)); transition: width .3s ease; }
+  .metaNum{ font-size:.85rem; color: var(--fg-muted); white-space:nowrap; font-family:'Chakra Petch',sans-serif; }
+
+  .lienzo{ font-size:.9rem; display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+  .lienzo div{ display:flex; justify-content:space-between; gap:10px; }
+  .lienzo .k{ color: var(--fg-muted); font-size:.82rem; }
+  .lienzo .v{ text-align:right; }
+
+  .nota{ font-size:.85rem; color: var(--fg-muted); font-style:italic; margin-bottom:10px; }
+  .nota.bien{ color: var(--verde); font-style:normal; }
+  .nota.mal{ color: var(--rojo); font-style:normal; }
+  .nota.warn{ color: var(--amarillo); font-style:normal; }
+
+  .acciones{ display:flex; gap:8px; flex-wrap:wrap; }
+  .acciones button{ flex:1; min-width:90px; padding:12px; font-size:.85rem; }
+  .btnPrincipal{ color: var(--bg); background: linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btnTeal{ background: var(--teal); color:#08211d; }
+  .btnOscuro{ background: var(--bg-2); color: var(--fg); border:1px solid var(--card-border) !important; }
+  .btnRojo{ background: var(--rojo); color:#2b0410; }
+  .btnVerde{ background: var(--verde); color:#06281a; }
+
+  /* ---------- overlay formulario ---------- */
+  #overlay{
+    display:none; position:fixed; inset:0; background: rgba(9,7,15,.75);
+    align-items:flex-end; justify-content:center; z-index:50;
+    backdrop-filter: blur(2px);
+  }
+  #formCard{
+    background: var(--bg); border:1px solid var(--card-border);
+    border-radius:22px 22px 0 0; padding:24px; width:100%; max-width:560px;
+    max-height:90dvh; overflow-y:auto;
+  }
+  #formCard h2{ font-size:1.3rem; margin-bottom:18px; }
+  .campo{ margin-bottom:16px; }
+  .campo label{ display:block; font-size:.85rem; color: var(--fg-muted); margin-bottom:6px; }
+  .campo .hint{ font-size:.75rem; color: var(--fg-muted); margin-top:4px; }
+  .fila{ display:flex; gap:12px; }
+  .fila .campo{ flex:1; }
+  #formMsg{ color: var(--rojo); font-size:.85rem; min-height:18px; margin-bottom:10px; }
+  #formBotones{ display:flex; gap:10px; margin-top:6px; }
+  #formBotones button{ flex:1; padding:16px; }
+  #btnCancelarForm{ background: var(--card); color: var(--fg); border:1px solid var(--card-border); }
+
+  .resumen{
+    background: var(--card); border:1px solid var(--card-border);
+    border-radius:12px; padding:14px 16px; margin-bottom:16px;
+    font-size:.85rem; display:flex; flex-direction:column; gap:6px;
+  }
+  .resumen .r-act{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem; margin-bottom:2px; }
+  .resumen div{ display:flex; justify-content:space-between; gap:10px; }
+  .resumen .k{ color: var(--fg-muted); }
+  .resumen .v{ text-align:right; }
+
+  #overlayRecompensa{
+    display:none; position:fixed; inset:0; background: rgba(9,7,15,.75);
+    align-items:flex-end; justify-content:center; z-index:60;
+    backdrop-filter: blur(2px);
+  }
+  #recompensaCard{
+    background: var(--bg); border:1px solid var(--card-border);
+    border-radius:22px 22px 0 0; padding:24px; width:100%; max-width:560px;
+    max-height:90dvh; overflow-y:auto;
+  }
+  #recompensaCard h2{ font-size:1.3rem; margin-bottom:18px; }
+  #recompensaMsg{ color: var(--rojo); font-size:.85rem; min-height:18px; margin-bottom:10px; }
+
+  .balDesglose{ margin-top:10px; border-top:1px solid var(--card-border); padding-top:8px; display:flex; flex-direction:column; gap:4px; }
+  .balDesglose .b-item{ font-size:.75rem; color: var(--fg-muted); display:flex; justify-content:space-between; gap:8px; }
+  .balDesglose .b-item b{ color: var(--fg); font-family:'Chakra Petch',sans-serif; }
+</style>
+</head>
+<body>
+
+<!-- ================= PANTALLA: QUIÉN ERES ================= -->
+<div id="pantallaUsuario">
+  <div class="eyebrow">Complicidad en Pareja · Retos</div>
+  <h1>¿Quién eres?</h1>
+  <p>Selecciona tu usuario para continuar.</p>
+  <div id="listaUsuarios"></div>
+</div>
+
+<!-- ================= APP PRINCIPAL ================= -->
+<div id="app">
+  <div id="encabezado">
+    <div class="saludo">Hola, <span id="nombreActual"></span></div>
+    <div class="derecha">
+      <a href="../index.html" id="btnVolver">← Inicio</a>
+      <button id="btnCambiarUsuario">Cambiar usuario</button>
+    </div>
+  </div>
+
+  <div id="contenido">
+    <div class="seccionTitulo">Mis puntos</div>
+    <div id="balances"></div>
+    <div class="nota" style="margin-top:8px;">Total acumulado en todos los retos. Cada reto muestra su propio avance.</div>
+
+    <div class="seccionTitulo">Retos</div>
+    <div id="listaRetos"></div>
+    <div id="vacioMsg" style="display:none;">Todavía no hay retos.</div>
+  </div>
+
+  <button id="btnProponerReto">+ Proponer reto</button>
+</div>
+
+<!-- ================= OVERLAY: FORMULARIO ================= -->
+<div id="overlay">
+  <div id="formCard">
+    <h2 id="formTitulo">Proponer reto</h2>
+
+    <div id="infoResumen" class="resumen" style="display:none;"></div>
+
+    <div class="campo">
+      <label for="fActividad">Actividad</label>
+      <input id="fActividad" type="text" placeholder="Ej: Hacer ejercicio juntos">
+    </div>
+
+    <div class="campo">
+      <label for="fAsignado">Se le asigna a</label>
+      <select id="fAsignado"></select>
+      <div class="hint">La recompensa la define quien la va a recibir.</div>
+    </div>
+
+    <div class="fila">
+      <div class="campo">
+        <label for="fVeces">Veces al día</label>
+        <input id="fVeces" type="number" min="1" step="1" value="1">
+      </div>
+      <div class="campo">
+        <label for="fDias">Duración (días)</label>
+        <input id="fDias" type="number" min="1" step="1" value="7">
+      </div>
+    </div>
+
+    <div class="fila">
+      <div class="campo">
+        <label for="fMeta">Puntos para cumplir</label>
+        <input id="fMeta" type="number" min="1" step="1" placeholder="veces × días">
+      </div>
+      <div class="campo">
+        <label for="fPenalizacion">Penalización (puntos)</label>
+        <input id="fPenalizacion" type="number" min="0" step="1" value="0">
+      </div>
+    </div>
+
+    <div class="campo">
+      <label for="fCastigo">Castigo por no cumplir</label>
+      <textarea id="fCastigo" placeholder="Ej: Preparar la cena los próximos 3 días..."></textarea>
+    </div>
+
+    <div class="campo" id="campoRecompensa" style="display:none;">
+      <label for="fRecompensa">Mi recompensa al cumplir</label>
+      <textarea id="fRecompensa" placeholder="Ej: Una cena en mi restaurante favorito..."></textarea>
+    </div>
+
+    <div id="formMsg"></div>
+
+    <div id="formBotones">
+      <button id="btnCancelarForm">Cancelar</button>
+      <button id="btnAccion" class="btnPrincipal">Proponer reto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= OVERLAY: DEFINIR RECOMPENSA ================= -->
+<div id="overlayRecompensa">
+  <div id="recompensaCard">
+    <h2>Mi recompensa</h2>
+
+    <div id="recompensaResumen" class="resumen"></div>
+
+    <div class="campo">
+      <label for="fRecompensaOverlay">Recompensa que quiero al cumplir el reto</label>
+      <textarea id="fRecompensaOverlay" placeholder="Ej: Una cena en mi restaurante favorito..."></textarea>
+    </div>
+
+    <div id="recompensaMsg"></div>
+
+    <div id="formBotones">
+      <button id="btnCancelarRecompensa">Cancelar</button>
+      <button id="btnGuardarRecompensa" class="btnPrincipal">Guardar recompensa</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
+  onSnapshot, query, orderBy, where, serverTimestamp, increment,
+  runTransaction, writeBatch, getDocs
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+import firebaseConfig from "../firebase-config.js";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const retosRef = collection(db, "retos");
+const puntosUsuariosRef = collection(db, "puntosUsuarios");
+
+// ====== ESTADO LOCAL ======
+const CLAVE_LOCAL = "appPareja_quienSoy";
+let usuarios = [];
+let miIdentidad = null;
+let balances = {};
+let retos = [];
+let modoForm = null;      // "nueva" | "modificar" | "autorizar"
+let retoEnEdicion = null; // id del reto en el formulario
+let retoActual = null;    // objeto del reto en el formulario
+let retoRecompensaId = null;
+
+// ====== ELEMENTOS ======
+const pantallaUsuario = document.getElementById("pantallaUsuario");
+const listaUsuariosEl = document.getElementById("listaUsuarios");
+
+const appEl = document.getElementById("app");
+const nombreActualEl = document.getElementById("nombreActual");
+const btnCambiarUsuario = document.getElementById("btnCambiarUsuario");
+
+const balancesEl = document.getElementById("balances");
+const listaRetosEl = document.getElementById("listaRetos");
+const vacioMsgEl = document.getElementById("vacioMsg");
+const btnProponerReto = document.getElementById("btnProponerReto");
+
+const overlay = document.getElementById("overlay");
+const formTitulo = document.getElementById("formTitulo");
+const fActividad = document.getElementById("fActividad");
+const fAsignado = document.getElementById("fAsignado");
+const fVeces = document.getElementById("fVeces");
+const fDias = document.getElementById("fDias");
+const fMeta = document.getElementById("fMeta");
+const fPenalizacion = document.getElementById("fPenalizacion");
+const fCastigo = document.getElementById("fCastigo");
+const campoRecompensa = document.getElementById("campoRecompensa");
+const fRecompensa = document.getElementById("fRecompensa");
+const formMsg = document.getElementById("formMsg");
+const btnCancelarForm = document.getElementById("btnCancelarForm");
+const btnAccion = document.getElementById("btnAccion");
+const infoResumen = document.getElementById("infoResumen");
+
+const overlayRecompensa = document.getElementById("overlayRecompensa");
+const recompensaResumen = document.getElementById("recompensaResumen");
+const fRecompensaOverlay = document.getElementById("fRecompensaOverlay");
+const recompensaMsg = document.getElementById("recompensaMsg");
+const btnCancelarRecompensa = document.getElementById("btnCancelarRecompensa");
+const btnGuardarRecompensa = document.getElementById("btnGuardarRecompensa");
+
+// ====== HELPERS ======
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, m=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[m]);
+}
+
+function formatearFecha(valor){
+  if(!valor) return "";
+  const f = (valor.toDate ? valor.toDate() : new Date(valor));
+  if(isNaN(f.getTime())) return "";
+  return f.toLocaleString("es-MX", { day:"numeric", month:"long", hour:"2-digit", minute:"2-digit" });
+}
+
+function diasRestantes(fechaFin){
+  if(!fechaFin) return null;
+  const f = (fechaFin.toDate ? fechaFin.toDate() : new Date(fechaFin));
+  return Math.ceil((f.getTime() - Date.now()) / 86400000);
+}
+
+function momentoFecha(valor){
+  return (valor.toDate ? valor.toDate() : new Date(valor));
+}
+
+// ====== IDENTIDAD ======
+function cargarIdentidadGuardada(){
+  const guardado = localStorage.getItem(CLAVE_LOCAL);
+  if(!guardado) return null;
+  try{ return JSON.parse(guardado); }catch(e){ return null; }
+}
+
+function guardarIdentidad(usuario){
+  localStorage.setItem(CLAVE_LOCAL, JSON.stringify(usuario));
+  miIdentidad = usuario;
+}
+
+function mostrarPantallaUsuario(){
+  listaUsuariosEl.innerHTML = "";
+  usuarios.forEach(u=>{
+    const btn = document.createElement("button");
+    btn.className = "btnUsuario";
+    btn.textContent = u.nombre;
+    btn.onclick = ()=>{
+      guardarIdentidad(u);
+      mostrarApp();
+    };
+    listaUsuariosEl.appendChild(btn);
+  });
+  pantallaUsuario.style.display = "flex";
+  appEl.style.display = "none";
+}
+
+function mostrarApp(){
+  nombreActualEl.textContent = miIdentidad.nombre;
+  pantallaUsuario.style.display = "none";
+  appEl.style.display = "flex";
+}
+
+btnCambiarUsuario.onclick = ()=>{
+  localStorage.removeItem(CLAVE_LOCAL);
+  miIdentidad = null;
+  mostrarPantallaUsuario();
+};
+
+// ====== BALANCES ======
+function renderBalances(){
+  balancesEl.innerHTML = "";
+  usuarios.forEach(u=>{
+    const b = balances[u.id] || 0;
+    const card = document.createElement("div");
+    card.className = "balCard";
+    const nom = document.createElement("div");
+    nom.className = "balNombre";
+    nom.textContent = u.nombre;
+    const pts = document.createElement("div");
+    pts.className = "balPuntos" + (b < 0 ? " negativo" : "");
+    pts.textContent = (b > 0 ? "+" : "") + b + " pts";
+    card.appendChild(nom);
+    card.appendChild(pts);
+
+    const activos = retos
+      .map(r=> r.data ? r.data() : r)
+      .filter(r=> r.asignadoA && r.asignadoA.id === u.id && r.estado === "enCurso")
+      .slice(0, 4);
+
+    if(activos.length){
+      const wrap = document.createElement("div");
+      wrap.className = "balDesglose";
+      activos.forEach(r=>{
+        const item = document.createElement("div");
+        item.className = "b-item";
+        item.innerHTML = '<span>' + esc(truncar(r.actividad, 22)) + '</span><b>' + (r.conteo || 0) + '/' + (r.puntosMeta || 0) + '</b>';
+        wrap.appendChild(item);
+      });
+      card.appendChild(wrap);
+    }
+
+    balancesEl.appendChild(card);
+  });
+}
+
+function truncar(s, n){
+  s = String(s || "");
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+// ====== FORMULARIO ======
+function llenarSelectAsignado(preferidoId){
+  fAsignado.innerHTML = "";
+  usuarios.forEach(u=>{
+    const opt = document.createElement("option");
+    opt.value = u.id;
+    opt.textContent = u.nombre;
+    fAsignado.appendChild(opt);
+  });
+  if(preferidoId && usuarios.some(u=>u.id === preferidoId)){
+    fAsignado.value = preferidoId;
+  }
+}
+
+function actualizarVisibilidadRecompensa(){
+  const aVer = fAsignado.value;
+  campoRecompensa.style.display = (aVer === miIdentidad.id) ? "block" : "none";
+  if(aVer !== miIdentidad.id) fRecompensa.value = "";
+}
+
+function rellenarMetaSiVacio(){
+  const veces = parseInt(fVeces.value, 10) || 0;
+  const dias = parseInt(fDias.value, 10) || 0;
+  if(fMeta.value === "" && veces > 0 && dias > 0){
+    fMeta.value = veces * dias;
+  }
+}
+
+fAsignado.onchange = actualizarVisibilidadRecompensa;
+fVeces.oninput = rellenarMetaSiVacio;
+fDias.oninput = rellenarMetaSiVacio;
+
+function resumenHtml(reto){
+  const nom = u=> (u && u.nombre) || "—";
+  return (
+    '<div class="r-act">' + esc(reto.actividad) + '</div>' +
+    '<div><span class="k">Propuesto por</span><span class="v">' + esc(nom(reto.asignadoPor)) + '</span></div>' +
+    '<div><span class="k">Asignado a</span><span class="v">' + esc(nom(reto.asignadoA)) + '</span></div>' +
+    '<div><span class="k">Veces al día</span><span class="v">' + esc(reto.vecesAlDia) + '</span></div>' +
+    '<div><span class="k">Duración</span><span class="v">' + esc(reto.duracionDias) + ' días</span></div>' +
+    '<div><span class="k">Meta</span><span class="v">' + esc(reto.puntosMeta) + ' pts</span></div>' +
+    '<div><span class="k">Penalización</span><span class="v">' + esc(reto.penalizacionPuntos) + ' pts</span></div>' +
+    '<div><span class="k">Castigo</span><span class="v">' + esc(reto.castigo) + '</span></div>' +
+    '<div><span class="k">Recompensa</span><span class="v">' + esc(reto.recompensa || "Por definir") + '</span></div>'
+  );
+}
+
+function abrirFormulario(modo, reto, id){
+  formMsg.textContent = "";
+  modoForm = modo;
+  retoEnEdicion = id || null;
+  retoActual = reto || null;
+  llenarSelectAsignado();
+
+  if(modo === "nueva"){
+    formTitulo.textContent = "Proponer reto";
+    infoResumen.style.display = "none";
+    fActividad.value = "";
+    fVeces.value = 1;
+    fDias.value = 7;
+    fMeta.value = "";
+    fPenalizacion.value = 0;
+    fCastigo.value = "";
+    fRecompensa.value = "";
+    const otros = usuarios.filter(u=>u.id !== miIdentidad.id);
+    if(otros.length === 1) llenarSelectAsignado(otros[0].id);
+    actualizarVisibilidadRecompensa();
+    btnAccion.textContent = "Proponer reto";
+  }else if(modo === "modificar"){
+    formTitulo.textContent = "Modificar propuesta";
+    infoResumen.style.display = "block";
+    infoResumen.innerHTML = resumenHtml(reto);
+    fActividad.value = reto.actividad || "";
+    llenarSelectAsignado(reto.asignadoA ? reto.asignadoA.id : null);
+    fVeces.value = reto.vecesAlDia || 1;
+    fDias.value = reto.duracionDias || 7;
+    fMeta.value = reto.puntosMeta || "";
+    fPenalizacion.value = reto.penalizacionPuntos || 0;
+    fCastigo.value = reto.castigo || "";
+    fRecompensa.value = reto.recompensa || "";
+    actualizarVisibilidadRecompensa();
+    btnAccion.textContent = "Guardar cambios";
+  }else if(modo === "autorizar"){
+    formTitulo.textContent = "Autorizar reto";
+    infoResumen.style.display = "block";
+    infoResumen.innerHTML = resumenHtml(reto);
+    fActividad.value = reto.actividad || "";
+    llenarSelectAsignado(reto.asignadoA ? reto.asignadoA.id : null);
+    fVeces.value = reto.vecesAlDia || 1;
+    fDias.value = reto.duracionDias || 7;
+    fMeta.value = reto.puntosMeta || "";
+    fPenalizacion.value = reto.penalizacionPuntos || 0;
+    fCastigo.value = reto.castigo || "";
+    fRecompensa.value = reto.recompensa || "";
+    actualizarVisibilidadRecompensa();
+    btnAccion.textContent = "Autorizar reto";
+  }
+
+  overlay.style.display = "flex";
+}
+
+function cerrarFormulario(){
+  overlay.style.display = "none";
+  modoForm = null;
+  retoEnEdicion = null;
+  retoActual = null;
+  campoRecompensa.style.display = "none";
+  infoResumen.style.display = "none";
+}
+
+btnCancelarForm.onclick = cerrarFormulario;
+btnProponerReto.onclick = ()=> abrirFormulario("nueva", null, null);
+
+function leerFormulario(){
+  return {
+    actividad: fActividad.value.trim(),
+    asignadoAId: fAsignado.value,
+    vecesAlDia: parseInt(fVeces.value, 10) || 0,
+    duracionDias: parseInt(fDias.value, 10) || 0,
+    puntosMeta: parseInt(fMeta.value, 10) || 0,
+    penalizacionPuntos: parseInt(fPenalizacion.value, 10) || 0,
+    castigo: fCastigo.value.trim(),
+    recompensa: campoRecompensa.style.display === "block" ? fRecompensa.value.trim() : ""
+  };
+}
+
+function validarFormulario(f, requiereRecompensa){
+  if(!f.actividad){ return "Escribe el nombre de la actividad."; }
+  if(!f.asignadoAId){ return "Elige a quién se le asigna el reto."; }
+  if(f.vecesAlDia < 1){ return "Indica al menos 1 vez al día."; }
+  if(f.duracionDias < 1){ return "Indica una duración de al menos 1 día."; }
+  if(f.puntosMeta < 1){ return "Indica cuántos puntos se necesitan para cumplir."; }
+  if(f.penalizacionPuntos < 0){ return "La penalización no puede ser negativa."; }
+  if(!f.castigo){ return "Escribe el castigo por no cumplir."; }
+  if(requiereRecompensa && !f.recompensa){ return "Define tu recompensa antes de continuar."; }
+  return null;
+}
+
+btnAccion.onclick = async ()=>{
+  const f = leerFormulario();
+  const soyReceptor = (f.asignadoAId === miIdentidad.id);
+
+  if(modoForm === "nueva"){
+    const err = validarFormulario(f, soyReceptor);
+    if(err){ formMsg.textContent = err; return; }
+    btnAccion.disabled = true;
+    try{
+      if(miIdentidad.admin){
+        const ahora = new Date();
+        await addDoc(retosRef, {
+          actividad: f.actividad,
+          asignadoPor: { id: miIdentidad.id, nombre: miIdentidad.nombre },
+          asignadoA: { id: f.asignadoAId, nombre: usuarios.find(u=>u.id===f.asignadoAId).nombre },
+          vecesAlDia: f.vecesAlDia,
+          duracionDias: f.duracionDias,
+          puntosMeta: f.puntosMeta,
+          penalizacionPuntos: f.penalizacionPuntos,
+          castigo: f.castigo,
+          recompensa: soyReceptor ? f.recompensa : "",
+          conteo: 0,
+          estado: "enCurso",
+          creadoEn: serverTimestamp(),
+          fechaInicio: ahora,
+          fechaFin: new Date(ahora.getTime() + f.duracionDias * 86400000),
+          autorizadaPor: { id: miIdentidad.id, nombre: miIdentidad.nombre }
+        });
+      }else{
+        await addDoc(retosRef, {
+          actividad: f.actividad,
+          asignadoPor: { id: miIdentidad.id, nombre: miIdentidad.nombre },
+          asignadoA: { id: f.asignadoAId, nombre: usuarios.find(u=>u.id===f.asignadoAId).nombre },
+          vecesAlDia: f.vecesAlDia,
+          duracionDias: f.duracionDias,
+          puntosMeta: f.puntosMeta,
+          penalizacionPuntos: f.penalizacionPuntos,
+          castigo: f.castigo,
+          recompensa: soyReceptor ? f.recompensa : "",
+          conteo: 0,
+          estado: "propuesta",
+          creadoEn: serverTimestamp()
+        });
+      }
+      cerrarFormulario();
+    }catch(e){
+      formMsg.textContent = "Error al guardar. Revisa tu conexión.";
+      console.error(e);
+    }finally{
+      btnAccion.disabled = false;
+    }
+  }
+
+  else if(modoForm === "modificar"){
+    const err = validarFormulario(f, soyReceptor);
+    if(err){ formMsg.textContent = err; return; }
+    btnAccion.disabled = true;
+    try{
+      await updateDoc(doc(db, "retos", retoEnEdicion), {
+        actividad: f.actividad,
+        asignadoA: { id: f.asignadoAId, nombre: usuarios.find(u=>u.id===f.asignadoAId).nombre },
+        vecesAlDia: f.vecesAlDia,
+        duracionDias: f.duracionDias,
+        puntosMeta: f.puntosMeta,
+        penalizacionPuntos: f.penalizacionPuntos,
+        castigo: f.castigo,
+        recompensa: soyReceptor ? f.recompensa : (retoActual ? retoActual.recompensa : "")
+      });
+      cerrarFormulario();
+    }catch(e){
+      formMsg.textContent = "Error al guardar. Revisa tu conexión.";
+      console.error(e);
+    }finally{
+      btnAccion.disabled = false;
+    }
+  }
+
+  else if(modoForm === "autorizar"){
+    const err = validarFormulario(f, soyReceptor);
+    if(err){ formMsg.textContent = err; return; }
+    btnAccion.disabled = true;
+    try{
+      const ahora = new Date();
+      await updateDoc(doc(db, "retos", retoEnEdicion), {
+        actividad: f.actividad,
+        asignadoA: { id: f.asignadoAId, nombre: usuarios.find(u=>u.id===f.asignadoAId).nombre },
+        vecesAlDia: f.vecesAlDia,
+        duracionDias: f.duracionDias,
+        puntosMeta: f.puntosMeta,
+        penalizacionPuntos: f.penalizacionPuntos,
+        castigo: f.castigo,
+        recompensa: soyReceptor ? f.recompensa : (retoActual ? retoActual.recompensa : ""),
+        estado: "enCurso",
+        fechaInicio: ahora,
+        fechaFin: new Date(ahora.getTime() + f.duracionDias * 86400000),
+        autorizadaPor: { id: miIdentidad.id, nombre: miIdentidad.nombre }
+      });
+      cerrarFormulario();
+    }catch(e){
+      formMsg.textContent = "Error al guardar. Revisa tu conexión.";
+      console.error(e);
+    }finally{
+      btnAccion.disabled = false;
+    }
+  }
+};
+
+// ====== DEFINIR RECOMPENSA (overlay aparte) ======
+function abrirOverlayRecompensa(reto, id){
+  retoRecompensaId = id;
+  retoActual = reto;
+  recompensaMsg.textContent = "";
+  recompensaResumen.innerHTML = resumenHtml(reto);
+  fRecompensaOverlay.value = reto.recompensa || "";
+  overlayRecompensa.style.display = "flex";
+}
+
+btnCancelarRecompensa.onclick = ()=>{
+  overlayRecompensa.style.display = "none";
+  retoRecompensaId = null;
+};
+
+btnGuardarRecompensa.onclick = async ()=>{
+  const recompensa = fRecompensaOverlay.value.trim();
+  if(!recompensa){ recompensaMsg.textContent = "Escribe tu recompensa."; return; }
+  btnGuardarRecompensa.disabled = true;
+  try{
+    await updateDoc(doc(db, "retos", retoRecompensaId), { recompensa: recompensa });
+    overlayRecompensa.style.display = "none";
+    retoRecompensaId = null;
+  }catch(e){
+    recompensaMsg.textContent = "Error al guardar. Revisa tu conexión.";
+    console.error(e);
+  }finally{
+    btnGuardarRecompensa.disabled = false;
+  }
+};
+
+// ====== ACCIONES SOBRE UN RETO ======
+async function rechazarReto(id){
+  if(!confirm("¿Seguro que quieres rechazar este reto?")) return;
+  await updateDoc(doc(db, "retos", id), {
+    estado: "rechazada",
+    ultimaAccionPor: { id: miIdentidad.id, nombre: miIdentidad.nombre }
+  });
+}
+
+async function retirarReto(id){
+  if(!confirm("¿Seguro que quieres retirar esta propuesta?")) return;
+  await deleteDoc(doc(db, "retos", id));
+}
+
+async function eliminarReto(reto, id){
+  if(!confirm("¿Seguro que quieres eliminar este reto? Esta acción no se puede deshacer.")) return;
+  try{
+    const conteo = (reto.estado === "enCurso") ? (reto.conteo || 0) : 0;
+    if(conteo > 0){
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "retos", id));
+      batch.set(doc(db, "puntosUsuarios", reto.asignadoA.id), { balance: increment(-conteo) }, { merge: true });
+      await batch.commit();
+    }else{
+      await deleteDoc(doc(db, "retos", id));
+    }
+  }catch(e){
+    console.error(e);
+    alert("Error al eliminar el reto. Revisa tu conexión.");
+  }
+}
+
+async function marcarCumplida(reto, id){
+  if(!confirm("¿Le das un punto a " + reto.asignadoA.nombre + " por cumplir esta actividad?")) return;
+  btnProponerReto.disabled = true;
+  try{
+    const nuevoConteo = (reto.conteo || 0) + 1;
+    const metaAlcanzada = nuevoConteo >= (reto.puntosMeta || 0);
+
+    const batch = writeBatch(db);
+    batch.update(doc(db, "retos", id), {
+      conteo: increment(1),
+      ...(metaAlcanzada ? { estado: "cobrada", cumplidaEn: serverTimestamp() } : {})
+    });
+    const delta = metaAlcanzada ? (1 - (reto.puntosMeta || 0)) : 1;
+    batch.set(doc(db, "puntosUsuarios", reto.asignadoA.id), { balance: increment(delta) }, { merge: true });
+    await batch.commit();
+  }catch(e){
+    console.error(e);
+    alert("Error al dar el punto. Revisa tu conexión.");
+  }finally{
+    btnProponerReto.disabled = false;
+  }
+}
+
+async function cobrarRecompensaVisual(reto, id){
+  if(!confirm("¿Cobrar tu recompensa?")) return;
+  try{
+    await updateDoc(doc(db, "retos", id), { recompensaCobrada: true });
+  }catch(e){
+    console.error(e);
+    alert("Error al cobrar la recompensa. Revisa tu conexión.");
+  }
+}
+
+async function aplicarCastigoVisual(reto, id){
+  if(!confirm("¿Aplicar el castigo: «" + (reto.castigo || "") + "»?")) return;
+  try{
+    await updateDoc(doc(db, "retos", id), { castigoAplicado: true });
+  }catch(e){
+    console.error(e);
+    alert("Error al aplicar el castigo. Revisa tu conexión.");
+  }
+}
+
+// ====== LIQUIDACIÓN AUTOMÁTICA AL VENCER ======
+async function finalizarRetosVencidos(){
+  try{
+    const q = query(retosRef, where("estado", "==", "enCurso"));
+    const snap = await getDocs(q);
+    for(const docSnap of snap.docs){
+      const r = docSnap.data();
+      if(!r.fechaFin) continue;
+      if(momentoFecha(r.fechaFin).getTime() > Date.now()) continue;
+      await runTransaction(db, async (t)=>{
+        const ref = doc(db, "retos", docSnap.id);
+        const actual = await t.get(ref);
+        if(!actual.exists) return;
+        const data = actual.data();
+        if(data.estado !== "enCurso") return;
+        const cumplido = (data.conteo || 0) >= (data.puntosMeta || 0);
+        if(cumplido){
+          t.update(ref, { estado: "cobrada", liquidadoEn: serverTimestamp() });
+          t.set(doc(db, "puntosUsuarios", data.asignadoA.id), { balance: increment(-(data.puntosMeta || 0)) }, { merge: true });
+        }else{
+          t.update(ref, { estado: "noCumplido", liquidadoEn: serverTimestamp() });
+          t.set(doc(db, "puntosUsuarios", data.asignadoA.id), { balance: increment(-(data.penalizacionPuntos || 0)) }, { merge: true });
+        }
+      });
+    }
+  }catch(e){
+    console.error("Error liquidando retos:", e);
+  }
+}
+
+// ====== RENDER ======
+function renderRetos(){
+  listaRetosEl.innerHTML = "";
+
+  if(retos.length === 0){
+    vacioMsgEl.style.display = "block";
+    return;
+  }
+  vacioMsgEl.style.display = "none";
+
+  retos.forEach(r=>{
+    const id = r.id;
+    const c = r.data ? r.data() : r;
+    const esAdmin = !!miIdentidad.admin;
+    const soyProponente = c.asignadoPor && c.asignadoPor.id === miIdentidad.id;
+    const soyAsignado = c.asignadoA && c.asignadoA.id === miIdentidad.id;
+    const estado = c.estado || "propuesta";
+    const conteo = c.conteo || 0;
+    const meta = c.puntosMeta || 0;
+    const pct = meta > 0 ? Math.min(100, Math.round(conteo / meta * 100)) : 0;
+
+    let html = "";
+    html += '<div class="reto">';
+    html += '<div class="fila-top"><div class="actividad">' + esc(c.actividad) + '</div>';
+    html += '<div class="badge ' + esc(estado) + '">' + esc(etiquetaEstado(estado)) + '</div></div>';
+    html += '<div class="quien">' + esc(c.asignadoPor.nombre) + ' propuso para ' + esc(c.asignadoA.nombre) + '</div>';
+
+    if(estado === "enCurso" || estado === "cumplido" || estado === "cobrada" || estado === "noCumplido" || estado === "propuesta"){
+      if(estado !== "propuesta"){
+        html += '<div class="meta"><div class="barra"><i style="width:' + pct + '%"></i></div>';
+        html += '<div class="metaNum">' + conteo + ' / ' + meta + '</div></div>';
+      }
+
+      html += '<div class="lienzo">';
+      html += '<div><span class="k">Veces al día</span><span class="v">' + esc(c.vecesAlDia) + '</span></div>';
+      html += '<div><span class="k">Duración</span><span class="v">' + esc(c.duracionDias) + ' días</span></div>';
+      html += '<div><span class="k">Meta</span><span class="v">' + esc(meta) + ' pts</span></div>';
+      html += '<div><span class="k">Penalización</span><span class="v">' + esc(c.penalizacionPuntos) + ' pts</span></div>';
+      html += '<div><span class="k">Castigo</span><span class="v">' + esc(c.castigo) + '</span></div>';
+      if(c.recompensa) html += '<div><span class="k">Recompensa</span><span class="v">' + esc(c.recompensa) + '</span></div>';
+      else html += '<div><span class="k">Recompensa</span><span class="v">Por definir</span></div>';
+      if(estado === "enCurso" || estado === "cumplido" || estado === "cobrada" || estado === "noCumplido"){
+        html += '<div><span class="k">Termina</span><span class="v">' + esc(formatearFecha(c.fechaFin)) + '</span></div>';
+        const faltan = diasRestantes(c.fechaFin);
+        if(faltan !== null && estado === "enCurso") html += '<div><span class="k">Tiempo restante</span><span class="v">' + faltan + ' día(s)</span></div>';
+      }
+      html += '</div>';
+    }
+
+    if(estado === "enCurso" && faltanTiempo(c)){
+      html += '<div class="nota warn">Si al vencer alcanzas los ' + esc(meta) + ' puntos, se entrega la recompensa (' + esc(c.recompensa || "por definir") + ') y se descuentan ' + esc(c.puntosMeta) + ' pts. Si no, se descuentan ' + esc(c.penalizacionPuntos) + ' pts.</div>';
+    }
+
+    // --- mensajes según estado ---
+    if(estado === "propuesta" && soyProponente){
+      html += '<div class="nota">Esperando autorización de la administradora...</div>';
+    }
+    if(estado === "cumplido" && soyAsignado){
+      html += '<div class="nota bien">¡Meta cumplida! Recompensa: ' + esc(c.recompensa || "por definir") + '</div>';
+    }
+    if(estado === "noCumplido"){
+      html += '<div class="nota mal">No se cumplió la meta · Se descontaron ' + esc(c.penalizacionPuntos) + ' puntos · Castigo: ' + esc(c.castigo || "—") + '</div>';
+    }
+    if(estado === "rechazada"){
+      html += '<div class="nota mal">Rechazada por ' + esc((c.ultimaAccionPor && c.ultimaAccionPor.nombre) || "la administradora") + '</div>';
+    }
+
+    // --- acciones ---
+    const acciones = [];
+    if(estado === "propuesta"){
+      if(esAdmin && !soyProponente){
+        acciones.push({ tipo:"autorizar", clase:"btnTeal", texto:"Autorizar" });
+        acciones.push({ tipo:"modificar", clase:"btnOscuro", texto:"Modificar" });
+        acciones.push({ tipo:"rechazar", clase:"btnRojo", texto:"Rechazar" });
+      }else if(soyProponente && !esAdmin){
+        acciones.push({ tipo:"retirar", clase:"btnRojo", texto:"Retirar" });
+      }
+    }
+    if(estado === "enCurso"){
+      if(soyProponente){
+        acciones.push({ tipo:"cumplida", clase:"btnPrincipal", texto:"Cumplida +1" });
+      }
+      if(soyAsignado){
+        const texto = c.recompensa ? "Editar mi recompensa" : "Definir mi recompensa";
+        acciones.push({ tipo:"recompensa", clase:"btnOscuro", texto });
+      }
+    }
+    if(estado === "cobrada"){
+      const yaCobrada = !!c.recompensaCobrada;
+      acciones.push({
+        tipo: yaCobrada ? "recompensaCobrada" : "cobrar",
+        clase: (soyAsignado && !yaCobrada) ? "btnVerde" : "btnOscuro",
+        texto: yaCobrada ? "Recompensa cobrada" : "Cobrar recompensa",
+        disabled: yaCobrada || !soyAsignado
+      });
+    }
+    if(estado === "noCumplido"){
+      const yaAplicado = !!c.castigoAplicado;
+      acciones.push({
+        tipo: yaAplicado ? "castigoAplicado" : "aplicarCastigo",
+        clase: (soyProponente && !yaAplicado) ? "btnVerde" : "btnOscuro",
+        texto: yaAplicado ? "Castigo aplicado" : "Aplicar castigo",
+        disabled: yaAplicado || !soyProponente
+      });
+    }
+    if(esAdmin){
+      acciones.push({ tipo:"eliminar", clase:"btnRojo", texto:"Eliminar" });
+    }
+
+    if(acciones.length){
+      html += '<div class="acciones">';
+      acciones.forEach(a=>{
+        html += '<button class="' + a.clase + '" data-accion="' + id + '" data-tipo="' + a.tipo + '"' + (a.disabled ? ' disabled' : '') + '>' + esc(a.texto) + '</button>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+    listaRetosEl.insertAdjacentHTML("beforeend", html);
+  });
+
+  // enlazar botones
+  listaRetosEl.querySelectorAll("[data-accion]").forEach(btn=>{
+    const id = btn.getAttribute("data-accion");
+    const tipo = btn.getAttribute("data-tipo");
+    const reto = retos.find(r=> r.id === id);
+    if(!reto) return;
+    const c = reto.data ? reto.data() : reto;
+
+    if(tipo === "autorizar") btn.onclick = ()=> abrirFormulario("autorizar", c, id);
+    else if(tipo === "modificar") btn.onclick = ()=> abrirFormulario("modificar", c, id);
+    else if(tipo === "rechazar") btn.onclick = ()=> rechazarReto(id);
+    else if(tipo === "retirar") btn.onclick = ()=> retirarReto(id);
+    else if(tipo === "cumplida") btn.onclick = ()=> marcarCumplida(c, id);
+    else if(tipo === "recompensa") btn.onclick = ()=> abrirOverlayRecompensa(c, id);
+    else if(tipo === "cobrar") btn.onclick = ()=> cobrarRecompensaVisual(c, id);
+    else if(tipo === "aplicarCastigo") btn.onclick = ()=> aplicarCastigoVisual(c, id);
+    else if(tipo === "eliminar") btn.onclick = ()=> eliminarReto(c, id);
+  });
+
+  renderBalances();
+}
+
+function etiquetaEstado(e){
+  return {
+    propuesta:"Propuesta",
+    enCurso:"En curso",
+    cumplido:"Cumplido",
+    cobrada:"Terminado",
+    noCumplido:"No cumplido",
+    rechazada:"Rechazada",
+    terminado:"Terminado"
+  }[e] || e;
+}
+
+function faltanTiempo(c){
+  return c.fechaFin && momentoFecha(c.fechaFin).getTime() > Date.now();
+}
+
+// ====== ESCUCHAS EN TIEMPO REAL ======
+function escucharRetos(){
+  const q = query(retosRef, orderBy("creadoEn", "desc"));
+  onSnapshot(q, (snapshot)=>{
+    retos = snapshot.docs;
+    renderRetos();
+    finalizarRetosVencidos();
+  }, (error)=>{
+    console.error("Error escuchando retos:", error);
+  });
+}
+
+function escucharBalances(){
+  onSnapshot(puntosUsuariosRef, (snapshot)=>{
+    balances = {};
+    snapshot.forEach(d=>{
+      balances[d.id] = (d.data().balance || 0);
+    });
+    renderBalances();
+  }, (error)=>{
+    console.error("Error escuchando puntos:", error);
+  });
+}
+
+// ====== INICIO ======
+(async function iniciar(){
+  const r = await fetch("../Citas/usuarios.json");
+  usuarios = await r.json();
+
+  const guardado = cargarIdentidadGuardada();
+  if(guardado && usuarios.some(u=>u.id === guardado.id)){
+    miIdentidad = usuarios.find(u=>u.id === guardado.id);
+    guardarIdentidad(miIdentidad);
+    mostrarApp();
+  }else{
+    mostrarPantallaUsuario();
+  }
+
+  escucharBalances();
+  escucharRetos();
+})();
+
+</script>
+
+</body>
+</html>

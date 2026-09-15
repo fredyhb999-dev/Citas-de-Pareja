@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Complicidad en Pareja</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #120e1c;
+    --bg-2: #1a1428;
+    --card: #201933;
+    --card-border: #322a4a;
+    --fg: #f4f1fb;
+    --fg-muted: #a599c7;
+    --coral: #ff6a5c;
+    --teal: #2fd9c7;
+  }
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body{
+    margin:0; padding:0; min-height:100%; width:100%;
+    color:var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%),
+      var(--bg);
+  }
+  body{
+    min-height:100dvh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:24px;
+  }
+  .eyebrow{
+    font-family:'Chakra Petch', sans-serif;
+    font-size:.8rem; letter-spacing:.35em; text-transform:uppercase;
+    color: var(--fg-muted); margin-bottom:14px;
+  }
+  h1{
+    font-family:'Chakra Petch', sans-serif;
+    font-weight:700; font-size:1.9rem; margin:0 0 34px; text-align:center;
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .card{
+    width:100%; max-width:380px;
+    display:flex; align-items:center; gap:16px;
+    padding:20px; margin-bottom:14px;
+    background: var(--card); border:1px solid var(--card-border);
+    border-radius:16px; text-decoration:none; color:var(--fg);
+    transition: transform .15s ease, border-color .2s ease;
+  }
+  .card:active{ transform: scale(.97); border-color: var(--teal); }
+  .card .icon{ font-size:2rem; }
+  .card .label{ flex:1; }
+  .card .title{ font-family:'Chakra Petch', sans-serif; font-weight:700; font-size:1.1rem; }
+  .card .subtitle{ font-size:.85rem; color: var(--fg-muted); margin-top:2px; }
+  .card .chevron{ font-size:1.4rem; color: var(--fg-muted); }
+</style>
+</head>
+<body>
+
+<div class="eyebrow">Complicidad en Pareja</div>
+<h1>¿Qué quieres hacer?</h1>
+
+<a class="card" href="Citas/">
+  <span class="icon">📅</span>
+  <span class="label">
+    <div class="title">Citas</div>
+    <div class="subtitle">Agenda, confirma y revisa actividades</div>
+  </span>
+  <span class="chevron">›</span>
+</a>
+
+<a class="card" href="Retos/">
+  <span class="icon">🏆</span>
+  <span class="label">
+    <div class="title">Retos</div>
+    <div class="subtitle">Propón retos, gana puntos y cobra recompensas</div>
+  </span>
+  <span class="chevron">›</span>
+</a>
+
+</body>
+</html>
