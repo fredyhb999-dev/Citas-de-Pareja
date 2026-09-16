@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Accesorios</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #120e1c;
+    --bg-2: #1a1428;
+    --card: #201933;
+    --card-border: #322a4a;
+    --fg: #f4f1fb;
+    --fg-muted: #a599c7;
+    --coral: #ff6a5c;
+    --teal: #2fd9c7;
+    --rojo: #ff5c7a;
+  }
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body{
+    margin:0; padding:0; min-height:100%; width:100%;
+    color:var(--fg);
+    font-family: 'Inter', system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%),
+      var(--bg);
+  }
+  body{
+    min-height:100dvh; display:flex; flex-direction:column;
+    align-items:center; padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom));
+    position:relative;
+  }
+
+  .back{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    font-family:'Chakra Petch', sans-serif;
+    font-size:.85rem; font-weight:500;
+    color: var(--fg-muted); text-decoration:none;
+  }
+  .back:hover{ color: var(--fg); }
+
+  .eyebrow{
+    font-family:'Chakra Petch', sans-serif;
+    font-size:.8rem; letter-spacing:.3em; text-transform:uppercase;
+    color: var(--fg-muted); margin-bottom:10px;
+  }
+  h1{
+    font-family:'Chakra Petch', sans-serif;
+    font-weight:700; font-size:1.8rem; margin:0 0 8px; text-align:center;
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  p.desc{
+    font-size:.88rem; color:var(--fg-muted); max-width:340px; margin:0 0 18px; text-align:center;
+  }
+
+  .tabs{ display:flex; gap:10px; margin-bottom:22px; }
+  .tabs a{
+    font-family:'Chakra Petch', sans-serif;
+    font-size:.85rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+    color: var(--fg-muted); text-decoration:none;
+    padding:10px 18px; border-radius:12px;
+    border:1px solid var(--card-border); background: var(--card);
+  }
+  .tabs a.activo{ color: var(--teal); border-color: var(--teal); }
+
+  #alta{
+    width:100%; max-width:420px; margin-bottom:10px;
+  }
+  #alta .fila{ display:flex; gap:10px; }
+  #alta input{
+    font-family:'Inter', sans-serif; flex:1; min-width:0;
+    border-radius:12px; border:1px solid var(--card-border);
+    background: var(--card); color:var(--fg);
+    padding:14px; font-size:1rem;
+  }
+  #btnAgregar{
+    font-family:'Chakra Petch', sans-serif; font-weight:700; letter-spacing:.04em;
+    border:none; border-radius:14px; cursor:pointer; padding:14px 20px;
+    color: var(--bg);
+    background: linear-gradient(90deg, var(--coral), var(--teal));
+    transition: transform .15s ease, opacity .2s ease;
+    white-space:nowrap;
+  }
+  #btnAgregar:active{ transform: scale(.97); }
+  #btnAgregar:disabled{ opacity:.4; }
+  #btnAgregar.eliminar{ background: var(--rojo); color:#2b0410; }
+
+  #msg{
+    min-height:20px; font-size:.85rem; color:var(--rojo);
+    margin:8px 0 16px; text-align:center; max-width:420px;
+  }
+  #msg.ok{ color: var(--teal); }
+
+  #conteo{
+    font-size:.8rem; color:var(--fg-muted); opacity:.8; margin-bottom:10px;
+  }
+
+  #lista{
+    width:100%; max-width:520px;
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;
+  }
+  .item{
+    background: var(--card); border:1px solid var(--card-border);
+    border-radius:10px; padding:10px 8px;
+    font-size:.78rem; text-align:center;
+    word-break:break-word;
+  }
+  .item.nuevo{ border-color: var(--teal); }
+</style>
+</head>
+<body>
+
+<a class="back" href="../index.html">← Volver</a>
+
+<div class="eyebrow">Configuración</div>
+<h1>Accesorios</h1>
+<p class="desc">Agrega accesorios nuevos. Se guardan y aparecen en tus citas.</p>
+
+<div class="tabs">
+  <a href="accesorios.html" class="activo">Accesorios</a>
+  <a href="actividades.html">Actividades</a>
+</div>
+
+<div id="alta">
+  <div class="fila">
+    <input id="nombreNuevo" type="text" placeholder="Nombre del accesorio" maxlength="60" autocomplete="off">
+    <button id="btnAgregar">Agregar</button>
+  </div>
+</div>
+
+<div id="msg"></div>
+<div id="conteo"></div>
+<div id="lista"></div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+import firebaseConfig from "../firebase-config.js";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const extrasRef = collection(db, "accesoriosExtra");
+
+// ====== ESTADO ======
+const listaEl = document.getElementById("lista");
+const conteoEl = document.getElementById("conteo");
+const msgEl = document.getElementById("msg");
+const inputEl = document.getElementById("nombreNuevo");
+const btnAgregar = document.getElementById("btnAgregar");
+
+let catalogo = [];  // del JSON (no se pueden eliminar desde la app)
+let extras = [];    // de Firebase: [{id, nombre}] (sí se pueden eliminar)
+
+let modo = "agregar";   // "agregar" | "eliminar"
+let docObjetivo = null;
+
+function normalizar(s){
+  return (s || "").trim().toLowerCase();
+}
+
+function nombresCatalogo(){
+  return new Set(catalogo.map(normalizar));
+}
+
+function listaCombinada(){
+  const vistos = new Set();
+  const salida = [];
+  catalogo.concat(extras.map(e=>e.nombre)).forEach(n=>{
+    const clave = normalizar(n);
+    if(clave && !vistos.has(clave)){
+      vistos.add(clave);
+      salida.push(n.trim());
+    }
+  });
+  return salida.sort((a,b)=>a.localeCompare(b,"es"));
+}
+
+function buscarExtra(clave){
+  return extras.find(e=>normalizar(e.nombre) === clave) || null;
+}
+
+function pintar(){
+  const todos = listaCombinada();
+  const nombresExtras = new Set(extras.map(e=>normalizar(e.nombre)));
+  listaEl.innerHTML = "";
+  todos.forEach(n=>{
+    const div = document.createElement("div");
+    div.className = "item" + (nombresExtras.has(normalizar(n)) ? " nuevo" : "");
+    div.textContent = n;
+    listaEl.appendChild(div);
+  });
+  conteoEl.textContent = todos.length + (todos.length === 1 ? " accesorio" : " accesorios");
+}
+
+// Si lo escrito coincide con uno agregado desde la app,
+// el botón se convierte en "Eliminar".
+function actualizarModo(){
+  const clave = normalizar(inputEl.value);
+
+  if(!clave){
+    modo = "agregar";
+    docObjetivo = null;
+    btnAgregar.textContent = "Agregar";
+    btnAgregar.classList.remove("eliminar");
+    msgEl.textContent = "";
+    msgEl.className = "";
+    return;
+  }
+
+  const extra = buscarExtra(clave);
+  if(extra){
+    modo = "eliminar";
+    docObjetivo = extra.id;
+    btnAgregar.textContent = "Eliminar";
+    btnAgregar.classList.add("eliminar");
+    msgEl.textContent = "";
+    msgEl.className = "";
+    return;
+  }
+
+  modo = "agregar";
+  docObjetivo = null;
+  btnAgregar.textContent = "Agregar";
+  btnAgregar.classList.remove("eliminar");
+
+  if(nombresCatalogo().has(clave)){
+    msgEl.textContent = "Ese accesorio ya existe.";
+    msgEl.className = "";
+  }else{
+    msgEl.textContent = "";
+    msgEl.className = "";
+  }
+}
+
+function avisar(texto, ok){
+  msgEl.textContent = texto;
+  msgEl.className = ok ? "ok" : "";
+}
+
+async function cargar(){
+  try{
+    const r = await fetch("accesorios.json");
+    const data = await r.json();
+    catalogo = Array.isArray(data) ? data : [];
+  }catch(e){
+    catalogo = [];
+  }
+
+  try{
+    const snap = await getDocs(extrasRef);
+    extras = [];
+    snap.forEach(d=>{
+      const n = d.data().nombre;
+      if(n) extras.push({ id: d.id, nombre: n });
+    });
+  }catch(e){
+    extras = [];
+  }
+
+  pintar();
+  actualizarModo();
+}
+
+async function agregar(){
+  const nombre = inputEl.value.trim();
+  if(!nombre){
+    avisar("Escribe el nombre del accesorio.");
+    return;
+  }
+
+  const clave = normalizar(nombre);
+  const existe = listaCombinada().some(n=>normalizar(n) === clave);
+  if(existe){
+    avisar("Ese accesorio ya existe.");
+    return;
+  }
+
+  btnAgregar.disabled = true;
+  try{
+    const ref = await addDoc(extrasRef, { nombre: nombre, creadoEn: serverTimestamp() });
+    extras.push({ id: ref.id, nombre: nombre });
+    pintar();
+    inputEl.value = "";
+    inputEl.focus();
+    actualizarModo();
+    avisar("Accesorio agregado.", true);
+  }catch(e){
+    avisar("No se pudo guardar. Revisa tu conexión.");
+  }
+  btnAgregar.disabled = false;
+}
+
+async function eliminar(){
+  if(!docObjetivo) return;
+
+  btnAgregar.disabled = true;
+  try{
+    await deleteDoc(doc(db, "accesoriosExtra", docObjetivo));
+    extras = extras.filter(e=>e.id !== docObjetivo);
+    pintar();
+    inputEl.value = "";
+    inputEl.focus();
+    actualizarModo();
+    avisar("Accesorio eliminado.", true);
+  }catch(e){
+    avisar("No se pudo eliminar. Revisa tu conexión.");
+  }
+  btnAgregar.disabled = false;
+}
+
+btnAgregar.onclick = ()=>{
+  if(modo === "eliminar"){
+    eliminar();
+  }else{
+    agregar();
+  }
+};
+inputEl.addEventListener("input", actualizarModo);
+inputEl.addEventListener("keydown", e=>{
+  if(e.key === "Enter") btnAgregar.onclick();
+});
+
+cargar();
+
+</script>
+
+</body>
+</html>

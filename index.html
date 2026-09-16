@@ -63,9 +63,18 @@
   .card .title{ font-family:'Chakra Petch', sans-serif; font-weight:700; font-size:1.1rem; }
   .card .subtitle{ font-size:.85rem; color: var(--fg-muted); margin-top:2px; }
   .card .chevron{ font-size:1.4rem; color: var(--fg-muted); }
+  .menu-btn{
+    position:absolute; top:max(18px, env(safe-area-inset-top)); right:18px;
+    font-size:1.6rem; line-height:1;
+    color: var(--fg-muted); text-decoration:none;
+    padding:8px 10px; border-radius:12px;
+  }
+  .menu-btn:active{ color: var(--fg); background: var(--card); }
 </style>
 </head>
 <body>
+
+<a class="menu-btn" href="Citas/accesorios.html" aria-label="Configurar accesorios">☰</a>
 
 <div class="eyebrow">Complicidad en Pareja</div>
 <h1>¿Qué quieres hacer?</h1>
