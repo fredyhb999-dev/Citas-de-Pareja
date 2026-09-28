@@ -156,9 +156,23 @@
   #formBotones button{ flex:1; padding:16px; }
   #btnGuardarCita{ color: var(--bg); background: linear-gradient(90deg, var(--coral), var(--teal)); }
   #btnCancelarForm{ background: var(--card); color: var(--fg); border:1px solid var(--card-border); }
+
+  /* ---------- pancarta de avisos ---------- */
+  #banner{
+    display:none; position:fixed; z-index:100;
+    top:max(14px, env(safe-area-inset-top)); left:16px; right:16px;
+    background:var(--card); border:1px solid var(--teal); border-radius:14px;
+    padding:14px 16px; font-size:.9rem; text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);
+    cursor:pointer;
+  }
+  #banner.ver{ display:block; }
+  .destacar{ border-color: var(--teal) !important; box-shadow:0 0 0 2px var(--teal), 0 10px 30px rgba(0,0,0,.5); }
 </style>
 </head>
 <body>
+
+<div id="banner"></div>
 
 <!-- ================= PANTALLA: QUIÉN ERES ================= -->
 <div id="pantallaUsuario">
@@ -247,6 +261,96 @@ let accesoriosPorActividadCache = {};
 let miIdentidad = null; // { id, nombre }
 let editandoId = null;  // id del doc si estamos modificando una cita existente
 
+// ====== AVISOS (pancarta + sonido + vibración + Telegram) ======
+const TELEGRAM_BOT_TOKEN = "PON_AQUI_TU_TOKEN";
+const TELEGRAM_CHAT_ID = "PON_AQUI_TU_CHAT_ID";
+const APP_URL = "PON_AQUI_URL_DE_TU_APP/";
+
+const bannerEl = document.getElementById("banner");
+let bannerTimer = null;
+let audioCtx = null;
+let bannerAncla = null;
+
+bannerEl.onclick = ()=>{
+  bannerEl.classList.remove("ver");
+  if(bannerAncla){
+    const el = document.getElementById(bannerAncla);
+    if(el){ try{ el.scrollIntoView({ behavior:"smooth", block:"center" }); }catch(e){} }
+    bannerAncla = null;
+  }
+};
+
+function mostrarBanner(texto){
+  bannerEl.textContent = texto;
+  bannerEl.classList.add("ver");
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(()=>bannerEl.classList.remove("ver"), 6000);
+}
+function bip(){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = "sine"; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+    o.start(); o.stop(audioCtx.currentTime + 0.6);
+  }catch(e){}
+}
+function notificar(texto, ancla){
+  bannerAncla = ancla || null;
+  mostrarBanner(texto);
+  bip();
+  try{ if(navigator.vibrate) navigator.vibrate([150, 80, 150]); }catch(e){}
+}
+async function avisarTelegram(texto, url){
+  if(!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.indexOf("PON_AQUI") === 0) return;
+  if(!TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID.indexOf("PON_AQUI") === 0) return;
+  try{
+    const cuerpo = { chat_id: TELEGRAM_CHAT_ID, text: texto };
+    if(url) cuerpo.reply_markup = { inline_keyboard: [[{ text: "Abrir 👀", url: url }]] };
+    await fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cuerpo)
+    });
+  }catch(e){}
+}
+// Acciones propias recientes: no alertar de lo que yo mismo hice
+const suprimidos = {};
+function suprimir(id){
+  suprimidos[id] = Date.now();
+}
+function estaSuprimido(id){
+  return !!(suprimidos[id] && (Date.now() - suprimidos[id] < 10000));
+}
+// Copia local de citas por id (para describir avisos)
+const citasPorId = {};
+// Resaltado al abrir con ?cita=ID
+let pendienteResaltar = null;
+let intentosResalte = 0;
+(function(){
+  try{
+    const q = new URLSearchParams(location.search);
+    const id = q.get("cita");
+    if(id) pendienteResaltar = id;
+  }catch(e){}
+  try{ history.replaceState(null, "", location.pathname); }catch(e){}
+})();
+function intentarResaltar(){
+  if(!pendienteResaltar) return;
+  const el = document.getElementById("cita-" + pendienteResaltar);
+  if(el){
+    try{ el.scrollIntoView({ behavior:"smooth", block:"center" }); }catch(e){}
+    el.classList.add("destacar");
+    setTimeout(()=>el.classList.remove("destacar"), 5000);
+    pendienteResaltar = null;
+  }else if(++intentosResalte > 30){
+    pendienteResaltar = null;
+  }
+}
+
 // ====== ELEMENTOS ======
 const pantallaUsuario = document.getElementById("pantallaUsuario");
 const listaUsuariosEl = document.getElementById("listaUsuarios");
@@ -272,14 +376,6 @@ const btnCancelarForm = document.getElementById("btnCancelarForm");
 const btnGuardarCita = document.getElementById("btnGuardarCita");
 
 // ====== CARGA DE CATÁLOGOS ======
-// Si la nube no responde en unos segundos, se sigue solo con el JSON
-function conTiempo(promesa, ms){
-  return Promise.race([
-    promesa,
-    new Promise((_, rechazar)=>setTimeout(()=>rechazar(new Error("timeout")), ms))
-  ]);
-}
-
 async function cargarCatalogos(){
   const [rUsuarios, rActividades, rAccesorios] = await Promise.all([
     fetch("usuarios.json"),
@@ -291,7 +387,7 @@ async function cargarCatalogos(){
 
   // Mezcla las actividades agregadas en la nube (pantalla ☰)
   try{
-    const snapActs = await conTiempo(getDocs(actsExtraRef), 8000);
+    const snapActs = await getDocs(actsExtraRef);
     const vistosActs = new Set(actividades.map(n=>(n || "").trim().toLowerCase()));
     snapActs.forEach(d=>{
       const nombre = (d.data().nombre || "").trim();
@@ -308,7 +404,7 @@ async function cargarCatalogos(){
 
   // Mezcla los accesorios agregados en la nube (pantalla ☰)
   try{
-    const snap = await conTiempo(getDocs(extrasRef), 8000);
+    const snap = await getDocs(extrasRef);
     const vistos = new Set(accesoriosCatalogo.map(n=>(n || "").trim().toLowerCase()));
     snap.forEach(d=>{
       const nombre = (d.data().nombre || "").trim();
@@ -354,6 +450,8 @@ function mostrarApp(){
   nombreActualEl.textContent = miIdentidad.nombre;
   pantallaUsuario.style.display = "none";
   appEl.style.display = "flex";
+  intentosResalte = 0;
+  intentarResaltar();
 }
 
 btnCambiarUsuario.onclick = ()=>{
@@ -427,7 +525,7 @@ async function obtenerAccesoriosActividad(nombre){
 
   // Primero la nube (pantalla ☰); si no hay, el archivo <actividad>.json
   try{
-    const snap = await conTiempo(getDoc(doc(db, "presetsActividad", nombre)), 8000);
+    const snap = await getDoc(doc(db, "presetsActividad", nombre));
     if(snap.exists() && Array.isArray(snap.data().accesorios)){
       accesoriosPorActividadCache[nombre] = snap.data().accesorios;
       return accesoriosPorActividadCache[nombre];
@@ -530,18 +628,22 @@ btnGuardarCita.onclick = async ()=>{
   try{
     if(editandoId){
       // Modificar cita existente: se conserva el estado actual (no confirma)
+      suprimir(editandoId);
       await updateDoc(doc(db, "citas", editandoId), {
         fechaCita: fecha,
         actividad,
         descripcion,
         accesorios,
-        actualizadoEn: serverTimestamp()
+        actualizadoEn: serverTimestamp(),
+        ultimaAccionPorId: miIdentidad.id,
+        ultimaAccionPorNombre: miIdentidad.nombre
       });
+      avisarTelegram("✏️ " + miIdentidad.nombre + " modificó la cita: " + actividad + " (" + formatearFecha(fecha) + ")", APP_URL + "Citas/?cita=" + editandoId);
     }else{
       const paraId = fCampoPara.value;
       const paraUsuario = usuarios.find(u=>u.id === paraId);
 
-      await addDoc(citasRef, {
+      const refNueva = await addDoc(citasRef, {
         proponenteId: miIdentidad.id,
         proponenteNombre: miIdentidad.nombre,
         paraId: paraUsuario.id,
@@ -556,6 +658,7 @@ btnGuardarCita.onclick = async ()=>{
         ultimaAccionPorId: miIdentidad.id,
         ultimaAccionPorNombre: miIdentidad.nombre
       });
+      avisarTelegram("📅 Nueva cita de " + miIdentidad.nombre + " para " + paraUsuario.nombre + ": " + actividad + " (" + formatearFecha(fecha) + ")", APP_URL + "Citas/?cita=" + refNueva.id);
     }
     cerrarFormulario();
   }catch(e){
@@ -568,27 +671,36 @@ btnGuardarCita.onclick = async ()=>{
 
 // ====== ACCIONES SOBRE UNA CITA ======
 async function confirmarCita(id){
+  suprimir(id);
   await updateDoc(doc(db, "citas", id), {
     estado: "confirmada",
     actualizadoEn: serverTimestamp(),
     ultimaAccionPorId: miIdentidad.id,
     ultimaAccionPorNombre: miIdentidad.nombre
   });
+  const c = citasPorId[id];
+  avisarTelegram("✅ " + miIdentidad.nombre + " confirmó la cita: " + (c ? c.actividad : "") + (c ? " (" + formatearFecha(c.fechaCita) + ")" : ""), APP_URL + "Citas/?cita=" + id);
 }
 
 async function rechazarCita(id){
+  suprimir(id);
   await updateDoc(doc(db, "citas", id), {
     estado: "rechazada",
     actualizadoEn: serverTimestamp(),
     ultimaAccionPorId: miIdentidad.id,
     ultimaAccionPorNombre: miIdentidad.nombre
   });
+  const c = citasPorId[id];
+  avisarTelegram("❌ " + miIdentidad.nombre + " rechazó la cita: " + (c ? c.actividad : "") + (c ? " (" + formatearFecha(c.fechaCita) + ")" : ""), APP_URL + "Citas/?cita=" + id);
 }
 
 async function eliminarCita(id){
   const confirmado = confirm("¿Seguro que quieres eliminar esta cita? Esta acción no se puede deshacer.");
   if(!confirmado) return;
+  const c = citasPorId[id];
+  suprimir(id);
   await deleteDoc(doc(db, "citas", id));
+  avisarTelegram("🗑️ " + miIdentidad.nombre + " eliminó la cita: " + (c ? c.actividad : ""), APP_URL + "Citas/");
 }
 
 // ====== RENDER ======
@@ -614,12 +726,14 @@ function renderCitas(docsSnap){
   docsSnap.forEach(docSnap=>{
     const c = docSnap.data();
     const id = docSnap.id;
+    citasPorId[id] = c;
 
     const soyProponente = c.proponenteId === miIdentidad.id;
     const soyContraparte = c.paraId === miIdentidad.id;
 
     const card = document.createElement("div");
     card.className = "cita";
+    card.id = "cita-" + id;
 
     const filaTop = document.createElement("div");
     filaTop.className = "fila-top";
@@ -736,11 +850,54 @@ function renderCitas(docsSnap){
 
     listaCitasEl.appendChild(card);
   });
+  intentarResaltar();
+}
+
+let vistosCitas = null;
+function firmaCita(c){
+  return [c.estado, c.actividad, c.fechaCita, c.descripcion,
+    (c.accesorios || []).join("|"), c.ultimaAccionPorId, c.paraId, c.proponenteId].join("~");
+}
+function esRelevanteCita(c){
+  if(!miIdentidad) return false;
+  return c.paraId === miIdentidad.id || c.proponenteId === miIdentidad.id || !!miIdentidad.admin;
 }
 
 function escucharCitas(){
   const q = query(citasRef, orderBy("creadoEn", "desc"));
   onSnapshot(q, (snapshot)=>{
+    if(!vistosCitas){
+      vistosCitas = {};
+      snapshot.docs.forEach(d=>{ vistosCitas[d.id] = firmaCita(d.data()); });
+      renderCitas(snapshot.docs);
+      return;
+    }
+    const ahora = {};
+    snapshot.docs.forEach(d=>{ ahora[d.id] = firmaCita(d.data()); });
+    const yo = miIdentidad && miIdentidad.id;
+    snapshot.docs.forEach(d=>{
+      const id = d.id, c = d.data();
+      if(estaSuprimido(id)) return;
+      const antes = vistosCitas[id];
+      if(antes === undefined){
+        if(esRelevanteCita(c) && c.proponenteId !== yo){
+          notificar("📅 Nueva cita de " + c.proponenteNombre + " para " + c.paraNombre + ": " + c.actividad, "cita-" + id);
+        }
+      }else if(antes !== ahora[id]){
+        if(esRelevanteCita(c) && c.ultimaAccionPorId !== yo){
+          if(c.estado === "confirmada") notificar("✅ " + (c.ultimaAccionPorNombre || "Alguien") + " confirmó: " + c.actividad, "cita-" + id);
+          else if(c.estado === "rechazada") notificar("❌ " + (c.ultimaAccionPorNombre || "Alguien") + " rechazó: " + c.actividad, "cita-" + id);
+          else notificar("✏️ Cita modificada por " + (c.ultimaAccionPorNombre || "alguien") + ": " + c.actividad, "cita-" + id);
+        }
+      }
+    });
+    Object.keys(vistosCitas).forEach(id=>{
+      if(!(id in ahora) && !estaSuprimido(id)){
+        const c = citasPorId[id];
+        if(c && esRelevanteCita(c)) notificar("🗑️ Se eliminó la cita: " + c.actividad);
+      }
+    });
+    vistosCitas = ahora;
     renderCitas(snapshot.docs);
   }, (error)=>{
     console.error("Error escuchando citas:", error);

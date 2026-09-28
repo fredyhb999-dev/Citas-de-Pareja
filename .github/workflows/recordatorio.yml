@@ -1,0 +1,28 @@
+name: Recordatorio de la mañana
+
+on:
+  schedule:
+    - cron: "37 15 * * *"  # 09:37 centro: minuto no pico + colchon ante la cola de GitHub
+  workflow_dispatch:
+    inputs:
+      enviar:
+        description: "Enviar a Telegram (false = solo ver en logs)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+jobs:
+  recordatorio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Ejecutar recordatorio
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MODO_PRUEBA: ${{ github.event_name == 'workflow_dispatch' && inputs.enviar != 'true' && '1' || '0' }}
+        run: python .github/scripts/recordatorio.py
