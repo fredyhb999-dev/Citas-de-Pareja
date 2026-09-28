@@ -87,7 +87,8 @@
     background: linear-gradient(90deg, var(--coral), var(--teal));
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  #btnCambiarUsuario{
+  #encabezado .derecha{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  #btnVolver, #btnCambiarUsuario{
     background:none; color: var(--fg-muted); font-size:.75rem;
     text-decoration:underline; padding:4px; font-weight:500; font-family:'Inter',sans-serif;
   }
@@ -186,7 +187,10 @@
 <div id="app">
   <div id="encabezado">
     <div class="saludo">Hola, <span id="nombreActual"></span></div>
-    <button id="btnCambiarUsuario">Cambiar usuario</button>
+    <div class="derecha">
+      <a href="../index.html" id="btnVolver">← Inicio</a>
+      <button id="btnCambiarUsuario">Cambiar usuario</button>
+    </div>
   </div>
 
   <div id="contenido">
@@ -376,6 +380,15 @@ const btnCancelarForm = document.getElementById("btnCancelarForm");
 const btnGuardarCita = document.getElementById("btnGuardarCita");
 
 // ====== CARGA DE CATÁLOGOS ======
+// Si la nube no responde en unos segundos (p. ej. config sin poner),
+// se sigue solo con el JSON en vez de colgar la pantalla.
+function conTiempo(promesa, ms){
+  return Promise.race([
+    promesa,
+    new Promise((_, rechazar)=>setTimeout(()=>rechazar(new Error("timeout")), ms))
+  ]);
+}
+
 async function cargarCatalogos(){
   const [rUsuarios, rActividades, rAccesorios] = await Promise.all([
     fetch("usuarios.json"),
@@ -387,7 +400,7 @@ async function cargarCatalogos(){
 
   // Mezcla las actividades agregadas en la nube (pantalla ☰)
   try{
-    const snapActs = await getDocs(actsExtraRef);
+    const snapActs = await conTiempo(getDocs(actsExtraRef), 8000);
     const vistosActs = new Set(actividades.map(n=>(n || "").trim().toLowerCase()));
     snapActs.forEach(d=>{
       const nombre = (d.data().nombre || "").trim();
@@ -404,7 +417,7 @@ async function cargarCatalogos(){
 
   // Mezcla los accesorios agregados en la nube (pantalla ☰)
   try{
-    const snap = await getDocs(extrasRef);
+    const snap = await conTiempo(getDocs(extrasRef), 8000);
     const vistos = new Set(accesoriosCatalogo.map(n=>(n || "").trim().toLowerCase()));
     snap.forEach(d=>{
       const nombre = (d.data().nombre || "").trim();
@@ -525,7 +538,7 @@ async function obtenerAccesoriosActividad(nombre){
 
   // Primero la nube (pantalla ☰); si no hay, el archivo <actividad>.json
   try{
-    const snap = await getDoc(doc(db, "presetsActividad", nombre));
+    const snap = await conTiempo(getDoc(doc(db, "presetsActividad", nombre)), 8000);
     if(snap.exists() && Array.isArray(snap.data().accesorios)){
       accesoriosPorActividadCache[nombre] = snap.data().accesorios;
       return accesoriosPorActividadCache[nombre];

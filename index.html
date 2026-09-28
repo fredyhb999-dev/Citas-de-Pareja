@@ -70,6 +70,20 @@
     padding:8px 10px; border-radius:12px;
   }
   .menu-btn:active{ color: var(--fg); background: var(--card); }
+  /* ---------- identidad ---------- */
+  #pantallaUsuario{ display:none; width:100%; max-width:380px; flex-direction:column; align-items:center; text-align:center; }
+  #pantallaUsuario h1{ margin-bottom:10px; }
+  #pantallaUsuario p{ color:var(--fg-muted); margin:0 0 26px; }
+  .btnUsuario{
+    width:100%; padding:16px; margin-bottom:12px;
+    background: var(--card); border:1px solid var(--card-border); border-radius:16px;
+    color:var(--fg); font-size:1.05rem; font-family:'Chakra Petch', sans-serif; font-weight:600;
+    cursor:pointer;
+  }
+  .btnUsuario:active{ transform: scale(.97); border-color: var(--teal); }
+  #menu{ display:none; width:100%; max-width:380px; flex-direction:column; align-items:center; }
+  #quienLine{ color:var(--fg-muted); font-size:.85rem; margin-top:6px; }
+  #quienLine button{ background:none; border:none; color:var(--teal); font-size:.85rem; cursor:pointer; padding:0; }
 </style>
 </head>
 <body>
@@ -77,6 +91,14 @@
 <a class="menu-btn" href="Citas/accesorios.html" aria-label="Configurar accesorios">☰</a>
 
 <div class="eyebrow">Complicidad en Pareja</div>
+
+<div id="pantallaUsuario">
+  <h1>¿Quién eres?</h1>
+  <p>Selecciona tu usuario para continuar.</p>
+  <div id="listaUsuarios" style="width:100%"></div>
+</div>
+
+<div id="menu">
 <h1>¿Qué quieres hacer?</h1>
 
 <a class="card" href="Citas/">
@@ -96,6 +118,57 @@
   </span>
   <span class="chevron">›</span>
 </a>
+<div id="quienLine">Hola, <b id="quienNombre"></b> · <button id="btnCambiar" type="button">cambiar usuario</button></div>
+</div>
+
+<script>
+// Misma identidad que usan Citas/ y Retos (se comparte en este sitio).
+const CLAVE_LOCAL = "appPareja_quienSoy";
+const pantallaEl = document.getElementById("pantallaUsuario");
+const listaEl = document.getElementById("listaUsuarios");
+const menuEl = document.getElementById("menu");
+
+function leerGuardado(){
+  try{ return JSON.parse(localStorage.getItem(CLAVE_LOCAL)); }catch(e){ return null; }
+}
+function mostrarMenu(nombre){
+  document.getElementById("quienNombre").textContent = nombre;
+  pantallaEl.style.display = "none";
+  menuEl.style.display = "flex";
+}
+function mostrarIdentidad(usuarios){
+  listaEl.innerHTML = "";
+  usuarios.forEach(u=>{
+    const b = document.createElement("button");
+    b.className = "btnUsuario";
+    b.textContent = u.nombre;
+    b.onclick = ()=>{
+      localStorage.setItem(CLAVE_LOCAL, JSON.stringify(u));
+      mostrarMenu(u.nombre);
+    };
+    listaEl.appendChild(b);
+  });
+  menuEl.style.display = "none";
+  pantallaEl.style.display = "flex";
+}
+document.getElementById("btnCambiar").onclick = ()=>{
+  localStorage.removeItem(CLAVE_LOCAL);
+  iniciar();
+};
+async function iniciar(){
+  let usuarios = [];
+  try{
+    const r = await fetch("Citas/usuarios.json");
+    usuarios = await r.json();
+  }catch(e){ usuarios = []; }
+  const g = leerGuardado();
+  const ok = g && usuarios.some(u=>u.id === g.id);
+  if(ok) mostrarMenu(usuarios.find(u=>u.id === g.id).nombre);
+  else if(usuarios.length) mostrarIdentidad(usuarios);
+  else mostrarMenu("?");
+}
+iniciar();
+</script>
 
 </body>
 </html>
