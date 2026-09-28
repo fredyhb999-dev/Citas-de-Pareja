@@ -199,7 +199,9 @@ import {
   getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-import firebaseConfig from "../firebase-config.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase } from "../config.js";
+const firebaseConfig = resolverFirebase(firebaseConfigBase);
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);

@@ -95,11 +95,7 @@ Cada cosa que pase en la app puede llegar a tu grupo de Telegram con un botón "
 
 1. En Telegram, habla con **BotFather** → `/newbot` → ponle nombre y usuario → te da un **token**.
 2. Crea un grupo con tu pareja e invita al bot. Para saber el **chat ID** del grupo, habla con **@userinfobot** o abre `https://api.telegram.org/botTU_TOKEN/getUpdates` después de escribir algo en el grupo.
-3. En tu repositorio, abre **`Citas/index.html`** y **`Retos/index.html`** y reemplaza:
-   - `PON_AQUI_TU_TOKEN` → el token del bot
-   - `PON_AQUI_TU_CHAT_ID` → el chat ID del grupo
-   - `PON_AQUI_URL_DE_TU_APP/` → tu URL de Pages del Paso 4 (con `/` al final)
-4. Guarda y sube los cambios. Sin estos datos la app funciona igual, solo no manda avisos.
+3. Abre tu app y sigue el **asistente**: pega el token y el chat ID cuando te los pida (puedes omitirlo y ponerlo después borrando la configuración del navegador). Sin estos datos la app funciona igual, solo no manda avisos. La URL de los botones se arma sola.
 
 ---
 
@@ -110,7 +106,7 @@ Un resumen diario de citas y retos, gratis, con GitHub Actions (puede llegar con
 1. En tu repositorio ve a **Settings → Secrets → Actions** y crea:
    - `TELEGRAM_BOT_TOKEN` → el token del Paso 5
    - `TELEGRAM_CHAT_ID` → el chat ID del Paso 5
-2. Abre **`.github/scripts/recordatorio.py`** y reemplaza `TU_PROYECTO`, `TU_API_KEY` (la de tu `firebase-config.js`) y `PON_AQUI_URL_DE_TU_APP/`.
+2. Abre **`.github/scripts/recordatorio.py`** y reemplaza `TU_PROYECTO`, `TU_API_KEY` (la de tu `firebase-config.js`) y `PON_AQUI_URL_DE_TU_APP/` (tu URL de Pages con `/` al final; es la identificación ante Google).
 3. En la pestaña **Actions** verás "Recordatorio de la mañana": se ejecuta solo cada mañana (~09:37 hora centro) o manualmente con **Run workflow** (`enviar=false` = solo prueba en logs).
 4. Recomendado: en Google Cloud → tu proyecto → APIs y servicios → Credenciales → tu llave → restricción de sitios web con `TU-USUARIO.github.io/*` (así nadie más puede usar tu llave).
 
@@ -122,7 +118,7 @@ Los archivos JSON en la carpeta **`Citas/`** definen qué aparece en la app:
 
 | Archivo | Qué contiene |
 |---|---|
-| `usuarios.json` | Las personas que usan la app (tú y tu pareja) |
+| `usuarios.json` | Respaldo local (los usuarios se definen en el asistente y viven en Firebase `config/ajustes`) |
 | `actividades.json` | Lista de actividades para elegir |
 | `accesorios.json` | Lista de accesorios/dispositivos |
 

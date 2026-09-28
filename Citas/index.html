@@ -248,7 +248,9 @@ import {
   onSnapshot, query, orderBy, serverTimestamp, getDocs, getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-import firebaseConfig from "../firebase-config.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase, resolverTelegram, baseUrl, cargarUsuarios } from "../config.js";
+const firebaseConfig = resolverFirebase(firebaseConfigBase);
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -266,9 +268,11 @@ let miIdentidad = null; // { id, nombre }
 let editandoId = null;  // id del doc si estamos modificando una cita existente
 
 // ====== AVISOS (pancarta + sonido + vibración + Telegram) ======
-const TELEGRAM_BOT_TOKEN = "PON_AQUI_TU_TOKEN";
-const TELEGRAM_CHAT_ID = "PON_AQUI_TU_CHAT_ID";
-const APP_URL = "PON_AQUI_URL_DE_TU_APP/";
+// Telegram y URL salen del asistente (index); sin ellos, solo avisos locales.
+const _tg = resolverTelegram();
+const TELEGRAM_BOT_TOKEN = _tg.token;
+const TELEGRAM_CHAT_ID = _tg.chat;
+const APP_URL = baseUrl();
 
 const bannerEl = document.getElementById("banner");
 let bannerTimer = null;
@@ -395,7 +399,7 @@ async function cargarCatalogos(){
     fetch("actividades.json"),
     fetch("accesorios.json")
   ]);
-  usuarios = await rUsuarios.json();
+  usuarios = await cargarUsuarios(db, getDoc, doc, await rUsuarios.json());
   actividades = await rActividades.json();
 
   // Mezcla las actividades agregadas en la nube (pantalla ☰)

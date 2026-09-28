@@ -23,6 +23,7 @@
     --fg-muted: #a599c7;
     --coral: #ff6a5c;
     --teal: #2fd9c7;
+    --rojo: #ff5c7a;
   }
   *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body{
@@ -45,10 +46,11 @@
   }
   h1{
     font-family:'Chakra Petch', sans-serif;
-    font-weight:700; font-size:1.9rem; margin:0 0 34px; text-align:center;
+    font-weight:700; font-size:1.9rem; margin:0 0 12px; text-align:center;
     background: linear-gradient(90deg, var(--coral), var(--teal));
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
+  .sub{ color:var(--fg-muted); font-size:.9rem; text-align:center; margin:0 0 26px; max-width:380px; }
   .card{
     width:100%; max-width:380px;
     display:flex; align-items:center; gap:16px;
@@ -84,6 +86,40 @@
   #menu{ display:none; width:100%; max-width:380px; flex-direction:column; align-items:center; }
   #quienLine{ color:var(--fg-muted); font-size:.85rem; margin-top:6px; }
   #quienLine button{ background:none; border:none; color:var(--teal); font-size:.85rem; cursor:pointer; padding:0; }
+  /* ---------- asistente ---------- */
+  #asistente{ display:none; width:100%; max-width:420px; flex-direction:column; }
+  .paso{ display:none; width:100%; }
+  .paso.ver{ display:block; }
+  .paso ol{ color:var(--fg-muted); font-size:.88rem; padding-left:20px; margin:0 0 16px; }
+  .paso ol li{ margin-bottom:6px; }
+  .paso ol a{ color:var(--teal); }
+  textarea, input[type=text]{
+    width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background: var(--card); color:var(--fg);
+    padding:14px; font-size:.9rem; font-family:'Inter',sans-serif; margin-bottom:12px;
+  }
+  textarea{ min-height:130px; resize:vertical; }
+  .btnPri{
+    width:100%; padding:16px; margin-bottom:10px;
+    border:none; border-radius:14px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem;
+    color:var(--bg); background: linear-gradient(90deg, var(--coral), var(--teal));
+  }
+  .btnPri:active{ transform: scale(.97); }
+  .btnPri:disabled{ opacity:.4; }
+  .btnSec{
+    width:100%; padding:14px; background:none; border:none; cursor:pointer;
+    color:var(--fg-muted); font-size:.9rem; text-decoration:underline;
+  }
+  #wizMsg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:4px 0 12px; text-align:center; }
+  #wizMsg.ok{ color:var(--teal); }
+  .radioFila{ display:flex; gap:10px; margin-bottom:12px; }
+  .radioFila label{
+    flex:1; display:flex; align-items:center; gap:8px;
+    background:var(--card); border:1px solid var(--card-border);
+    border-radius:12px; padding:12px; font-size:.9rem;
+  }
+  .radioFila input{ accent-color: var(--teal); }
 </style>
 </head>
 <body>
@@ -92,12 +128,57 @@
 
 <div class="eyebrow">Complicidad en Pareja</div>
 
+<!-- ================= ASISTENTE (primera vez) ================= -->
+<div id="asistente">
+  <div class="paso" id="paso1">
+    <h1>Bienvenidos 💛</h1>
+    <p class="sub">Conectemos tu base de datos (una sola vez).</p>
+    <ol>
+      <li>Entra a <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> con tu Google.</li>
+      <li><b>Agregar proyecto</b> → nombre → sin Analytics → <b>Crear</b>.</li>
+      <li>Menú → <b>Firestore Database</b> → <b>Crear base de datos</b> → Producción → Habilitar.</li>
+      <li>Pestaña <b>Reglas</b> → permite lectura y escritura → <b>Publicar</b>.</li>
+      <li>Registra la app web (<b>&lt;/&gt;</b>) y copia el bloque <b>firebaseConfig</b>. Pégalo aquí:</li>
+    </ol>
+    <textarea id="wFB" placeholder='apiKey: "...", authDomain: "...", ...'></textarea>
+    <div id="wizMsg"></div>
+    <button class="btnPri" id="wBtn1">Probar conexión y continuar</button>
+  </div>
+
+  <div class="paso" id="paso2">
+    <h1>Avisos 📲</h1>
+    <p class="sub">Opcional: Telegram avisa cada cita y reto. Si lo omites, la app funciona igual.</p>
+    <ol>
+      <li>Habla con <b>BotFather</b> → <b>/newbot</b> → te da un <b>token</b>.</li>
+      <li>Crea tu grupo, invita al bot y consigue el <b>chat ID</b>.</li>
+    </ol>
+    <input type="text" id="wToken" placeholder="Token del bot" autocomplete="off">
+    <input type="text" id="wChat" placeholder="Chat ID del grupo" autocomplete="off">
+    <button class="btnPri" id="wBtn2">Continuar</button>
+    <button class="btnSec" id="wOmitir">Omitir por ahora</button>
+  </div>
+
+  <div class="paso" id="paso3">
+    <h1>¿Quiénes son? 💑</h1>
+    <p class="sub">Nombres y quién administra (puede autorizar y configurar).</p>
+    <input type="text" id="wNom1" placeholder="Nombre 1 (ej. Ana)" maxlength="30" autocomplete="off">
+    <input type="text" id="wNom2" placeholder="Nombre 2 (ej. Luis)" maxlength="30" autocomplete="off">
+    <div class="radioFila">
+      <label><input type="radio" name="wAdmin" value="u1" checked> Admin: <span id="wAdm1">1</span></label>
+      <label><input type="radio" name="wAdmin" value="u2"> Admin: <span id="wAdm2">2</span></label>
+    </div>
+    <button class="btnPri" id="wBtn3">Guardar y empezar</button>
+  </div>
+</div>
+
+<!-- ================= IDENTIDAD ================= -->
 <div id="pantallaUsuario">
   <h1>¿Quién eres?</h1>
   <p>Selecciona tu usuario para continuar.</p>
   <div id="listaUsuarios" style="width:100%"></div>
 </div>
 
+<!-- ================= MENÚ ================= -->
 <div id="menu">
 <h1>¿Qué quieres hacer?</h1>
 
@@ -121,18 +202,60 @@
 <div id="quienLine">Hola, <b id="quienNombre"></b> · <button id="btnCambiar" type="button">cambiar usuario</button></div>
 </div>
 
-<script>
-// Misma identidad que usan Citas/ y Retos (se comparte en este sitio).
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import firebaseConfigBase from "./firebase-config.js";
+import {
+  CLAVE_CONFIG, leerConfigGuardada, guardarConfig,
+  resolverFirebase, guardarUsuariosLocal, leerUsuariosLocal, cargarUsuarios
+} from "./config.js";
+
 const CLAVE_LOCAL = "appPareja_quienSoy";
+const asistenteEl = document.getElementById("asistente");
 const pantallaEl = document.getElementById("pantallaUsuario");
 const listaEl = document.getElementById("listaUsuarios");
 const menuEl = document.getElementById("menu");
+const wizMsg = document.getElementById("wizMsg");
 
+let fbTemporal = null;   // firebase del paso 1 (se guarda al final)
+let dbTemporal = null;
+
+function msg(t, ok){
+  wizMsg.textContent = t;
+  wizMsg.className = ok ? "ok" : "";
+}
+
+function conTiempo(promesa, ms){
+  return Promise.race([
+    promesa,
+    new Promise((_, rechazar)=>setTimeout(()=>rechazar(new Error("timeout")), ms))
+  ]);
+}
+
+function parsearFB(texto){
+  const vals = {};
+  const re = /(\w+)\s*:\s*"([^"]+)"/g;
+  let m;
+  while((m = re.exec(texto)) !== null) vals[m[1]] = m[2];
+  const need = ["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId"];
+  for(const k of need) if(!vals[k] || /TU_/.test(vals[k])) return null;
+  return { apiKey: vals.apiKey, authDomain: vals.authDomain, projectId: vals.projectId,
+    storageBucket: vals.storageBucket, messagingSenderId: vals.messagingSenderId, appId: vals.appId };
+}
+
+function verPaso(n){
+  document.querySelectorAll(".paso").forEach(p=>p.classList.remove("ver"));
+  document.getElementById("paso" + n).classList.add("ver");
+}
+
+// ---------- identidad ----------
 function leerGuardado(){
   try{ return JSON.parse(localStorage.getItem(CLAVE_LOCAL)); }catch(e){ return null; }
 }
 function mostrarMenu(nombre){
   document.getElementById("quienNombre").textContent = nombre;
+  asistenteEl.style.display = "none";
   pantallaEl.style.display = "none";
   menuEl.style.display = "flex";
 }
@@ -148,6 +271,7 @@ function mostrarIdentidad(usuarios){
     };
     listaEl.appendChild(b);
   });
+  asistenteEl.style.display = "none";
   menuEl.style.display = "none";
   pantallaEl.style.display = "flex";
 }
@@ -155,17 +279,115 @@ document.getElementById("btnCambiar").onclick = ()=>{
   localStorage.removeItem(CLAVE_LOCAL);
   iniciar();
 };
-async function iniciar(){
-  let usuarios = [];
+
+async function usuariosEfectivos(db){
+  let respaldo = [];
   try{
     const r = await fetch("Citas/usuarios.json");
-    usuarios = await r.json();
-  }catch(e){ usuarios = []; }
-  const g = leerGuardado();
-  const ok = g && usuarios.some(u=>u.id === g.id);
-  if(ok) mostrarMenu(usuarios.find(u=>u.id === g.id).nombre);
-  else if(usuarios.length) mostrarIdentidad(usuarios);
-  else mostrarMenu("?");
+    respaldo = await r.json();
+  }catch(e){}
+  if(!db) return leerUsuariosLocal() || respaldo;
+  return cargarUsuarios(db, getDoc, doc, respaldo);
+}
+
+// ---------- asistente ----------
+document.getElementById("wBtn1").onclick = async ()=>{
+  msg("");
+  const cfg = parsearFB(document.getElementById("wFB").value);
+  if(!cfg){ msg("Pega el bloque firebaseConfig completo (sin TU_...)."); return; }
+  const btn = document.getElementById("wBtn1");
+  btn.disabled = true;
+  msg("Probando conexión...", true);
+  try{
+    const app = initializeApp(cfg, "asistente");
+    const db = getFirestore(app);
+    await conTiempo(getDoc(doc(db, "config", "ajustes")), 10000);
+    fbTemporal = cfg;
+    dbTemporal = db;
+    msg("", true);
+    verPaso(2);
+  }catch(e){
+    msg("No conecta. Revisa el pegado y las reglas de Firestore.");
+  }
+  btn.disabled = false;
+};
+
+function irPaso3(){
+  const t = document.getElementById("wToken").value.trim();
+  const c = document.getElementById("wChat").value.trim();
+  dbTemporal._tg = (t && c) ? { token: t, chat: c } : null;
+  syncAdminLabels();
+  verPaso(3);
+}
+document.getElementById("wBtn2").onclick = irPaso3;
+document.getElementById("wOmitir").onclick = ()=>{ dbTemporal._tg = null; syncAdminLabels(); verPaso(3); };
+
+function syncAdminLabels(){
+  document.getElementById("wAdm1").textContent =
+    document.getElementById("wNom1").value.trim() || "1";
+  document.getElementById("wAdm2").textContent =
+    document.getElementById("wNom2").value.trim() || "2";
+}
+document.getElementById("wNom1").addEventListener("input", syncAdminLabels);
+document.getElementById("wNom2").addEventListener("input", syncAdminLabels);
+
+document.getElementById("wBtn3").onclick = async ()=>{
+  const n1 = document.getElementById("wNom1").value.trim();
+  const n2 = document.getElementById("wNom2").value.trim();
+  if(!n1 || !n2){ msg("Escribe los dos nombres."); verPaso(3); return; }
+  const adminId = (document.querySelector('input[name="wAdmin"]:checked') || {}).value || "u1";
+  const usuarios = [
+    { id: "u1", nombre: n1, admin: adminId === "u1" },
+    { id: "u2", nombre: n2, admin: adminId === "u2" },
+  ];
+  const btn = document.getElementById("wBtn3");
+  btn.disabled = true;
+  try{
+    await conTiempo(setDoc(doc(dbTemporal, "config", "ajustes"),
+      { usuarios, actualizadoEn: serverTimestamp() }, { merge: true }), 10000);
+    const cfg = { firebase: fbTemporal };
+    if(dbTemporal._tg) cfg.telegram = dbTemporal._tg;
+    guardarConfig(cfg);
+    guardarUsuariosLocal(usuarios);
+    btn.disabled = false;
+    mostrarIdentidad(usuarios);
+  }catch(e){
+    btn.disabled = false;
+    msg("No se pudo guardar. Revisa tu conexión y las reglas.");
+    verPaso(3);
+  }
+};
+
+// ---------- inicio ----------
+async function iniciar(){
+  const g = leerConfigGuardada();
+  let db = null, ok = false;
+  if(g && g.firebase){
+    try{
+      const app = initializeApp(g.firebase);
+      db = getFirestore(app);
+      await conTiempo(getDoc(doc(db, "config", "ajustes")), 10000);
+      ok = true;
+    }catch(e){ ok = false; }
+  }
+  if(!ok){
+    // Sin config válida: asistente (primera vez o datos borrados)
+    menuEl.style.display = "none";
+    pantallaEl.style.display = "none";
+    asistenteEl.style.display = "flex";
+    verPaso(1);
+    return;
+  }
+  const usuarios = await usuariosEfectivos(db);
+  const guardado = leerGuardado();
+  if(guardado && usuarios.some(u=>u.id === guardado.id)){
+    mostrarMenu(usuarios.find(u=>u.id === guardado.id).nombre);
+  }else if(usuarios.length){
+    mostrarIdentidad(usuarios);
+  }else{
+    asistenteEl.style.display = "flex";
+    verPaso(1);
+  }
 }
 iniciar();
 </script>

@@ -353,10 +353,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/fireba
 import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
   onSnapshot, query, orderBy, where, serverTimestamp, increment,
-  runTransaction, writeBatch, getDocs
+  runTransaction, writeBatch, getDocs, getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-import firebaseConfig from "../firebase-config.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase, resolverTelegram, baseUrl, cargarUsuarios } from "../config.js";
+const firebaseConfig = resolverFirebase(firebaseConfigBase);
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -371,9 +373,11 @@ let balances = {};
 let retos = [];
 
 // ====== AVISOS (pancarta + sonido + vibración + Telegram) ======
-const TELEGRAM_BOT_TOKEN = "PON_AQUI_TU_TOKEN";
-const TELEGRAM_CHAT_ID = "PON_AQUI_TU_CHAT_ID";
-const APP_URL = "PON_AQUI_URL_DE_TU_APP/";
+// Telegram y URL salen del asistente (index); sin ellos, solo avisos locales.
+const _tg = resolverTelegram();
+const TELEGRAM_BOT_TOKEN = _tg.token;
+const TELEGRAM_CHAT_ID = _tg.chat;
+const APP_URL = baseUrl();
 
 const bannerEl = document.getElementById("banner");
 let bannerTimer = null;
@@ -1261,7 +1265,7 @@ function escucharBalances(){
 // ====== INICIO ======
 (async function iniciar(){
   const r = await fetch("../Citas/usuarios.json");
-  usuarios = await r.json();
+  usuarios = await cargarUsuarios(db, getDoc, doc, await r.json());
 
   const guardado = cargarIdentidadGuardada();
   if(guardado && usuarios.some(u=>u.id === guardado.id)){
