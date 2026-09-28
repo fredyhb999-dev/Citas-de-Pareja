@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Chat</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; }
+  #encabezado{ padding:20px 20px 12px; border-bottom:1px solid var(--card-border); }
+  #encabezado .fila{ display:flex; align-items:center; justify-content:space-between; }
+  #encabezado h1{ font-family:'Chakra Petch',sans-serif; font-size:1.4rem; margin:0;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  #btnVolver{ background:none; color:var(--fg-muted); font-size:.75rem; text-decoration:underline; padding:4px; font-family:'Inter',sans-serif; }
+  #presencia{ font-size:.8rem; color:var(--fg-muted); margin-top:4px; }
+  #presencia .on{ color:var(--teal); }
+  #lista{ flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:10px; }
+  .msg{ max-width:80%; padding:10px 14px; border-radius:14px; font-size:.92rem; word-break:break-word;
+    background:var(--card); border:1px solid var(--card-border); align-self:flex-start; }
+  .msg.mio{ align-self:flex-end; background:#2b2144; border-color:var(--teal); }
+  .msg .autor{ font-size:.7rem; color:var(--fg-muted); margin-bottom:2px; }
+  .msg .hora{ font-size:.68rem; color:var(--fg-muted); margin-top:4px; text-align:right; }
+  #vacio{ text-align:center; color:var(--fg-muted); font-size:.85rem; margin-top:30px; }
+  #envio{ display:flex; gap:10px; padding:12px 16px max(16px, env(safe-area-inset-bottom)); border-top:1px solid var(--card-border); }
+  #texto{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--card); color:var(--fg); padding:14px; font-size:1rem; font-family:'Inter',sans-serif; }
+  #btnEnviar{ border:none; border-radius:14px; cursor:pointer; padding:14px 20px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  #btnEnviar:active{ transform:scale(.97); }
+  #btnEnviar:disabled{ opacity:.4; }
+  #aviso{ padding:40px 24px; text-align:center; color:var(--fg-muted); }
+  #aviso a{ color:var(--teal); }
+</style>
+</head>
+<body>
+
+<div id="encabezado">
+  <div class="fila">
+    <h1>Chat 💬</h1>
+    <a href="../index.html" id="btnVolver">← Inicio</a>
+  </div>
+  <div id="presencia">…</div>
+</div>
+
+<div id="lista"><div id="vacio">Aún no hay mensajes. ¡Saluda! 👋</div></div>
+
+<div id="envio">
+  <input id="texto" type="text" placeholder="Escribe..." maxlength="500" autocomplete="off">
+  <button id="btnEnviar">➤</button>
+</div>
+
+<div id="aviso" style="display:none;">Elige tu usuario en el <a href="../index.html">inicio</a> para chatear.</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, doc, setDoc, getDoc,
+  onSnapshot, query, orderBy, limit, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase, cargarUsuarios } from "../config.js";
+
+const CLAVE_LOCAL = "appPareja_quienSoy";
+const listaEl = document.getElementById("lista");
+const vacioEl = document.getElementById("vacio");
+const textoEl = document.getElementById("texto");
+const btnEnviar = document.getElementById("btnEnviar");
+const presenciaEl = document.getElementById("presencia");
+
+function leerIdentidad(){
+  try{ return JSON.parse(localStorage.getItem(CLAVE_LOCAL)); }catch(e){ return null; }
+}
+const yo = leerIdentidad();
+if(!yo){
+  document.getElementById("envio").style.display = "none";
+  listaEl.style.display = "none";
+  document.getElementById("aviso").style.display = "block";
+  throw new Error("sin identidad");
+}
+
+const firebaseConfig = resolverFirebase(firebaseConfigBase);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const chatRef = collection(db, "chat");
+const presenciaRef = collection(db, "presencia");
+
+function horaCorta(ts){
+  try{
+    const f = ts.toDate ? ts.toDate() : new Date(ts);
+    return f.toLocaleString("es-MX", { hour: "2-digit", minute: "2-digit" });
+  }catch(e){ return ""; }
+}
+
+function pintar(docs){
+  listaEl.innerHTML = "";
+  if(!docs.length){ listaEl.appendChild(vacioEl); vacioEl.style.display = "block"; return; }
+  docs.forEach(d=>{
+    const m = d.data();
+    const div = document.createElement("div");
+    div.className = "msg" + (m.autorId === yo.id ? " mio" : "");
+    const a = document.createElement("div");
+    a.className = "autor";
+    a.textContent = m.autorId === yo.id ? "Tú" : (m.autorNombre || "");
+    const t = document.createElement("div");
+    t.textContent = m.texto || "";
+    const h = document.createElement("div");
+    h.className = "hora";
+    h.textContent = m.creadoEn ? horaCorta(m.creadoEn) : "";
+    div.appendChild(a); div.appendChild(t); div.appendChild(h);
+    listaEl.appendChild(div);
+  });
+  listaEl.scrollTop = listaEl.scrollHeight;
+}
+
+onSnapshot(query(chatRef, orderBy("creadoEn", "asc"), limit(100)), (snap)=>{
+  pintar(snap.docs);
+}, ()=>{});
+
+// ====== presencia: "en línea" ======
+async function latir(){
+  try{
+    await setDoc(doc(db, "presencia", yo.id), { nombre: yo.nombre, visto: serverTimestamp() }, { merge: true });
+  }catch(e){}
+}
+latir();
+setInterval(latir, 30000);
+
+let nombres = [];
+try{
+  const r = await fetch("../Citas/usuarios.json");
+  nombres = await cargarUsuarios(db, getDoc, doc, await r.json());
+}catch(e){ nombres = []; }
+
+onSnapshot(presenciaRef, (snap)=>{
+  const ahora = Date.now();
+  const otros = [];
+  snap.forEach(d=>{
+    if(d.id === yo.id) return;
+    const p = d.data();
+    let ms = 0;
+    try{ ms = p.visto && p.visto.toDate ? p.visto.toDate().getTime() : 0; }catch(e){}
+    if(ms && (ahora - ms) < 90000){
+      const u = nombres.find(x=>x.id === d.id);
+      otros.push((u && u.nombre) || p.nombre || "Pareja");
+    }
+  });
+  presenciaEl.innerHTML = otros.length
+    ? '<span class="on">● ' + otros.join(", ") + " en línea</span>"
+    : "Tu pareja aparece aquí cuando abre la app";
+}, ()=>{});
+
+// ====== enviar ======
+async function enviar(){
+  const texto = textoEl.value.trim();
+  if(!texto) return;
+  btnEnviar.disabled = true;
+  try{
+    await addDoc(chatRef, {
+      texto: texto.slice(0, 500),
+      autorId: yo.id,
+      autorNombre: yo.nombre,
+      creadoEn: serverTimestamp()
+    });
+    textoEl.value = "";
+  }catch(e){}
+  btnEnviar.disabled = false;
+  textoEl.focus();
+}
+btnEnviar.onclick = enviar;
+textoEl.addEventListener("keydown", (e)=>{ if(e.key === "Enter") enviar(); });
+</script>
+
+</body>
+</html>

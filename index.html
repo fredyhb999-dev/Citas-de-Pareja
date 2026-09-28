@@ -12,6 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <style>
   :root{
@@ -120,16 +122,35 @@
     border-radius:12px; padding:12px; font-size:.9rem;
   }
   .radioFila input{ accent-color: var(--teal); }
+  /* ---------- vincular / QR ---------- */
+  #pantallaQR{ display:none; width:100%; max-width:420px; flex-direction:column; align-items:center; text-align:center; }
+  #qrCaja{ background:#fff; padding:14px; border-radius:16px; margin:10px 0 14px; min-height:248px; display:flex; align-items:center; justify-content:center; }
+  #lector{ width:100%; max-width:340px; }
+  #lector video{ border-radius:16px; }
 </style>
 </head>
 <body>
 
-<a class="menu-btn" href="Citas/accesorios.html" aria-label="Configurar accesorios">☰</a>
+<a class="menu-btn" id="menuBtn" href="Citas/accesorios.html" aria-label="Configurar accesorios" style="display:none">☰</a>
 
 <div class="eyebrow">Complicidad en Pareja</div>
 
 <!-- ================= ASISTENTE (primera vez) ================= -->
 <div id="asistente">
+  <div class="paso" id="paso0">
+    <h1>Bienvenidos 💛</h1>
+    <p class="sub">¿Cómo empiezan?</p>
+    <div id="avisoConn" style="display:none;color:var(--rojo);font-size:.85rem;text-align:center;margin-bottom:12px;"></div>
+    <button class="btnPri" id="wNueva">Crear base nueva</button>
+    <button class="btnPri" id="wUnirme" style="background:var(--card);color:var(--fg);border:1px solid var(--card-border);">Tengo QR de mi pareja</button>
+  </div>
+  <div class="paso" id="pasoQR">
+    <h1>Escanea 📷</h1>
+    <p class="sub">Apunta a su código QR. Pide permiso de cámara una vez.</p>
+    <div id="lector"></div>
+    <div id="wizMsg2"></div>
+    <button class="btnSec" id="wQRCancelar">Cancelar</button>
+  </div>
   <div class="paso" id="paso1">
     <h1>Bienvenidos 💛</h1>
     <p class="sub">Conectemos tu base de datos (una sola vez).</p>
@@ -199,7 +220,25 @@
   </span>
   <span class="chevron">›</span>
 </a>
-<div id="quienLine">Hola, <b id="quienNombre"></b> · <button id="btnCambiar" type="button">cambiar usuario</button></div>
+
+<a class="card" href="Chat/">
+  <span class="icon">💬</span>
+  <span class="label">
+    <div class="title">Chat</div>
+    <div class="subtitle">Hablen en vivo cuando estén conectados</div>
+  </span>
+  <span class="chevron">›</span>
+</a>
+<div id="quienLine">Hola, <b id="quienNombre"></b> · <button id="btnCambiar" type="button">cambiar usuario</button> · <button id="btnVincular" type="button">📱 vincular pareja</button></div>
+</div>
+
+<!-- ================= VINCULAR (QR propio) ================= -->
+<div id="pantallaQR">
+  <div class="eyebrow">Vincular pareja</div>
+  <h1>Tu código 📱</h1>
+  <p class="sub">Tu pareja lo escanea desde su app (inicio → Tengo QR). En persona: quien lo tenga entra a tu base.</p>
+  <div id="qrCaja"></div>
+  <button class="btnSec" id="btnQRCerrar">Cerrar</button>
 </div>
 
 <script type="module">
@@ -255,6 +294,8 @@ function leerGuardado(){
 }
 function mostrarMenu(nombre){
   document.getElementById("quienNombre").textContent = nombre;
+  document.getElementById("menuBtn").style.display = "";
+  ocultarQR();
   asistenteEl.style.display = "none";
   pantallaEl.style.display = "none";
   menuEl.style.display = "flex";
@@ -272,6 +313,8 @@ function mostrarIdentidad(usuarios){
     listaEl.appendChild(b);
   });
   asistenteEl.style.display = "none";
+  ocultarQR();
+  document.getElementById("menuBtn").style.display = "";
   menuEl.style.display = "none";
   pantallaEl.style.display = "flex";
 }
@@ -359,25 +402,7 @@ document.getElementById("wBtn3").onclick = async ()=>{
 };
 
 // ---------- inicio ----------
-async function iniciar(){
-  const g = leerConfigGuardada();
-  let db = null, ok = false;
-  if(g && g.firebase){
-    try{
-      const app = initializeApp(g.firebase);
-      db = getFirestore(app);
-      await conTiempo(getDoc(doc(db, "config", "ajustes")), 10000);
-      ok = true;
-    }catch(e){ ok = false; }
-  }
-  if(!ok){
-    // Sin config válida: asistente (primera vez o datos borrados)
-    menuEl.style.display = "none";
-    pantallaEl.style.display = "none";
-    asistenteEl.style.display = "flex";
-    verPaso(1);
-    return;
-  }
+async function entrar(db){
   const usuarios = await usuariosEfectivos(db);
   const guardado = leerGuardado();
   if(guardado && usuarios.some(u=>u.id === guardado.id)){
@@ -387,6 +412,112 @@ async function iniciar(){
   }else{
     asistenteEl.style.display = "flex";
     verPaso(1);
+  }
+}
+
+async function iniciar(){
+  ocultarQR();
+  document.getElementById("avisoConn").style.display = "none";
+  const g = leerConfigGuardada();
+  let db = null, ok = false, hayConfig = !!(g && g.firebase);
+  if(hayConfig){
+    try{
+      const app = initializeApp(g.firebase);
+      db = getFirestore(app);
+      await conTiempo(getDoc(doc(db, "config", "ajustes")), 10000);
+      ok = true;
+    }catch(e){ ok = false; }
+  }
+  if(!ok){
+    // Sin config válida: elegir crear base o unirse con QR
+    menuEl.style.display = "none";
+    pantallaEl.style.display = "none";
+    asistenteEl.style.display = "flex";
+    if(hayConfig){
+      const av = document.getElementById("avisoConn");
+      av.textContent = "Tienes base guardada pero no conecta. Revisa tu internet.";
+      av.style.display = "block";
+    }
+    verPaso(0);
+    return;
+  }
+  entrar(db);
+}
+
+// ---------- elección inicial ----------
+document.getElementById("wNueva").onclick = ()=>{ msg(""); verPaso(1); };
+document.getElementById("wUnirme").onclick = ()=>{ msg(""); verPaso("QR"); iniciarScan(); };
+document.getElementById("wQRCancelar").onclick = async ()=>{
+  await detenerScan();
+  verPaso(0);
+};
+
+// ---------- mostrar mi QR ----------
+const qrPantallaEl = document.getElementById("pantallaQR");
+function ocultarQR(){
+  qrPantallaEl.style.display = "none";
+}
+document.getElementById("btnVincular").onclick = ()=>{
+  const g = leerConfigGuardada();
+  if(!g || !g.firebase){ alert("Primero termina el asistente."); return; }
+  const caja = document.getElementById("qrCaja");
+  caja.innerHTML = "";
+  try{
+    new QRCode(caja, {
+      text: JSON.stringify({ firebase: g.firebase, telegram: g.telegram || null }),
+      width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M
+    });
+  }catch(e){
+    caja.textContent = "No se pudo generar el QR.";
+  }
+  menuEl.style.display = "none";
+  qrPantallaEl.style.display = "flex";
+};
+document.getElementById("btnQRCerrar").onclick = ()=>{
+  ocultarQR();
+  iniciar();
+};
+
+// ---------- escanear QR de mi pareja ----------
+let scanObj = null;
+async function detenerScan(){
+  try{ if(scanObj){ await scanObj.stop(); } }catch(e){}
+  try{ if(scanObj){ await scanObj.clear(); } }catch(e){}
+  scanObj = null;
+}
+function msgQR(t){
+  document.getElementById("wizMsg2").textContent = t || "";
+}
+async function iniciarScan(){
+  msgQR("");
+  await detenerScan();
+  try{
+    scanObj = new Html5Qrcode("lector");
+    await scanObj.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      async (texto)=>{
+        try{
+          const data = JSON.parse(texto);
+          const fb = data && data.firebase;
+          const need = ["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId"];
+          if(!fb || need.some(k=>!fb[k])){ msgQR("Ese QR no trae configuración válida."); return; }
+          await detenerScan();
+          const cfg = { firebase: fb };
+          if(data.telegram && data.telegram.token && data.telegram.chat) cfg.telegram = data.telegram;
+          guardarConfig(cfg);
+          const app = initializeApp(fb);
+          const db = getFirestore(app);
+          await conTiempo(getDoc(doc(db, "config", "ajustes")), 10000);
+          entrar(db);
+        }catch(e){
+          msgQR("No se pudo leer. Intenta de nuevo.");
+        }
+      },
+      ()=>{}
+    );
+  }catch(e){
+    msgQR("Sin cámara o sin permiso. Revisa el navegador.");
   }
 }
 iniciar();

@@ -136,6 +136,13 @@ Para cada actividad, puedes crear un archivo JSON con sus accesorios preseleccio
 
 ---
 
+## Vincular a tu pareja y chatear
+
+- **Vincular:** en el inicio, tu pareja elige "Tengo QR de mi pareja" y escanea tu código (inicio → "📱 vincular pareja"). Muéstralo en persona: quien lo tenga entra a tu base.
+- **Chat:** tarjeta 💬 en el inicio. Mensajes en vivo solo con la app abierta + "en línea" cuando el otro también la tiene abierta. Con la app cerrada no suena nada: para eso sigue Telegram (Paso 5).
+
+---
+
 ## Usar la app en el celular
 
 Si accedes a la URL de GitHub Pages desde tu celular:

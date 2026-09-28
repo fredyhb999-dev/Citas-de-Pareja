@@ -83,10 +83,12 @@
     border-bottom:1px solid var(--card-border);
   }
   #encabezado .saludo{ font-size:1.2rem; }
+  #encabezado .saludo.grande{ font-size:1.7rem; font-family:'Chakra Petch',sans-serif; font-weight:700; }
   #encabezado .saludo span{
     background: linear-gradient(90deg, var(--coral), var(--teal));
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
+  #fechaHoy{ font-size:.82rem; color:var(--fg-muted); margin-top:2px; }
   #encabezado .derecha{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   #btnVolver, #btnCambiarUsuario{
     background:none; color: var(--fg-muted); font-size:.75rem;
@@ -186,7 +188,10 @@
 <!-- ================= APP PRINCIPAL ================= -->
 <div id="app">
   <div id="encabezado">
-    <div class="saludo">Hola, <span id="nombreActual"></span></div>
+    <div>
+      <div class="saludo grande">Hola, <span id="nombreActual"></span></div>
+      <div id="fechaHoy"></div>
+    </div>
     <div class="derecha">
       <a href="../index.html" id="btnVolver">← Inicio</a>
       <button id="btnCambiarUsuario">Cambiar usuario</button>
@@ -465,6 +470,10 @@ function mostrarPantallaUsuario(){
 
 function mostrarApp(){
   nombreActualEl.textContent = miIdentidad.nombre;
+  try{
+    const f = new Date().toLocaleDateString("es-MX", { weekday:"long", day:"numeric", month:"long" });
+    document.getElementById("fechaHoy").textContent = f.charAt(0).toUpperCase() + f.slice(1);
+  }catch(e){}
   pantallaUsuario.style.display = "none";
   appEl.style.display = "flex";
   intentosResalte = 0;
