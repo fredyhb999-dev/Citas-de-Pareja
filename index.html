@@ -12,7 +12,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <style>
@@ -86,8 +85,19 @@
   }
   .btnUsuario:active{ transform: scale(.97); border-color: var(--teal); }
   #menu{ display:none; width:100%; max-width:380px; flex-direction:column; align-items:center; }
-  #quienLine{ color:var(--fg-muted); font-size:.85rem; margin-top:6px; }
-  #quienLine button{ background:none; border:none; color:var(--teal); font-size:.85rem; cursor:pointer; padding:0; }
+  .hero{ text-align:center; margin:6px 0 28px; }
+  .heroLogo{ width:110px; height:110px; border-radius:28px; margin-bottom:14px;
+    box-shadow:0 0 0 1px var(--card-border), 0 12px 40px rgba(47,217,199,.25), 0 12px 40px rgba(255,106,92,.18); }
+  .hero .hola{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.7rem; margin:0 0 4px;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero .fecha{ color:var(--fg-muted); font-size:.9rem; }
+  #menu .card{ padding:24px 20px; margin-bottom:16px; border-radius:20px;
+    box-shadow:0 8px 26px rgba(0,0,0,.35); }
+  #menu .card .icon{ font-size:2.4rem; }
+  #menu .card .title{ font-size:1.25rem; }
+  #btnExpVolver{ position:fixed; top:max(18px, env(safe-area-inset-top)); left:18px;
+    font-size:.85rem; width:auto; padding:8px 10px; }
   /* ---------- asistente ---------- */
   #asistente{ display:none; width:100%; max-width:420px; flex-direction:column; }
   .paso{ display:none; width:100%; }
@@ -123,15 +133,13 @@
   }
   .radioFila input{ accent-color: var(--teal); }
   /* ---------- vincular / QR ---------- */
-  #pantallaQR{ display:none; width:100%; max-width:420px; flex-direction:column; align-items:center; text-align:center; }
-  #qrCaja{ background:#fff; padding:14px; border-radius:16px; margin:10px 0 14px; min-height:248px; display:flex; align-items:center; justify-content:center; }
   #lector{ width:100%; max-width:340px; }
   #lector video{ border-radius:16px; }
 </style>
 </head>
 <body>
 
-<a class="menu-btn" id="menuBtn" href="Citas/accesorios.html" aria-label="Configurar accesorios" style="display:none">☰</a>
+<a class="menu-btn" id="menuBtn" href="Citas/actividades.html" aria-label="Configuración" style="display:none">☰</a>
 
 <div class="eyebrow">Complicidad en Pareja</div>
 
@@ -181,13 +189,9 @@
 
   <div class="paso" id="paso3">
     <h1>¿Quiénes son? 💑</h1>
-    <p class="sub">Nombres y quién administra (puede autorizar y configurar).</p>
-    <input type="text" id="wNom1" placeholder="Nombre 1 (ej. Ana)" maxlength="30" autocomplete="off">
-    <input type="text" id="wNom2" placeholder="Nombre 2 (ej. Luis)" maxlength="30" autocomplete="off">
-    <div class="radioFila">
-      <label><input type="radio" name="wAdmin" value="u1" checked> Admin: <span id="wAdm1">1</span></label>
-      <label><input type="radio" name="wAdmin" value="u2"> Admin: <span id="wAdm2">2</span></label>
-    </div>
+    <p class="sub">Nombres, quién administra y, si quieren, invitados (ej. a una cena).</p>
+    <div id="wNombres"></div>
+    <button class="btnSec" id="wMas" type="button">＋ Agregar invitado</button>
     <button class="btnPri" id="wBtn3">Guardar y empezar</button>
   </div>
 </div>
@@ -201,10 +205,36 @@
 
 <!-- ================= MENÚ ================= -->
 <div id="menu">
-<h1>¿Qué quieres hacer?</h1>
+<div class="hero">
+  <img class="heroLogo" src="icon-192.png" alt="Complicidad en Pareja">
+  <div class="hola">Hola, <span id="quienNombre"></span> 💛</div>
+  <div class="fecha" id="heroFecha"></div>
+</div>
 
+<div id="vistaMenu">
+<button class="card" id="btnExp" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+  <span class="icon">✨</span>
+  <span class="label">
+    <div class="title">Experiencias en Pareja</div>
+    <div class="subtitle">Citas y retos para compartir</div>
+  </span>
+  <span class="chevron">›</span>
+</button>
+
+<a class="card" href="Chat/">
+  <span class="icon">💬</span>
+  <span class="label">
+    <div class="title">Chat</div>
+    <div class="subtitle">Hablen en vivo cuando estén conectados</div>
+  </span>
+  <span class="chevron">›</span>
+</a>
+</div>
+
+<div id="vistaExp" style="display:none;width:100%">
+<button class="btnSec" id="btnExpVolver" type="button">‹ Volver</button>
 <a class="card" href="Citas/">
-  <span class="icon">📅</span>
+  <span class="icon"><svg width="38" height="38" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="gCal" x1="0" y1="0" x2="24" y2="24"><stop offset="0" stop-color="#ff6a5c"/><stop offset="1" stop-color="#2fd9c7"/></linearGradient></defs><rect x="3.5" y="5" width="17" height="15.5" rx="3.5" stroke="url(#gCal)" stroke-width="1.8"/><path d="M3.5 9.5h17" stroke="url(#gCal)" stroke-width="1.8"/><path d="M8 3v3.4M16 3v3.4" stroke="url(#gCal)" stroke-width="1.8" stroke-linecap="round"/><path d="M12 17.4s-2.5-1.6-3.45-3C7.76 13.36 8.11 12.1 9.22 11.63c.66-.27 1.39-.16 2 .35.61-.51 1.34-.62 2-.35 1.11.47 1.46 1.73.67 2.77-.95 1.4-3.45 3-3.45 3z" fill="url(#gCal)"/></svg></span>
   <span class="label">
     <div class="title">Citas</div>
     <div class="subtitle">Agenda, confirma y revisa actividades</div>
@@ -220,25 +250,7 @@
   </span>
   <span class="chevron">›</span>
 </a>
-
-<a class="card" href="Chat/">
-  <span class="icon">💬</span>
-  <span class="label">
-    <div class="title">Chat</div>
-    <div class="subtitle">Hablen en vivo cuando estén conectados</div>
-  </span>
-  <span class="chevron">›</span>
-</a>
-<div id="quienLine">Hola, <b id="quienNombre"></b> · <button id="btnCambiar" type="button">cambiar usuario</button> · <button id="btnVincular" type="button">📱 vincular pareja</button></div>
 </div>
-
-<!-- ================= VINCULAR (QR propio) ================= -->
-<div id="pantallaQR">
-  <div class="eyebrow">Vincular pareja</div>
-  <h1>Tu código 📱</h1>
-  <p class="sub">Tu pareja lo escanea desde su app (inicio → Tengo QR). En persona: quien lo tenga entra a tu base.</p>
-  <div id="qrCaja"></div>
-  <button class="btnSec" id="btnQRCerrar">Cerrar</button>
 </div>
 
 <script type="module">
@@ -294,8 +306,13 @@ function leerGuardado(){
 }
 function mostrarMenu(nombre){
   document.getElementById("quienNombre").textContent = nombre;
+  try{
+    const f = new Date().toLocaleDateString("es-MX", { weekday:"long", day:"numeric", month:"long" });
+    document.getElementById("heroFecha").textContent = f.charAt(0).toUpperCase() + f.slice(1);
+  }catch(e){}
   document.getElementById("menuBtn").style.display = "";
-  ocultarQR();
+  document.getElementById("vistaMenu").style.display = "block";
+  document.getElementById("vistaExp").style.display = "none";
   asistenteEl.style.display = "none";
   pantallaEl.style.display = "none";
   menuEl.style.display = "flex";
@@ -313,16 +330,10 @@ function mostrarIdentidad(usuarios){
     listaEl.appendChild(b);
   });
   asistenteEl.style.display = "none";
-  ocultarQR();
   document.getElementById("menuBtn").style.display = "";
   menuEl.style.display = "none";
   pantallaEl.style.display = "flex";
 }
-document.getElementById("btnCambiar").onclick = ()=>{
-  localStorage.removeItem(CLAVE_LOCAL);
-  iniciar();
-};
-
 async function usuariosEfectivos(db){
   let respaldo = [];
   try{
@@ -359,30 +370,75 @@ function irPaso3(){
   const t = document.getElementById("wToken").value.trim();
   const c = document.getElementById("wChat").value.trim();
   dbTemporal._tg = (t && c) ? { token: t, chat: c } : null;
-  syncAdminLabels();
+  if(!document.querySelectorAll("#wNombres .wFila").length) armarFilas(["", ""]);
   verPaso(3);
 }
 document.getElementById("wBtn2").onclick = irPaso3;
-document.getElementById("wOmitir").onclick = ()=>{ dbTemporal._tg = null; syncAdminLabels(); verPaso(3); };
+document.getElementById("wOmitir").onclick = ()=>{
+  dbTemporal._tg = null;
+  if(!document.querySelectorAll("#wNombres .wFila").length) armarFilas(["", ""]);
+  verPaso(3);
+};
 
-function syncAdminLabels(){
-  document.getElementById("wAdm1").textContent =
-    document.getElementById("wNom1").value.trim() || "1";
-  document.getElementById("wAdm2").textContent =
-    document.getElementById("wNom2").value.trim() || "2";
+// Filas dinámicas: 2 fijos + invitados extra. Mínimo 2 con nombre.
+function armarFilas(valores){
+  const cont = document.getElementById("wNombres");
+  cont.innerHTML = "";
+  valores.forEach((v, i)=>agregarFila(v, i === 0));
 }
-document.getElementById("wNom1").addEventListener("input", syncAdminLabels);
-document.getElementById("wNom2").addEventListener("input", syncAdminLabels);
+function agregarFila(valor, adminMarcado){
+  const cont = document.getElementById("wNombres");
+  const idx = cont.querySelectorAll(".wFila").length;
+  const fila = document.createElement("div");
+  fila.className = "wFila";
+  fila.style.cssText = "display:flex;gap:8px;margin-bottom:10px;";
+  const inp = document.createElement("input");
+  inp.type = "text";
+  inp.maxLength = 30;
+  inp.autocomplete = "off";
+  inp.placeholder = idx < 2 ? ("Nombre " + (idx + 1)) : "Invitado (ej. Suegra)";
+  inp.value = valor || "";
+  inp.style.marginBottom = "0";
+  const lab = document.createElement("label");
+  lab.style.cssText = "display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--fg-muted);white-space:nowrap;";
+  const rad = document.createElement("input");
+  rad.type = "radio";
+  rad.name = "wAdmin";
+  rad.value = "u" + (idx + 1);
+  rad.checked = !!adminMarcado;
+  rad.style.accentColor = "var(--teal)";
+  lab.appendChild(rad);
+  lab.appendChild(document.createTextNode("Admin"));
+  fila.appendChild(inp);
+  fila.appendChild(lab);
+  if(idx >= 2){
+    const x = document.createElement("button");
+    x.type = "button";
+    x.textContent = "✕";
+    x.style.cssText = "background:none;border:none;color:var(--fg-muted);font-size:1rem;cursor:pointer;";
+    x.onclick = ()=>{ fila.remove(); renumerarRadios(); };
+    fila.appendChild(x);
+  }
+  cont.appendChild(fila);
+}
+function renumerarRadios(){
+  document.querySelectorAll("#wNombres .wFila").forEach((fila, i)=>{
+    fila.querySelector('input[type="radio"]').value = "u" + (i + 1);
+  });
+}
+document.getElementById("wMas").onclick = ()=>agregarFila("", false);
 
 document.getElementById("wBtn3").onclick = async ()=>{
-  const n1 = document.getElementById("wNom1").value.trim();
-  const n2 = document.getElementById("wNom2").value.trim();
-  if(!n1 || !n2){ msg("Escribe los dos nombres."); verPaso(3); return; }
+  const filas = Array.from(document.querySelectorAll("#wNombres .wFila"));
+  const nombres = filas.map(f=>f.querySelector('input[type="text"]').value.trim());
+  if(nombres.length < 2 || !nombres[0] || !nombres[1]){
+    msg("Escribe al menos los dos primeros nombres."); verPaso(3); return;
+  }
   const adminId = (document.querySelector('input[name="wAdmin"]:checked') || {}).value || "u1";
-  const usuarios = [
-    { id: "u1", nombre: n1, admin: adminId === "u1" },
-    { id: "u2", nombre: n2, admin: adminId === "u2" },
-  ];
+  const usuarios = nombres
+    .map((n, i)=>({ id: "u" + (i + 1), nombre: n }))
+    .filter(u=>u.nombre)
+    .map(u=>({ id: u.id, nombre: u.nombre, admin: u.id === adminId }));
   const btn = document.getElementById("wBtn3");
   btn.disabled = true;
   try{
@@ -416,7 +472,6 @@ async function entrar(db){
 }
 
 async function iniciar(){
-  ocultarQR();
   document.getElementById("avisoConn").style.display = "none";
   const g = leerConfigGuardada();
   let db = null, ok = false, hayConfig = !!(g && g.firebase);
@@ -450,32 +505,6 @@ document.getElementById("wUnirme").onclick = ()=>{ msg(""); verPaso("QR"); inici
 document.getElementById("wQRCancelar").onclick = async ()=>{
   await detenerScan();
   verPaso(0);
-};
-
-// ---------- mostrar mi QR ----------
-const qrPantallaEl = document.getElementById("pantallaQR");
-function ocultarQR(){
-  qrPantallaEl.style.display = "none";
-}
-document.getElementById("btnVincular").onclick = ()=>{
-  const g = leerConfigGuardada();
-  if(!g || !g.firebase){ alert("Primero termina el asistente."); return; }
-  const caja = document.getElementById("qrCaja");
-  caja.innerHTML = "";
-  try{
-    new QRCode(caja, {
-      text: JSON.stringify({ firebase: g.firebase, telegram: g.telegram || null }),
-      width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M
-    });
-  }catch(e){
-    caja.textContent = "No se pudo generar el QR.";
-  }
-  menuEl.style.display = "none";
-  qrPantallaEl.style.display = "flex";
-};
-document.getElementById("btnQRCerrar").onclick = ()=>{
-  ocultarQR();
-  iniciar();
 };
 
 // ---------- escanear QR de mi pareja ----------
@@ -520,6 +549,15 @@ async function iniciarScan(){
     msgQR("Sin cámara o sin permiso. Revisa el navegador.");
   }
 }
+// ---------- submenú Experiencias ----------
+document.getElementById("btnExp").onclick = ()=>{
+  document.getElementById("vistaMenu").style.display = "none";
+  document.getElementById("vistaExp").style.display = "block";
+};
+document.getElementById("btnExpVolver").onclick = ()=>{
+  document.getElementById("vistaExp").style.display = "none";
+  document.getElementById("vistaMenu").style.display = "block";
+};
 iniciar();
 </script>
 

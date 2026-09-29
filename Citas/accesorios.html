@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
   :root{
@@ -68,7 +69,17 @@
     padding:10px 18px; border-radius:12px;
     border:1px solid var(--card-border); background: var(--card);
   }
-  .tabs a.activo{ color: var(--teal); border-color: var(--teal); }
+  .tabs a.activo, .tabs button.activo{ color: var(--teal); border-color: var(--teal); }
+  .tabs button{
+    font-family:'Chakra Petch', sans-serif;
+    font-size:.85rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+    color: var(--fg-muted); padding:10px 18px; border-radius:12px; cursor:pointer;
+    border:1px solid var(--card-border); background: var(--card);
+  }
+  .panel{ display:none; width:100%; max-width:520px; margin:0 0 16px;
+    background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:18px; }
+  .panel.ver{ display:block; }
+  [hidden]{ display:none !important; }
 
   #alta{
     width:100%; max-width:420px; margin-bottom:10px;
@@ -113,6 +124,18 @@
     word-break:break-word;
   }
   .item.nuevo{ border-color: var(--teal); }
+  .seccionCfg{ width:100%; max-width:520px; margin:30px 0 6px; text-align:center; }
+  .seccionCfg h2{ font-family:'Chakra Petch',sans-serif; font-size:1.1rem; margin:0 0 6px; }
+  .seccionCfg .mini{ font-size:.82rem; color:var(--fg-muted); margin:0 0 12px; }
+  #listaUsuariosCfg{ display:flex; flex-direction:column; gap:10px; }
+  #listaUsuariosCfg button{ background:var(--card); border:1px solid var(--card-border); border-radius:12px; color:var(--fg); padding:12px; font-size:.95rem; font-family:'Chakra Petch',sans-serif; cursor:pointer; }
+  #listaUsuariosCfg button.yo{ border-color:var(--teal); }
+  #qrCajaCfg{ background:#fff; padding:12px; border-radius:14px; display:none; justify-content:center; margin:0 auto 12px; width:fit-content; }
+  .btnCfg{ font-family:'Chakra Petch',sans-serif; font-weight:700; border:none; border-radius:12px; cursor:pointer; padding:12px 22px; color:var(--bg); background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btnCfg:active{ transform:scale(.97); }
+  .filaCfg{ display:flex; gap:8px; margin-top:12px; }
+  .filaCfg input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:12px; font-size:.95rem; font-family:'Inter',sans-serif; }
 </style>
 </head>
 <body>
@@ -120,12 +143,38 @@
 <a class="back" href="../index.html">← Volver</a>
 
 <div class="eyebrow">Configuración</div>
-<h1>Actividades y Accesorios</h1>
-<p class="desc">Agrega accesorios nuevos. Se guardan y aparecen en tus citas.</p>
+<h1 id="tituloCfg">Actividades y Accesorios</h1>
+<p class="desc" id="descCfg">Elige una opción para configurar tu app.</p>
 
 <div class="tabs">
   <a href="actividades.html">Actividades</a>
-  <a href="accesorios.html" class="activo">Accesorios</a>
+  <button id="tabLista" type="button">Accesorios</button>
+</div>
+
+<div class="tabs">
+  <button id="tabUsuario" type="button">Usuarios</button>
+  <button id="tabVincular" type="button">Vincular</button>
+</div>
+
+<div class="panel" id="panelUsuario">
+  <div class="seccionCfg" style="margin:0">
+    <h2>Usuarios</h2>
+    <p class="mini" id="quienCfg">…</p>
+    <div id="listaUsuariosCfg"></div>
+    <div class="filaCfg">
+      <input id="nuevoInvitado" type="text" placeholder="Nuevo invitado (ej. Suegra)" maxlength="30" autocomplete="off">
+      <button id="btnAddCfg" class="btnCfg">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panelVincular">
+  <div class="seccionCfg" style="margin:0">
+    <h2>Vincular pareja 📱</h2>
+    <p class="mini">Tu pareja lo escanea desde su app (inicio → Tengo QR). Muéstralo en persona.</p>
+    <div id="qrCajaCfg"></div>
+    <button id="btnQRCfg" class="btnCfg">Mostrar mi código</button>
+  </div>
 </div>
 
 <div id="alta">
@@ -136,18 +185,18 @@
 </div>
 
 <div id="msg"></div>
-<div id="conteo"></div>
-<div id="lista"></div>
+<div id="conteo" hidden></div>
+<div id="lista" hidden></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, serverTimestamp
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase } from "../config.js";
+import { resolverFirebase, leerConfigGuardada, cargarUsuarios } from "../config.js";
 const firebaseConfig = resolverFirebase(firebaseConfigBase);
 
 const app = initializeApp(firebaseConfig);
@@ -333,7 +382,155 @@ inputEl.addEventListener("keydown", e=>{
   if(e.key === "Enter") btnAgregar.onclick();
 });
 
+// ====== USUARIO + VINCULAR (config) ======
+const CLAVE_LOCAL_CFG = "appPareja_quienSoy";
+async function pintarUsuarioCfg(){
+  const quienEl = document.getElementById("quienCfg");
+  const listaU = document.getElementById("listaUsuariosCfg");
+  let respaldo = [];
+  try{ respaldo = await (await fetch("usuarios.json")).json(); }catch(e){}
+  let usuarios = respaldo;
+  try{ usuarios = await cargarUsuarios(db, getDoc, doc, respaldo); }catch(e){}
+  let yo = null;
+  try{ yo = JSON.parse(localStorage.getItem(CLAVE_LOCAL_CFG)); }catch(e){}
+  quienEl.textContent = "Actual: " + ((yo && yo.nombre) || "sin elegir");
+  listaU.innerHTML = "";
+  usuarios.forEach(u=>{
+    const fila = document.createElement("div");
+    fila.style.cssText = "display:flex;gap:8px;";
+    const b = document.createElement("button");
+    b.style.flex = "1";
+    b.textContent = u.nombre + (yo && yo.id === u.id ? " ✓" : "") + (u.admin ? " ★" : "");
+    if(yo && yo.id === u.id) b.className = "yo";
+    b.onclick = ()=>{
+      localStorage.setItem(CLAVE_LOCAL_CFG, JSON.stringify(u));
+      pintarUsuarioCfg();
+    };
+    fila.appendChild(b);
+    if(!u.admin){
+      const x = document.createElement("button");
+      x.textContent = "✕";
+      x.title = "Eliminar invitado";
+      x.onclick = ()=>eliminarInvitadoCfg(u.id, u.nombre);
+      fila.appendChild(x);
+    }
+    listaU.appendChild(fila);
+  });
+}
+async function eliminarInvitadoCfg(id, nombre){
+  if(!confirm("¿Eliminar a " + nombre + " de la app?")) return;
+  try{
+    const ref = doc(db, "config", "ajustes");
+    const snap = await getDoc(ref);
+    const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+    await setDoc(ref, { usuarios: arr.filter(u=>u.id !== id), actualizadoEn: serverTimestamp() }, { merge: true });
+    try{
+      const loc = JSON.parse(localStorage.getItem("pareja_usuarios") || "[]");
+      localStorage.setItem("pareja_usuarios", JSON.stringify(loc.filter(u=>u.id !== id)));
+      const yo = JSON.parse(localStorage.getItem(CLAVE_LOCAL_CFG) || "null");
+      if(yo && yo.id === id) localStorage.removeItem(CLAVE_LOCAL_CFG);
+    }catch(e){}
+    pintarUsuarioCfg();
+  }catch(e){
+    alert("No se pudo eliminar. Revisa tu conexión.");
+  }
+}
+document.getElementById("btnQRCfg").onclick = ()=>{
+  const g = leerConfigGuardada();
+  const caja = document.getElementById("qrCajaCfg");
+  if(!g || !g.firebase){
+    caja.style.display = "none";
+    alert("Primero termina el asistente del inicio.");
+    return;
+  }
+  caja.innerHTML = "";
+  caja.style.display = "flex";
+  try{
+    new QRCode(caja, {
+      text: JSON.stringify({ firebase: g.firebase, telegram: g.telegram || null }),
+      width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M
+    });
+  }catch(e){ caja.textContent = "No se pudo generar."; }
+};
+// ====== PANELES (lista / usuario / vincular) ======
+const tabLista = document.getElementById("tabLista");
+const tabUsuario = document.getElementById("tabUsuario");
+const tabVincular = document.getElementById("tabVincular");
+const panelUsuario = document.getElementById("panelUsuario");
+const panelVincular = document.getElementById("panelVincular");
+function todosApagados(){
+  [tabLista, tabUsuario, tabVincular].forEach(b=>b.classList.remove("activo"));
+  panelUsuario.classList.remove("ver");
+  panelVincular.classList.remove("ver");
+  listaEl.hidden = true;
+  conteoEl.hidden = true;
+  document.getElementById("alta").style.display = "";
+  document.getElementById("tituloCfg").textContent = "Actividades y Accesorios";
+  document.getElementById("descCfg").textContent = "Elige una opción para configurar tu app.";
+}
+function ponerTitulo(t, d){
+  document.getElementById("tituloCfg").textContent = t;
+  document.getElementById("descCfg").textContent = d;
+}
+tabLista.onclick = ()=>{
+  const abierto = tabLista.classList.contains("activo");
+  todosApagados();
+  if(!abierto){
+    tabLista.classList.add("activo");
+    ponerTitulo("Accesorios", "Agrega accesorios nuevos. Se guardan y aparecen en tus citas.");
+    listaEl.hidden = false;
+    conteoEl.hidden = false;
+  }
+};
+tabUsuario.onclick = ()=>{
+  const abierto = tabUsuario.classList.contains("activo");
+  todosApagados();
+  if(!abierto){
+    tabUsuario.classList.add("activo");
+    ponerTitulo("Usuarios", "Cambia quién usa este celular o agrega invitados.");
+    document.getElementById("alta").style.display = "none";
+    panelUsuario.classList.add("ver");
+    pintarUsuarioCfg();
+  }
+};
+tabVincular.onclick = ()=>{
+  const abierto = tabVincular.classList.contains("activo");
+  todosApagados();
+  if(!abierto){
+    tabVincular.classList.add("activo");
+    ponerTitulo("Vincular pareja", "Comparte tu código para vincular a tu pareja.");
+    document.getElementById("alta").style.display = "none";
+    panelVincular.classList.add("ver");
+  }
+};
+async function agregarInvitadoCfg(){
+  const inp = document.getElementById("nuevoInvitado");
+  const nombre = inp.value.trim();
+  if(!nombre) return;
+  const id = "u" + Date.now().toString(36);
+  const nuevo = { id, nombre, admin: false };
+  try{
+    const ref = doc(db, "config", "ajustes");
+    const snap = await getDoc(ref);
+    const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios.slice() : [];
+    arr.push(nuevo);
+    await setDoc(ref, { usuarios: arr, actualizadoEn: serverTimestamp() }, { merge: true });
+    try{
+      const loc = JSON.parse(localStorage.getItem("pareja_usuarios") || "[]");
+      loc.push(nuevo);
+      localStorage.setItem("pareja_usuarios", JSON.stringify(loc));
+    }catch(e){}
+    inp.value = "";
+    pintarUsuarioCfg();
+  }catch(e){
+    alert("No se pudo agregar. Revisa tu conexión.");
+  }
+}
+document.getElementById("btnAddCfg").onclick = agregarInvitadoCfg;
+pintarUsuarioCfg();
+
 cargar();
+inputEl.focus();
 
 </script>
 
