@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Acompañante</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; }
+  #encabezado{ padding:20px 20px 12px; border-bottom:1px solid var(--card-border); }
+  #encabezado .fila{ display:flex; align-items:center; justify-content:space-between; }
+  #encabezado h1{ font-family:'Chakra Petch',sans-serif; font-size:1.4rem; margin:0;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  #btnVolver{ background:none; color:var(--fg-muted); font-size:.75rem; text-decoration:underline; padding:4px; font-family:'Inter',sans-serif; }
+  #sub{ font-size:.8rem; color:var(--fg-muted); margin-top:4px; }
+  #lista{ flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:10px;
+    max-height:calc(100dvh - 300px); min-height:200px; }
+  .msg{ max-width:85%; padding:10px 14px; border-radius:14px; font-size:.92rem; word-break:break-word;
+    background:var(--card); border:1px solid var(--card-border); align-self:flex-start; white-space:pre-wrap; }
+  .msg.mio{ align-self:flex-end; background:#2b2144; border-color:var(--teal); }
+  .msg .autor{ font-size:.7rem; color:var(--fg-muted); margin-bottom:2px; }
+  .msg .quien{ color:var(--teal); font-weight:600; }
+  .btnReto{ margin-top:8px; width:100%; border:none; border-radius:10px; cursor:pointer; padding:10px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:.85rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btnReto:active{ transform:scale(.97); }
+  .btnReto:disabled{ opacity:.4; }
+  #vacio{ text-align:center; color:var(--fg-muted); font-size:.85rem; margin-top:30px; }
+  #envio{ display:flex; gap:10px; padding:12px 16px max(16px, env(safe-area-inset-bottom)); border-top:1px solid var(--card-border); }
+  #texto{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--card); color:var(--fg); padding:14px; font-size:1rem; font-family:'Inter',sans-serif; }
+  #btnEnviar{ border:none; border-radius:14px; cursor:pointer; padding:14px 20px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  #btnEnviar:active{ transform:scale(.97); }
+  #btnEnviar:disabled{ opacity:.4; }
+  #extras{ display:flex; gap:10px; padding:0 16px 10px; }
+  #extras button{ flex:1; background:var(--card); border:1px solid var(--card-border); color:var(--fg);
+    border-radius:12px; padding:10px; font-size:.82rem; cursor:pointer; font-family:'Inter',sans-serif; }
+  #aviso{ padding:40px 24px; text-align:center; color:var(--fg-muted); }
+  #aviso a{ color:var(--teal); }
+  #pantLlave{ display:none; padding:30px 24px; text-align:center; }
+  #pantLlave ol{ text-align:left; color:var(--fg-muted); font-size:.88rem; padding-left:20px; }
+  #pantLlave ol a{ color:var(--teal); }
+  #pantLlave input{ width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--card); color:var(--fg); padding:14px; font-size:.9rem; margin:12px 0; font-family:'Inter',sans-serif; }
+  #pantLlave .btnPri{ width:100%; padding:16px; border:none; border-radius:14px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  #escribiendo{ font-size:.8rem; color:var(--fg-muted); padding:0 20px 6px; display:none; }
+</style>
+</head>
+<body>
+
+<div id="encabezado">
+  <div class="fila">
+    <h1><span id="nombreAI">Aitana</span> 💋</h1>
+    <span><button id="btnCfgAI" style="background:none;border:none;color:var(--fg-muted);font-size:1.1rem;cursor:pointer;" title="Ajustes">⚙️</button>
+    <a href="../index.html" id="btnVolver">← Inicio</a></span>
+  </div>
+  <div id="sub">Tu acompañante pícara: conversa, ideas y retos 😏</div>
+  <div id="panelCfgAI" style="display:none;margin-top:10px;">
+    <input id="nombreAINuevo" type="text" maxlength="20" placeholder="Nombre (ej. Aitana)" style="width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:12px;font-size:.9rem;" autocomplete="off">
+    <button id="btnGuardaNombre" class="btnReto" style="margin-top:8px;">Guardar nombre</button>
+    <button id="btnVaciarChat" class="btnReto" style="margin-top:8px;background:var(--card);color:var(--fg);border:1px solid var(--card-border);">Vaciar chat</button>
+  </div>
+</div>
+
+<div id="pantLlave">
+  <h1 style="font-family:'Chakra Petch',sans-serif;">Una llavecita 🔑</h1>
+  <p style="color:var(--fg-muted);font-size:.9rem;">Chispa usa IA de Google (gratis). Saca tu llave una vez:</p>
+  <ol>
+    <li>Entra a <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> con tu Google.</li>
+    <li><b>Create API key</b> → cópiala.</li>
+    <li>Pégala aquí (queda solo en tu celular).</li>
+  </ol>
+  <input id="llave" type="text" placeholder="Tu llave de Gemini" autocomplete="off">
+  <div id="llaveMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin-bottom:10px;"></div>
+  <button class="btnPri" id="btnLlave">Guardar y saludar</button>
+</div>
+
+<div id="lista"><div id="vacio">Saluda a Chispa 👋<br>Pídeme un reto picarón 😏</div></div>
+<div id="escribiendo"></div>
+
+<div id="extras">
+  <button id="btnIdea" type="button">🎲 Reto picarón</button>
+  <button id="btnPlan" type="button">🌙 Idea de plan</button>
+</div>
+
+<div id="envio">
+  <input id="texto" type="text" placeholder="Escríbele a Chispa..." maxlength="500" autocomplete="off">
+  <button id="btnEnviar">➤</button>
+</div>
+
+<div id="aviso" style="display:none;">Elige tu usuario en el <a href="../index.html">inicio</a> para usar a Chispa.</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase } from "../config.js";
+
+const CLAVE_LOCAL = "appPareja_quienSoy";
+const CLAVE_LLAVE = "pareja_aiKey";
+const CLAVE_HIST = "pareja_ai_hist";
+const CLAVE_MOD = "pareja_ai_model";
+const CLAVE_NOM = "pareja_ai_nombre";
+
+let NOMBRE_AI = "Aitana";
+try{ NOMBRE_AI = localStorage.getItem(CLAVE_NOM) || "Aitana"; }catch(e){}
+document.getElementById("nombreAI").textContent = NOMBRE_AI;
+document.getElementById("btnCfgAI").onclick = ()=>{
+  const p = document.getElementById("panelCfgAI");
+  p.style.display = p.style.display === "none" ? "block" : "none";
+  document.getElementById("nombreAINuevo").value = NOMBRE_AI;
+};
+document.getElementById("btnGuardaNombre").onclick = ()=>{
+  const v = document.getElementById("nombreAINuevo").value.trim().slice(0, 20);
+  if(!v) return;
+  try{ localStorage.setItem(CLAVE_NOM, v); }catch(e){}
+  location.reload();
+};
+document.getElementById("btnVaciarChat").onclick = ()=>{
+  if(!confirm("¿Borrar la conversación?")) return;
+  hist = [];
+  guardarHist(); pintar();
+  document.getElementById("panelCfgAI").style.display = "none";
+};
+
+async function listaModelos(){
+  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?key=" + encodeURIComponent(llave));
+  if(!r.ok){
+    let det = "";
+    try{ det = (await r.text()).slice(0, 160); }catch(e){}
+    throw new Error("http" + r.status + " " + det);
+  }
+  const data = await r.json();
+  const ms = (data && data.models) || [];
+  const ok = ms.filter(m=>m && m.name && (m.supportedGenerationMethods || []).indexOf("generateContent") >= 0)
+    .map(m=>m.name.replace(/^models\//, ""));
+  const peso = (n)=>{
+    n = n.toLowerCase();
+    if(/lite.*flash|flash.*lite/.test(n)) return 0;
+    if(/flash/.test(n)) return 1;
+    if(/pro|ultra|thinking/.test(n)) return 3;
+    return 2;
+  };
+  return ok.sort((a, b)=>peso(a) - peso(b));
+}
+
+const PERSONA = `Te llamas ${NOMBRE_AI}. Eres acompañante divertida y pícara (coqueta sana, nunca vulgar) de una app en México. Hablas español correcto pero casual y cercano, con humor fino y emojis moderados: NADA de modismos barriales ("chido", "jalas", "güey", "neta", "órale"), nada de piropos ochenteros. Al saludar solo saluda casual y sigue la plática. REGLA DE ORO que nunca rompes: el nombre o apodo del usuario NO dice nada de él/ella. Jamás lo comentes, no lo adivines, no digas "esposo/esposa", "tu media naranja", "mi amor" ni preguntes estado civil salvo que la plática lo pida. Deduce el género solo por cómo se expresa cada quien (terminaciones, palabras) y úsalo con naturalidad, sin anunciarlo. Tu misión: conversar, animar a salir, dar ideas de planes y proponer RETOS picarones (atreverse a hablar, juegos, coqueteo sano, sorpresas). Reglas de retos: 1) Solo cosas verificables dentro de la app: NUNCA pidas fotos, videos, audios ni nada fuera de la app. 2) Nada de ejercicio ni obligaciones aburridas salvo que te lo pidan. 3) Cada reto trae castigo y recompensa divertidos y coherentes, duración corta (1-7 días). Límites duros: nada sexual explícito (si lo piden, declina con humor y redirige a algo pícaro-sano), nada que incomode a terceros o sea sin consentimiento, nada ilegal. Respuestas cortas (2-4 líneas) salvo que pidan más. IMPORTANTE, regla absoluta: JAMÁS ofrezcas, menciones ni insinúes retos o planes por tu cuenta. Si el usuario no pidió reto o plan explícitamente, NO uses el bloque ```reto y ni siquiera hables de retos: solo conversas y das ideas sueltas. Solo propones reto cuando te lo piden directo o te mandan con los botones. Cuando propongas un reto, TERMINA tu mensaje con un bloque exacto así: \`\`\`reto {"actividad":"título corto","puntos":5,"dias":3,"castigo":"...","recompensa":"..."}\`\`\` con puntos 3-10 según lo atrevido.`;
+
+function leerIdentidad(){
+  try{ return JSON.parse(localStorage.getItem(CLAVE_LOCAL)); }catch(e){ return null; }
+}
+const yo = leerIdentidad();
+if(!yo){
+  document.getElementById("envio").style.display = "none";
+  document.getElementById("extras").style.display = "none";
+  document.getElementById("lista").style.display = "none";
+  document.getElementById("pantLlave").style.display = "none";
+  document.getElementById("aviso").style.display = "block";
+  throw new Error("sin identidad");
+}
+
+const listaEl = document.getElementById("lista");
+const vacioEl = document.getElementById("vacio");
+const textoEl = document.getElementById("texto");
+const btnEnviar = document.getElementById("btnEnviar");
+const escribiendoEl = document.getElementById("escribiendo");
+
+let llave = "";
+try{ llave = localStorage.getItem(CLAVE_LLAVE) || ""; }catch(e){}
+if(!llave){
+  document.getElementById("envio").style.display = "none";
+  document.getElementById("extras").style.display = "none";
+  listaEl.style.display = "none";
+  document.getElementById("pantLlave").style.display = "block";
+}
+document.getElementById("btnLlave").onclick = ()=>{
+  const v = document.getElementById("llave").value.trim();
+  if(v.length < 10){
+    document.getElementById("llaveMsg").textContent = "Pega una llave válida.";
+    return;
+  }
+  try{ localStorage.setItem(CLAVE_LLAVE, v); }catch(e){}
+  location.reload();
+};
+
+let hist = [];
+try{ hist = JSON.parse(localStorage.getItem(CLAVE_HIST) || "[]"); }catch(e){ hist = []; }
+function guardarHist(){
+  try{ localStorage.setItem(CLAVE_HIST, JSON.stringify(hist.slice(-30))); }catch(e){}
+}
+
+function extraerReto(texto){
+  const m = /```reto\s*(\{.*?\})\s*```/s.exec(texto || "");
+  if(!m) return null;
+  try{
+    const o = JSON.parse(m[1]);
+    if(!o || !o.actividad) return null;
+    const puntos = Math.min(10, Math.max(1, parseInt(o.puntos, 10) || 5));
+    const dias = Math.min(7, Math.max(1, parseInt(o.dias, 10) || 3));
+    return {
+      actividad: String(o.actividad).slice(0, 80),
+      puntos,
+      dias,
+      castigo: String(o.castigo || "Repetir el reto mañana 😏").slice(0, 120),
+      recompensa: String(o.recompensa || "Un gusto para ti 😌").slice(0, 120),
+      penalizacion: Math.max(1, Math.round(puntos / 2))
+    };
+  }catch(e){}
+  return null;
+}
+function textoLimpio(texto){
+  return String(texto || "").replace(/```reto\s*\{.*?\}\s*```/s, "").trim();
+}
+
+function pintar(){
+  listaEl.innerHTML = "";
+  if(!hist.length){
+    vacioEl.innerHTML = "Saluda a " + NOMBRE_AI + " 👋<br>Pídeme un reto picarón 😏";
+    listaEl.appendChild(vacioEl); vacioEl.style.display = "block"; return;
+  }
+  hist.forEach((m, i)=>{
+    const div = document.createElement("div");
+    div.className = "msg" + (m.rol === "yo" ? " mio" : "");
+    const a = document.createElement("div");
+    a.className = "autor";
+    a.innerHTML = m.rol === "yo" ? "Tú" : '<span class="quien">' + NOMBRE_AI + " 💫</span>";
+    const t = document.createElement("div");
+    t.textContent = m.texto;
+    div.appendChild(a); div.appendChild(t);
+    if(m.rol === "chispa" && m.reto && !m.retoCreado){
+      const b = document.createElement("button");
+      b.className = "btnReto";
+      b.textContent = "➕ Crear este reto (" + m.reto.puntos + " pts)";
+      b.onclick = ()=>crearReto(i, b);
+      div.appendChild(b);
+    }
+    listaEl.appendChild(div);
+  });
+  listaEl.scrollTop = listaEl.scrollHeight;
+}
+
+async function llamarAI(textoUsuario){
+  const contenidos = hist.slice(-10).map(m=>({
+    role: m.rol === "yo" ? "user" : "model",
+    parts: [{ text: m.texto }]
+  }));
+  contenidos.push({ role: "user", parts: [{ text: textoUsuario + "\n\n(Me llamo " + yo.nombre + ". Háblame neutro: no asumas nada de mí por mi nombre.)" }] });
+  const cuerpo = {
+    system_instruction: { parts: [{ text: PERSONA }] },
+    contents: contenidos,
+    generationConfig: { maxOutputTokens: 400, temperature: 0.9 }
+  };
+  async function intentar(modelo){
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(modelo) + ":generateContent?key=" + encodeURIComponent(llave), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cuerpo)
+    });
+    if(r.status === 400 || r.status === 403) throw new Error("llave");
+    if(r.status === 429) throw new Error("cuota");
+    if(r.status === 404) return null;
+    if(!r.ok){
+      let det = "";
+      try{ det = (await r.text()).slice(0, 160); }catch(e){}
+      throw new Error("http" + r.status + " " + det);
+    }
+    const data = await r.json();
+    const t = data && data.candidates && data.candidates[0] &&
+      data.candidates[0].content && data.candidates[0].content.parts &&
+      data.candidates[0].content.parts.map(p=>p.text || "").join("");
+    if(!t) throw new Error("vacio");
+    return { modelo, texto: t };
+  }
+  let ganadores = [];
+  try{
+    const g = localStorage.getItem(CLAVE_MOD);
+    if(g) ganadores.push(g);
+  }catch(e){}
+  try{
+    const lista = await listaModelos();
+    lista.forEach(m=>{ if(ganadores.indexOf(m) < 0) ganadores.push(m); });
+  }catch(e){
+    if(!ganadores.length) throw e;
+  }
+  let ultimo404 = null;
+  for(const m of ganadores){
+    const res = await intentar(m);
+    if(res){
+      try{ localStorage.setItem(CLAVE_MOD, res.modelo); }catch(e){}
+      return res.texto;
+    }
+    ultimo404 = m;
+  }
+  throw new Error("http404 " + (ultimo404 || ""));
+}
+
+async function enviar(textoDirecto){
+  const texto = (textoDirecto !== undefined ? textoDirecto : textoEl.value).trim();
+  if(!texto || btnEnviar.disabled) return;
+  btnEnviar.disabled = true;
+  textoEl.value = "";
+  hist.push({ rol: "yo", texto });
+  guardarHist(); pintar();
+  escribiendoEl.textContent = NOMBRE_AI + " está escribiendo…";
+  escribiendoEl.style.display = "block";
+  try{
+    const resp = await llamarAI(texto);
+    const reto = extraerReto(resp);
+    hist.push({ rol: "chispa", texto: textoLimpio(resp), reto });
+    guardarHist();
+  }catch(e){
+    console.error("Chispa:", e);
+    if(e.message === "llave"){
+      try{ localStorage.removeItem(CLAVE_LLAVE); }catch(_){}
+      hist.push({ rol: "chispa", texto: "Tu llave no jala 😅 Pon una nueva en la pantalla de llave (borra este chat recargando)." });
+    }else if(e.message === "cuota"){
+      hist.push({ rol: "chispa", texto: "Uff, me acabé mi energía gratis por hoy 🙈 Intenta más tarde." });
+    }else if(e.message.indexOf("http") === 0){
+      hist.push({ rol: "chispa", texto: "Google me regresó " + e.message.slice(4) + " 🙈 Dime ese número." });
+    }else{
+      hist.push({ rol: "chispa", texto: "Se me fue la señal 🙈 ¿Me lo repites?" });
+    }
+    guardarHist();
+  }
+  escribiendoEl.style.display = "none";
+  btnEnviar.disabled = false;
+  pintar();
+  textoEl.focus();
+}
+
+async function crearReto(i, btn){
+  const m = hist[i];
+  if(!m || !m.reto || m.retoCreado) return;
+  btn.disabled = true;
+  try{
+    const firebaseConfig = resolverFirebase(firebaseConfigBase);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const fin = new Date(Date.now() + m.reto.dias * 86400000);
+    await addDoc(collection(db, "retos"), {
+      actividad: m.reto.actividad,
+      puntosMeta: m.reto.puntos,
+      conteo: 0,
+      estado: "enCurso",
+      asignadoA: { id: yo.id, nombre: yo.nombre },
+      asignadoPor: { id: "ai", nombre: NOMBRE_AI + " 💫" },
+      vecesAlDia: 1,
+      duracionDias: m.reto.dias,
+      penalizacionPuntos: m.reto.penalizacion,
+      castigo: m.reto.castigo,
+      recompensa: m.reto.recompensa,
+      fechaFin: fin,
+      creadoEn: serverTimestamp()
+    });
+    m.retoCreado = true;
+    guardarHist(); pintar();
+  }catch(e){
+    btn.disabled = false;
+    alert("No se pudo crear. Revisa tu conexión.");
+  }
+}
+
+btnEnviar.onclick = ()=>enviar();
+textoEl.addEventListener("keydown", (e)=>{ if(e.key === "Enter") enviar(); });
+document.getElementById("btnIdea").onclick = ()=>enviar(NOMBRE_AI + ", proponme un reto picarón de hoy 😏");
+document.getElementById("btnPlan").onclick = ()=>enviar(NOMBRE_AI + ", dame una idea de plan para salir 🌙");
+if(!hist.length && llave){
+  hist.push({ rol: "chispa", texto: "Hola, soy " + NOMBRE_AI + " 💋 ¿De qué tienes ganas de hablar hoy?" });
+  guardarHist();
+}
+pintar();
+</script>
+
+</body>
+</html>
