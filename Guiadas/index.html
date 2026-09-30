@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Citas Guiadas</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  #btnCfg{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
+    background:none; border:none; font-size:1.3rem; cursor:pointer; padding:4px;
+  }
+  #btnAtras{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
+    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
+  }
+  #btnAtrasEd{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
+    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
+  }
+  .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--card); color:var(--fg); padding:13px 14px; font-size:.95rem;
+    font-family:'Inter',sans-serif; margin-bottom:14px; }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.desc{ font-size:.88rem; color:var(--fg-muted); max-width:360px; margin:0 0 18px; text-align:center; }
+  .vista{ display:none; width:100%; max-width:520px; flex-direction:column; align-items:center; }
+  .vista.ver{ display:flex; }
+  .btnAct{ width:100%; padding:16px; margin-bottom:12px; background:var(--card);
+    border:1px solid var(--card-border); border-radius:16px; color:var(--fg);
+    font-size:1.02rem; font-family:'Chakra Petch',sans-serif; font-weight:600; cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .btnAct:active{ transform:scale(.97); border-color:var(--teal); }
+  .btnAct small{ color:var(--fg-muted); font-family:'Inter',sans-serif; font-weight:400; font-size:.8rem; }
+  .btnAct:disabled{ opacity:.45; }
+  .nivel{ width:100%; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .nivel h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1rem; }
+  .nivel h3 .tag{ font-size:.7rem; color:var(--teal); border:1px solid var(--teal);
+    border-radius:8px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+  .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
+    padding:6px 8px 6px 14px; font-size:.82rem; display:flex; align-items:center; gap:6px; }
+  .chip button{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:.9rem; padding:0 4px; }
+  .filaAdd{ display:flex; gap:8px; }
+  .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:12px; font-size:.9rem; font-family:'Inter',sans-serif; }
+  .filaAdd button{ border:none; border-radius:12px; cursor:pointer; padding:12px 16px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .tomas{ width:100%; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin:4px 0 14px; }
+  .tomas h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 10px; font-size:1rem; }
+  .tomasGrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tomasGrid label{ font-size:.78rem; color:var(--fg-muted); display:flex; flex-direction:column; gap:4px; }
+  .tomasGrid input{ border-radius:10px; border:1px solid var(--card-border); background:var(--bg);
+    color:var(--fg); padding:10px; font-size:1rem; width:100%; font-family:'Inter',sans-serif; }
+  .btnPri{ width:100%; padding:16px; margin-bottom:10px; border:none; border-radius:14px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btnPri:active{ transform:scale(.97); }
+  .btnSec{ width:100%; padding:12px; background:none; border:none; cursor:pointer;
+    color:var(--fg-muted); font-size:.9rem; text-decoration:underline; }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
+  /* player */
+  #progreso{ color:var(--fg-muted); font-size:.85rem; margin-bottom:6px; }
+  #nivelTag{ font-size:.75rem; color:var(--teal); border:1px solid var(--teal); border-radius:8px;
+    padding:3px 10px; margin-bottom:16px; text-transform:uppercase; letter-spacing:.15em;
+    font-family:'Chakra Petch',sans-serif; }
+  #actividadAhora{ font-family:'Chakra Petch',sans-serif; font-size:1.9rem; font-weight:700;
+    text-align:center; margin:26px 0 30px; line-height:1.45; padding:30px 24px;
+    background:linear-gradient(135deg, #2b2144, var(--card));
+    border:1px solid var(--card-border); border-radius:24px; width:100%;
+    box-shadow:0 14px 44px rgba(0,0,0,.45), 0 0 34px rgba(47,217,199,.12); }
+  #finMsg{ font-size:1.1rem; text-align:center; margin:20px 0; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../index.html">← Inicio</a>
+<button id="btnCfg" aria-label="Configurar">⚙️</button>
+<button id="btnAtras" aria-label="Volver a jugar">← Jugar</button>
+<button id="btnAtrasEd" aria-label="Volver a configurar">← Configurar</button>
+
+<div class="eyebrow">Citas Guiadas</div>
+
+<!-- ============ LISTA (jugar) ============ -->
+<div class="vista ver" id="vistaLista">
+  <h1>Elige actividad</h1>
+  <p class="desc">¿Qué vas a jugar hoy?</p>
+  <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar actividad..." autocomplete="off">
+  <div id="listaActs" style="width:100%"></div>
+</div>
+
+<!-- ============ CONFIG (elegir para editar) ============ -->
+<div class="vista" id="vistaConfig">
+  <h1>Configurar</h1>
+  <p class="desc">Elige actividad.</p>
+  <input class="buscar" id="buscarCfg" type="text" placeholder="🔍 Buscar actividad..." autocomplete="off">
+  <div id="listaActsCfg" style="width:100%"></div>
+</div>
+
+<!-- ============ EDITOR ============ -->
+<div class="vista" id="vistaEditar">
+  <h1 id="edTitulo">Actividad</h1>
+  <p class="desc">Agrega acciones por nivel.</p>
+  <div id="nivelesBox" style="width:100%"></div>
+  <div class="tomas">
+    <h3>Define acciones de cada nivel</h3>
+    <div class="tomasGrid" id="tomasGrid"></div>
+  </div>
+  <div id="msg"></div>
+  <button class="btnPri" id="btnJugar">Jugar ▶</button>
+</div>
+
+<!-- ============ PLAYER ============ -->
+<div class="vista" id="vistaPlayer">
+  <h1 id="plTitulo">En juego</h1>
+  <div id="progreso" hidden></div>
+  <div id="nivelTag" hidden></div>
+  <div id="actividadAhora"></div>
+  <div id="finMsg" style="display:none">¡Cita completa! 🔥</div>
+  <button class="btnPri" id="btnSig">Siguiente →</button>
+  <button class="btnSec" id="btnTerminar">Terminar</button>
+</div>
+
+<!-- ============ CONTINUAR ============ -->
+<div class="vista" id="vistaSeguir">
+  <h1 id="sgTitulo">¿Continuar cita anterior?</h1>
+  <p class="desc" id="sgDesc"></p>
+  <button class="btnPri" id="btnContinuar">Continuar →</button>
+  <button class="btnSec" id="btnNueva">Cita nueva</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase } from "../config.js";
+
+const NIVELES = [
+  { id: "basico", nombre: "Básico" },
+  { id: "medio", nombre: "Medio" },
+  { id: "avanzado", nombre: "Avanzado" },
+  { id: "experto", nombre: "Experto" },
+  { id: "alucinado", nombre: "Alucinado" },
+];
+const TOMAS_DEF = { basico: 2, medio: 2, avanzado: 1, experto: 1, alucinado: 1 };
+
+const firebaseConfig = resolverFirebase(firebaseConfigBase);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let actividad = null;
+let datos = null;  // {basico:[],...}
+let listaJuego = [];
+let paso = 0;
+
+let ultimaActividad = null;
+function ver(id, guardar){
+  document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
+  document.getElementById(id).classList.add("ver");
+  document.getElementById("btnCfg").style.display = (id === "vistaLista") ? "block" : "none";
+  document.getElementById("btnAtras").style.display = (id === "vistaConfig") ? "block" : "none";
+  document.getElementById("btnAtrasEd").style.display = (id === "vistaEditar") ? "block" : "none";
+  if(guardar !== false){
+    try{ history.pushState({ v: id, act: ultimaActividad }, ""); }catch(e){}
+  }
+  window.scrollTo(0, 0);
+}
+window.addEventListener("popstate", (e)=>{
+  const v = (e.state && e.state.v) || "vistaLista";
+  const act = e.state && e.state.act;
+  if(v === "vistaEditar" && act){
+    abrirEditor(act, false);
+  }else if(v === "vistaConfig"){
+    pintarLista("listaActsCfg", "editar");
+    ver("vistaConfig", false);
+  }else if(v === "vistaPlayer"){
+    pintarLista("listaActs", "jugar");
+    ver("vistaLista", false);
+  }else{
+    pintarLista("listaActs", "jugar");
+    ver("vistaLista", false);
+  }
+});
+try{ history.replaceState({ v: "vistaLista", act: null }, ""); }catch(e){}
+document.getElementById("btnCfg").onclick = ()=>{
+  pintarLista("listaActsCfg", "editar");
+  ver("vistaConfig");
+};
+document.getElementById("btnAtras").onclick = ()=>{
+  pintarLista("listaActs", "jugar");
+  ver("vistaLista");
+};
+function filtrar(boxId, texto){
+  const t = (texto || "").trim().toLowerCase();
+  document.querySelectorAll("#" + boxId + " .btnAct").forEach(b=>{
+    b.style.display = (!t || b.textContent.toLowerCase().indexOf(t) >= 0) ? "" : "none";
+  });
+}
+document.getElementById("buscarLista").addEventListener("input", (e)=>filtrar("listaActs", e.target.value));
+document.getElementById("buscarCfg").addEventListener("input", (e)=>filtrar("listaActsCfg", e.target.value));
+function mezclar(a){
+  const x = a.slice();
+  for(let i = x.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [x[i], x[j]] = [x[j], x[i]];
+  }
+  return x;
+}
+function claveDoc(nombre){
+  return "nivelesActividad";
+}
+
+// ---------- lista ----------
+async function cargarActividades(){
+  let base = [];
+  try{ base = await (await fetch("../Citas/actividades.json")).json(); }catch(e){}
+  try{
+    const snap = await getDocs(collection(db, "actividadesExtra"));
+    const vistos = new Set((Array.isArray(base) ? base : []).map(n=>(n || "").toLowerCase()));
+    snap.forEach(d=>{
+      const n = (d.data().nombre || "").trim();
+      if(n && !vistos.has(n.toLowerCase())){ vistos.add(n.toLowerCase()); base.push(n); }
+    });
+  }catch(e){}
+  return Array.isArray(base) ? base : [];
+}
+async function pintarLista(boxId, modo){
+  const acts = await cargarActividades();
+  const box = document.getElementById(boxId);
+  box.innerHTML = "";
+  const conteos = {};
+  try{
+    const snap = await getDocs(collection(db, "nivelesActividad"));
+    snap.forEach(d=>{
+      const n = d.data().n || {};
+      conteos[d.id] = NIVELES.reduce((t, nv)=>t + ((n[nv.id] || []).length), 0);
+    });
+  }catch(e){}
+  acts.forEach(nombre=>{
+    const b = document.createElement("button");
+    b.className = "btnAct";
+    const t = document.createElement("span");
+    t.textContent = nombre;
+    b.appendChild(t);
+    const c = conteos[nombre] || 0;
+    if(modo === "editar"){
+      const s = document.createElement("small");
+      s.textContent = c ? (c + (c === 1 ? " acción" : " acciones")) : "sin acciones";
+      b.appendChild(s);
+      b.onclick = ()=>abrirEditor(nombre);
+    }else{
+      if(!c){
+        b.disabled = true;
+        const s = document.createElement("small");
+        s.textContent = "⚙️ configurar acciones";
+        b.appendChild(s);
+      }else{
+        b.onclick = ()=>jugarDirecto(nombre);
+      }
+    }
+    box.appendChild(b);
+  });
+}
+async function jugarDirecto(nombre){
+  actividad = nombre;
+  datos = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
+  try{
+    const snap = await getDoc(doc(db, "nivelesActividad", nombre));
+    if(snap.exists() && snap.data().n) datos = Object.assign(datos, snap.data().n);
+  }catch(e){}
+  const pendiente = leerProg();
+  if(pendiente && pendiente.actividad === nombre && Array.isArray(pendiente.lista) && pendiente.lista.length){
+    document.getElementById("sgDesc").textContent =
+      nombre + ": ibas en la " + (pendiente.paso + 1) + " de " + pendiente.lista.length + ".";
+    ver("vistaSeguir");
+    return;
+  }
+  empezarNuevo();
+}
+function leerProg(){
+  try{ return JSON.parse(localStorage.getItem("guia_prog") || "null"); }catch(e){ return null; }
+}
+function guardarProg(){
+  try{ localStorage.setItem("guia_prog", JSON.stringify({ actividad, lista: listaJuego, paso })); }catch(e){}
+}
+function borrarProg(){
+  try{ localStorage.removeItem("guia_prog"); }catch(e){}
+}
+function empezarNuevo(){
+  const tomas = tomasGuardadas(actividad);
+  listaJuego = [];
+  NIVELES.forEach(nv=>{
+    const disponibles = mezclar(datos[nv.id] || []);
+    const n = Math.min(tomas[nv.id], disponibles.length);
+    for(let i = 0; i < n; i++) listaJuego.push({ nivel: nv.nombre, texto: disponibles[i] });
+  });
+  if(!listaJuego.length){
+    alert("Sin acciones todavía. Aliméntala en ⚙️.");
+    return;
+  }
+  paso = 0;
+  guardarProg();
+  mostrarPlayer();
+}
+function mostrarPlayer(){
+  document.getElementById("plTitulo").textContent = actividad;
+  document.getElementById("finMsg").style.display = "none";
+  document.getElementById("nivelTag").style.display = "";
+  document.getElementById("btnSig").style.display = "";
+  pintarPaso();
+  ver("vistaPlayer");
+}
+document.getElementById("btnContinuar").onclick = ()=>{
+  const p = leerProg();
+  if(!p) return;
+  actividad = p.actividad;
+  listaJuego = p.lista;
+  paso = Math.min(p.paso, listaJuego.length - 1);
+  mostrarPlayer();
+};
+document.getElementById("btnNueva").onclick = ()=>{
+  borrarProg();
+  empezarNuevo();
+};
+
+// ---------- editor ----------
+function tomasGuardadas(nombre){
+  try{
+    const t = JSON.parse(localStorage.getItem("guia_tomas_" + nombre) || "null");
+    if(t) return Object.assign({}, TOMAS_DEF, t);
+  }catch(e){}
+  return Object.assign({}, TOMAS_DEF);
+}
+async function abrirEditor(nombre, empujar){
+  actividad = nombre;
+  ultimaActividad = nombre;
+  document.getElementById("edTitulo").textContent = nombre;
+  datos = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
+  try{
+    const snap = await getDoc(doc(db, "nivelesActividad", nombre));
+    if(snap.exists() && snap.data().n) datos = Object.assign(datos, snap.data().n);
+  }catch(e){}
+  pintarEditor();
+  ver("vistaEditar", empujar !== false);
+}
+function pintarEditor(){
+  const box = document.getElementById("nivelesBox");
+  box.innerHTML = "";
+  NIVELES.forEach(nv=>{
+    const items = datos[nv.id] || [];
+    const div = document.createElement("div");
+    div.className = "nivel";
+    const h = document.createElement("h3");
+    h.textContent = nv.nombre;
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = items.length + (items.length === 1 ? " acción" : " acciones");
+    h.appendChild(tag);
+    div.appendChild(h);
+    const chips = document.createElement("div");
+    chips.className = "chips";
+    items.forEach((txt, i)=>{
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = txt;
+      const x = document.createElement("button");
+      x.textContent = "✕";
+      x.onclick = ()=>{ quitarItem(nv.id, i); };
+      c.appendChild(x);
+      chips.appendChild(c);
+    });
+    div.appendChild(chips);
+    const fila = document.createElement("div");
+    fila.className = "filaAdd";
+    const inp = document.createElement("input");
+    inp.placeholder = "Nueva acción (" + nv.nombre.toLowerCase() + ")";
+    inp.maxLength = 90;
+    const btn = document.createElement("button");
+    btn.textContent = "+";
+    const agregar = ()=>{ agregarItem(nv.id, inp.value); };
+    btn.onclick = agregar;
+    inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregar(); });
+    fila.appendChild(inp); fila.appendChild(btn);
+    div.appendChild(fila);
+    box.appendChild(div);
+  });
+  const tg = document.getElementById("tomasGrid");
+  tg.innerHTML = "";
+  const tomas = tomasGuardadas(actividad);
+  NIVELES.forEach(nv=>{
+    const lab = document.createElement("label");
+    lab.textContent = nv.nombre;
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.min = "0"; inp.max = "20";
+    inp.value = tomas[nv.id];
+    inp.id = "toma_" + nv.id;
+    lab.appendChild(inp);
+    tg.appendChild(lab);
+  });
+  document.getElementById("msg").textContent = "";
+}
+async function guardar(){
+  try{
+    await setDoc(doc(db, "nivelesActividad", actividad), { n: datos, actualizadoEn: serverTimestamp() }, { merge: true });
+  }catch(e){}
+}
+async function agregarItem(nivel, texto){
+  texto = (texto || "").trim();
+  if(!texto) return;
+  datos[nivel] = datos[nivel] || [];
+  if(datos[nivel].some(t=>t.toLowerCase() === texto.toLowerCase())) return;
+  datos[nivel].push(texto);
+  await guardar();
+  pintarEditor();
+}
+async function quitarItem(nivel, i){
+  datos[nivel].splice(i, 1);
+  await guardar();
+  pintarEditor();
+}
+function leerTomas(){
+  const t = {};
+  NIVELES.forEach(nv=>{
+    const el = document.getElementById("toma_" + nv.id);
+    t[nv.id] = Math.max(0, Math.min(20, parseInt(el.value, 10) || 0));
+  });
+  try{ localStorage.setItem("guia_tomas_" + actividad, JSON.stringify(t)); }catch(e){}
+  return t;
+}
+document.getElementById("btnAtrasEd").onclick = ()=>{
+  pintarLista("listaActsCfg", "editar");
+  ver("vistaConfig");
+};
+
+// ---------- player ----------
+document.getElementById("btnJugar").onclick = ()=>{
+  const tomas = leerTomas();
+  listaJuego = [];
+  NIVELES.forEach(nv=>{
+    const disponibles = mezclar(datos[nv.id] || []);
+    const n = Math.min(tomas[nv.id], disponibles.length);
+    for(let i = 0; i < n; i++) listaJuego.push({ nivel: nv.nombre, texto: disponibles[i] });
+  });
+  const msg = document.getElementById("msg");
+  if(!listaJuego.length){
+    msg.textContent = "Agrega acciones o sube las tomas.";
+    return;
+  }
+  paso = 0;
+  document.getElementById("plTitulo").textContent = actividad;
+  document.getElementById("finMsg").style.display = "none";
+  document.getElementById("nivelTag").style.display = "";
+  document.getElementById("btnSig").style.display = "";
+  pintarPaso();
+  ver("vistaPlayer");
+};
+function pintarPaso(){
+  const total = listaJuego.length;
+  document.getElementById("actividadAhora").textContent = listaJuego[paso].texto;
+  document.getElementById("btnSig").textContent = (paso + 1 >= total) ? "Terminar 🔥" : "Siguiente →";
+}
+document.getElementById("btnSig").onclick = ()=>{
+  if(paso + 1 >= listaJuego.length){
+    document.getElementById("actividadAhora").textContent = "";
+    document.getElementById("finMsg").style.display = "block";
+    document.getElementById("btnSig").style.display = "none";
+    borrarProg();
+    return;
+  }
+  paso++;
+  guardarProg();
+  pintarPaso();
+};
+document.getElementById("btnTerminar").onclick = ()=>{
+  pintarLista("listaActs", "jugar");
+  ver("vistaLista");
+};
+
+pintarLista("listaActs", "jugar");
+</script>
+
+</body>
+</html>
