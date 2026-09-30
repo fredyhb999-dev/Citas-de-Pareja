@@ -29,7 +29,7 @@ async function clavePublica(){
   return crypto.subtle.importKey('jwk', TAQUILLA_PUBLICA,
     { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
 }
-/** Verifica un código. Regresa payload {para,item,vence} o null. */
+/** Verifica un código. Regresa payload {para,item,email,vence} o null. Exige email (forzado sep-2026). */
 export async function verificarCodigo(codigo){
   try{
     const partes = String(codigo || '').trim().split('.');
@@ -41,13 +41,34 @@ export async function verificarCodigo(codigo){
     if(!ok) return null;
     const pay = JSON.parse(new TextDecoder().decode(deB64u(partes[0])));
     if(!pay || !pay.para || !pay.item) return null;
+    pay.email = String(pay.email || '').trim().toLowerCase();
+    if(!pay.email || pay.email.indexOf('@') < 0) return null;
     if(pay.vence && Date.now() > pay.vence) return null;
     return pay;
   }catch(e){ return null; }
 }
-/** Firma un acceso (solo autorizador, con su privada guardada). */
-export async function firmarAcceso(privJwk, para, item, vence){
-  const pay = { para, item, vence: vence || null };
+/** Verifica firma sin checar vencimiento. Para detectar vencidos y dar cortesía una vez. */
+export async function verificarFirma(codigo){
+  try{
+    const partes = String(codigo || '').trim().split('.');
+    if(partes.length !== 2) return null;
+    const datos = new TextEncoder().encode(partes[0]);
+    const firma = deB64u(partes[1]);
+    const key = await clavePublica();
+    const ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, firma, datos);
+    if(!ok) return null;
+    const pay = JSON.parse(new TextDecoder().decode(deB64u(partes[0])));
+    if(!pay || !pay.para || !pay.item) return null;
+    pay.email = String(pay.email || '').trim().toLowerCase();
+    if(!pay.email || pay.email.indexOf('@') < 0) return null;
+    return pay;
+  }catch(e){ return null; }
+}
+/** Firma un acceso (solo autorizador, con su privada guardada). Email obligatorio. */
+export async function firmarAcceso(privJwk, para, item, vence, email){
+  email = String(email || '').trim().toLowerCase();
+  if(!email || email.indexOf('@') < 0) throw new Error('email requerido');
+  const pay = { para, item, email, vence: vence || null };
   const base = b64u(new TextEncoder().encode(JSON.stringify(pay)));
   const key = await crypto.subtle.importKey('jwk', privJwk,
     { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);

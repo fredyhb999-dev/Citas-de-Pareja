@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Contratar</title>
+<title>Adquisición de Experiencias</title>
 <meta name="theme-color" content="#120e1c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,8 +71,8 @@
 
 <button id="btnCasa" type="button">← Inicio</button>
 
-<h1 id="tituloPag">Contrataciones</h1>
-<p class="desc" id="descPag">Actividades y Juegos para esa Cita Especial</p>
+<h1 id="tituloPag">Adquisición de Experiencias</h1>
+<p class="desc" id="descPag">Complicidad en Pareja</p>
 <div id="msg"></div>
 <div class="tabsTienda" id="botonesSec">
   <button data-sec="experiencias" type="button">
@@ -92,18 +92,18 @@
   </button>
 </div>
 <div id="vistaSec" style="display:none;width:100%;flex-direction:column;align-items:center;">
-  <button class="btnSecTienda" id="btnVolverSec" type="button">‹ Contrataciones</button>
+  <button class="btnSecTienda" id="btnVolverSec" type="button">‹ Centro de Adquisiciones</button>
   <div id="listaSec" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
 </div>
 <div id="lista" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
 
 <script type="module">
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase } from "../config.js";
-import { TAQUILLA_FIREBASE, verificarCodigo } from "../taquilla.js";
+import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "../taquilla.js";
 
 const CLAVE_LIC = "licencias";
 function appTaq(){
@@ -149,6 +149,29 @@ async function licenciaValida(item){
   if(!cod) return false;
   const pay = await verificarCodigo(cod);
   return !!(pay && pay.item === item && pay.para === miProyecto());
+}
+/** Cortesía: vencido con firma válida y graciaUsada==false en servidor. */
+async function graciaDisponible(item){
+  try{
+    const cod = leerLic()[item];
+    if(!cod) return null;
+    const estricto = await verificarCodigo(cod);
+    if(estricto) return null;
+    const pay = await verificarFirma(cod);
+    if(!pay || pay.item !== item || pay.para !== miProyecto()) return null;
+    if(!(pay.vence && Date.now() > pay.vence)) return null;
+    const tdb = getFirestore(appTaq());
+    const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30)));
+    let mejor = null;
+    snap.forEach(dd=>{
+      const s = dd.data();
+      if(s.item !== item) return;
+      if(String(s.email || "").trim().toLowerCase() !== String(pay.email || "").trim().toLowerCase()) return;
+      if(s.estado !== "aprobado" || s.graciaUsada !== false) return;
+      mejor = { id: dd.id, s };
+    });
+    return mejor;
+  }catch(e){ return null; }
 }
 
 async function pintar(){
@@ -224,6 +247,12 @@ async function tarjetaPack(p){
       btn.className = "btn ghost";
       btn.textContent = "Abrir";
       btn.onclick = ()=>{ location.href = "../" + (p.ruta || "") + "/"; };
+    }else if(await graciaDisponible(p.id)){
+      est.className = "estado ok";
+      est.textContent = "⏳ Venció, pero tienen último acceso disponible";
+      btn.className = "btn";
+      btn.textContent = "Abrir última vez";
+      btn.onclick = ()=>{ location.href = "../" + (p.ruta || "") + "/"; };
     }else{
       est.textContent = "🔒 Sin acceso";
       btn.className = "btn";
@@ -241,12 +270,71 @@ async function pedir(p, btn, est){
       usuarioGoogle = res.user;
     }
     btn.disabled = true;
+    const email = String(usuarioGoogle.email || "").trim().toLowerCase();
     const tdb = getFirestore(appTaq());
+    // Evita duplicados: reutiliza la misma solicitud por correo+juego
+    let prev = null;
+    try{
+      const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30)));
+      const mios = [];
+      snap.forEach(dd=>{
+        const s = dd.data();
+        if(s.item === p.id && String(s.email || "").trim().toLowerCase() === email) mios.push({ id: dd.id, s });
+      });
+      mios.sort((a, b)=>{
+        const fa = a.s.fecha, fb = b.s.fecha;
+        const ta = fa && fa.toDate ? fa.toDate().getTime() : 0;
+        const tb = fb && fb.toDate ? fb.toDate().getTime() : 0;
+        return tb - ta;
+      });
+      prev = mios[0] || null;
+    }catch(e){}
+    if(prev){
+      const es = prev.s.estado || "pendiente";
+      if(es === "aprobado" && prev.s.codigo){
+        try{
+          const pay = await verificarCodigo(prev.s.codigo);
+          if(pay && pay.para === miProyecto() && pay.item === p.id){
+            const lic = leerLic();
+            lic[p.id] = String(prev.s.codigo).trim();
+            guardarLic(lic);
+            est.textContent = "✅ Ya tienes acceso. Se agregó a tu menú.";
+            pintar();
+            btn.disabled = false;
+            return;
+          }
+        }catch(e){}
+      }
+      if(es === "pendiente"){
+        est.textContent = "⏳ Ya la pediste. En cuanto se apruebe se activa sola.";
+        escuchar(p.id);
+        btn.disabled = false;
+        return;
+      }
+      // revocado o negado: no crea otra, pide quitar revocación sobre la misma
+      try{
+        await updateDoc(doc(tdb, "solicitudes", prev.id), {
+          estado: "pendiente",
+          fecha: serverTimestamp(),
+          quien: usuarioGoogle.displayName || prev.s.quien || "?",
+          intentos: (prev.s.intentos || 1) + 1,
+          pideDesrevocar: true
+        });
+      }catch(e){
+        est.textContent = "No se pudo reenviar. Revisa tu conexión.";
+        btn.disabled = false;
+        return;
+      }
+      est.textContent = "⏳ Pediste quitar la revocación. En cuanto se re-apruebe se activa sola.";
+      escuchar(p.id);
+      btn.disabled = false;
+      return;
+    }
     await addDoc(collection(tdb, "solicitudes"), {
       para: miProyecto(), item: p.id,
       quien: usuarioGoogle.displayName || "?",
-      email: usuarioGoogle.email || "",
-      estado: "pendiente", fecha: serverTimestamp()
+      email: email,
+      estado: "pendiente", fecha: serverTimestamp(), intentos: 1
     });
     est.textContent = "⏳ Solicitud enviada. Al aprobarse se activará en tu menú.";
     escuchar(p.id);
@@ -279,6 +367,19 @@ function escuchar(){
       });
       for(const d of docs){
         const s = d.data();
+        if((s.estado === "revocado" || s.estado === "negado") && s.email){
+          try{
+            const em = String(s.email).trim().toLowerCase();
+            for(const k of Object.keys(lic)){
+              const payLoc = await verificarCodigo(lic[k]);
+              if(payLoc && String(payLoc.email || "").trim().toLowerCase() === em && payLoc.item === s.item){
+                delete lic[k];
+                cambio = true;
+              }
+            }
+          }catch(e){}
+          continue;
+        }
         if(s.estado !== "aprobado" || !s.codigo) continue;
         const pay = await verificarCodigo(s.codigo);
         if(pay && pay.para === miProyecto() && !(lic[pay.item] && (await verificarCodigo(lic[pay.item])))){

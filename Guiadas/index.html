@@ -108,12 +108,9 @@
 <!-- ============ BLOQUEO (sin acceso) ============ -->
 <div class="vista" id="vistaBloqueo">
   <h1>Acceso 🔒</h1>
-  <p class="desc">Citas Guiadas necesita permiso del desarrollador.</p>
-  <input class="buscar" id="licNombre" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="off">
-  <button class="btnPri" id="btnGoogle">Entrar con Google</button>
-  <p class="desc" style="font-size:.78rem;">Login oficial de Google: solo verificamos tu correo. No vemos tu contraseña ni tus datos.</p>
-  <p class="desc" id="quienGoogle" style="display:none"></p>
-  <button class="btnPri" id="btnPedir" style="display:none">Pedir acceso</button>
+  <p class="desc">Citas Guiadas no está activado en tu menú. Pídelo en Centro de Adquisiciones y al aprobarse aparece solo.</p>
+  <button class="btnPri" id="btnTienda">Ir a Centro de Adquisiciones</button>
+  <button class="btnSec" id="btnRevisar">Ya lo pedí, revisar acceso</button>
   <button class="btnSec" id="btnTengo">Tengo código</button>
   <textarea id="licCodigo" style="display:none;width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:12px;font-size:.8rem;min-height:90px;" placeholder="Pega tu código aquí"></textarea>
   <button class="btnPri" id="btnValidar" style="display:none">Validar y entrar</button>
@@ -168,12 +165,21 @@
   <button class="btnSec" id="btnNueva">Cita nueva</button>
 </div>
 
+<!-- ============ MODAL CORTESÍA VENCIDO ============ -->
+<div id="modalGracia" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:22px 20px;text-align:center;">
+    <div style="font-size:.95rem;line-height:1.5;">Su acceso venció 🥺 pero hoy no les arruinamos su cita 💛 les obsequiamos este último acceso</div>
+    <div style="font-size:.75rem;color:var(--fg-muted);margin-top:10px;text-align:right;">Solicite su acceso en<br>Centro de Adquisiciones</div>
+    <button class="btnPri" id="btnGraciaOk" style="margin-top:14px;">Aceptar</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase } from "../config.js";
-import { TAQUILLA_FIREBASE, verificarCodigo } from "../taquilla.js";
+import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "../taquilla.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
 const NIVELES = [
@@ -206,14 +212,47 @@ async function tengoAcceso(){
   if(pay.para !== miProyecto()) return false;
   return true;
 }
+function mostrarGracia(){
+  document.getElementById("modalGracia").style.display = "flex";
+}
+document.getElementById("btnGraciaOk").onclick = ()=>{
+  document.getElementById("modalGracia").style.display = "none";
+};
 async function entrar(){
   if(await tengoAcceso()){
     pintarLista("listaActs", "jugar");
     ver("vistaLista", false);
-  }else{
-    ver("vistaBloqueo", false);
-    escucharAprobacion();
+    return;
   }
+  // Cortesía única si venció y no se ha usado
+  try{
+    const lic = leerLicencias()[ITEM_ID];
+    if(lic){
+      const pay = await verificarFirma(lic);
+      if(pay && pay.item === ITEM_ID && pay.para === miProyecto() && pay.vence && Date.now() > pay.vence){
+        const tapp = appTaq();
+        const tdb = getFirestore(tapp);
+        const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30)));
+        let docGracia = null;
+        snap.forEach(dd=>{
+          const s = dd.data();
+          if(s.item !== ITEM_ID) return;
+          if(String(s.email || "").trim().toLowerCase() !== String(pay.email || "").trim().toLowerCase()) return;
+          if(s.estado !== "aprobado" || s.graciaUsada !== false) return;
+          docGracia = { id: dd.id, s };
+        });
+        if(docGracia){
+          try{ await updateDoc(doc(tdb, "solicitudes", docGracia.id), { graciaUsada: true, graciaFecha: serverTimestamp() }); }catch(e){}
+          pintarLista("listaActs", "jugar");
+          ver("vistaLista", false);
+          mostrarGracia();
+          return;
+        }
+      }
+    }
+  }catch(e){}
+  ver("vistaBloqueo", false);
+  escucharAprobacion();
 }
 function licMsg(t){
   document.getElementById("licMsg").textContent = t || "";
@@ -223,49 +262,22 @@ function appTaq(){
   try{ return getApp("taquilla"); }
   catch(e){ return initializeApp(TAQUILLA_FIREBASE, "taquilla"); }
 }
-document.getElementById("btnGoogle").onclick = async ()=>{
-  licMsg("");
-  try{
-    const tapp = appTaq();
-    const auth = getAuth(tapp);
-    const res = await signInWithPopup(auth, new GoogleAuthProvider());
-    usuarioGoogle = res.user;
-    document.getElementById("btnGoogle").style.display = "none";
-    const qg = document.getElementById("quienGoogle");
-    qg.style.display = "block";
-    qg.textContent = "✅ " + (usuarioGoogle.displayName || "") + " (" + usuarioGoogle.email + ")";
-    document.getElementById("btnPedir").style.display = "block";
-    if(usuarioGoogle.displayName && !document.getElementById("licNombre").value){
-      document.getElementById("licNombre").value = usuarioGoogle.displayName;
-    }
-  }catch(e){
-    const c = (e && e.code) || "";
-    if(c === "auth/operation-not-allowed") licMsg("Google no está activado en taquilla (Authentication → Google).");
-    else if(c === "auth/unauthorized-domain") licMsg("Dominio no autorizado. Prueba en http://localhost:8423/Guiadas/");
-    else if(c === "auth/popup-blocked") licMsg("Permite ventanas emergentes para este sitio.");
-    else licMsg("No se pudo entrar con Google (" + c + "). Revisa tu conexión.");
-  }
+document.getElementById("btnTienda").onclick = ()=>{
+  location.href = "../Tienda/?sec=experiencias";
 };
-document.getElementById("btnPedir").onclick = async (e)=>{
+document.getElementById("btnRevisar").onclick = async (e)=>{
   licMsg("");
-  if(!usuarioGoogle){ licMsg("Entra con Google primero."); return; }
-  const nombre = document.getElementById("licNombre").value.trim() || usuarioGoogle.displayName || "?";
   e.target.disabled = true;
-  try{
-    const tapp = appTaq();
-    const tdb = getFirestore(tapp);
-    await addDoc(collection(tdb, "solicitudes"), {
-      para: miProyecto(), item: ITEM_ID, quien: nombre,
-      email: usuarioGoogle.email || "",
-      estado: "pendiente", fecha: serverTimestamp()
-    });
-    licMsg("Solicitud enviada. En cuanto se apruebe entras sola. ✅");
-    escucharAprobacion();
-  }catch(err){
-    licMsg("No se pudo enviar. Revisa tu conexión.");
-  }
-  e.target.disabled = false;
+  try{ await entrar(); }
+  finally{ e.target.disabled = false; }
 };
+function quitarLicencia(){
+  try{
+    const lic = leerLicencias();
+    delete lic[ITEM_ID];
+    localStorage.setItem(CLAVE_LIC, JSON.stringify(lic));
+  }catch(e){}
+}
 let stopEscucha = null;
 function escucharAprobacion(){
   try{ if(stopEscucha) stopEscucha(); }catch(e){}
@@ -273,7 +285,7 @@ function escucharAprobacion(){
     const tapp = appTaq();
     const tdb = getFirestore(tapp);
     const q = query(collection(tdb, "solicitudes"),
-      where("para", "==", miProyecto()), limit(20));
+      where("para", "==", miProyecto()), limit(30));
     stopEscucha = onSnapshot(q, async (snap)=>{
       const docs = snap.docs.slice().sort((a, b)=>{
         const fa = a.data().fecha, fb = b.data().fecha;
@@ -281,6 +293,28 @@ function escucharAprobacion(){
         const tb = fb && fb.toDate ? fb.toDate().getTime() : 0;
         return tb - ta;
       });
+      // 1) Si mi licencia actual fue revocada/negada, quitarla en ese momento
+      try{
+        const actual = leerLicencias()[ITEM_ID];
+        if(actual){
+          const payAct = await verificarCodigo(actual);
+          if(payAct){
+            const rev = docs.find(d=>{
+              const s = d.data();
+              return s.item === ITEM_ID
+                && String(s.email || "").trim().toLowerCase() === String(payAct.email || "").trim().toLowerCase()
+                && (s.estado === "revocado" || s.estado === "negado");
+            });
+            if(rev){
+              quitarLicencia();
+              try{ if(stopEscucha) stopEscucha(); }catch(e){}
+              ver("vistaBloqueo", false);
+              licMsg("Acceso revocado por el desarrollador.");
+              return;
+            }
+          }
+        }
+      }catch(e){}
       for(const d of docs){
         if(d.data().item !== ITEM_ID || d.data().estado !== "aprobado") continue;
         const c = d.data().codigo;
@@ -306,14 +340,23 @@ document.getElementById("btnValidar").onclick = async ()=>{
   licMsg("");
   const cod = document.getElementById("licCodigo").value;
   const pay = await verificarCodigo(cod);
-  if(!pay || pay.item !== ITEM_ID || pay.para !== miProyecto()){
-    licMsg("Código inválido o vencido.");
+  if(pay && pay.item === ITEM_ID && pay.para === miProyecto()){
+    const lic = leerLicencias();
+    lic[ITEM_ID] = cod.trim();
+    try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+    entrar();
     return;
   }
-  const lic = leerLicencias();
-  lic[ITEM_ID] = cod.trim();
-  try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
-  entrar();
+  // Acepta vencido con firma válida para activar la cortesía única en entrar()
+  const pf = await verificarFirma(cod);
+  if(pf && pf.item === ITEM_ID && pf.para === miProyecto()){
+    const lic = leerLicencias();
+    lic[ITEM_ID] = cod.trim();
+    try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+    entrar();
+    return;
+  }
+  licMsg("Código inválido o vencido.");
 };
 
 let actividad = null;

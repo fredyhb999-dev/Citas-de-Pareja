@@ -141,7 +141,7 @@
 </head>
 <body>
 
-<a class="menu-btn" id="menuBtn" href="Citas/actividades.html" aria-label="Configuración" style="display:none">☰</a>
+<a class="menu-btn" id="menuBtn" href="Tienda/" aria-label="Centro de Adquisiciones" style="display:none">🛒</a>
 
 <div class="eyebrow">Complicidad en Pareja</div>
 
@@ -245,15 +245,6 @@
   <div class="subTitulo">Juegos 🎮</div>
   <div id="packsJuegos" style="width:100%"></div>
 </div>
-
-<a class="card" href="Tienda/">
-  <span class="icon">🛒</span>
-  <span class="label">
-    <div class="title">Contratar</div>
-    <div class="subtitle">Juegos y actividades publicados</div>
-  </span>
-  <span class="chevron">›</span>
-</a>
 </div>
 
 <div id="vistaExp" style="display:none;width:100%">
@@ -282,8 +273,9 @@
 
 <script type="module">
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, where, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "./firebase-config.js";
+import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "./taquilla.js";
 import {
   CLAVE_CONFIG, leerConfigGuardada, guardarConfig,
   resolverFirebase, guardarUsuariosLocal, leerUsuariosLocal, cargarUsuarios
@@ -331,6 +323,18 @@ function verPaso(n){
 function leerGuardado(){
   try{ return JSON.parse(localStorage.getItem(CLAVE_LOCAL)); }catch(e){ return null; }
 }
+function iconoMenu(modo){
+  const b = document.getElementById("menuBtn");
+  if(modo === "exp"){
+    b.textContent = "☰";
+    b.href = "Citas/actividades.html";
+    b.setAttribute("aria-label", "Configuración");
+  }else{
+    b.textContent = "🛒";
+    b.href = "Tienda/";
+    b.setAttribute("aria-label", "Centro de Adquisiciones");
+  }
+}
 function mostrarMenu(nombre){
   document.getElementById("quienNombre").textContent = nombre;
   try{
@@ -338,6 +342,7 @@ function mostrarMenu(nombre){
     document.getElementById("heroFecha").textContent = f.charAt(0).toUpperCase() + f.slice(1);
   }catch(e){}
   document.getElementById("menuBtn").style.display = "";
+  iconoMenu("menu");
   document.getElementById("vistaMenu").style.display = "block";
   document.getElementById("vistaExp").style.display = "none";
   asistenteEl.style.display = "none";
@@ -395,17 +400,37 @@ async function renderPacks(){
   let miId = "";
   try{ miId = resolverFirebase(firebaseConfigBase).projectId || ""; }catch(e){}
   const lic = leerLic();
+  // Mapa de gracias disponibles por item (vencido + graciaUsada==false)
+  let gracias = {};
+  try{
+    let tapp2;
+    try{ tapp2 = getApp("taquilla-menu"); }
+    catch(e){ tapp2 = initializeApp(TAQUILLA_FIREBASE, "taquilla-menu"); }
+    const tdb2 = getFirestore(tapp2);
+    const snap2 = await getDocs(query(collection(tdb2, "solicitudes"), where("para", "==", miId), limit(30)));
+    snap2.forEach(d=>{
+      const s = d.data();
+      if(s.estado === "aprobado" && s.graciaUsada === false && s.item) gracias[s.item + "|" + String(s.email || "").toLowerCase()] = true;
+    });
+  }catch(e){}
   let juegos = 0;
   for(const p of packs){
     const cod = lic[p.id];
     let ok = false;
+    let gracia = false;
     if(cod){
       try{
         const pay = await verificarCodigo(cod);
         ok = !!(pay && pay.item === p.id && pay.para === miId);
+        if(!ok){
+          const pf = await verificarFirma(cod);
+          if(pf && pf.item === p.id && pf.para === miId && pf.vence && Date.now() > pf.vence){
+            if(gracias[p.id + "|" + String(pf.email || "").toLowerCase()]) gracia = true;
+          }
+        }
       }catch(e){}
     }
-    if(!ok) continue;
+    if(!ok && !gracia) continue;
     const card = tarjetaPack(p);
     if((p.seccion || "experiencias") === "juegos"){
       boxJ.appendChild(card);
@@ -416,6 +441,49 @@ async function renderPacks(){
   }
   if(juegos) secJ.style.display = "block";
 }
+// Quita del menú en ese momento si revocan: escucha solicitudes de mi proyecto
+function escucharRevocadosMenu(){
+  try{
+    let miId = "";
+    try{ miId = resolverFirebase(firebaseConfigBase).projectId || ""; }catch(e){}
+    if(!miId) return;
+    let tapp;
+    try{ tapp = getApp("taquilla-menu"); }
+    catch(e){ tapp = initializeApp(TAQUILLA_FIREBASE, "taquilla-menu"); }
+    const tdb = getFirestore(tapp);
+    const q = query(collection(tdb, "solicitudes"), where("para", "==", miId), limit(30));
+    onSnapshot(q, async (snap)=>{
+      let lic = leerLic();
+      let cambio = false;
+      for(const d of snap.docs){
+        const s = d.data();
+        if((s.estado === "revocado" || s.estado === "negado") && s.email && s.item && lic[s.item]){
+          try{
+            const payLoc = await verificarCodigo(lic[s.item]);
+            if(payLoc && String(payLoc.email || "").toLowerCase() === String(s.email).toLowerCase()){
+              delete lic[s.item];
+              cambio = true;
+            }
+          }catch(e){}
+        }
+        if(s.estado === "aprobado" && s.codigo){
+          try{
+            const pay = await verificarCodigo(s.codigo);
+            if(pay && pay.para === miId && pay.item && !(lic[pay.item] && (await verificarCodigo(lic[pay.item])))){
+              lic[pay.item] = String(s.codigo).trim();
+              cambio = true;
+            }
+          }catch(e){}
+        }
+      }
+      if(cambio){
+        try{ localStorage.setItem("licencias", JSON.stringify(lic)); }catch(e){}
+        renderPacks();
+      }
+    }, ()=>{});
+  }catch(e){}
+}
+escucharRevocadosMenu();
 function mostrarIdentidad(usuarios){
   listaEl.innerHTML = "";
   usuarios.forEach(u=>{
@@ -429,7 +497,7 @@ function mostrarIdentidad(usuarios){
     listaEl.appendChild(b);
   });
   asistenteEl.style.display = "none";
-  document.getElementById("menuBtn").style.display = "";
+  document.getElementById("menuBtn").style.display = "none";
   menuEl.style.display = "none";
   pantallaEl.style.display = "flex";
 }
@@ -652,10 +720,12 @@ async function iniciarScan(){
 document.getElementById("btnExp").onclick = ()=>{
   document.getElementById("vistaMenu").style.display = "none";
   document.getElementById("vistaExp").style.display = "block";
+  iconoMenu("exp");
 };
 document.getElementById("btnExpVolver").onclick = ()=>{
   document.getElementById("vistaExp").style.display = "none";
   document.getElementById("vistaMenu").style.display = "block";
+  iconoMenu("menu");
 };
 iniciar();
 </script>

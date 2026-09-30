@@ -37,6 +37,7 @@
   .badge.pendiente{ color:var(--teal); border-color:var(--teal); }
   .badge.aprobado{ color:#6dffa0; border-color:#6dffa0; }
   .badge.negado{ color:var(--rojo); border-color:var(--rojo); }
+  .badge.revocado{ color:var(--rojo); border-color:var(--rojo); }
   textarea, input[type=text], input[type=number]{ width:100%; border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg); color:var(--fg); padding:12px; font-size:.88rem; font-family:'Inter',sans-serif; margin-bottom:10px; }
   textarea{ min-height:90px; resize:vertical; }
@@ -75,6 +76,7 @@
   <p class="mini">Sin solicitud: para una base directa.</p>
   <input type="text" id="mPara" placeholder="Proyecto destino (ej. mi-proyecto)">
   <input type="text" id="mItem" placeholder="Juego o actividad (ej. guiadas)" value="guiadas">
+  <input type="text" id="mEmail" placeholder="Correo del usuario (obligatorio)">
   <div class="fila">
     <input type="number" id="mDias" placeholder="Días de vigencia (vacío = infinito)" min="1" max="3650">
     <button class="btn" id="btnManual">Firmar</button>
@@ -83,11 +85,12 @@
 </div>
 
 <h1 style="font-size:1.3rem;margin-top:10px;">Solicitudes</h1>
+<input type="text" id="buscar" placeholder="🔍 Buscar por correo, nombre o proyecto..." style="width:100%;max-width:520px;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:12px 14px;font-size:.88rem;margin-bottom:12px;">
 <div id="lista" style="width:100%;max-width:520px;"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { TAQUILLA_FIREBASE, firmarAcceso } from "../taquilla.js";
 
 const CLAVE_PRIV = "taquilla_priv";
@@ -124,27 +127,32 @@ function diasAVence(dias){
   if(!dias || dias < 1) return null;
   return Date.now() + dias * 86400000;
 }
-async function firmar(para, item, dias, btn){
+async function firmar(para, item, dias, email, btn){
   const priv = leerPriv();
   if(!priv){ alert("Guarda tu llave privada primero."); return null; }
   para = (para || "").trim();
   item = (item || "").trim();
+  email = String(email || "").trim().toLowerCase();
   if(!para || !item){ alert("Falta destino o juego."); return null; }
+  if(!email || email.indexOf("@") < 0){ alert("Falta correo válido."); return null; }
   btn.disabled = true;
   try{
-    return await firmarAcceso(priv, para, item, diasAVence(dias));
+    const v = diasAVence(dias);
+    const cod = await firmarAcceso(priv, para, item, v, email);
+    return { cod, vence: v, email };
   }finally{ btn.disabled = false; }
 }
 document.getElementById("btnManual").onclick = async (e)=>{
-  const cod = await firmar(
+  const r = await firmar(
     document.getElementById("mPara").value,
     document.getElementById("mItem").value,
     document.getElementById("mDias").value,
+    document.getElementById("mEmail").value,
     e.target);
-  if(cod){
+  if(r){
     const c = document.getElementById("mCodigo");
     c.style.display = "block";
-    c.textContent = cod;
+    c.textContent = r.cod;
   }
 };
 
@@ -154,16 +162,32 @@ function fechaCorta(ts){
     return f.toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   }catch(e){ return ""; }
 }
+let cacheSol = [];
+function venceTexto(v){
+  if(!v) return "∞ infinito";
+  try{
+    const f = new Date(v);
+    return f.toLocaleString("es-MX", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }catch(e){ return ""; }
+}
+document.getElementById("buscar").addEventListener("input", pintarSol);
 onSnapshot(query(solRef, orderBy("fecha", "desc")), (snap)=>{
+  cacheSol = snap.docs.map(d=>({ id: d.id, s: d.data() }));
+  pintarSol();
+}, ()=>{});
+function pintarSol(){
+  const t = (document.getElementById("buscar").value || "").trim().toLowerCase();
   const box = document.getElementById("lista");
   box.innerHTML = "";
-  if(!snap.docs.length){
+  const lista = cacheSol.filter(({s})=>{
+    if(!t) return true;
+    return ((s.quien || "") + " " + (s.email || "") + " " + (s.para || "") + " " + (s.item || "")).toLowerCase().indexOf(t) >= 0;
+  });
+  if(!lista.length){
     box.innerHTML = '<p class="desc">Sin solicitudes.</p>';
     return;
   }
-  snap.docs.forEach(d=>{
-    const s = d.data();
-    const id = d.id;
+  lista.forEach(({id, s})=>{
     const div = document.createElement("div");
     div.className = "caja";
     const b = document.createElement("span");
@@ -173,31 +197,62 @@ onSnapshot(query(solRef, orderBy("fecha", "desc")), (snap)=>{
     h.textContent = (s.quien || "?") + " → " + (s.item || "?");
     const m = document.createElement("p");
     m.className = "mini";
-    m.textContent = "Para: " + (s.para || "?") + (s.email ? " · " + s.email : "") + " · " + fechaCorta(s.fecha);
+    m.textContent = "Para: " + (s.para || "?") + (s.email ? " · " + s.email : "") + " · " + fechaCorta(s.fecha)
+      + (s.vence ? " · vence: " + venceTexto(s.vence) : (s.estado === "aprobado" ? " · vence: ∞" : ""))
+      + (s.intentos > 1 ? " · intentos: " + s.intentos : "");
     div.appendChild(b); div.appendChild(h); div.appendChild(m);
+    if(s.pideDesrevocar && s.estado === "pendiente"){
+      const av = document.createElement("p");
+      av.className = "mini";
+      av.style.color = "var(--teal)";
+      av.textContent = "🔄 Pide quitar la revocación. Re-aprueba para devolver acceso.";
+      div.appendChild(av);
+    }
+    if(s.estado === "aprobado" && s.vence){
+      const g = document.createElement("p");
+      g.className = "mini";
+      g.textContent = s.graciaUsada ? "Cortesía usada." : "Cortesía disponible.";
+      div.appendChild(g);
+    }
     if(s.estado === "aprobado" && s.codigo){
       const c = document.createElement("div");
       c.className = "codigo";
       c.textContent = s.codigo;
       div.appendChild(c);
+      const fila = document.createElement("div");
+      fila.className = "fila";
+      fila.style.marginTop = "10px";
+      const rev = document.createElement("button");
+      rev.className = "btn danger"; rev.textContent = "Revocar";
+      rev.onclick = async ()=>{
+        if(!confirm("¿Revocar acceso a " + (s.email || s.quien || "?") + "? Se le quitará en ese momento si está conectado.")) return;
+        rev.disabled = true;
+        try{ await updateDoc(doc(db, "solicitudes", id), { estado: "revocado", revocadoEn: serverTimestamp() }); }
+        finally{ rev.disabled = false; }
+      };
+      fila.appendChild(rev);
+      div.appendChild(fila);
     }
-    if((s.estado || "pendiente") === "pendiente"){
+    if((s.estado || "pendiente") === "pendiente" || s.estado === "negado" || s.estado === "revocado"){
       const fila = document.createElement("div");
       fila.className = "fila";
       const inp = document.createElement("input");
       inp.type = "number"; inp.min = "1"; inp.placeholder = "Días (vacío = ∞)";
       const ok = document.createElement("button");
-      ok.className = "btn"; ok.textContent = "Aprobar";
+      ok.className = "btn"; ok.textContent = s.estado === "pendiente" ? "Aprobar" : "Re-aprobar";
       const no = document.createElement("button");
       no.className = "btn danger"; no.textContent = "Negar";
       ok.onclick = async ()=>{
-        const cod = await firmar(s.para, s.item, inp.value, ok);
-        if(!cod) return;
-        await updateDoc(doc(db, "solicitudes", id), { estado: "aprobado", codigo: cod });
-        const c = document.createElement("div");
-        c.className = "codigo";
-        c.textContent = cod;
-        div.appendChild(c);
+        const r = await firmar(s.para, s.item, inp.value, s.email, ok);
+        if(!r) return;
+        const dias = parseInt(inp.value, 10);
+        const finito = !!(dias && dias >= 1);
+        await updateDoc(doc(db, "solicitudes", id), {
+          estado: "aprobado", codigo: r.cod, email: r.email,
+          vence: r.vence, dias: finito ? dias : null,
+          aprobadoEn: serverTimestamp(), pideDesrevocar: false,
+          graciaUsada: finito ? false : null
+        });
       };
       no.onclick = async ()=>{
         if(!confirm("¿Negar acceso?")) return;
@@ -208,7 +263,7 @@ onSnapshot(query(solRef, orderBy("fecha", "desc")), (snap)=>{
     }
     box.appendChild(div);
   });
-}, ()=>{});
+}
 </script>
 
 </body>
