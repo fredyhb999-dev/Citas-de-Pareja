@@ -49,6 +49,8 @@
 <body>
 
 <a class="back" href="index.html">‹ Panel</a>
+<button id="btnGoogle" type="button" style="position:absolute;top:max(52px, calc(env(safe-area-inset-top) + 32px));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">Entrar con Google</button>
+<p class="desc" id="quienGoogle" style="display:none"></p>
 <div class="eyebrow">Panel · Permisos</div>
 <h1>Correos que publican 📧</h1>
 <p class="desc">Quién puede publicar en el catálogo. Sin correos fijos en el código: esta lista manda. Se guarda en <b>config/permisos</b> de taquilla.</p>
@@ -67,6 +69,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { TAQUILLA_FIREBASE } from "../taquilla.js";
 
 const CLAVE_PRIV = "taquilla_priv";
@@ -77,6 +80,38 @@ try{
 
 const app = initializeApp(TAQUILLA_FIREBASE);
 const db = getFirestore(app);
+const auth = getAuth(app);
+let yoEmail = "";
+function pintarYo(){
+  const q = document.getElementById("quienGoogle");
+  const b = document.getElementById("btnGoogle");
+  if(yoEmail){
+    q.style.display = "block";
+    q.textContent = "✅ " + yoEmail;
+    b.style.display = "none";
+  }else{
+    q.style.display = "none";
+    b.style.display = "";
+  }
+}
+document.getElementById("btnGoogle").onclick = async ()=>{
+  msg("");
+  try{
+    const res = await signInWithPopup(auth, new GoogleAuthProvider());
+    yoEmail = String(res.user.email || "").trim().toLowerCase();
+    pintarYo();
+  }catch(e){ msg("No se pudo entrar con Google."); }
+};
+onAuthStateChanged(auth, (u)=>{
+  yoEmail = u && u.email ? String(u.email).trim().toLowerCase() : "";
+  pintarYo();
+});
+async function puedoEditar(){
+  const act = (await leer()) || [];
+  if(!yoEmail) return false;
+  if(!act.length) return true;
+  return act.indexOf(yoEmail) >= 0;
+}
 const ref = doc(db, "config", "permisos");
 function msg(t, ok){
   const m = document.getElementById("msg");
@@ -118,6 +153,7 @@ async function pintar(){
     x.textContent = "✕";
     x.onclick = async ()=>{
       if(!confirm("¿Quitar " + em + "?")) return;
+      if(!(await puedoEditar())){ msg("Entra con Google de un publicador."); return; }
       try{
         const act = (await leer()) || [];
         await guardar(act.filter(e=>e !== em));
@@ -133,6 +169,7 @@ document.getElementById("btnAdd").onclick = async ()=>{
   msg("");
   const em = normalizar(document.getElementById("nuevo").value);
   if(em.indexOf("@") < 0){ msg("Correo inválido."); return; }
+  if(!(await puedoEditar())){ msg("Entra con Google de un publicador."); return; }
   try{
     const act = (await leer()) || [];
     if(act.indexOf(em) >= 0){ msg("Ya está en la lista."); return; }

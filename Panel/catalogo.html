@@ -68,6 +68,8 @@
 <body>
 
 <a class="back" href="index.html">‹ Panel</a>
+<button id="btnGoogle" type="button" style="position:absolute;top:max(52px, calc(env(safe-area-inset-top) + 32px));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">Entrar con Google</button>
+<p class="desc" id="quienGoogle" style="display:none"></p>
 <div class="eyebrow">Panel · Catálogo</div>
 <h1 id="tituloPag">Catálogo de Adquisiciones 🗂️</h1>
 <p class="desc">Control del catálogo por sección, con orden y NUEVO. Guiadas vive aparte y no se toca aquí.</p>
@@ -124,6 +126,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { TAQUILLA_FIREBASE } from "../taquilla.js";
 
 const CLAVE_PRIV = "taquilla_priv";
@@ -134,6 +137,45 @@ try{
 
 const app = initializeApp(TAQUILLA_FIREBASE);
 const db = getFirestore(app);
+const auth = getAuth(app);
+let yoEmail = "";
+function pintarYo(){
+  const q = document.getElementById("quienGoogle");
+  const b = document.getElementById("btnGoogle");
+  if(yoEmail){
+    q.style.display = "block";
+    q.textContent = "✅ " + yoEmail;
+    b.style.display = "none";
+  }else{
+    q.style.display = "none";
+    b.style.display = "";
+  }
+}
+document.getElementById("btnGoogle").onclick = async ()=>{
+  msg("");
+  try{
+    const res = await signInWithPopup(auth, new GoogleAuthProvider());
+    yoEmail = String(res.user.email || "").trim().toLowerCase();
+    pintarYo();
+  }catch(e){
+    const c = (e && e.code) || "";
+    if(c === "auth/unauthorized-domain") msg("Dominio no autorizado en taquilla.");
+    else if(c === "auth/popup-blocked") msg("Permite ventanas emergentes.");
+    else msg("No se pudo entrar con Google.");
+  }
+};
+onAuthStateChanged(auth, (u)=>{
+  yoEmail = u && u.email ? String(u.email).trim().toLowerCase() : "";
+  pintarYo();
+});
+async function soyPublicador(){
+  if(!yoEmail) return false;
+  try{
+    const snap = await getDoc(doc(db, "config", "permisos"));
+    const arr = snap.exists() && Array.isArray(snap.data().correos) ? snap.data().correos : [];
+    return arr.map(e=>String(e).trim().toLowerCase()).indexOf(yoEmail) >= 0;
+  }catch(e){ return false; }
+};
 const packsRef = collection(db, "packs");
 const SECS = [
   { id: "experiencias", nombre: "💑 Experiencias en Pareja" },
@@ -245,6 +287,8 @@ document.getElementById("btnGuardar").onclick = async (e)=>{
   const f = leerForm();
   if(!f.id || !/^[a-z0-9_-]{2,30}$/i.test(f.id)){ msg("ID inválido: letras/números/_/-, 2-30."); return; }
   if(!f.titulo){ msg("Pon título."); return; }
+  if(!yoEmail){ msg("Entra con Google primero."); return; }
+  if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
   const repetido = cacheItems.some(p=>p.id !== f.id && (p.seccion || "experiencias") === f.seccion && (p.icono || "") === f.icono);
   e.target.disabled = true;
   try{
@@ -315,6 +359,8 @@ async function cargar(){
       const act = document.createElement("button");
       act.className = "btn ghost"; act.textContent = (p.activo === false) ? "Activar" : "Ocultar";
       act.onclick = async ()=>{
+        if(!yoEmail){ msg("Entra con Google primero."); return; }
+        if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
         act.disabled = true;
         try{ await setDoc(doc(db, "packs", p.id), { activo: !(p.activo !== false), actualizadoEn: serverTimestamp() }, { merge: true }); cargar(); }
         catch(e){ msg("No se pudo cambiar. Revisa reglas."); }
@@ -324,6 +370,8 @@ async function cargar(){
       bor.className = "btn danger"; bor.textContent = "Borrar";
       bor.onclick = async ()=>{
         if(!confirm("¿Borrar " + p.id + " del catálogo?")) return;
+        if(!yoEmail){ msg("Entra con Google primero."); return; }
+        if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
         bor.disabled = true;
         try{ await deleteDoc(doc(db, "packs", p.id)); cargar(); }
         catch(e){ msg("No se pudo borrar. Revisa reglas."); }
