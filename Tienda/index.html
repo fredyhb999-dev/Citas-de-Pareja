@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Contratar</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.desc{ font-size:.88rem; color:var(--fg-muted); max-width:380px; margin:0 0 18px; text-align:center; }
+  .pack{ width:100%; max-width:420px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .pack h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1.05rem; }
+  .pack .d{ font-size:.85rem; color:var(--fg-muted); margin:0 0 12px; }
+  .pack .estado{ font-size:.8rem; margin-bottom:10px; }
+  .pack .estado.ok{ color:var(--teal); }
+  .tabsTienda{ display:flex; flex-direction:column; gap:12px; margin-bottom:18px; width:100%; max-width:420px; }
+  .tabsTienda button{ display:flex; align-items:center; gap:16px; width:100%;
+    font-family:'Chakra Petch',sans-serif; padding:20px; border-radius:16px; cursor:pointer;
+    border:1px solid var(--card-border); background:var(--card); color:var(--fg); text-align:left; }
+  .tabsTienda button:active{ transform:scale(.97); border-color:var(--teal); }
+  .tabsTienda button.activo{ border-color:var(--teal); }
+  .tabsTienda .icon{ font-size:2rem; }
+  .tabsTienda .label{ flex:1; }
+  .tabsTienda .title{ font-weight:700; font-size:1.05rem; }
+  .tabsTienda .subtitle{ font-size:.82rem; color:var(--fg-muted); margin-top:2px; font-family:'Inter',sans-serif; }
+  .nuevo{ display:inline-block; font-size:.68rem; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    border-radius:8px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
+  .subTituloSec{ width:100%; max-width:420px; font-family:'Chakra Petch',sans-serif; font-size:.85rem; font-weight:700;
+    letter-spacing:.2em; text-transform:uppercase; color:var(--fg); margin:6px 0 12px; text-align:center; }
+  .btnSecTienda{ background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; padding:8px; margin-bottom:6px; text-decoration:underline; }
+  .btn{ width:100%; border:none; border-radius:12px; cursor:pointer; padding:13px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:.92rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); text-decoration:none;
+    display:block; text-align:center; }
+  .btn:active{ transform:scale(.97); }
+  .btn:disabled{ opacity:.4; }
+  .btn.ghost{ background:var(--bg-2); color:var(--fg); border:1px solid var(--card-border); }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; max-width:420px; }
+  h1.chico{ font-size:1.4rem; }
+  #btnCasa{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
+    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; padding:4px;
+  }
+</style>
+</head>
+<body>
+
+<button id="btnCasa" type="button">← Inicio</button>
+
+<h1 id="tituloPag">Contrataciones</h1>
+<p class="desc" id="descPag">Actividades y Juegos para esa Cita Especial</p>
+<div id="msg"></div>
+<div class="tabsTienda" id="botonesSec">
+  <button data-sec="experiencias" type="button">
+    <span class="icon">💑</span>
+    <span class="label"><div class="title">Experiencias en Pareja</div>
+    <div class="subtitle">Citas y momentos para compartir</div></span>
+  </button>
+  <button data-sec="juegos" type="button">
+    <span class="icon">🎮</span>
+    <span class="label"><div class="title">Juegos</div>
+    <div class="subtitle">Para divertirse juntos</div></span>
+  </button>
+  <button data-sec="extras" type="button">
+    <span class="icon">✨</span>
+    <span class="label"><div class="title">Extras</div>
+    <div class="subtitle">Lo que vaya llegando</div></span>
+  </button>
+</div>
+<div id="vistaSec" style="display:none;width:100%;flex-direction:column;align-items:center;">
+  <button class="btnSecTienda" id="btnVolverSec" type="button">‹ Contrataciones</button>
+  <div id="listaSec" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
+</div>
+<div id="lista" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
+
+<script type="module">
+import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase } from "../config.js";
+import { TAQUILLA_FIREBASE, verificarCodigo } from "../taquilla.js";
+
+const CLAVE_LIC = "licencias";
+function appTaq(){
+  try{ return getApp("taquilla"); }
+  catch(e){ return initializeApp(TAQUILLA_FIREBASE, "taquilla"); }
+}
+function miProyecto(){
+  try{ return resolverFirebase(firebaseConfigBase).projectId || ""; }catch(e){ return ""; }
+}
+function leerLic(){
+  try{ return JSON.parse(localStorage.getItem(CLAVE_LIC) || "{}"); }catch(e){ return {}; }
+}
+function guardarLic(o){
+  try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(o)); }catch(e){}
+}
+let usuarioGoogle = null;
+let packsCache = [];
+const SEC_NOMBRES = { experiencias: "💑 Experiencias en Pareja", juegos: "🎮 Juegos", extras: "✨ Extras" };
+const SEC_DESC = { experiencias: "Material de Apoyo para tu cita", juegos: "Diviértete en esa cita especial", extras: "Retos que te llevarán a otro nivel" };
+let secActual = null;
+try{ secActual = new URLSearchParams(location.search).get("sec"); }catch(e){}
+document.getElementById("btnCasa").onclick = ()=>{ location.href = "../index.html"; };
+if(SEC_NOMBRES[secActual]){
+  document.getElementById("botonesSec").style.display = "none";
+  document.getElementById("vistaSec").style.display = "flex";
+  document.getElementById("btnCasa").style.display = "none";
+  const tp = document.getElementById("tituloPag");
+  tp.textContent = SEC_NOMBRES[secActual];
+  document.getElementById("descPag").textContent = SEC_DESC[secActual];
+}else{
+  document.getElementById("vistaSec").style.display = "none";
+}
+document.querySelectorAll("#botonesSec button").forEach(b=>{
+  b.onclick = ()=>{ location.href = "?sec=" + b.getAttribute("data-sec"); };
+});
+document.getElementById("btnVolverSec").onclick = ()=>{ location.href = location.pathname; };
+const listaEl = document.getElementById("lista");
+const msgEl = document.getElementById("msg");
+function msg(t){ msgEl.textContent = t || ""; }
+
+async function licenciaValida(item){
+  const cod = leerLic()[item];
+  if(!cod) return false;
+  const pay = await verificarCodigo(cod);
+  return !!(pay && pay.item === item && pay.para === miProyecto());
+}
+
+async function pintar(){
+  listaEl.innerHTML = "";
+  packsCache = [];
+  try{
+    const tdb = getFirestore(appTaq());
+    const snap = await getDocs(collection(tdb, "packs"));
+    snap.forEach(d=>packsCache.push(Object.assign({ id: d.id }, d.data())));
+  }catch(e){
+    msg("No se pudo cargar el catálogo. Revisa tu conexión.");
+    return;
+  }
+  if(!packsCache.length){
+    listaEl.innerHTML = '<p class="desc">Aún no hay nada publicado.</p>';
+    return;
+  }
+  pintarDesdeCache();
+}
+async function pintarDesdeCache(){
+  const cont = SEC_NOMBRES[secActual] ? document.getElementById("listaSec") : listaEl;
+  cont.innerHTML = "";
+  if(!SEC_NOMBRES[secActual]) return;
+  if(!packsCache.length){
+    cont.innerHTML = '<p class="desc">Aún no hay nada publicado.</p>';
+    return;
+  }
+  const grupos = [{ id: secActual, titulo: SEC_NOMBRES[secActual] }];
+  for(const g of grupos){
+    if(!SEC_NOMBRES[secActual]){
+      const h = document.createElement("div");
+      h.textContent = g.titulo;
+      h.style.cssText = "width:100%;max-width:420px;font-family:'Chakra Petch',sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:var(--fg-muted);margin:14px 0 12px;";
+      cont.appendChild(h);
+    }
+    const items = packsCache.filter(p=>(p.seccion || "experiencias") === g.id);
+    if(!items.length){
+      const v = document.createElement("p");
+      v.className = "desc";
+      v.textContent = "Nada aquí todavía.";
+      cont.appendChild(v);
+      continue;
+    }
+    for(const p of items){
+      cont.appendChild(await tarjetaPack(p));
+    }
+  }
+}
+async function tarjetaPack(p){
+    const div = document.createElement("div");
+    div.className = "pack";
+    const h = document.createElement("h3");
+    h.textContent = (p.icono || "🎁") + " " + (p.titulo || p.id);
+    try{
+      const nh = p.nuevoHasta && p.nuevoHasta.toDate ? p.nuevoHasta.toDate().getTime() : 0;
+      if(nh && Date.now() < nh){
+        const nb = document.createElement("span");
+        nb.className = "nuevo";
+        nb.textContent = "NUEVO";
+        h.appendChild(nb);
+      }
+    }catch(e){}
+    const d = document.createElement("p");
+    d.className = "d";
+    d.textContent = p.desc || "";
+    const est = document.createElement("div");
+    est.className = "estado";
+    const btn = document.createElement("button");
+    div.appendChild(h); div.appendChild(d); div.appendChild(est); div.appendChild(btn);
+    if(await licenciaValida(p.id)){
+      est.className = "estado ok";
+      est.textContent = "✅ Se agregó a tu menú";
+      btn.className = "btn ghost";
+      btn.textContent = "Abrir";
+      btn.onclick = ()=>{ location.href = "../" + (p.ruta || "") + "/"; };
+    }else{
+      est.textContent = "🔒 Sin acceso";
+      btn.className = "btn";
+      btn.textContent = "Pedir acceso";
+      btn.onclick = ()=>pedir(p, btn, est);
+    }
+    return div;
+}
+
+async function pedir(p, btn, est){
+  msg("");
+  try{
+    if(!usuarioGoogle){
+      const res = await signInWithPopup(getAuth(appTaq()), new GoogleAuthProvider());
+      usuarioGoogle = res.user;
+    }
+    btn.disabled = true;
+    const tdb = getFirestore(appTaq());
+    await addDoc(collection(tdb, "solicitudes"), {
+      para: miProyecto(), item: p.id,
+      quien: usuarioGoogle.displayName || "?",
+      email: usuarioGoogle.email || "",
+      estado: "pendiente", fecha: serverTimestamp()
+    });
+    est.textContent = "⏳ Solicitud enviada. Al aprobarse se activará en tu menú.";
+    escuchar(p.id);
+  }catch(e){
+    msg("No se pudo pedir. Revisa conexión o ventanas emergentes.");
+  }
+  btn.disabled = false;
+}
+
+let stopEscucha = null;
+function escuchar(){
+  try{ if(stopEscucha) stopEscucha(); }catch(e){}
+  try{
+    const tdb = getFirestore(appTaq());
+    const q = query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30));
+    stopEscucha = onSnapshot(q, async ()=>{
+      const antes = JSON.stringify(leerLic());
+      const lic = leerLic();
+      let cambio = false;
+      // revalida todo el catálogo visible
+      const tdb2 = getFirestore(appTaq());
+      let snap;
+      try{ snap = await getDocs(query(collection(tdb2, "solicitudes"), where("para", "==", miProyecto()), limit(30))); }
+      catch(e){ return; }
+      const docs = snap.docs.slice().sort((a, b)=>{
+        const fa = a.data().fecha, fb = b.data().fecha;
+        const ta = fa && fa.toDate ? fa.toDate().getTime() : 0;
+        const tb = fb && fb.toDate ? fb.toDate().getTime() : 0;
+        return tb - ta;
+      });
+      for(const d of docs){
+        const s = d.data();
+        if(s.estado !== "aprobado" || !s.codigo) continue;
+        const pay = await verificarCodigo(s.codigo);
+        if(pay && pay.para === miProyecto() && !(lic[pay.item] && (await verificarCodigo(lic[pay.item])))){
+          lic[pay.item] = String(s.codigo).trim();
+          cambio = true;
+        }
+      }
+      if(cambio || JSON.stringify(lic) !== antes){
+        guardarLic(lic);
+        if(cambio) pintar();
+      }
+    }, ()=>{});
+  }catch(e){}
+}
+
+pintar();
+escuchar();
+</script>
+
+</body>
+</html>

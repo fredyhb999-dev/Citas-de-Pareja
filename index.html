@@ -96,6 +96,8 @@
     box-shadow:0 8px 26px rgba(0,0,0,.35); }
   #menu .card .icon{ font-size:2.4rem; }
   #menu .card .title{ font-size:1.25rem; }
+  .subTitulo{ width:100%; font-family:'Chakra Petch',sans-serif; font-size:.8rem; font-weight:600;
+    letter-spacing:.25em; text-transform:uppercase; color:var(--fg-muted); margin:10px 0 12px; }
   #btnExpVolver{ position:fixed; top:max(18px, env(safe-area-inset-top)); left:18px;
     font-size:.85rem; width:auto; padding:8px 10px; }
   /* ---------- asistente ---------- */
@@ -238,6 +240,20 @@
   </span>
   <span class="chevron">›</span>
 </a>
+
+<div id="secJuegos" style="display:none;width:100%">
+  <div class="subTitulo">Juegos 🎮</div>
+  <div id="packsJuegos" style="width:100%"></div>
+</div>
+
+<a class="card" href="Tienda/">
+  <span class="icon">🛒</span>
+  <span class="label">
+    <div class="title">Contratar</div>
+    <div class="subtitle">Juegos y actividades publicados</div>
+  </span>
+  <span class="chevron">›</span>
+</a>
 </div>
 
 <div id="vistaExp" style="display:none;width:100%">
@@ -260,19 +276,12 @@
   <span class="chevron">›</span>
 </a>
 
-<a class="card" href="Guiadas/">
-  <span class="icon">🗺️</span>
-  <span class="label">
-    <div class="title">Citas Guiadas</div>
-    <div class="subtitle">Niveles y secuencias paso a paso</div>
-  </span>
-  <span class="chevron">›</span>
-</a>
+<div id="packsExp" style="width:100%"></div>
 </div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "./firebase-config.js";
 import {
@@ -334,6 +343,78 @@ function mostrarMenu(nombre){
   asistenteEl.style.display = "none";
   pantallaEl.style.display = "none";
   menuEl.style.display = "flex";
+  renderPacks();
+}
+
+// ---------- packs con acceso: solo aparecen si hay licencia ----------
+function leerLic(){
+  try{ return JSON.parse(localStorage.getItem("licencias") || "{}"); }catch(e){ return {}; }
+}
+function tarjetaPack(p){
+  const a = document.createElement("a");
+  a.className = "card";
+  a.href = p.ruta + "/";
+  const ic = document.createElement("span");
+  ic.className = "icon";
+  ic.textContent = p.icono || "🎁";
+  const lab = document.createElement("span");
+  lab.className = "label";
+  const t = document.createElement("div");
+  t.className = "title";
+  t.textContent = p.titulo || p.id;
+  const s = document.createElement("div");
+  s.className = "subtitle";
+  s.textContent = p.desc || "";
+  lab.appendChild(t); lab.appendChild(s);
+  const ch = document.createElement("span");
+  ch.className = "chevron";
+  ch.textContent = "›";
+  a.appendChild(ic); a.appendChild(lab); a.appendChild(ch);
+  return a;
+}
+async function renderPacks(){
+  const boxExp = document.getElementById("packsExp");
+  const secJ = document.getElementById("secJuegos");
+  const boxJ = document.getElementById("packsJuegos");
+  boxExp.innerHTML = "";
+  boxJ.innerHTML = "";
+  secJ.style.display = "none";
+  let packs = [{ id: "guiadas", titulo: "Citas Guiadas", icono: "🗺️",
+    desc: "Niveles y secuencias paso a paso", ruta: "Guiadas", seccion: "experiencias" }];
+  try{
+    let tapp;
+    try{ tapp = getApp("taquilla-menu"); }
+    catch(e){ tapp = initializeApp(TAQUILLA_FIREBASE, "taquilla-menu"); }
+    const tdb = getFirestore(tapp);
+    const snap = await getDocs(collection(tdb, "packs"));
+    snap.forEach(d=>{
+      if(d.id === "guiadas") return;
+      packs.push(Object.assign({ id: d.id }, d.data()));
+    });
+  }catch(e){}
+  let miId = "";
+  try{ miId = resolverFirebase(firebaseConfigBase).projectId || ""; }catch(e){}
+  const lic = leerLic();
+  let juegos = 0;
+  for(const p of packs){
+    const cod = lic[p.id];
+    let ok = false;
+    if(cod){
+      try{
+        const pay = await verificarCodigo(cod);
+        ok = !!(pay && pay.item === p.id && pay.para === miId);
+      }catch(e){}
+    }
+    if(!ok) continue;
+    const card = tarjetaPack(p);
+    if((p.seccion || "experiencias") === "juegos"){
+      boxJ.appendChild(card);
+      juegos++;
+    }else{
+      boxExp.appendChild(card);
+    }
+  }
+  if(juegos) secJ.style.display = "block";
 }
 function mostrarIdentidad(usuarios){
   listaEl.innerHTML = "";
