@@ -105,8 +105,23 @@
 
 <div class="eyebrow">Citas Guiadas</div>
 
+<!-- ============ BLOQUEO (sin acceso) ============ -->
+<div class="vista" id="vistaBloqueo">
+  <h1>Acceso 🔒</h1>
+  <p class="desc">Citas Guiadas necesita permiso del desarrollador.</p>
+  <input class="buscar" id="licNombre" type="text" placeholder="Tu nombre" maxlength="30" autocomplete="off">
+  <button class="btnPri" id="btnGoogle">Entrar con Google</button>
+  <p class="desc" style="font-size:.78rem;">Login oficial de Google: solo verificamos tu correo. No vemos tu contraseña ni tus datos.</p>
+  <p class="desc" id="quienGoogle" style="display:none"></p>
+  <button class="btnPri" id="btnPedir" style="display:none">Pedir acceso</button>
+  <button class="btnSec" id="btnTengo">Tengo código</button>
+  <textarea id="licCodigo" style="display:none;width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:12px;font-size:.8rem;min-height:90px;" placeholder="Pega tu código aquí"></textarea>
+  <button class="btnPri" id="btnValidar" style="display:none">Validar y entrar</button>
+  <div id="licMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:6px 0;text-align:center;"></div>
+</div>
+
 <!-- ============ LISTA (jugar) ============ -->
-<div class="vista ver" id="vistaLista">
+<div class="vista" id="vistaLista">
   <h1>Elige actividad</h1>
   <p class="desc">¿Qué vas a jugar hoy?</p>
   <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar actividad..." autocomplete="off">
@@ -154,10 +169,12 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase } from "../config.js";
+import { TAQUILLA_FIREBASE, verificarCodigo } from "../taquilla.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
 const NIVELES = [
   { id: "basico", nombre: "Básico" },
@@ -171,6 +188,133 @@ const TOMAS_DEF = { basico: 2, medio: 2, avanzado: 1, experto: 1, alucinado: 1 }
 const firebaseConfig = resolverFirebase(firebaseConfigBase);
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+const ITEM_ID = "guiadas";
+const CLAVE_LIC = "licencias";
+function miProyecto(){
+  return (firebaseConfig && firebaseConfig.projectId) || "";
+}
+function leerLicencias(){
+  try{ return JSON.parse(localStorage.getItem(CLAVE_LIC) || "{}"); }catch(e){ return {}; }
+}
+async function tengoAcceso(){
+  const lic = leerLicencias()[ITEM_ID];
+  if(!lic) return false;
+  const pay = await verificarCodigo(lic);
+  if(!pay) return false;
+  if(pay.item !== ITEM_ID) return false;
+  if(pay.para !== miProyecto()) return false;
+  return true;
+}
+async function entrar(){
+  if(await tengoAcceso()){
+    pintarLista("listaActs", "jugar");
+    ver("vistaLista", false);
+  }else{
+    ver("vistaBloqueo", false);
+    escucharAprobacion();
+  }
+}
+function licMsg(t){
+  document.getElementById("licMsg").textContent = t || "";
+}
+let usuarioGoogle = null;
+function appTaq(){
+  try{ return getApp("taquilla"); }
+  catch(e){ return initializeApp(TAQUILLA_FIREBASE, "taquilla"); }
+}
+document.getElementById("btnGoogle").onclick = async ()=>{
+  licMsg("");
+  try{
+    const tapp = appTaq();
+    const auth = getAuth(tapp);
+    const res = await signInWithPopup(auth, new GoogleAuthProvider());
+    usuarioGoogle = res.user;
+    document.getElementById("btnGoogle").style.display = "none";
+    const qg = document.getElementById("quienGoogle");
+    qg.style.display = "block";
+    qg.textContent = "✅ " + (usuarioGoogle.displayName || "") + " (" + usuarioGoogle.email + ")";
+    document.getElementById("btnPedir").style.display = "block";
+    if(usuarioGoogle.displayName && !document.getElementById("licNombre").value){
+      document.getElementById("licNombre").value = usuarioGoogle.displayName;
+    }
+  }catch(e){
+    const c = (e && e.code) || "";
+    if(c === "auth/operation-not-allowed") licMsg("Google no está activado en taquilla (Authentication → Google).");
+    else if(c === "auth/unauthorized-domain") licMsg("Dominio no autorizado. Prueba en http://localhost:8423/Guiadas/");
+    else if(c === "auth/popup-blocked") licMsg("Permite ventanas emergentes para este sitio.");
+    else licMsg("No se pudo entrar con Google (" + c + "). Revisa tu conexión.");
+  }
+};
+document.getElementById("btnPedir").onclick = async (e)=>{
+  licMsg("");
+  if(!usuarioGoogle){ licMsg("Entra con Google primero."); return; }
+  const nombre = document.getElementById("licNombre").value.trim() || usuarioGoogle.displayName || "?";
+  e.target.disabled = true;
+  try{
+    const tapp = appTaq();
+    const tdb = getFirestore(tapp);
+    await addDoc(collection(tdb, "solicitudes"), {
+      para: miProyecto(), item: ITEM_ID, quien: nombre,
+      email: usuarioGoogle.email || "",
+      estado: "pendiente", fecha: serverTimestamp()
+    });
+    licMsg("Solicitud enviada. En cuanto se apruebe entras sola. ✅");
+    escucharAprobacion();
+  }catch(err){
+    licMsg("No se pudo enviar. Revisa tu conexión.");
+  }
+  e.target.disabled = false;
+};
+let stopEscucha = null;
+function escucharAprobacion(){
+  try{ if(stopEscucha) stopEscucha(); }catch(e){}
+  try{
+    const tapp = appTaq();
+    const tdb = getFirestore(tapp);
+    const q = query(collection(tdb, "solicitudes"),
+      where("para", "==", miProyecto()), limit(20));
+    stopEscucha = onSnapshot(q, async (snap)=>{
+      const docs = snap.docs.slice().sort((a, b)=>{
+        const fa = a.data().fecha, fb = b.data().fecha;
+        const ta = fa && fa.toDate ? fa.toDate().getTime() : 0;
+        const tb = fb && fb.toDate ? fb.toDate().getTime() : 0;
+        return tb - ta;
+      });
+      for(const d of docs){
+        if(d.data().item !== ITEM_ID || d.data().estado !== "aprobado") continue;
+        const c = d.data().codigo;
+        if(!c) continue;
+        const pay = await verificarCodigo(c);
+        if(pay && pay.item === ITEM_ID && pay.para === miProyecto()){
+          const lic = leerLicencias();
+          lic[ITEM_ID] = String(c).trim();
+          try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+          try{ if(stopEscucha) stopEscucha(); }catch(e){}
+          entrar();
+          return;
+        }
+      }
+    }, ()=>{});
+  }catch(e){}
+}
+document.getElementById("btnTengo").onclick = ()=>{
+  document.getElementById("licCodigo").style.display = "block";
+  document.getElementById("btnValidar").style.display = "block";
+};
+document.getElementById("btnValidar").onclick = async ()=>{
+  licMsg("");
+  const cod = document.getElementById("licCodigo").value;
+  const pay = await verificarCodigo(cod);
+  if(!pay || pay.item !== ITEM_ID || pay.para !== miProyecto()){
+    licMsg("Código inválido o vencido.");
+    return;
+  }
+  const lic = leerLicencias();
+  lic[ITEM_ID] = cod.trim();
+  try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+  entrar();
+};
 
 let actividad = null;
 let datos = null;  // {basico:[],...}
@@ -198,11 +342,9 @@ window.addEventListener("popstate", (e)=>{
     pintarLista("listaActsCfg", "editar");
     ver("vistaConfig", false);
   }else if(v === "vistaPlayer"){
-    pintarLista("listaActs", "jugar");
-    ver("vistaLista", false);
+    entrar();
   }else{
-    pintarLista("listaActs", "jugar");
-    ver("vistaLista", false);
+    entrar();
   }
 });
 try{ history.replaceState({ v: "vistaLista", act: null }, ""); }catch(e){}
@@ -211,8 +353,7 @@ document.getElementById("btnCfg").onclick = ()=>{
   ver("vistaConfig");
 };
 document.getElementById("btnAtras").onclick = ()=>{
-  pintarLista("listaActs", "jugar");
-  ver("vistaLista");
+  entrar();
 };
 function filtrar(boxId, texto){
   const t = (texto || "").trim().toLowerCase();
@@ -497,11 +638,10 @@ document.getElementById("btnSig").onclick = ()=>{
   pintarPaso();
 };
 document.getElementById("btnTerminar").onclick = ()=>{
-  pintarLista("listaActs", "jugar");
-  ver("vistaLista");
+  entrar();
 };
 
-pintarLista("listaActs", "jugar");
+entrar();
 </script>
 
 </body>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Autorizar</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.desc{ font-size:.88rem; color:var(--fg-muted); max-width:380px; margin:0 0 18px; text-align:center; }
+  .caja{ width:100%; max-width:520px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .caja h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 6px; font-size:1rem; }
+  .caja .mini{ font-size:.8rem; color:var(--fg-muted); margin:0 0 10px; word-break:break-all; }
+  .badge{ display:inline-block; font-size:.72rem; border:1px solid var(--card-border); border-radius:8px;
+    padding:2px 10px; margin-bottom:8px; color:var(--fg-muted); }
+  .badge.pendiente{ color:var(--teal); border-color:var(--teal); }
+  .badge.aprobado{ color:#6dffa0; border-color:#6dffa0; }
+  .badge.negado{ color:var(--rojo); border-color:var(--rojo); }
+  textarea, input[type=text], input[type=number]{ width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:12px; font-size:.88rem; font-family:'Inter',sans-serif; margin-bottom:10px; }
+  textarea{ min-height:90px; resize:vertical; }
+  .fila{ display:flex; gap:8px; }
+  .fila input{ flex:1; min-width:0; }
+  .btn{ border:none; border-radius:12px; cursor:pointer; padding:12px 18px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:.9rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btn:active{ transform:scale(.97); }
+  .btn.ghost{ background:var(--bg-2); color:var(--fg); border:1px solid var(--card-border); }
+  .btn.danger{ background:var(--rojo); color:#2b0410; }
+  .btn:disabled{ opacity:.4; }
+  .codigo{ background:var(--bg); border:1px solid var(--teal); border-radius:10px; padding:10px;
+    font-size:.75rem; word-break:break-all; margin-top:8px; }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../index.html">← Inicio</a>
+
+<div class="eyebrow">Taquilla · Autorizar</div>
+<h1>Accesos 🎟️</h1>
+<p class="desc">Solo tú: apruebas solicitudes y generas códigos. Tu llave privada nunca sale de este aparato.</p>
+
+<div class="caja" id="cajaLlave">
+  <h3>Tu llave privada</h3>
+  <p class="mini">Pégala una vez (queda solo aquí).</p>
+  <textarea id="priv" placeholder='{"kty":"EC",...}'></textarea>
+  <button class="btn" id="btnPriv">Guardar llave</button>
+  <div id="msg"></div>
+</div>
+
+<div class="caja" id="cajaManual">
+  <h3>Aprobar manual</h3>
+  <p class="mini">Sin solicitud: para una base directa.</p>
+  <input type="text" id="mPara" placeholder="Proyecto destino (ej. mi-proyecto)">
+  <input type="text" id="mItem" placeholder="Juego o actividad (ej. guiadas)" value="guiadas">
+  <div class="fila">
+    <input type="number" id="mDias" placeholder="Días de vigencia (vacío = infinito)" min="1" max="3650">
+    <button class="btn" id="btnManual">Firmar</button>
+  </div>
+  <div class="codigo" id="mCodigo" style="display:none"></div>
+</div>
+
+<h1 style="font-size:1.3rem;margin-top:10px;">Solicitudes</h1>
+<div id="lista" style="width:100%;max-width:520px;"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { TAQUILLA_FIREBASE, firmarAcceso } from "../taquilla.js";
+
+const CLAVE_PRIV = "taquilla_priv";
+const app = initializeApp(TAQUILLA_FIREBASE);
+const db = getFirestore(app);
+const solRef = collection(db, "solicitudes");
+
+function leerPriv(){
+  try{
+    const p = JSON.parse(localStorage.getItem(CLAVE_PRIV) || "null");
+    return (p && p.kty === "EC" && p.d) ? p : null;
+  }catch(e){ return null; }
+}
+function refrescarCaja(){
+  const ok = !!leerPriv();
+  document.getElementById("cajaLlave").style.display = ok ? "none" : "";
+  document.getElementById("msg").textContent = ok ? "" : document.getElementById("msg").textContent;
+}
+document.getElementById("btnPriv").onclick = ()=>{
+  try{
+    const p = JSON.parse(document.getElementById("priv").value);
+    if(p.kty !== "EC" || !p.d) throw 0;
+    localStorage.setItem(CLAVE_PRIV, JSON.stringify(p));
+    document.getElementById("msg").textContent = "";
+    refrescarCaja();
+  }catch(e){
+    document.getElementById("msg").textContent = "Llave inválida.";
+  }
+};
+refrescarCaja();
+
+function diasAVence(dias){
+  dias = parseInt(dias, 10);
+  if(!dias || dias < 1) return null;
+  return Date.now() + dias * 86400000;
+}
+async function firmar(para, item, dias, btn){
+  const priv = leerPriv();
+  if(!priv){ alert("Guarda tu llave privada primero."); return null; }
+  para = (para || "").trim();
+  item = (item || "").trim();
+  if(!para || !item){ alert("Falta destino o juego."); return null; }
+  btn.disabled = true;
+  try{
+    return await firmarAcceso(priv, para, item, diasAVence(dias));
+  }finally{ btn.disabled = false; }
+}
+document.getElementById("btnManual").onclick = async (e)=>{
+  const cod = await firmar(
+    document.getElementById("mPara").value,
+    document.getElementById("mItem").value,
+    document.getElementById("mDias").value,
+    e.target);
+  if(cod){
+    const c = document.getElementById("mCodigo");
+    c.style.display = "block";
+    c.textContent = cod;
+  }
+};
+
+function fechaCorta(ts){
+  try{
+    const f = ts.toDate ? ts.toDate() : new Date(ts);
+    return f.toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }catch(e){ return ""; }
+}
+onSnapshot(query(solRef, orderBy("fecha", "desc")), (snap)=>{
+  const box = document.getElementById("lista");
+  box.innerHTML = "";
+  if(!snap.docs.length){
+    box.innerHTML = '<p class="desc">Sin solicitudes.</p>';
+    return;
+  }
+  snap.docs.forEach(d=>{
+    const s = d.data();
+    const id = d.id;
+    const div = document.createElement("div");
+    div.className = "caja";
+    const b = document.createElement("span");
+    b.className = "badge " + (s.estado || "pendiente");
+    b.textContent = s.estado || "pendiente";
+    const h = document.createElement("h3");
+    h.textContent = (s.quien || "?") + " → " + (s.item || "?");
+    const m = document.createElement("p");
+    m.className = "mini";
+    m.textContent = "Para: " + (s.para || "?") + (s.email ? " · " + s.email : "") + " · " + fechaCorta(s.fecha);
+    div.appendChild(b); div.appendChild(h); div.appendChild(m);
+    if(s.estado === "aprobado" && s.codigo){
+      const c = document.createElement("div");
+      c.className = "codigo";
+      c.textContent = s.codigo;
+      div.appendChild(c);
+    }
+    if((s.estado || "pendiente") === "pendiente"){
+      const fila = document.createElement("div");
+      fila.className = "fila";
+      const inp = document.createElement("input");
+      inp.type = "number"; inp.min = "1"; inp.placeholder = "Días (vacío = ∞)";
+      const ok = document.createElement("button");
+      ok.className = "btn"; ok.textContent = "Aprobar";
+      const no = document.createElement("button");
+      no.className = "btn danger"; no.textContent = "Negar";
+      ok.onclick = async ()=>{
+        const cod = await firmar(s.para, s.item, inp.value, ok);
+        if(!cod) return;
+        await updateDoc(doc(db, "solicitudes", id), { estado: "aprobado", codigo: cod });
+        const c = document.createElement("div");
+        c.className = "codigo";
+        c.textContent = cod;
+        div.appendChild(c);
+      };
+      no.onclick = async ()=>{
+        if(!confirm("¿Negar acceso?")) return;
+        await updateDoc(doc(db, "solicitudes", id), { estado: "negado" });
+      };
+      fila.appendChild(inp); fila.appendChild(ok); fila.appendChild(no);
+      div.appendChild(fila);
+    }
+    box.appendChild(div);
+  });
+}, ()=>{});
+</script>
+
+</body>
+</html>

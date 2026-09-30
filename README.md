@@ -138,8 +138,18 @@ Para cada actividad, puedes crear un archivo JSON con sus accesorios preseleccio
 
 ## Vincular a tu pareja y chatear
 
-- **Vincular:** en el inicio, tu pareja elige "Tengo QR de mi pareja" y escanea tu código (inicio → "📱 vincular pareja"). Muéstralo en persona: quien lo tenga entra a tu base.
+- **Vincular:** en el inicio, tu pareja elige "Tengo QR de mi pareja" y escanea tu código (inicio → "📱 vincular pareja" o Config → Vincular). Muéstralo en persona: quien lo tenga entra a tu base.
 - **Chat:** tarjeta 💬 en el inicio. Mensajes en vivo solo con la app abierta + "en línea" cuando el otro también la tiene abierta. Con la app cerrada no suena nada: para eso sigue Telegram (Paso 5).
+
+---
+
+## Accesos por taquilla (Citas Guiadas y juegos)
+
+Algunas secciones piden permiso del desarrollador:
+
+- **Usuario:** entra con Google (login oficial, solo verifica tu correo) → Pedir acceso → al aprobarse entras sola, sin pegar nada.
+- **Desarrollador:** crea el proyecto `taquilla-juegos` (Firestore + reglas solo `solicitudes` y lectura de `packs`), guarda tu llave privada en `Autorizar/` (una vez, no sale de tu aparato) y aprueba desde ahí, con días de vigencia o infinita.
+- Los códigos van firmados (no falsificables) y cada juego verifica offline juego + vigencia.
 
 ---
 
