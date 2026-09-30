@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Catálogo · Panel</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.6rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  h2{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.25em; text-transform:uppercase;
+    color:var(--fg-muted); margin:18px 0 10px; width:100%; max-width:520px; }
+  p.desc{ font-size:.85rem; color:var(--fg-muted); max-width:420px; margin:0 0 16px; text-align:center; }
+  .caja{ width:100%; max-width:520px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .caja h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1rem; }
+  .caja .mini{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; word-break:break-all; }
+  input[type=text], input[type=number], input[type=date], select{
+    width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:11px 12px; font-size:.88rem;
+    font-family:'Inter',sans-serif; margin-bottom:8px; }
+  label.chk{ display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--fg-muted); margin:4px 0 10px; }
+  label.chk input{ accent-color:var(--teal); width:18px; height:18px; }
+  .fila{ display:flex; gap:8px; }
+  .fila .btn{ flex:1; }
+  .btn{ border:none; border-radius:12px; cursor:pointer; padding:12px 14px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:.88rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btn:active{ transform:scale(.97); }
+  .btn.ghost{ background:var(--bg-2); color:var(--fg); border:1px solid var(--card-border); }
+  .btn.danger{ background:var(--rojo); color:#2b0410; }
+  .btn:disabled{ opacity:.4; }
+  .card{ width:100%; max-width:520px; display:flex; align-items:center; gap:16px;
+    padding:20px; margin-bottom:14px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; color:var(--fg); font-family:'Inter',sans-serif; }
+  .card:active{ transform:scale(.97); border-color:var(--teal); }
+  .card .icon{ font-size:2rem; }
+  .card .label{ flex:1; text-align:left; }
+  .card .title{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.05rem; }
+  .card .subtitle{ font-size:.83rem; color:var(--fg-muted); margin-top:2px; }
+  .card .chevron{ font-size:1.4rem; color:var(--fg-muted); }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; max-width:520px; }
+  #msg.ok{ color:var(--teal); }
+  #btnVolverSec{ position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
+    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; padding:4px; }
+</style>
+</head>
+<body>
+
+<a class="back" href="index.html">‹ Panel</a>
+<div class="eyebrow">Panel · Catálogo</div>
+<h1 id="tituloPag">Catálogo de Adquisiciones 🗂️</h1>
+<p class="desc">Control del catálogo por sección, con orden y NUEVO. Guiadas vive aparte y no se toca aquí.</p>
+
+<div id="vistaSec" style="width:100%;max-width:520px;">
+  <button class="card" data-sec="experiencias" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+    <span class="icon">💑</span>
+    <span class="label"><div class="title">Experiencias en Pareja</div>
+    <div class="subtitle">Citas y momentos para compartir</div></span>
+    <span class="chevron">›</span>
+  </button>
+  <button class="card" data-sec="juegos" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+    <span class="icon">🎮</span>
+    <span class="label"><div class="title">Juegos</div>
+    <div class="subtitle">Para divertirse juntos</div></span>
+    <span class="chevron">›</span>
+  </button>
+  <button class="card" data-sec="extras" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+    <span class="icon">✨</span>
+    <span class="label"><div class="title">Extras</div>
+    <div class="subtitle">Lo que vaya llegando</div></span>
+    <span class="chevron">›</span>
+  </button>
+</div>
+
+<div id="vistaCat" style="display:none;width:100%;max-width:520px;">
+<button id="btnVolverSec" type="button">‹ Secciones</button>
+<h2 id="tituloSec" style="margin-top:0;"></h2>
+
+<div class="caja">
+  <h3 id="formTitulo">Nuevo juego / experiencia</h3>
+  <p class="mini">ID = documento en <b>packs</b> (ej. masaje, daditos). Sin espacios.</p>
+  <input type="text" id="fId" placeholder="ID (ej. daditos)">
+  <input type="text" id="fTitulo" placeholder="Título (ej. Daditos)">
+  <input type="text" id="fIcono" placeholder="Icono (ej. 🎲)">
+  <div id="iconos" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;"></div>
+  <button class="btn ghost" id="btnSorpresa" type="button" style="width:100%;margin-bottom:8px;">🎲 Sorpréndeme</button>
+  <input type="text" id="fDesc" placeholder="Descripción corta">
+  <input type="text" id="fRuta" placeholder="Ruta (ej. Daditos)">
+  <p class="mini" id="fSecFija" style="margin:0 0 8px;"></p>
+  <input type="number" id="fOrden" placeholder="Orden" min="0" max="999" value="10">
+  <input type="date" id="fNuevo">
+  <label class="chk"><input type="checkbox" id="fActivo" checked> Activo en catálogo</label>
+  <div class="fila">
+    <button class="btn" id="btnGuardar">Guardar</button>
+    <button class="btn ghost" id="btnLimpiar">Limpiar</button>
+  </div>
+  <div id="msg"></div>
+</div>
+
+<div id="lista" style="width:100%;max-width:520px;"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { TAQUILLA_FIREBASE } from "../taquilla.js";
+
+const CLAVE_PRIV = "taquilla_priv";
+try{
+  const p = JSON.parse(localStorage.getItem(CLAVE_PRIV) || "null");
+  if(!(p && p.kty === "EC" && p.d)) location.href = "index.html";
+}catch(e){ location.href = "index.html"; }
+
+const app = initializeApp(TAQUILLA_FIREBASE);
+const db = getFirestore(app);
+const packsRef = collection(db, "packs");
+const SECS = [
+  { id: "experiencias", nombre: "💑 Experiencias en Pareja" },
+  { id: "juegos", nombre: "🎮 Juegos" },
+  { id: "extras", nombre: "✨ Extras" },
+];
+function msg(t, ok){
+  const m = document.getElementById("msg");
+  m.textContent = t || "";
+  m.className = ok ? "ok" : "";
+  m.id = "msg";
+}
+let secActual = null;
+function nombreSec(id){
+  const s = SECS.find(x=>x.id === id);
+  return s ? s.nombre : id;
+}
+function entrarSec(id){
+  secActual = id;
+  document.getElementById("vistaSec").style.display = "none";
+  document.getElementById("vistaCat").style.display = "block";
+  document.getElementById("tituloPag").textContent = nombreSec(id);
+  document.getElementById("tituloSec").style.display = "none";
+  document.getElementById("fSecFija").textContent = "Sección: " + nombreSec(id);
+  pintarForm({});
+  msg("");
+  cargar();
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll("#vistaSec button").forEach(b=>{
+  b.onclick = ()=>entrarSec(b.getAttribute("data-sec"));
+});
+document.getElementById("btnVolverSec").onclick = ()=>{
+  secActual = null;
+  document.getElementById("tituloPag").textContent = "Catálogo de Adquisiciones 🗂️";
+  document.getElementById("vistaCat").style.display = "none";
+  document.getElementById("vistaSec").style.display = "block";
+};
+const ICONOS = ["🎲","🍷","💋","🌙","🔥","💑","🎭","🎶","🕯️","🍫","🎁","✨"];
+let cacheItems = [];
+(function armarIconos(){
+  const box = document.getElementById("iconos");
+  ICONOS.forEach(em=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = em;
+    b.style.cssText = "font-size:1.3rem;background:var(--bg-2);border:1px solid var(--card-border);border-radius:10px;padding:6px 10px;cursor:pointer;";
+    b.onclick = ()=>{ document.getElementById("fIcono").value = em; };
+    box.appendChild(b);
+  });
+})();
+function hashId(s){
+  let h = 0;
+  s = String(s || "");
+  for(let i = 0; i < s.length; i++){ h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+  return h;
+}
+document.getElementById("btnSorpresa").onclick = ()=>{
+  const id = document.getElementById("fId").value.trim() || ("x" + Date.now());
+  const usados = new Set(cacheItems.filter(p=>(p.seccion || "experiencias") === (secActual || "experiencias")).map(p=>p.icono));
+  let idx = hashId(id) % ICONOS.length;
+  for(let k = 0; k < ICONOS.length; k++){
+    const em = ICONOS[(idx + k) % ICONOS.length];
+    if(!usados.has(em)){ document.getElementById("fIcono").value = em; return; }
+  }
+  document.getElementById("fIcono").value = ICONOS[idx];
+};
+function leerForm(){
+  return {
+    id: document.getElementById("fId").value.trim(),
+    titulo: document.getElementById("fTitulo").value.trim(),
+    icono: document.getElementById("fIcono").value.trim() || "🎁",
+    desc: document.getElementById("fDesc").value.trim(),
+    ruta: document.getElementById("fRuta").value.trim(),
+    seccion: secActual || "experiencias",
+    orden: parseInt(document.getElementById("fOrden").value, 10) || 10,
+    activo: document.getElementById("fActivo").checked,
+    nuevo: document.getElementById("fNuevo").value || "",
+  };
+}
+function pintarForm(f){
+  document.getElementById("fId").value = f.id || "";
+  document.getElementById("fId").disabled = !!f.id;
+  document.getElementById("fTitulo").value = f.titulo || "";
+  document.getElementById("fIcono").value = f.icono || "";
+  document.getElementById("fDesc").value = f.desc || "";
+  document.getElementById("fRuta").value = f.ruta || "";
+  document.getElementById("fOrden").value = (f.orden ?? 10);
+  document.getElementById("fActivo").checked = f.activo !== false;
+  document.getElementById("fNuevo").value = f.nuevo || "";
+  document.getElementById("formTitulo").textContent = f.id ? ("Editar: " + f.id) : ("Nuevo en " + nombreSec(secActual || "experiencias"));
+  validarForm();
+}
+function formCompleto(){
+  const id = document.getElementById("fId").value.trim();
+  const ti = document.getElementById("fTitulo").value.trim();
+  const de = document.getElementById("fDesc").value.trim();
+  return /^[a-z0-9_-]{2,30}$/i.test(id) && !!ti && !!de;
+}
+function validarForm(){
+  document.getElementById("btnGuardar").disabled = !formCompleto();
+}
+["fId","fTitulo","fDesc"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", validarForm);
+});
+document.getElementById("btnLimpiar").onclick = ()=>{ pintarForm({}); msg(""); };
+document.getElementById("btnGuardar").onclick = async (e)=>{
+  msg("");
+  const f = leerForm();
+  if(!f.id || !/^[a-z0-9_-]{2,30}$/i.test(f.id)){ msg("ID inválido: letras/números/_/-, 2-30."); return; }
+  if(!f.titulo){ msg("Pon título."); return; }
+  const repetido = cacheItems.some(p=>p.id !== f.id && (p.seccion || "experiencias") === f.seccion && (p.icono || "") === f.icono);
+  e.target.disabled = true;
+  try{
+    const data = {
+      titulo: f.titulo, icono: f.icono, desc: f.desc, ruta: f.ruta || f.id,
+      seccion: f.seccion, orden: f.orden, activo: f.activo,
+      actualizadoEn: serverTimestamp(),
+    };
+    if(f.nuevo){
+      const t = new Date(f.nuevo + "T23:59:59").getTime();
+      data.nuevoHasta = new Date(t);
+    }else{
+      data.nuevoHasta = null;
+    }
+    await setDoc(doc(db, "packs", f.id), data, { merge: true });
+    msg(repetido ? "Guardado ✅ (ojo: ese icono ya se usa en esta sección)" : "Guardado ✅", true);
+    pintarForm({});
+    cargar();
+  }catch(err){
+    msg("No se pudo guardar. Revisa conexión y reglas de packs (escritura).");
+  }
+  validarForm();
+};
+async function cargar(){
+  const box = document.getElementById("lista");
+  box.innerHTML = "";
+  let items = [];
+  try{
+    const snap = await getDocs(packsRef);
+    snap.forEach(d=>items.push(Object.assign({ id: d.id }, d.data())));
+    cacheItems = items.slice();
+  }catch(err){
+    box.innerHTML = '<p class="desc">No se pudo leer packs. Revisa conexión y reglas (lectura).</p>';
+    return;
+  }
+  items = items.filter(p=>(p.seccion || "experiencias") === (secActual || "experiencias"));
+  items.sort((a, b)=>((a.orden ?? 10) - (b.orden ?? 10)) || String(a.titulo || "").localeCompare(String(b.titulo || "")));
+  if(!items.length){
+    box.innerHTML = '<p class="desc">Vacío en ' + nombreSec(secActual) + '. Agrega el primero arriba.</p>';
+    return;
+  }
+  items.forEach(p=>{
+      const div = document.createElement("div");
+      div.className = "caja";
+      const h3 = document.createElement("h3");
+      h3.textContent = (p.icono || "🎁") + " " + (p.titulo || p.id) + (p.activo === false ? " (inactivo)" : "");
+      const m = document.createElement("p");
+      m.className = "mini";
+      let nh = "";
+      try{
+        const t = p.nuevoHasta && p.nuevoHasta.toDate ? p.nuevoHasta.toDate().getTime() : 0;
+        if(t && Date.now() < t) nh = " · NUEVO";
+      }catch(e){}
+      m.textContent = "ID: " + p.id + " · orden " + (p.orden ?? 10) + " · ruta " + (p.ruta || p.id) + nh + (p.desc ? " · " + p.desc : "");
+      const fila = document.createElement("div");
+      fila.className = "fila";
+      const ed = document.createElement("button");
+      ed.className = "btn ghost"; ed.textContent = "Editar";
+      ed.onclick = ()=>{
+        let nv = "";
+        try{
+          const t = p.nuevoHasta && p.nuevoHasta.toDate ? p.nuevoHasta.toDate() : null;
+          if(t) nv = t.toISOString().slice(0, 10);
+        }catch(e){}
+        pintarForm({ id: p.id, titulo: p.titulo, icono: p.icono, desc: p.desc, ruta: p.ruta, seccion: p.seccion, orden: p.orden, activo: p.activo !== false, nuevo: nv });
+        window.scrollTo(0, 0);
+      };
+      const act = document.createElement("button");
+      act.className = "btn ghost"; act.textContent = (p.activo === false) ? "Activar" : "Ocultar";
+      act.onclick = async ()=>{
+        act.disabled = true;
+        try{ await setDoc(doc(db, "packs", p.id), { activo: !(p.activo !== false), actualizadoEn: serverTimestamp() }, { merge: true }); cargar(); }
+        catch(e){ msg("No se pudo cambiar. Revisa reglas."); }
+        act.disabled = false;
+      };
+      const bor = document.createElement("button");
+      bor.className = "btn danger"; bor.textContent = "Borrar";
+      bor.onclick = async ()=>{
+        if(!confirm("¿Borrar " + p.id + " del catálogo?")) return;
+        bor.disabled = true;
+        try{ await deleteDoc(doc(db, "packs", p.id)); cargar(); }
+        catch(e){ msg("No se pudo borrar. Revisa reglas."); }
+        bor.disabled = false;
+      };
+      fila.appendChild(ed); fila.appendChild(act); fila.appendChild(bor);
+      div.appendChild(h3); div.appendChild(m); div.appendChild(fila);
+      box.appendChild(div);
+  });
+}
+cargar();
+</script>
+
+</body>
+</html>

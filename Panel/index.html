@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Panel · Desarrollador</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.desc{ font-size:.88rem; color:var(--fg-muted); max-width:400px; margin:0 0 18px; text-align:center; }
+  .caja{ width:100%; max-width:520px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .caja h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 6px; font-size:1rem; }
+  .caja .mini{ font-size:.8rem; color:var(--fg-muted); margin:0 0 10px; word-break:break-all; }
+  textarea{ width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:12px; font-size:.88rem; font-family:'Inter',sans-serif; margin-bottom:10px; min-height:90px; resize:vertical; }
+  .btn{ border:none; border-radius:12px; cursor:pointer; padding:12px 18px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:.9rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btn:active{ transform:scale(.97); }
+  .card{ width:100%; max-width:520px; display:flex; align-items:center; gap:16px;
+    padding:18px; margin-bottom:12px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; text-decoration:none; color:var(--fg); }
+  .card:active{ transform:scale(.97); border-color:var(--teal); }
+  .card .icon{ font-size:2rem; }
+  .card .label{ flex:1; }
+  .card .title{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.05rem; }
+  .card .subtitle{ font-size:.83rem; color:var(--fg-muted); margin-top:2px; }
+  .card .chevron{ font-size:1.4rem; color:var(--fg-muted); }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
+</style>
+</head>
+<body>
+
+<div class="eyebrow">Complicidad en Pareja · Privado</div>
+<h1>Panel 🛠️</h1>
+<p class="desc">Solo desarrollador. No está enlazado en la app. Aquí vivirán Autorizaciones, Catálogo, Correos y lo que surja.</p>
+
+<div class="caja" id="cajaLlave">
+  <h3>Tu llave privada</h3>
+  <p class="mini">La misma de Autorizar. Queda solo en este aparato.</p>
+  <textarea id="priv" placeholder='{"kty":"EC",...}'></textarea>
+  <button class="btn" id="btnPriv">Guardar llave</button>
+  <div id="msg"></div>
+</div>
+
+<div id="menu" style="display:none;width:100%;max-width:520px;">
+  <a class="card" href="../Autorizar/">
+    <span class="icon">🎟️</span>
+    <span class="label"><div class="title">Autorizaciones</div>
+    <div class="subtitle">Aprobar, revocar y ver cortesías</div></span>
+    <span class="chevron">›</span>
+  </a>
+  <a class="card" href="catalogo.html">
+    <span class="icon">🗂️</span>
+    <span class="label"><div class="title">Catálogo</div>
+    <div class="subtitle">Centro de Adquisiciones por sección, orden y NUEVO</div></span>
+    <span class="chevron">›</span>
+  </a>
+  <a class="card" href="permisos.html">
+    <span class="icon">📧</span>
+    <span class="label"><div class="title">Correos que publican</div>
+    <div class="subtitle">Quién puede publicar, editable por ti</div></span>
+    <span class="chevron">›</span>
+  </a>
+</div>
+
+<script type="module">
+const CLAVE_PRIV = "taquilla_priv";
+function leerPriv(){
+  try{
+    const p = JSON.parse(localStorage.getItem(CLAVE_PRIV) || "null");
+    return (p && p.kty === "EC" && p.d) ? p : null;
+  }catch(e){ return null; }
+}
+function refrescar(){
+  const ok = !!leerPriv();
+  document.getElementById("cajaLlave").style.display = ok ? "none" : "";
+  document.getElementById("menu").style.display = ok ? "block" : "none";
+}
+document.getElementById("btnPriv").onclick = ()=>{
+  try{
+    const p = JSON.parse(document.getElementById("priv").value);
+    if(p.kty !== "EC" || !p.d) throw 0;
+    localStorage.setItem(CLAVE_PRIV, JSON.stringify(p));
+    document.getElementById("msg").textContent = "";
+    refrescar();
+  }catch(e){
+    document.getElementById("msg").textContent = "Llave inválida.";
+  }
+};
+refrescar();
+</script>
+
+</body>
+</html>

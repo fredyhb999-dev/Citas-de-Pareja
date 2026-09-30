@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Correos · Panel</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.6rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.desc{ font-size:.85rem; color:var(--fg-muted); max-width:420px; margin:0 0 16px; text-align:center; }
+  .caja{ width:100%; max-width:520px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .caja h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 6px; font-size:1rem; }
+  .caja .mini{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; word-break:break-all; }
+  .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
+    padding:8px 8px 8px 14px; font-size:.85rem; display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .chip span{ flex:1; word-break:break-all; }
+  .chip button{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:1rem; padding:0 6px; }
+  .filaAdd{ display:flex; gap:8px; }
+  .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:12px; font-size:.9rem; font-family:'Inter',sans-serif; }
+  .filaAdd button{ border:none; border-radius:12px; cursor:pointer; padding:12px 16px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; max-width:520px; }
+  #msg.ok{ color:var(--teal); }
+</style>
+</head>
+<body>
+
+<a class="back" href="index.html">‹ Panel</a>
+<div class="eyebrow">Panel · Permisos</div>
+<h1>Correos que publican 📧</h1>
+<p class="desc">Quién puede publicar en el catálogo. Sin correos fijos en el código: esta lista manda. Se guarda en <b>config/permisos</b> de taquilla.</p>
+
+<div class="caja">
+  <h3>Publicadores</h3>
+  <p class="mini">Solo correos Google verificados. El primero se agrega una vez en consola, el resto aquí.</p>
+  <div id="chips"></div>
+  <div class="filaAdd">
+    <input type="text" id="nuevo" placeholder="correo@ejemplo.com" autocomplete="off">
+    <button id="btnAdd">+</button>
+  </div>
+  <div id="msg"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { TAQUILLA_FIREBASE } from "../taquilla.js";
+
+const CLAVE_PRIV = "taquilla_priv";
+try{
+  const p = JSON.parse(localStorage.getItem(CLAVE_PRIV) || "null");
+  if(!(p && p.kty === "EC" && p.d)) location.href = "index.html";
+}catch(e){ location.href = "index.html"; }
+
+const app = initializeApp(TAQUILLA_FIREBASE);
+const db = getFirestore(app);
+const ref = doc(db, "config", "permisos");
+function msg(t, ok){
+  const m = document.getElementById("msg");
+  m.textContent = t || "";
+  m.className = ok ? "ok" : "";
+  m.id = "msg";
+}
+function normalizar(em){
+  return String(em || "").trim().toLowerCase();
+}
+async function leer(){
+  try{
+    const snap = await getDoc(ref);
+    const arr = snap.exists() && Array.isArray(snap.data().correos) ? snap.data().correos : [];
+    return arr.map(normalizar).filter(e=>e.indexOf("@") > 0);
+  }catch(e){ return null; }
+}
+async function guardar(correos){
+  await setDoc(ref, { correos, actualizadoEn: serverTimestamp() }, { merge: true });
+}
+async function pintar(){
+  const box = document.getElementById("chips");
+  box.innerHTML = "";
+  const arr = await leer();
+  if(arr === null){
+    msg("No se pudo leer. Revisa conexión y reglas de config/permisos.");
+    return;
+  }
+  if(!arr.length){
+    box.innerHTML = '<p class="desc">Vacío. Agrega tu correo primero.</p>';
+    return;
+  }
+  arr.forEach(em=>{
+    const c = document.createElement("div");
+    c.className = "chip";
+    const s = document.createElement("span");
+    s.textContent = em;
+    const x = document.createElement("button");
+    x.textContent = "✕";
+    x.onclick = async ()=>{
+      if(!confirm("¿Quitar " + em + "?")) return;
+      try{
+        const act = (await leer()) || [];
+        await guardar(act.filter(e=>e !== em));
+        msg("Quitado ✅", true);
+        pintar();
+      }catch(e){ msg("No se pudo guardar. Revisa reglas."); }
+    };
+    c.appendChild(s); c.appendChild(x);
+    box.appendChild(c);
+  });
+}
+document.getElementById("btnAdd").onclick = async ()=>{
+  msg("");
+  const em = normalizar(document.getElementById("nuevo").value);
+  if(em.indexOf("@") < 0){ msg("Correo inválido."); return; }
+  try{
+    const act = (await leer()) || [];
+    if(act.indexOf(em) >= 0){ msg("Ya está en la lista."); return; }
+    act.push(em);
+    await guardar(act);
+    document.getElementById("nuevo").value = "";
+    msg("Agregado ✅", true);
+    pintar();
+  }catch(e){ msg("No se pudo guardar. Revisa reglas de config/permisos."); }
+};
+pintar();
+</script>
+
+</body>
+</html>
