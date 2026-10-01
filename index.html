@@ -241,10 +241,35 @@
   <span class="chevron">›</span>
 </a>
 
-<div id="secJuegos" style="display:none;width:100%">
+<button class="card" id="btnJuegos" type="button" style="display:none;width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+  <span class="icon">🎮</span>
+  <span class="label">
+    <div class="title">Juegos</div>
+    <div class="subtitle">Para divertirse juntos</div>
+  </span>
+  <span class="chevron">›</span>
+</button>
+
+<button class="card" id="btnExtras" type="button" style="display:none;width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+  <span class="icon">🏁</span>
+  <span class="label">
+    <div class="title">Retos especiales</div>
+    <div class="subtitle">Retos que te llevarán a otro nivel</div>
+  </span>
+  <span class="chevron">›</span>
+</button>
+</div>
+
+<div id="vistaJuegos" style="display:none;width:100%">
+<button class="btnSec" id="btnJuegosVolver" type="button">‹ Volver</button>
   <div class="subTitulo">Juegos 🎮</div>
   <div id="packsJuegos" style="width:100%"></div>
 </div>
+
+<div id="vistaExtras" style="display:none;width:100%">
+<button class="btnSec" id="btnExtrasVolver" type="button">‹ Volver</button>
+  <div class="subTitulo">Retos especiales 🏁</div>
+  <div id="packsExtras" style="width:100%"></div>
 </div>
 
 <div id="vistaExp" style="display:none;width:100%">
@@ -345,6 +370,8 @@ function mostrarMenu(nombre){
   iconoMenu("menu");
   document.getElementById("vistaMenu").style.display = "block";
   document.getElementById("vistaExp").style.display = "none";
+  document.getElementById("vistaJuegos").style.display = "none";
+  document.getElementById("vistaExtras").style.display = "none";
   asistenteEl.style.display = "none";
   pantallaEl.style.display = "none";
   menuEl.style.display = "flex";
@@ -379,11 +406,15 @@ function tarjetaPack(p){
 }
 async function renderPacks(){
   const boxExp = document.getElementById("packsExp");
-  const secJ = document.getElementById("secJuegos");
+  const btnJ = document.getElementById("btnJuegos");
+  const btnX = document.getElementById("btnExtras");
   const boxJ = document.getElementById("packsJuegos");
+  const boxX = document.getElementById("packsExtras");
   boxExp.innerHTML = "";
   boxJ.innerHTML = "";
-  secJ.style.display = "none";
+  boxX.innerHTML = "";
+  btnJ.style.display = "none";
+  btnX.style.display = "none";
   let packs = [{ id: "guiadas", titulo: "Citas Guiadas", icono: "🗺️",
     desc: "Niveles y secuencias paso a paso", ruta: "Guiadas", seccion: "experiencias" }];
   try{
@@ -413,7 +444,9 @@ async function renderPacks(){
       if(s.estado === "aprobado" && s.graciaUsada === false && s.item) gracias[s.item + "|" + String(s.email || "").toLowerCase()] = true;
     });
   }catch(e){}
+  packs.sort((a, b)=>((a.orden ?? 10) - (b.orden ?? 10)) || String(a.titulo || a.id || "").localeCompare(String(b.titulo || b.id || "")));
   let juegos = 0;
+  let extras = 0;
   for(const p of packs){
     const cod = lic[p.id];
     let ok = false;
@@ -435,11 +468,15 @@ async function renderPacks(){
     if((p.seccion || "experiencias") === "juegos"){
       boxJ.appendChild(card);
       juegos++;
+    }else if((p.seccion || "") === "extras"){
+      boxX.appendChild(card);
+      extras++;
     }else{
       boxExp.appendChild(card);
     }
   }
-  if(juegos) secJ.style.display = "block";
+  if(juegos) btnJ.style.display = "";
+  if(extras) btnX.style.display = "";
 }
 // Quita del menú en ese momento si revocan: escucha solicitudes de mi proyecto
 function escucharRevocadosMenu(){
@@ -726,6 +763,22 @@ document.getElementById("btnExpVolver").onclick = ()=>{
   document.getElementById("vistaExp").style.display = "none";
   document.getElementById("vistaMenu").style.display = "block";
   iconoMenu("menu");
+};
+document.getElementById("btnJuegos").onclick = ()=>{
+  document.getElementById("vistaMenu").style.display = "none";
+  document.getElementById("vistaJuegos").style.display = "block";
+};
+document.getElementById("btnJuegosVolver").onclick = ()=>{
+  document.getElementById("vistaJuegos").style.display = "none";
+  document.getElementById("vistaMenu").style.display = "block";
+};
+document.getElementById("btnExtras").onclick = ()=>{
+  document.getElementById("vistaMenu").style.display = "none";
+  document.getElementById("vistaExtras").style.display = "block";
+};
+document.getElementById("btnExtrasVolver").onclick = ()=>{
+  document.getElementById("vistaExtras").style.display = "none";
+  document.getElementById("vistaMenu").style.display = "block";
 };
 iniciar();
 </script>

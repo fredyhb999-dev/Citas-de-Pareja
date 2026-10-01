@@ -44,7 +44,7 @@
   .tabsTienda .label{ flex:1; }
   .tabsTienda .title{ font-weight:700; font-size:1.05rem; }
   .tabsTienda .subtitle{ font-size:.82rem; color:var(--fg-muted); margin-top:2px; font-family:'Inter',sans-serif; }
-  .nuevo{ display:inline-block; font-size:.68rem; font-weight:700; color:var(--bg);
+  .nuevo{ float:right; font-size:.68rem; font-weight:700; color:var(--bg);
     background:linear-gradient(90deg, var(--coral), var(--teal));
     border-radius:8px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
   .subTituloSec{ width:100%; max-width:420px; font-family:'Chakra Petch',sans-serif; font-size:.85rem; font-weight:700;
@@ -208,6 +208,7 @@ async function pintarDesdeCache(){
       cont.appendChild(h);
     }
     const items = packsCache.filter(p=>(p.seccion || "experiencias") === g.id);
+    items.sort((a, b)=>((a.orden ?? 10) - (b.orden ?? 10)) || String(a.titulo || a.id || "").localeCompare(String(b.titulo || b.id || "")));
     if(!items.length){
       const v = document.createElement("p");
       v.className = "desc";

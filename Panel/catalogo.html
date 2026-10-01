@@ -200,6 +200,7 @@ function entrarSec(id){
   document.getElementById("tituloPag").textContent = nombreSec(id);
   document.getElementById("tituloSec").style.display = "none";
   document.getElementById("fSecFija").textContent = "Sección: " + nombreSec(id);
+  armarIconos();
   pintarForm({});
   msg("");
   cargar();
@@ -214,11 +215,17 @@ document.getElementById("btnVolverSec").onclick = ()=>{
   document.getElementById("vistaCat").style.display = "none";
   document.getElementById("vistaSec").style.display = "block";
 };
-const ICONOS = ["🎲","🍷","💋","🌙","🔥","💑","🎭","🎶","🕯️","🍫","🎁","✨"];
+const ICONOS_POR_SEC = {
+  experiencias: ["💋","💑","🌙","🕯️","🍷","🍫","💐","💍","🌹","🎶","✨","🔥"],
+  juegos: ["🎲","🎮","🃏","🎯","🎳","🧩","🎪","🏆","🎉","🪩","🎊","🍻"],
+  extras: ["🔥","🏆","💪","🌶️","⚡","🎯","👀","🤫","🙈","🫣","🖤","🏁"],
+};
+function iconosSec(){ return ICONOS_POR_SEC[secActual] || ICONOS_POR_SEC.experiencias; }
 let cacheItems = [];
-(function armarIconos(){
+function armarIconos(){
   const box = document.getElementById("iconos");
-  ICONOS.forEach(em=>{
+  box.innerHTML = "";
+  iconosSec().forEach(em=>{
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = em;
@@ -226,7 +233,8 @@ let cacheItems = [];
     b.onclick = ()=>{ document.getElementById("fIcono").value = em; };
     box.appendChild(b);
   });
-})();
+}
+armarIconos();
 function hashId(s){
   let h = 0;
   s = String(s || "");
@@ -234,6 +242,7 @@ function hashId(s){
   return h;
 }
 document.getElementById("btnSorpresa").onclick = ()=>{
+  const ICONOS = iconosSec();
   const id = document.getElementById("fId").value.trim() || ("x" + Date.now());
   const usados = new Set(cacheItems.filter(p=>(p.seccion || "experiencias") === (secActual || "experiencias")).map(p=>p.icono));
   let idx = hashId(id) % ICONOS.length;
@@ -346,7 +355,7 @@ async function cargar(){
       const fila = document.createElement("div");
       fila.className = "fila";
       const ed = document.createElement("button");
-      ed.className = "btn ghost"; ed.textContent = "Editar";
+      ed.className = "btn"; ed.textContent = "Editar";
       ed.onclick = ()=>{
         let nv = "";
         try{
@@ -357,7 +366,7 @@ async function cargar(){
         window.scrollTo(0, 0);
       };
       const act = document.createElement("button");
-      act.className = "btn ghost"; act.textContent = (p.activo === false) ? "Activar" : "Ocultar";
+      act.className = "btn"; act.textContent = (p.activo === false) ? "Activar" : "Ocultar";
       act.onclick = async ()=>{
         if(!yoEmail){ msg("Entra con Google primero."); return; }
         if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
