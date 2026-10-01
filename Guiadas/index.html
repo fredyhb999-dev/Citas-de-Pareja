@@ -119,10 +119,17 @@
 
 <!-- ============ LISTA (jugar) ============ -->
 <div class="vista" id="vistaLista">
-  <h1>Elige actividad</h1>
-  <p class="desc">¿Qué vas a jugar hoy?</p>
+  <h1 id="tituloLista">Elige actividad</h1>
+  <p class="desc" id="descLista">¿Qué vas a jugar hoy?</p>
   <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar actividad..." autocomplete="off">
-  <div id="listaActs" style="width:100%"></div>
+  <div id="cajaActs" style="width:100%;max-height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
+    <div id="listaActs" style="width:100%"></div>
+  </div>
+  <button class="btnPri" id="btnMulti" style="margin-top:12px;">Modo MultiActividades 🔗</button>
+  <div id="filaMultiSel" style="display:none;width:100%;gap:8px;margin-top:12px;">
+    <button class="btnPri" id="btnMultiGo" disabled style="flex:1;opacity:.4;margin-bottom:0;">Combinar (0/3)</button>
+    <button class="btnSec" id="btnMultiCancel" style="width:auto;padding:12px 16px;text-decoration:none;">Cancelar</button>
+  </div>
 </div>
 
 <!-- ============ CONFIG (elegir para editar) ============ -->
@@ -157,12 +164,14 @@
   <button class="btnSec" id="btnTerminar">Terminar</button>
 </div>
 
-<!-- ============ CONTINUAR ============ -->
-<div class="vista" id="vistaSeguir">
-  <h1 id="sgTitulo">¿Continuar cita anterior?</h1>
-  <p class="desc" id="sgDesc"></p>
-  <button class="btnPri" id="btnContinuar">Continuar →</button>
-  <button class="btnSec" id="btnNueva">Cita nueva</button>
+<!-- ============ CONTINUAR (ventana emergente) ============ -->
+<div class="vista" id="vistaSeguir" style="position:fixed;inset:0;z-index:60;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.6);max-width:none;width:100%;">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:22px 20px;text-align:center;">
+    <h1 id="sgTitulo" style="font-size:1.3rem;">¿Continuar cita anterior?</h1>
+    <p class="desc" id="sgDesc" style="max-width:none;"></p>
+    <button class="btnPri" id="btnContinuar">Continuar →</button>
+    <button class="btnSec" id="btnNueva">Cita nueva</button>
+  </div>
 </div>
 
 <!-- ============ MODAL CORTESÍA VENCIDO ============ -->
@@ -171,6 +180,26 @@
     <div style="font-size:.95rem;line-height:1.5;">Su acceso venció 🥺 pero hoy no les arruinamos su cita 💛 les obsequiamos este último acceso</div>
     <div style="font-size:.75rem;color:var(--fg-muted);margin-top:10px;text-align:right;">Solicite su acceso en<br>Centro de Adquisiciones</div>
     <button class="btnPri" id="btnGraciaOk" style="margin-top:14px;">Aceptar</button>
+  </div>
+</div>
+
+<!-- ============ MODAL MULTI 2: CONFIRMAR ============ -->
+<div id="modalMulti2" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:22px 20px;text-align:center;">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;">¿Son estas 3?</div>
+    <div id="multiResumen" style="font-size:.95rem;margin:12px 0;line-height:1.6;"></div>
+    <button class="btnPri" id="btnMulti2Ok" style="margin-bottom:8px;">Sí, continuar →</button>
+    <button class="btnSec" id="btnMulti2Back">Re-elegir</button>
+  </div>
+</div>
+
+<!-- ============ MODAL MULTI 3: TOMAS ============ -->
+<div id="modalMulti3" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:22px 20px;">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin-bottom:10px;">¿Cuántas acciones por nivel?</div>
+    <div class="tomasGrid" id="multiTomasGrid"></div>
+    <button class="btnPri" id="btnMulti3Ok" style="margin-top:12px;">Aceptar y jugar ▶</button>
+    <button class="btnSec" id="btnMulti3Back">Atrás</button>
   </div>
 </div>
 
@@ -220,6 +249,8 @@ document.getElementById("btnGraciaOk").onclick = ()=>{
 };
 async function entrar(){
   if(await tengoAcceso()){
+    multiModo = false; multiSel = [];
+    try{ multiRefrescar(); }catch(e){}
     pintarLista("listaActs", "jugar");
     ver("vistaLista", false);
     return;
@@ -432,25 +463,46 @@ async function cargarActividades(){
   }catch(e){}
   return Array.isArray(base) ? base : [];
 }
-async function pintarLista(boxId, modo){
-  const acts = await cargarActividades();
+let cacheActs = null;
+let cacheConteos = null;
+function dibujarLista(boxId, modo, acts, conteos){
   const box = document.getElementById(boxId);
+  const scroller = document.getElementById("cajaActs");
+  const top = (boxId === "listaActs" && scroller) ? scroller.scrollTop : 0;
   box.innerHTML = "";
-  const conteos = {};
-  try{
-    const snap = await getDocs(collection(db, "nivelesActividad"));
-    snap.forEach(d=>{
-      const n = d.data().n || {};
-      conteos[d.id] = NIVELES.reduce((t, nv)=>t + ((n[nv.id] || []).length), 0);
-    });
-  }catch(e){}
   acts.forEach(nombre=>{
+    const c = conteos[nombre] || 0;
+    if(boxId === "listaActs" && multiModo){
+      const lab = document.createElement("label");
+      lab.className = "btnAct";
+      lab.style.cursor = c ? "pointer" : "default";
+      if(!c) lab.style.opacity = ".45";
+      const chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.disabled = !c;
+      chk.checked = multiSel.indexOf(nombre) >= 0;
+      chk.value = nombre;
+      chk.style.cssText = "width:20px;height:20px;accent-color:var(--teal);";
+      chk.onchange = ()=>{ multiToggle(nombre, chk.checked); };
+      const t = document.createElement("span");
+      t.textContent = nombre + (c ? "" : " (sin acciones)");
+      t.style.flex = "1";
+      lab.appendChild(t); lab.appendChild(chk);
+      lab.onclick = (e)=>{
+        if(e.target !== chk && c){
+          e.preventDefault();
+          chk.checked = !chk.checked;
+          multiToggle(nombre, chk.checked);
+        }
+      };
+      box.appendChild(lab);
+      return;
+    }
     const b = document.createElement("button");
     b.className = "btnAct";
     const t = document.createElement("span");
     t.textContent = nombre;
     b.appendChild(t);
-    const c = conteos[nombre] || 0;
     if(modo === "editar"){
       const s = document.createElement("small");
       s.textContent = c ? (c + (c === 1 ? " acción" : " acciones")) : "sin acciones";
@@ -468,9 +520,26 @@ async function pintarLista(boxId, modo){
     }
     box.appendChild(b);
   });
+  if(boxId === "listaActs" && scroller) scroller.scrollTop = top;
+}
+async function pintarLista(boxId, modo){
+  const acts = await cargarActividades();
+  const conteos = {};
+  try{
+    const snap = await getDocs(collection(db, "nivelesActividad"));
+    snap.forEach(d=>{
+      const n = d.data().n || {};
+      conteos[d.id] = NIVELES.reduce((t, nv)=>t + ((n[nv.id] || []).length), 0);
+    });
+  }catch(e){}
+  if(boxId === "listaActs"){ cacheActs = acts; cacheConteos = conteos; }
+  dibujarLista(boxId, modo, acts, conteos);
 }
 async function jugarDirecto(nombre){
   actividad = nombre;
+  multiActs = [];
+  multiModo = false; multiSel = [];
+  try{ multiRefrescar(); }catch(e){}
   datos = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
   try{
     const snap = await getDoc(doc(db, "nivelesActividad", nombre));
@@ -478,18 +547,32 @@ async function jugarDirecto(nombre){
   }catch(e){}
   const pendiente = leerProg();
   if(pendiente && pendiente.actividad === nombre && Array.isArray(pendiente.lista) && pendiente.lista.length){
-    document.getElementById("sgDesc").textContent =
-      nombre + ": ibas en la " + (pendiente.paso + 1) + " de " + pendiente.lista.length + ".";
-    ver("vistaSeguir");
+    seguirEncima("¿Continuar cita anterior?",
+      nombre + ": ibas en la " + (pendiente.paso + 1) + " de " + pendiente.lista.length + ".");
     return;
   }
   empezarNuevo();
 }
+function seguirEncima(titulo, desc){
+  document.getElementById("sgTitulo").textContent = titulo;
+  document.getElementById("sgDesc").textContent = desc;
+  document.getElementById("vistaSeguir").classList.add("ver");
+  try{ history.pushState({ v: "vistaSeguir" }, ""); }catch(e){}
+  window.scrollTo(0, 0);
+}
+function seguirFuera(){
+  document.getElementById("vistaSeguir").classList.remove("ver");
+}
 function leerProg(){
   try{ return JSON.parse(localStorage.getItem("guia_prog") || "null"); }catch(e){ return null; }
 }
+let multiActs = [];
 function guardarProg(){
-  try{ localStorage.setItem("guia_prog", JSON.stringify({ actividad, lista: listaJuego, paso })); }catch(e){}
+  try{
+    const base = { actividad, lista: listaJuego, paso };
+    if(multiActs && multiActs.length === 3){ base.modo = "multi"; base.actividades = multiActs.slice(); }
+    localStorage.setItem("guia_prog", JSON.stringify(base));
+  }catch(e){}
 }
 function borrarProg(){
   try{ localStorage.removeItem("guia_prog"); }catch(e){}
@@ -522,13 +605,145 @@ document.getElementById("btnContinuar").onclick = ()=>{
   const p = leerProg();
   if(!p) return;
   actividad = p.actividad;
+  multiActs = Array.isArray(p.actividades) ? p.actividades.slice() : [];
   listaJuego = p.lista;
   paso = Math.min(p.paso, listaJuego.length - 1);
+  seguirFuera();
   mostrarPlayer();
 };
 document.getElementById("btnNueva").onclick = ()=>{
+  const p = leerProg();
   borrarProg();
+  seguirFuera();
+  if(p && p.modo === "multi" && Array.isArray(p.actividades)){
+    multiActs = [];
+    multiAbrirSel();
+    return;
+  }
+  multiActs = [];
   empezarNuevo();
+};
+
+// ---------- MultiActividades (3 obligadas, ciegas, mismo acceso, selección inline) ----------
+let multiSel = [];
+let multiModo = false;
+function multiMostrar(id, mostrar){
+  const el = document.getElementById(id);
+  el.style.display = mostrar ? "flex" : "none";
+}
+function multiRefrescar(){
+  document.getElementById("tituloLista").textContent = multiModo ? "Selecciona 3 para combinar" : "Elige actividad";
+  document.getElementById("descLista").textContent = multiModo ? ("Llevas " + multiSel.length + "/3") : "¿Qué vas a jugar hoy?";
+  document.getElementById("btnMulti").style.display = multiModo ? "none" : "";
+  document.getElementById("filaMultiSel").style.display = multiModo ? "flex" : "none";
+  const go = document.getElementById("btnMultiGo");
+  go.textContent = "Combinar (" + multiSel.length + "/3)";
+  go.disabled = multiSel.length !== 3;
+  go.style.opacity = multiSel.length !== 3 ? ".4" : "1";
+}
+function multiToggle(nombre, on){
+  if(on){
+    if(multiSel.indexOf(nombre) >= 0){ multiRefrescar(); return; }
+    if(multiSel.length >= 3){
+      document.querySelectorAll('#listaActs input[type="checkbox"]').forEach(i=>{ if(i.value === nombre) i.checked = false; });
+      multiRefrescar();
+      return;
+    }
+    multiSel.push(nombre);
+  }else{
+    multiSel = multiSel.filter(x=>x !== nombre);
+  }
+  multiRefrescar();
+}
+async function multiAbrir(){
+  const pendiente = leerProg();
+  if(pendiente && pendiente.modo === "multi" && Array.isArray(pendiente.lista) && pendiente.lista.length){
+    const quienes = (pendiente.actividades || []).join(" + ");
+    seguirEncima("¿Continuar multi anterior?",
+      "Multi (" + quienes + "): ibas en la " + (pendiente.paso + 1) + " de " + pendiente.lista.length + ".");
+    return;
+  }
+  multiAbrirSel();
+}
+async function multiAbrirSel(){
+  multiModo = true;
+  multiSel = [];
+  multiRefrescar();
+  if(cacheActs && cacheConteos) dibujarLista("listaActs", "jugar", cacheActs, cacheConteos);
+  else await pintarLista("listaActs", "jugar");
+}
+async function multiSalir(){
+  multiModo = false;
+  multiSel = [];
+  multiRefrescar();
+  if(cacheActs && cacheConteos) dibujarLista("listaActs", "jugar", cacheActs, cacheConteos);
+  else await pintarLista("listaActs", "jugar");
+}
+document.getElementById("btnMulti").onclick = ()=>{ multiAbrir(); };
+document.getElementById("btnMultiCancel").onclick = ()=>{ multiSalir(); };
+document.getElementById("btnMultiGo").onclick = ()=>{
+  if(multiSel.length !== 3) return;
+  document.getElementById("multiResumen").textContent = multiSel.join(" + ");
+  multiMostrar("modalMulti2", true);
+};
+document.getElementById("btnMulti2Back").onclick = ()=>{
+  multiMostrar("modalMulti2", false);
+};
+document.getElementById("btnMulti2Ok").onclick = ()=>{
+  const g = document.getElementById("multiTomasGrid");
+  g.innerHTML = "";
+  NIVELES.forEach(nv=>{
+    const lab = document.createElement("label");
+    lab.textContent = nv.nombre;
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.min = "0"; inp.max = "20";
+    inp.value = TOMAS_DEF[nv.id];
+    inp.id = "multi_toma_" + nv.id;
+    lab.appendChild(inp);
+    g.appendChild(lab);
+  });
+  multiMostrar("modalMulti2", false);
+  multiMostrar("modalMulti3", true);
+};
+document.getElementById("btnMulti3Back").onclick = ()=>{
+  multiMostrar("modalMulti3", false);
+  multiMostrar("modalMulti2", true);
+};
+document.getElementById("btnMulti3Ok").onclick = async ()=>{
+  const tomas = {};
+  NIVELES.forEach(nv=>{
+    const el = document.getElementById("multi_toma_" + nv.id);
+    tomas[nv.id] = Math.max(0, Math.min(20, parseInt(el.value, 10) || 0));
+  });
+  const bolsas = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
+  for(const nombre of multiSel){
+    try{
+      const snap = await getDoc(doc(db, "nivelesActividad", nombre));
+      if(snap.exists() && snap.data().n){
+        const n = snap.data().n;
+        NIVELES.forEach(nv=>{ (n[nv.id] || []).forEach(t=>bolsas[nv.id].push(t)); });
+      }
+    }catch(e){}
+  }
+  multiActs = multiSel.slice();
+  actividad = "MultiActividades";
+  listaJuego = [];
+  NIVELES.forEach(nv=>{
+    const disponibles = mezclar(bolsas[nv.id] || []);
+    const n = Math.min(tomas[nv.id], disponibles.length);
+    for(let i = 0; i < n; i++) listaJuego.push({ nivel: nv.nombre, texto: disponibles[i] });
+  });
+  multiMostrar("modalMulti3", false);
+  if(!listaJuego.length){
+    alert("Sin acciones en esas 3. Elige otras o alimenta en ⚙️.");
+    multiActs = [];
+    return;
+  }
+  paso = 0;
+  guardarProg();
+  multiModo = false; multiSel = [];
+  try{ multiRefrescar(); }catch(e){}
+  mostrarPlayer();
 };
 
 // ---------- editor ----------
