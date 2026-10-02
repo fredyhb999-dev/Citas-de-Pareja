@@ -797,21 +797,23 @@ async function jugarDirecto(nombre){
     if(snap.exists() && snap.data().n) datos = Object.assign(datos, snap.data().n);
   }catch(e){}
   const pendiente = leerProg();
-  try{
-    const sd = await getDoc(sesionRef());
-    if(sd.exists()){
-      const d = sd.data();
-      const esMia = d.hostUid === miIdSesion();
-      const tiengoPendientes = Array.isArray(d.lista) && d.lista.length && (d.paso || 0) < d.lista.length;
-      if(esMia && tiengoPendientes){
-        pendienteSrc = "sesion";
-        seguirEncima("¿Continuar cita anterior?",
-          (d.titulo || "Cita") + ": ibas en la " + ((d.paso || 0) + 1) + " de " + d.lista.length + ".");
-        return;
+  if(modoJuego === "compartido"){
+    try{
+      const sd = await getDoc(sesionRef());
+      if(sd.exists()){
+        const d = sd.data();
+        const esMia = d.hostUid === miIdSesion();
+        const tengoPendientes = Array.isArray(d.lista) && d.lista.length && (d.paso || 0) < d.lista.length;
+        if(esMia && tengoPendientes){
+          pendienteSrc = "sesion";
+          seguirEncima("¿Continuar cita anterior?",
+            (d.titulo || "Cita") + ": ibas en la " + ((d.paso || 0) + 1) + " de " + d.lista.length + ".");
+          return;
+        }
+        if(esMia) await cerrarSesion();
       }
-      if(esMia) await cerrarSesion();
-    }
-  }catch(e){}
+    }catch(e){}
+  }
   if(pendiente && pendiente.actividad === nombre && Array.isArray(pendiente.lista) && pendiente.lista.length){
     seguirEncima("¿Continuar cita anterior?",
       nombre + ": ibas en la " + (pendiente.paso + 1) + " de " + pendiente.lista.length + ".");
@@ -982,6 +984,22 @@ function multiToggle(nombre, on){
   multiRefrescar();
 }
 async function multiAbrir(){
+  if(modoJuego === "compartido"){
+    try{
+      const sd = await getDoc(sesionRef());
+      if(sd.exists()){
+        const d = sd.data();
+        const esMia = d.hostUid === miIdSesion();
+        const pendientes = Array.isArray(d.lista) && d.lista.length && (d.paso || 0) < d.lista.length;
+        if(esMia && pendientes && d.modo === "multi"){
+          pendienteSrc = "sesion";
+          seguirEncima("¿Continuar multi anterior?",
+            "Multi (" + (d.actividades || []).join(" + ") + "): ibas en la " + ((d.paso || 0) + 1) + " de " + d.lista.length + ".");
+          return;
+        }
+      }
+    }catch(e){}
+  }
   const pendiente = leerProg();
   if(pendiente && pendiente.modo === "multi" && Array.isArray(pendiente.lista) && pendiente.lista.length){
     const quienes = (pendiente.actividades || []).join(" + ");
