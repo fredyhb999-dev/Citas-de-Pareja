@@ -140,7 +140,8 @@
   #lector video{ border-radius:16px; }
   #lectorInv{ width:100%; max-width:340px; }
   #lectorInv video{ border-radius:16px; }
-  #pantallaInvitado select option{ background:var(--card); }
+  #pantallaInvitado select{ color-scheme:dark; }
+  #pantallaInvitado select option{ background:var(--card); color:var(--fg); }
 </style>
 </head>
 <body>
@@ -230,7 +231,7 @@
   </button>
   </div>
   <div id="invVistaInv" style="display:none;width:100%;flex-direction:column;align-items:center;">
-    <button class="btnSec" id="invBackDeInv" type="button" style="align-self:flex-start;">‹ Invitados</button>
+    <button id="invBackDeInv" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Invitados</button>
     <h1 style="font-size:1.4rem;">Modo invitado 📷</h1>
     <div id="lectorInv" style="display:none;width:100%;max-width:340px;"></div>
     <div id="invMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:4px 0 12px;"></div>
@@ -244,7 +245,7 @@
     </div>
     <button class="btnPri" id="invEntrar">Entrar modo invitado 📷</button>
     <button class="btnPri" id="invSalir" style="background:var(--card);color:var(--fg);border:1px solid var(--card-border);">Salir modo invitado ↩</button>
-    <div style="width:100%;margin-top:18px;text-align:center;">
+    <div id="invVinc" style="width:100%;margin-top:18px;text-align:center;">
       <h2 style="font-family:'Chakra Petch',sans-serif;font-size:1rem;margin:0 0 4px;">Vincular pareja 📱</h2>
       <p style="font-size:.82rem;color:var(--fg-muted);margin:0 0 10px;">Muéstralo en persona: quien lo escanee entra a tu base.</p>
       <div id="qrCajaGear" style="background:#fff;padding:12px;border-radius:14px;display:none;justify-content:center;margin:0 auto 12px;width:fit-content;"></div>
@@ -252,7 +253,7 @@
     </div>
   </div>
   <div id="invVistaUsu" style="display:none;width:100%;text-align:left;">
-    <button class="btnSec" id="invBackDeUsu" type="button" style="padding-left:0;">‹ Invitados</button>
+    <button id="invBackDeUsu" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Invitados</button>
     <h1 style="font-size:1.4rem;text-align:center;">Usuarios 👥</h1>
     <p id="invQuien" style="font-size:.82rem;color:var(--fg-muted);text-align:center;margin:0 0 10px;"></p>
     <div id="invUsuarios" style="display:flex;flex-direction:column;gap:10px;"></div>
@@ -980,12 +981,14 @@ function invVer(cual){
   const cards = document.getElementById("invCards");
   const est = document.getElementById("invEstado");
   const tit = document.getElementById("invTitulo");
+  document.getElementById("invVolverTop").style.display = cual ? "none" : "";
   if(!cual){
     tit.style.display = "";
     cards.style.display = "flex";
     est.style.display = "";
     document.getElementById("invVistaInv").style.display = "none";
     document.getElementById("invVistaUsu").style.display = "none";
+    invModoScan(false);
     return;
   }
   tit.style.display = "none";
@@ -995,8 +998,18 @@ function invVer(cual){
   document.getElementById("invVistaUsu").style.display = cual === "usu" ? "block" : "none";
   try{ window.scrollTo(0, 0); }catch(e){}
 }
+function invModoScan(on){
+  document.getElementById("invEntrar").style.display = on ? "none" : "";
+  document.getElementById("invSalir").style.display = on ? "none" : (hayRespaldo() ? "" : "none");
+  document.getElementById("invVinc").style.display = on ? "none" : "";
+  if(!on){
+    document.getElementById("invForm").style.display = "none";
+    document.getElementById("lectorInv").style.display = "none";
+  }
+}
 document.getElementById("invBackDeInv").onclick = async ()=>{
   await detenerScanInv();
+  invModoScan(false);
   invVer(null);
 };
 document.getElementById("invBackDeUsu").onclick = ()=>{ invVer(null); };
@@ -1047,7 +1060,7 @@ document.getElementById("invEntrar").onclick = async ()=>{
   invMsg("");
   respaldarSesion();
   invRefrescar();
-  document.getElementById("invForm").style.display = "none";
+  invModoScan(true);
   const box = document.getElementById("lectorInv");
   await detenerScanInv();
   box.style.display = "block";
