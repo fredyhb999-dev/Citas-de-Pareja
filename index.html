@@ -215,19 +215,22 @@
   <button id="invVolverTop" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Volver</button>
   <h1>Invitados 🎟️</h1>
   <p id="invEstado" style="color:var(--fg-muted);margin:0 0 18px;">Entra a otra base como invitado o vuelve a la tuya.</p>
-  <button class="card" id="invCardInv" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+  <div id="invCards" style="width:100%;display:flex;flex-direction:column;gap:12px;">
+  <button class="card" id="invCardInv" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;margin:0;">
     <span class="icon">📷</span>
-    <span class="label"><div class="title">Modo invitado</div>
+    <span class="label"><div class="title">Invitados</div>
     <div class="subtitle">Entrar, salir y vincular</div></span>
     <span class="chevron">›</span>
   </button>
-  <button class="card" id="invCardUsu" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+  <button class="card" id="invCardUsu" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;margin:0;">
     <span class="icon">👥</span>
     <span class="label"><div class="title">Usuarios</div>
     <div class="subtitle">Cambiar, agregar o dar de baja</div></span>
     <span class="chevron">›</span>
   </button>
+  </div>
   <div id="invVistaInv" style="display:none;width:100%;flex-direction:column;align-items:center;">
+    <button class="btnSec" id="invBackDeInv" type="button" style="align-self:flex-start;">‹ Invitados</button>
     <div id="lectorInv" style="display:none;width:100%;max-width:340px;"></div>
     <div id="invMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:4px 0 12px;"></div>
     <div id="invForm" style="display:none;width:100%;">
@@ -248,6 +251,7 @@
     </div>
   </div>
   <div id="invVistaUsu" style="display:none;width:100%;text-align:left;">
+    <button class="btnSec" id="invBackDeUsu" type="button" style="padding-left:0;">‹ Invitados</button>
     <p id="invQuien" style="font-size:.82rem;color:var(--fg-muted);text-align:center;margin:0 0 10px;"></p>
     <div id="invUsuarios" style="display:flex;flex-direction:column;gap:10px;"></div>
     <div style="display:flex;gap:8px;margin-top:10px;">
@@ -971,9 +975,25 @@ document.getElementById("invQR").onclick = ()=>{
   }catch(e){ caja.textContent = "No se pudo generar."; }
 };
 function invVer(cual){
+  const cards = document.getElementById("invCards");
+  const est = document.getElementById("invEstado");
+  if(!cual){
+    cards.style.display = "flex";
+    est.style.display = "";
+    document.getElementById("invVistaInv").style.display = "none";
+    document.getElementById("invVistaUsu").style.display = "none";
+    return;
+  }
+  cards.style.display = "none";
+  est.style.display = "none";
   document.getElementById("invVistaInv").style.display = cual === "inv" ? "flex" : "none";
   document.getElementById("invVistaUsu").style.display = cual === "usu" ? "block" : "none";
 }
+document.getElementById("invBackDeInv").onclick = async ()=>{
+  await detenerScanInv();
+  invVer(null);
+};
+document.getElementById("invBackDeUsu").onclick = ()=>{ invVer(null); };
 document.getElementById("gearBtn").onclick = ()=>{
   menuEl.style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
