@@ -285,7 +285,9 @@ document.getElementById("btnGraciaOk").onclick = ()=>{
   document.getElementById("modalGracia").style.display = "none";
 };
 async function entrar(){
-  if(await tengoAcceso()){
+  let ok = false;
+  try{ ok = await tengoAcceso(); }catch(e){ ok = false; }
+  if(ok){
     multiModo = false; multiSel = [];
     try{ multiRefrescar(); }catch(e){}
     try{ await sincronizarOficiales(); }catch(e){}
@@ -531,22 +533,24 @@ function escucharSesion(){
   sesionIniciada = true;
   try{
     sesionUnsub = onSnapshot(sesionRef(), (snap)=>{
-      const d = snap.exists() ? snap.data() : null;
-      sesionActual = d;
-      if(d && d.activa){
-        const soyHost = d.hostUid === miIdSesion();
-        if(jugandoCompartido){ aplicaSesion(d); return; }
-        if(d.sid !== sidMostrado){
-          sidMostrado = d.sid;
-          document.getElementById("unirDesc").textContent = soyHost
-            ? "Tu cita compartida sigue en curso."
-            : (d.hostNombre || "Tu pareja") + " inició una cita de Citas Guiadas.";
-          document.getElementById("modalUnir").style.display = "flex";
+      try{
+        const d = snap.exists() ? snap.data() : null;
+        sesionActual = d;
+        if(d && d.activa){
+          const soyHost = d.hostUid === miIdSesion();
+          if(jugandoCompartido){ aplicaSesion(d); return; }
+          if(d.sid !== sidMostrado){
+            sidMostrado = d.sid;
+            document.getElementById("unirDesc").textContent = soyHost
+              ? "Tu cita compartida sigue en curso."
+              : (d.hostNombre || "Tu pareja") + " inició una cita de Citas Guiadas.";
+            document.getElementById("modalUnir").style.display = "flex";
+          }
+        }else if(jugandoCompartido){
+          jugandoCompartido = false;
+          entrar();
         }
-      }else if(jugandoCompartido){
-        jugandoCompartido = false;
-        entrar();
-      }
+      }catch(e){}
     }, ()=>{});
   }catch(e){}
 }
@@ -1273,7 +1277,18 @@ document.getElementById("btnUnirNo").onclick = ()=>{
   document.getElementById("modalUnir").style.display = "none";
 };
 
-(async ()=>{ await cargarIdentidad(); entrar(); })();
+(async ()=>{
+  try{ await cargarIdentidad(); }catch(e){}
+  try{
+    await entrar();
+  }catch(e){
+    try{ console.error("Guiadas arranque:", e); }catch(x){}
+    try{ multiModo = false; multiSel = []; multiRefrescar(); }catch(x){}
+    try{ await pintarLista("listaActs", "jugar"); }catch(x){}
+    try{ ver("vistaLista", false); }catch(x){}
+    try{ escucharSesion(); }catch(x){}
+  }
+})();
 </script>
 
 </body>
