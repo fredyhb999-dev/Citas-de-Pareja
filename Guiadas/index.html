@@ -82,6 +82,9 @@
   .btnPri:active{ transform:scale(.97); }
   .btnSec{ width:100%; padding:12px; background:none; border:none; cursor:pointer;
     color:var(--fg-muted); font-size:.9rem; text-decoration:underline; }
+  .opModo{ display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--bg-2);
+    border:1px solid var(--card-border); border-radius:12px; margin-top:8px; font-size:.9rem; cursor:pointer; }
+  .opModo input{ width:auto; accent-color:var(--teal); }
   #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
   /* player */
   #progreso{ color:var(--fg-muted); font-size:.85rem; margin-bottom:6px; }
@@ -129,6 +132,11 @@
   <div id="filaMultiSel" style="display:none;width:100%;gap:8px;margin-top:12px;">
     <button class="btnPri" id="btnMultiGo" disabled style="flex:1;opacity:.4;margin-bottom:0;">Combinar (0/3)</button>
     <button class="btnSec" id="btnMultiCancel" style="width:auto;padding:12px 16px;text-decoration:none;">Cancelar</button>
+  </div>
+  <div id="cajaModoJuego" style="width:100%;background:var(--card);border:1px solid var(--card-border);border-radius:16px;padding:14px;margin-top:6px;">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;">¿Cómo van a Jugar hoy?</div>
+    <label class="opModo"><input type="radio" name="modoJuego" value="local" checked> Acciones en un Celular</label>
+    <label class="opModo"><input type="radio" name="modoJuego" value="compartido"> Cada quien en el suyo</label>
   </div>
 </div>
 
@@ -204,11 +212,21 @@
   </div>
 </div>
 
+<!-- ============ MODAL UNIRSE (sesión compartida) ============ -->
+<div id="modalUnir" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:70;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:22px 20px;text-align:center;">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿Quieres jugar? ¿Unirte?</div>
+    <div id="unirDesc" style="font-size:.9rem;color:var(--fg-muted);margin:10px 0 0;"></div>
+    <button class="btnPri" id="btnUnirme" style="margin-top:16px;">Unirme →</button>
+    <button class="btnSec" id="btnUnirNo">Ahora no</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, updateDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, updateDoc, onSnapshot, query, where, limit, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase } from "../config.js";
+import { resolverFirebase, cargarUsuarios } from "../config.js";
 import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "../taquilla.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
@@ -273,6 +291,7 @@ async function entrar(){
     try{ await sincronizarOficiales(); }catch(e){}
     pintarLista("listaActs", "jugar");
     ver("vistaLista", false);
+    try{ escucharSesion(); }catch(e){}
     return;
   }
   // Cortesía única si venció y no se ha usado
@@ -416,6 +435,121 @@ let listaJuego = [];
 let paso = 0;
 
 let ultimaActividad = null;
+
+// ---------- modo de juego + sesión compartida (Cada quien en el suyo) ----------
+let modoJuego = "local";        // 'local' | 'compartido'
+let miUsuario = null;
+let usuariosLista = [];
+let miLado = "A";               // admin = A, pareja = B
+let jugandoCompartido = false;
+let sidMostrado = null;
+let sesionUnsub = null;
+let sesionActual = null;
+let sesionIniciada = false;
+
+function leerQuienSoy(){
+  try{ return JSON.parse(localStorage.getItem("appPareja_quienSoy") || "null"); }catch(e){ return null; }
+}
+async function cargarIdentidad(){
+  try{ usuariosLista = await cargarUsuarios(db, getDoc, doc, []); }catch(e){ usuariosLista = []; }
+  if(!Array.isArray(usuariosLista)) usuariosLista = [];
+  const yo = leerQuienSoy();
+  miUsuario = (yo && usuariosLista.find(u=>u.id === yo.id)) || yo || null;
+  const admin = usuariosLista.find(u=>u.admin);
+  if(miUsuario && typeof miUsuario.admin === "boolean") miLado = miUsuario.admin ? "A" : "B";
+  else if(admin && miUsuario) miLado = (miUsuario.id === admin.id) ? "A" : "B";
+  else miLado = "A";
+}
+function esAdmin(){ return miLado === "A"; }
+function nombreDe(lado){
+  const u = usuariosLista.find(x=> (lado === "A") ? x.admin : !x.admin);
+  return (u && u.nombre) || (lado === "A" ? "el administrador" : "tu pareja");
+}
+function miIdSesion(){ return (miUsuario && miUsuario.id) || "anon"; }
+function sesionRef(){ return doc(db, "sesionGuiada", "actual"); }
+function marcarRadio(v){
+  modoJuego = v;
+  document.querySelectorAll('input[name="modoJuego"]').forEach(r=>{ r.checked = (r.value === v); });
+}
+async function arrancarCompartido(){
+  if(!esAdmin()){ alert("En 'Cada quien en el suyo' la inicia " + nombreDe("A") + " (administrador)."); return; }
+  jugandoCompartido = true;
+  try{
+    await setDoc(sesionRef(), {
+      activa: true,
+      sid: String(Date.now()) + Math.random().toString(36).slice(2, 6),
+      hostUid: miIdSesion(),
+      hostNombre: (miUsuario && miUsuario.nombre) || nombreDe("A"),
+      modo: (multiActs && multiActs.length === 3) ? "multi" : "normal",
+      titulo: actividad || "Citas Guiadas",
+      actividades: (multiActs || []).slice(),
+      lista: listaJuego,
+      paso: 0,
+      empezadaEn: serverTimestamp(),
+      actualizadaEn: serverTimestamp()
+    });
+    sidMostrado = null;
+    mostrarPlayer();
+  }catch(e){
+    jugandoCompartido = false;
+    alert("Sin conexión. Se jugará en este celular.");
+    marcarRadio("local");
+    guardarProg();
+    mostrarPlayer();
+  }
+}
+async function avanzarSesion(){
+  try{
+    await runTransaction(db, async (tx)=>{
+      const ref = sesionRef();
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const d = snap.data();
+      if(!d.activa) return;
+      const lista = d.lista || [];
+      const p = d.paso || 0;
+      if(!lista[p] || lista[p].lado !== miLado) return;
+      const np = p + 1;
+      tx.update(ref, { paso: np, activa: np < lista.length, actualizadaEn: serverTimestamp() });
+    });
+  }catch(e){}
+}
+async function cerrarSesion(){
+  try{ await setDoc(sesionRef(), { activa: false, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+}
+function aplicaSesion(d){
+  listaJuego = Array.isArray(d.lista) ? d.lista : [];
+  paso = Math.min(d.paso || 0, Math.max(0, listaJuego.length - 1));
+  actividad = d.titulo || actividad;
+  if(d.modo === "multi" && Array.isArray(d.actividades)) multiActs = d.actividades.slice();
+  document.getElementById("plTitulo").textContent = actividad || "Citas Guiadas";
+  pintarPaso();
+}
+function escucharSesion(){
+  if(sesionIniciada) return;
+  sesionIniciada = true;
+  try{
+    sesionUnsub = onSnapshot(sesionRef(), (snap)=>{
+      const d = snap.exists() ? snap.data() : null;
+      sesionActual = d;
+      if(d && d.activa){
+        const soyHost = d.hostUid === miIdSesion();
+        if(jugandoCompartido){ aplicaSesion(d); return; }
+        if(d.sid !== sidMostrado){
+          sidMostrado = d.sid;
+          document.getElementById("unirDesc").textContent = soyHost
+            ? "Tu cita compartida sigue en curso."
+            : (d.hostNombre || "Tu pareja") + " inició una cita de Citas Guiadas.";
+          document.getElementById("modalUnir").style.display = "flex";
+        }
+      }else if(jugandoCompartido){
+        jugandoCompartido = false;
+        entrar();
+      }
+    }, ()=>{});
+  }catch(e){}
+}
+
 function ver(id, guardar){
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
   document.getElementById(id).classList.add("ver");
@@ -707,6 +841,7 @@ function empezarNuevo(){
     return;
   }
   paso = 0;
+  if(modoJuego === "compartido"){ arrancarCompartido(); return; }
   guardarProg();
   mostrarPlayer();
 }
@@ -876,9 +1011,10 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
     return;
   }
   paso = 0;
-  guardarProg();
   multiModo = false; multiSel = [];
   try{ multiRefrescar(); }catch(e){}
+  if(modoJuego === "compartido"){ arrancarCompartido(); return; }
+  guardarProg();
   mostrarPlayer();
 };
 
@@ -1043,14 +1179,46 @@ document.getElementById("btnJugar").onclick = ()=>{
 function pintarPaso(){
   const total = listaJuego.length;
   const elAct = document.getElementById("actividadAhora");
-  elAct.textContent = listaJuego[paso].texto;
-  const lado = listaJuego[paso].lado;
-  elAct.style.color = lado === "A" ? "var(--teal)" : (lado === "B" ? "var(--coral)" : "");
   const tag = document.getElementById("nivelTag");
-  tag.textContent = listaJuego[paso].nivel + (listaJuego[paso].lado ? " · Lado " + listaJuego[paso].lado : "");
-  document.getElementById("btnSig").textContent = (paso + 1 >= total) ? "Terminar 🔥" : "Siguiente →";
+  const btnSig = document.getElementById("btnSig");
+  const fin = document.getElementById("finMsg");
+  const prog = document.getElementById("progreso");
+  const p = listaJuego[paso];
+  if(jugandoCompartido){
+    prog.hidden = false;
+    prog.textContent = (paso + 1) + " de " + total;
+  }else{
+    prog.hidden = true;
+  }
+  if(!p){
+    elAct.textContent = "";
+    tag.style.display = "none";
+    btnSig.style.display = "none";
+    fin.style.display = "block";
+    return;
+  }
+  fin.style.display = "none";
+  tag.style.display = "";
+  const mia = !jugandoCompartido || p.lado === miLado;
+  if(mia){
+    elAct.textContent = p.texto;
+    elAct.style.color = p.lado === "A" ? "var(--teal)" : (p.lado === "B" ? "var(--coral)" : "");
+    btnSig.style.display = "";
+    btnSig.disabled = false;
+    btnSig.style.opacity = "1";
+    btnSig.textContent = (paso + 1 >= total) ? "Terminar 🔥" : "Siguiente →";
+  }else{
+    elAct.textContent = "Turno de " + nombreDe(p.lado) + "…";
+    elAct.style.color = "var(--fg-muted)";
+    btnSig.style.display = "";
+    btnSig.disabled = true;
+    btnSig.style.opacity = ".4";
+    btnSig.textContent = "Espera tu turno";
+  }
+  tag.textContent = p.nivel + (p.lado ? " · Lado " + p.lado : "");
 }
 document.getElementById("btnSig").onclick = ()=>{
+  if(jugandoCompartido){ avanzarSesion(); return; }
   if(paso + 1 >= listaJuego.length){
     borrarProg();
     entrar();
@@ -1060,11 +1228,29 @@ document.getElementById("btnSig").onclick = ()=>{
   guardarProg();
   pintarPaso();
 };
-document.getElementById("btnTerminar").onclick = ()=>{
+document.getElementById("btnTerminar").onclick = async ()=>{
+  if(jugandoCompartido){ jugandoCompartido = false; await cerrarSesion(); }
   entrar();
 };
 
-entrar();
+// ---------- casillas de modo + invitar/entrar ----------
+document.querySelectorAll('input[name="modoJuego"]').forEach(r=>{
+  r.addEventListener("change", ()=>{ if(r.checked) modoJuego = r.value; });
+});
+modoJuego = (document.querySelector('input[name="modoJuego"]:checked') || {}).value || "local";
+document.getElementById("btnUnirme").onclick = ()=>{
+  const d = sesionActual;
+  document.getElementById("modalUnir").style.display = "none";
+  if(!d || !d.activa) return;
+  jugandoCompartido = true;
+  aplicaSesion(d);
+  ver("vistaPlayer");
+};
+document.getElementById("btnUnirNo").onclick = ()=>{
+  document.getElementById("modalUnir").style.display = "none";
+};
+
+(async ()=>{ await cargarIdentidad(); entrar(); })();
 </script>
 
 </body>
