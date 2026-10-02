@@ -867,9 +867,9 @@ document.getElementById("invEntrar").onclick = async ()=>{
   invRefrescar();
   document.getElementById("invForm").style.display = "none";
   const box = document.getElementById("lectorInv");
+  await detenerScanInv();
   box.style.display = "block";
   box.innerHTML = "";
-  await detenerScanInv();
   try{
     scanInv = new Html5Qrcode("lectorInv");
     await scanInv.start(
