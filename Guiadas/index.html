@@ -551,8 +551,7 @@ function dibujarLista(boxId, modo, acts, conteos){
       lab.appendChild(t);
       if(esOf){
         const tag = document.createElement("small");
-        tag.textContent = "🏅 OFICIAL";
-        tag.style.color = "var(--teal)";
+        tag.textContent = "🏅";
         tag.style.fontFamily = "'Inter',sans-serif";
         tag.style.fontWeight = "400";
         tag.style.fontSize = ".8rem";
@@ -576,8 +575,7 @@ function dibujarLista(boxId, modo, acts, conteos){
     b.appendChild(t);
     if(esOf && boxId === "listaActs" && modo !== "editar"){
       const tag = document.createElement("small");
-      tag.textContent = "🏅 OFICIAL";
-      tag.style.color = "var(--teal)";
+      tag.textContent = "🏅";
       b.appendChild(tag);
     }
     if(modo === "editar"){
@@ -794,24 +792,32 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
     const el = document.getElementById("multi_toma_" + nv.id);
     tomas[nv.id] = Math.max(0, Math.min(20, parseInt(el.value, 10) || 0));
   });
-  const bolsas = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
+  const bolsas = { basico: {}, medio: {}, avanzado: {}, experto: {}, alucinado: {} };
   for(const nombre of multiSel){
     try{
       const snap = await getDoc(doc(db, "nivelesActividad", docDe(nombre)));
       if(snap.exists() && snap.data().n){
         const n = snap.data().n;
-        NIVELES.forEach(nv=>{ (n[nv.id] || []).forEach(t=>bolsas[nv.id].push(t)); });
+        NIVELES.forEach(nv=>{ bolsas[nv.id][nombre] = (n[nv.id] || []).slice(); });
+      }else{
+        NIVELES.forEach(nv=>{ bolsas[nv.id][nombre] = []; });
       }
-    }catch(e){}
+    }catch(e){
+      NIVELES.forEach(nv=>{ bolsas[nv.id][nombre] = []; });
+    }
   }
   multiActs = multiSel.slice();
   actividad = "MultiActividades";
   docActual = null;
   listaJuego = [];
   NIVELES.forEach(nv=>{
-    const disponibles = mezclar(bolsas[nv.id] || []);
-    const n = Math.min(tomas[nv.id], disponibles.length);
-    for(let i = 0; i < n; i++) listaJuego.push({ nivel: nv.nombre, texto: disponibles[i] });
+    const porAct = multiSel.map(nombre=>mezclar((bolsas[nv.id] && bolsas[nv.id][nombre]) || []));
+    const m = Math.min.apply(null, porAct.map(a=>a.length));
+    let pool = [];
+    porAct.forEach(a=>{ for(let i = 0; i < m; i++) pool.push(a[i]); });
+    pool = mezclar(pool);
+    const k = Math.max(0, tomas[nv.id] || 0);
+    for(let i = 0; i < k && pool.length; i++) listaJuego.push({ nivel: nv.nombre, texto: pool[i % pool.length] });
   });
   multiMostrar("modalMulti3", false);
   if(!listaJuego.length){
