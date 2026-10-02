@@ -517,6 +517,7 @@ async function abrirEditor(nombre){
   btnQuitarPreset.style.display = nube ? "" : "none";
 
   editorWrap.style.display = "flex";
+  try{ window.scrollTo(0, 0); }catch(e){}
 }
 
 function cerrarEditor(){
@@ -603,6 +604,7 @@ tabLista.onclick = ()=>{
 };
 
 cargar();
+tabLista.onclick();
 inputEl.focus();
 
 </script>

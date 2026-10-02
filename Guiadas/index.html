@@ -594,7 +594,7 @@ function dibujarLista(boxId, modo, acts, conteos){
     const t = document.createElement("span");
     t.textContent = nombre;
     b.appendChild(t);
-    if(esOf && boxId === "listaActs" && modo !== "editar"){
+    if(esOf && boxId === "listaActs"){
       const tag = document.createElement("small");
       tag.textContent = "🏅";
       b.appendChild(tag);
