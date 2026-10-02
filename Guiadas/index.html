@@ -219,6 +219,24 @@ const NIVELES = [
   { id: "alucinado", nombre: "Alucinado" },
 ];
 const TOMAS_DEF = { basico: 2, medio: 2, avanzado: 1, experto: 1, alucinado: 1 };
+function normLados(v){
+  if(Array.isArray(v)) return { A: v.slice(), B: v.slice() };
+  v = v || {};
+  return { A: (v.A || []).slice(), B: (v.B || []).slice() };
+}
+function normTomas(t){
+  const out = {};
+  NIVELES.forEach(nv=>{
+    const v = t ? t[nv.id] : null;
+    out[nv.id] = (typeof v === "number") ? v : ((v && (v.A || v.B)) || 0);
+  });
+  return out;
+}
+function contarNivel(v){
+  if(Array.isArray(v)) return v.length;
+  v = v || {};
+  return ((v.A || []).length + (v.B || []).length);
+}
 
 const firebaseConfig = resolverFirebase(firebaseConfigBase);
 const app = initializeApp(firebaseConfig);
@@ -481,13 +499,15 @@ async function sincronizarOficiales(){
         const ref = doc(db, "nivelesActividad", p.id);
         const snap = await getDoc(ref);
         if(!snap.exists()){
-          await setDoc(ref, { n: p.niveles || {}, titulo: p.titulo || p.id, oficial: true, actualizadoEn: serverTimestamp() }, { merge: true });
+          const nn = {};
+          NIVELES.forEach(nv=>{ nn[nv.id] = normLados((p.niveles || {})[nv.id]); });
+          await setDoc(ref, { n: nn, titulo: p.titulo || p.id, oficial: true, actualizadoEn: serverTimestamp() }, { merge: true });
         }
       }catch(e){}
       try{
         const k = "guia_tomas_" + p.id;
         if(!localStorage.getItem(k) && p.tomasSugeridas){
-          localStorage.setItem(k, JSON.stringify(Object.assign({}, TOMAS_DEF, p.tomasSugeridas)));
+          localStorage.setItem(k, JSON.stringify(normTomas(p.tomasSugeridas)));
         }
       }catch(e){}
     }
@@ -604,7 +624,7 @@ async function pintarLista(boxId, modo){
     const snap = await getDocs(collection(db, "nivelesActividad"));
     snap.forEach(d=>{
       const n = d.data().n || {};
-      conteos[d.id] = NIVELES.reduce((t, nv)=>t + ((n[nv.id] || []).length), 0);
+      conteos[d.id] = NIVELES.reduce((t, nv)=>t + contarNivel(n[nv.id]), 0);
     });
   }catch(e){}
   if(boxId === "listaActs"){ cacheActs = acts; cacheConteos = conteos; }
@@ -653,14 +673,26 @@ function guardarProg(){
 function borrarProg(){
   try{ localStorage.removeItem("guia_prog"); }catch(e){}
 }
+function armarListaLados(fuentePorNivel, tomas){
+  const lista = [];
+  NIVELES.forEach(nv=>{
+    const lados = normLados(fuentePorNivel[nv.id]);
+    const dA = mezclar(lados.A);
+    const dB = mezclar(lados.B);
+    const n = Math.max(0, (tomas && tomas[nv.id]) || 0);
+    const nA = Math.min(n, dA.length);
+    const nB = Math.min(n, dB.length);
+    const max = Math.max(nA, nB);
+    for(let i = 0; i < max; i++){
+      if(i < nA) lista.push({ nivel: nv.nombre, lado: "A", texto: dA[i] });
+      if(i < nB) lista.push({ nivel: nv.nombre, lado: "B", texto: dB[i] });
+    }
+  });
+  return lista;
+}
 function empezarNuevo(){
   const tomas = tomasGuardadas(docActual || actividad);
-  listaJuego = [];
-  NIVELES.forEach(nv=>{
-    const disponibles = mezclar(datos[nv.id] || []);
-    const n = Math.min(tomas[nv.id], disponibles.length);
-    for(let i = 0; i < n; i++) listaJuego.push({ nivel: nv.nombre, texto: disponibles[i] });
-  });
+  listaJuego = armarListaLados(datos, tomas);
   if(!listaJuego.length){
     alert("Sin acciones todavía. Aliméntala en ⚙️.");
     return;
@@ -771,10 +803,10 @@ document.getElementById("btnMulti2Ok").onclick = ()=>{
   g.innerHTML = "";
   NIVELES.forEach(nv=>{
     const lab = document.createElement("label");
-    lab.textContent = nv.nombre;
+    lab.textContent = nv.nombre + " (A y B)";
     const inp = document.createElement("input");
     inp.type = "number"; inp.min = "0"; inp.max = "20";
-    inp.value = TOMAS_DEF[nv.id];
+    inp.value = TOMAS_DEF[nv.id] || 0;
     inp.id = "multi_toma_" + nv.id;
     lab.appendChild(inp);
     g.appendChild(lab);
@@ -798,12 +830,12 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
       const snap = await getDoc(doc(db, "nivelesActividad", docDe(nombre)));
       if(snap.exists() && snap.data().n){
         const n = snap.data().n;
-        NIVELES.forEach(nv=>{ bolsas[nv.id][nombre] = (n[nv.id] || []).slice(); });
+        NIVELES.forEach(nv=>{ bolsas[nv.id][nombre] = normLados(n[nv.id]); });
       }else{
-        NIVELES.forEach(nv=>{ bolsas[nv.id][nombre] = []; });
+        NIVELES.forEach(nv=>{ bolsas[nv.id][nombre] = { A: [], B: [] }; });
       }
     }catch(e){
-      NIVELES.forEach(nv=>{ bolsas[nv.id][nombre] = []; });
+      NIVELES.forEach(nv=>{ bolsas[nv.id][nombre] = { A: [], B: [] }; });
     }
   }
   multiActs = multiSel.slice();
@@ -811,13 +843,22 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
   docActual = null;
   listaJuego = [];
   NIVELES.forEach(nv=>{
-    const porAct = multiSel.map(nombre=>mezclar((bolsas[nv.id] && bolsas[nv.id][nombre]) || []));
-    const m = Math.min.apply(null, porAct.map(a=>a.length));
-    let pool = [];
-    porAct.forEach(a=>{ for(let i = 0; i < m; i++) pool.push(a[i]); });
-    pool = mezclar(pool);
     const k = Math.max(0, tomas[nv.id] || 0);
-    for(let i = 0; i < k && pool.length; i++) listaJuego.push({ nivel: nv.nombre, texto: pool[i % pool.length] });
+    const porLado = {};
+    ["A", "B"].forEach(lado=>{
+      const porAct = multiSel.map(nombre=>mezclar(((bolsas[nv.id] && bolsas[nv.id][nombre]) || { A: [], B: [] })[lado] || []));
+      const m = Math.min.apply(null, porAct.map(a=>a.length));
+      let pool = [];
+      porAct.forEach(a=>{ for(let i = 0; i < m; i++) pool.push(a[i]); });
+      pool = mezclar(pool);
+      porLado[lado] = [];
+      for(let i = 0; i < k && pool.length; i++) porLado[lado].push(pool[i % pool.length]);
+    });
+    const max = Math.max(porLado.A.length, porLado.B.length);
+    for(let i = 0; i < max; i++){
+      if(i < porLado.A.length) listaJuego.push({ nivel: nv.nombre, lado: "A", texto: porLado.A[i] });
+      if(i < porLado.B.length) listaJuego.push({ nivel: nv.nombre, lado: "B", texto: porLado.B[i] });
+    }
   });
   multiMostrar("modalMulti3", false);
   if(!listaJuego.length){
@@ -836,19 +877,23 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
 function tomasGuardadas(nombre){
   try{
     const t = JSON.parse(localStorage.getItem("guia_tomas_" + nombre) || "null");
-    if(t) return Object.assign({}, TOMAS_DEF, t);
+    if(t) return normTomas(Object.assign({}, TOMAS_DEF, t));
   }catch(e){}
-  return Object.assign({}, TOMAS_DEF);
+  return normTomas(TOMAS_DEF);
 }
 async function abrirEditor(nombre, empujar){
   actividad = nombre;
   docActual = docDe(nombre);
   ultimaActividad = nombre;
   document.getElementById("edTitulo").textContent = nombre;
-  datos = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
+  datos = {};
+  NIVELES.forEach(nv=>{ datos[nv.id] = { A: [], B: [] }; });
   try{
     const snap = await getDoc(doc(db, "nivelesActividad", docActual));
-    if(snap.exists() && snap.data().n) datos = Object.assign(datos, snap.data().n);
+    if(snap.exists() && snap.data().n){
+      const n = snap.data().n;
+      NIVELES.forEach(nv=>{ datos[nv.id] = normLados(n[nv.id]); });
+    }
   }catch(e){}
   pintarEditor();
   ver("vistaEditar", empujar !== false);
@@ -857,41 +902,48 @@ function pintarEditor(){
   const box = document.getElementById("nivelesBox");
   box.innerHTML = "";
   NIVELES.forEach(nv=>{
-    const items = datos[nv.id] || [];
+    const lados = normLados(datos[nv.id]);
     const div = document.createElement("div");
     div.className = "nivel";
     const h = document.createElement("h3");
     h.textContent = nv.nombre;
     const tag = document.createElement("span");
     tag.className = "tag";
-    tag.textContent = items.length + (items.length === 1 ? " acción" : " acciones");
+    const total = lados.A.length + lados.B.length;
+    tag.textContent = total + (total === 1 ? " acción" : " acciones");
     h.appendChild(tag);
     div.appendChild(h);
-    const chips = document.createElement("div");
-    chips.className = "chips";
-    items.forEach((txt, i)=>{
-      const c = document.createElement("span");
-      c.className = "chip";
-      c.textContent = txt;
-      const x = document.createElement("button");
-      x.textContent = "✕";
-      x.onclick = ()=>{ quitarItem(nv.id, i); };
-      c.appendChild(x);
-      chips.appendChild(c);
+    ["A", "B"].forEach(lado=>{
+      const hl = document.createElement("div");
+      hl.style.cssText = "font-family:'Chakra Petch',sans-serif;font-size:.8rem;color:var(--teal);margin:8px 0 2px;";
+      hl.textContent = "Lado " + lado;
+      div.appendChild(hl);
+      const chips = document.createElement("div");
+      chips.className = "chips";
+      (lados[lado] || []).forEach((txt, i)=>{
+        const c = document.createElement("span");
+        c.className = "chip";
+        c.textContent = txt;
+        const x = document.createElement("button");
+        x.textContent = "✕";
+        x.onclick = ()=>{ quitarItem(nv.id, lado, i); };
+        c.appendChild(x);
+        chips.appendChild(c);
+      });
+      div.appendChild(chips);
+      const fila = document.createElement("div");
+      fila.className = "filaAdd";
+      const inp = document.createElement("input");
+      inp.placeholder = "Nueva acción " + lado + " (" + nv.nombre.toLowerCase() + ")";
+      inp.maxLength = 90;
+      const btn = document.createElement("button");
+      btn.textContent = "+";
+      const agregar = ()=>{ const li = NIVELES.indexOf(nv) * 2 + (lado === "B" ? 1 : 0); agregarItem(nv.id, lado, inp.value).then(()=>{ const again = document.querySelectorAll("#nivelesBox .filaAdd input")[li]; if(again) again.focus(); }); };
+      btn.onclick = agregar;
+      inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregar(); });
+      fila.appendChild(inp); fila.appendChild(btn);
+      div.appendChild(fila);
     });
-    div.appendChild(chips);
-    const fila = document.createElement("div");
-    fila.className = "filaAdd";
-    const inp = document.createElement("input");
-    inp.placeholder = "Nueva acción (" + nv.nombre.toLowerCase() + ")";
-    inp.maxLength = 90;
-    const btn = document.createElement("button");
-    btn.textContent = "+";
-    const agregar = ()=>{ agregarItem(nv.id, inp.value); };
-    btn.onclick = agregar;
-    inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregar(); });
-    fila.appendChild(inp); fila.appendChild(btn);
-    div.appendChild(fila);
     box.appendChild(div);
   });
   const tg = document.getElementById("tomasGrid");
@@ -899,11 +951,11 @@ function pintarEditor(){
   const tomas = tomasGuardadas(docActual || actividad);
   NIVELES.forEach(nv=>{
     const lab = document.createElement("label");
-    lab.textContent = nv.nombre;
+    lab.textContent = nv.nombre + " (A y B)";
     const inp = document.createElement("input");
     inp.type = "number";
     inp.min = "0"; inp.max = "20";
-    inp.value = tomas[nv.id];
+    inp.value = tomas[nv.id] || 0;
     inp.id = "toma_" + nv.id;
     lab.appendChild(inp);
     tg.appendChild(lab);
@@ -915,17 +967,18 @@ async function guardar(){
     await setDoc(doc(db, "nivelesActividad", docActual || actividad), { n: datos, actualizadoEn: serverTimestamp() }, { merge: true });
   }catch(e){}
 }
-async function agregarItem(nivel, texto){
+async function agregarItem(nivel, lado, texto){
   texto = (texto || "").trim();
   if(!texto) return;
-  datos[nivel] = datos[nivel] || [];
-  if(datos[nivel].some(t=>t.toLowerCase() === texto.toLowerCase())) return;
-  datos[nivel].push(texto);
+  datos[nivel] = normLados(datos[nivel]);
+  if(datos[nivel][lado].some(t=>t.toLowerCase() === texto.toLowerCase())) return;
+  datos[nivel][lado].push(texto);
   await guardar();
   pintarEditor();
 }
-async function quitarItem(nivel, i){
-  datos[nivel].splice(i, 1);
+async function quitarItem(nivel, lado, i){
+  datos[nivel] = normLados(datos[nivel]);
+  datos[nivel][lado].splice(i, 1);
   await guardar();
   pintarEditor();
 }
@@ -946,12 +999,7 @@ document.getElementById("btnAtrasEd").onclick = ()=>{
 // ---------- player ----------
 document.getElementById("btnJugar").onclick = ()=>{
   const tomas = leerTomas();
-  listaJuego = [];
-  NIVELES.forEach(nv=>{
-    const disponibles = mezclar(datos[nv.id] || []);
-    const n = Math.min(tomas[nv.id], disponibles.length);
-    for(let i = 0; i < n; i++) listaJuego.push({ nivel: nv.nombre, texto: disponibles[i] });
-  });
+  listaJuego = armarListaLados(datos, tomas);
   const msg = document.getElementById("msg");
   if(!listaJuego.length){
     msg.textContent = "Agrega acciones o sube las tomas.";
@@ -968,6 +1016,8 @@ document.getElementById("btnJugar").onclick = ()=>{
 function pintarPaso(){
   const total = listaJuego.length;
   document.getElementById("actividadAhora").textContent = listaJuego[paso].texto;
+  const tag = document.getElementById("nivelTag");
+  tag.textContent = listaJuego[paso].nivel + (listaJuego[paso].lado ? " · Lado " + listaJuego[paso].lado : "");
   document.getElementById("btnSig").textContent = (paso + 1 >= total) ? "Terminar 🔥" : "Siguiente →";
 }
 document.getElementById("btnSig").onclick = ()=>{
