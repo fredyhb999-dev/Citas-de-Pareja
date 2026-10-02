@@ -448,6 +448,8 @@ let sidMostrado = null;
 let sesionUnsub = null;
 let sesionActual = null;
 let sesionIniciada = false;
+let pendienteSrc = "local"; // 'local' (guia_prog) | 'sesion' (sesionGuiada/actual)
+let pendienteMultiPrev = null;
 
 function leerQuienSoy(){
   try{ return JSON.parse(localStorage.getItem("appPareja_quienSoy") || "null"); }catch(e){ return null; }
@@ -539,11 +541,16 @@ function escucharSesion(){
         if(d && d.activa){
           const soyHost = d.hostUid === miIdSesion();
           if(jugandoCompartido){ aplicaSesion(d); return; }
-          if(d.sid !== sidMostrado){
-            sidMostrado = d.sid;
-            document.getElementById("unirDesc").textContent = soyHost
-              ? "Tu cita compartida sigue en curso."
-              : (d.hostNombre || "Tu pareja") + " inició una cita de Citas Guiadas.";
+          if(d.sid === sidMostrado) return;
+          sidMostrado = d.sid;
+          if(soyHost){
+            pendienteSrc = "sesion";
+            seguirEncima("¿Continuar cita anterior?",
+              (d.titulo || "Cita") + ": ibas en la " + ((d.paso || 0) + 1) + " de " + (d.lista || []).length + ".");
+          }else{
+            document.getElementById("unirDesc").textContent = d.reanudada
+              ? ((d.hostNombre || "Tu pareja") + " retomó la cita. Puedes continuar donde van.")
+              : ((d.hostNombre || "Tu pareja") + " inició una cita de Citas Guiadas.");
             document.getElementById("modalUnir").style.display = "flex";
           }
         }else if(jugandoCompartido){
@@ -862,6 +869,21 @@ function mostrarPlayer(){
   ver("vistaPlayer");
 }
 document.getElementById("btnContinuar").onclick = async ()=>{
+  if(pendienteSrc === "sesion"){
+    const d = sesionActual;
+    pendienteSrc = "local";
+    seguirFuera();
+    if(!d || !d.activa) return;
+    jugandoCompartido = true;
+    try{
+      const nsid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
+      sidMostrado = nsid;
+      await setDoc(sesionRef(), { sid: nsid, reanudada: true, activa: true, actualizadaEn: serverTimestamp() }, { merge: true });
+    }catch(e){}
+    aplicaSesion(d);
+    ver("vistaPlayer");
+    return;
+  }
   const p = leerProg();
   if(!p) return;
   actividad = p.actividad;
@@ -886,13 +908,19 @@ document.getElementById("btnNueva").onclick = async ()=>{
   const p = leerProg();
   borrarProg();
   seguirFuera();
-  const eraMulti = p && p.modo === "multi" && Array.isArray(p.actividades);
-  if(modoJuego === "compartido"){
-    if(!esAdmin()){ alert("En 'Cada quien en el suyo' quien continúa o inicia la cita es " + nombreDe("A") + " (administrador)."); return; }
+  let eraMulti = !!(p && p.modo === "multi" && Array.isArray(p.actividades));
+  let titMulti = eraMulti ? p.actividades.join(" + ") : "";
+  if(pendienteSrc === "sesion"){
+    pendienteSrc = "local";
+    if(!esAdmin()){ alert("En 'Cada quien en el suyo' quien inicia o renueva la cita es " + nombreDe("A") + " (administrador)."); return; }
+    const s = sesionActual;
     await cerrarSesion();
     jugandoCompartido = false;
+    eraMulti = !!(s && s.modo === "multi" && Array.isArray(s.actividades));
+    titMulti = eraMulti ? s.actividades.join(" + ") : "";
   }
   if(eraMulti){
+    pendienteMultiPrev = titMulti;
     multiActs = [];
     multiAbrirSel();
     return;
@@ -979,6 +1007,9 @@ document.getElementById("btnMulti2Ok").onclick = ()=>{
     lab.appendChild(inp);
     g.appendChild(lab);
   });
+  if(pendienteMultiPrev){
+    document.getElementById("btnMulti3Ok").textContent = "Aceptar y jugar ▶";
+  }
   multiMostrar("modalMulti2", false);
   multiMostrar("modalMulti3", true);
 };
