@@ -464,6 +464,7 @@ async function renderPacks(){
       }catch(e){}
     }
     if(!ok && !gracia) continue;
+    if(p.oficial) continue;
     const card = tarjetaPack(p);
     if((p.seccion || "experiencias") === "juegos"){
       boxJ.appendChild(card);

@@ -209,11 +209,13 @@ function pintarNiveles(){
     btn.textContent = "+";
     const agregar = ()=>{
       const t = (inp.value || "").trim();
-      if(!t) return;
+      if(!t){ inp.focus(); return; }
       niveles[nv.id] = niveles[nv.id] || [];
-      if(niveles[nv.id].some(a=>a.toLowerCase() === t.toLowerCase())) return;
+      if(niveles[nv.id].some(a=>a.toLowerCase() === t.toLowerCase())){ inp.value = ""; inp.focus(); return; }
       niveles[nv.id].push(t);
       pintarNiveles();
+      const again = document.querySelectorAll("#nivelesBox .filaAdd input")[NIVELES.indexOf(nv)];
+      if(again) again.focus();
     };
     btn.onclick = agregar;
     inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregar(); });

@@ -525,7 +525,12 @@ function dibujarLista(boxId, modo, acts, conteos){
   const scroller = document.getElementById("cajaActs");
   const top = (boxId === "listaActs" && scroller) ? scroller.scrollTop : 0;
   box.innerHTML = "";
-  acts.forEach(nombre=>{
+  const ordenadas = acts.slice().sort((a, b)=>{
+    const oa = (mapaDocs[a] && mapaDocs[a].oficial) ? 0 : 1;
+    const ob = (mapaDocs[b] && mapaDocs[b].oficial) ? 0 : 1;
+    return oa - ob;
+  });
+  ordenadas.forEach(nombre=>{
     const c = conteos[docDe(nombre)] || 0;
     const esOf = !!(mapaDocs[nombre] && mapaDocs[nombre].oficial);
     if(boxId === "listaActs" && multiModo){
@@ -543,7 +548,17 @@ function dibujarLista(boxId, modo, acts, conteos){
       const t = document.createElement("span");
       t.textContent = nombre + (c ? "" : " (sin acciones)");
       t.style.flex = "1";
-      lab.appendChild(t); lab.appendChild(chk);
+      lab.appendChild(t);
+      if(esOf){
+        const tag = document.createElement("small");
+        tag.textContent = "🏅 OFICIAL";
+        tag.style.color = "var(--teal)";
+        tag.style.fontFamily = "'Inter',sans-serif";
+        tag.style.fontWeight = "400";
+        tag.style.fontSize = ".8rem";
+        lab.appendChild(tag);
+      }
+      lab.appendChild(chk);
       lab.onclick = (e)=>{
         if(e.target !== chk && c){
           e.preventDefault();
