@@ -151,32 +151,6 @@
   <button id="tabLista" type="button">Accesorios</button>
 </div>
 
-<div class="tabs">
-  <button id="tabUsuario" type="button">Usuarios</button>
-  <button id="tabVincular" type="button">Vincular</button>
-</div>
-
-<div class="panel" id="panelUsuario">
-  <div class="seccionCfg" style="margin:0">
-    <h2>Usuarios</h2>
-    <p class="mini" id="quienCfg">…</p>
-    <div id="listaUsuariosCfg"></div>
-    <div class="filaCfg">
-      <input id="nuevoInvitado" type="text" placeholder="Nuevo invitado (ej. Amante)" maxlength="30" autocomplete="off">
-      <button id="btnAddCfg" class="btnCfg">Agregar</button>
-    </div>
-  </div>
-</div>
-
-<div class="panel" id="panelVincular">
-  <div class="seccionCfg" style="margin:0">
-    <h2>Vincular pareja 📱</h2>
-    <p class="mini">Tu pareja lo escanea desde su app (inicio → Tengo QR). Muéstralo en persona.</p>
-    <div id="qrCajaCfg"></div>
-    <button id="btnQRCfg" class="btnCfg">Mostrar mi código</button>
-  </div>
-</div>
-
 <div id="alta">
   <div class="fila">
     <input id="nombreNuevo" type="text" placeholder="Nombre del accesorio" maxlength="60" autocomplete="off">
@@ -382,86 +356,10 @@ inputEl.addEventListener("keydown", e=>{
   if(e.key === "Enter") btnAgregar.onclick();
 });
 
-// ====== USUARIO + VINCULAR (config) ======
-const CLAVE_LOCAL_CFG = "appPareja_quienSoy";
-async function pintarUsuarioCfg(){
-  const quienEl = document.getElementById("quienCfg");
-  const listaU = document.getElementById("listaUsuariosCfg");
-  let respaldo = [];
-  try{ respaldo = await (await fetch("usuarios.json")).json(); }catch(e){}
-  let usuarios = respaldo;
-  try{ usuarios = await cargarUsuarios(db, getDoc, doc, respaldo); }catch(e){}
-  let yo = null;
-  try{ yo = JSON.parse(localStorage.getItem(CLAVE_LOCAL_CFG)); }catch(e){}
-  quienEl.textContent = "Actual: " + ((yo && yo.nombre) || "sin elegir");
-  listaU.innerHTML = "";
-  usuarios.forEach(u=>{
-    const fila = document.createElement("div");
-    fila.style.cssText = "display:flex;gap:8px;";
-    const b = document.createElement("button");
-    b.style.flex = "1";
-    b.textContent = u.nombre + (yo && yo.id === u.id ? " ✓" : "") + (u.admin ? " ★" : "");
-    if(yo && yo.id === u.id) b.className = "yo";
-    b.onclick = ()=>{
-      localStorage.setItem(CLAVE_LOCAL_CFG, JSON.stringify(u));
-      pintarUsuarioCfg();
-    };
-    fila.appendChild(b);
-    if(!u.admin){
-      const x = document.createElement("button");
-      x.textContent = "✕";
-      x.title = "Eliminar invitado";
-      x.onclick = ()=>eliminarInvitadoCfg(u.id, u.nombre);
-      fila.appendChild(x);
-    }
-    listaU.appendChild(fila);
-  });
-}
-async function eliminarInvitadoCfg(id, nombre){
-  if(!confirm("¿Eliminar a " + nombre + " de la app?")) return;
-  try{
-    const ref = doc(db, "config", "ajustes");
-    const snap = await getDoc(ref);
-    const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
-    await setDoc(ref, { usuarios: arr.filter(u=>u.id !== id), actualizadoEn: serverTimestamp() }, { merge: true });
-    try{
-      const loc = JSON.parse(localStorage.getItem("pareja_usuarios") || "[]");
-      localStorage.setItem("pareja_usuarios", JSON.stringify(loc.filter(u=>u.id !== id)));
-      const yo = JSON.parse(localStorage.getItem(CLAVE_LOCAL_CFG) || "null");
-      if(yo && yo.id === id) localStorage.removeItem(CLAVE_LOCAL_CFG);
-    }catch(e){}
-    pintarUsuarioCfg();
-  }catch(e){
-    alert("No se pudo eliminar. Revisa tu conexión.");
-  }
-}
-document.getElementById("btnQRCfg").onclick = ()=>{
-  const g = leerConfigGuardada();
-  const caja = document.getElementById("qrCajaCfg");
-  if(!g || !g.firebase){
-    caja.style.display = "none";
-    alert("Primero termina el asistente del inicio.");
-    return;
-  }
-  caja.innerHTML = "";
-  caja.style.display = "flex";
-  try{
-    new QRCode(caja, {
-      text: JSON.stringify({ firebase: g.firebase, telegram: g.telegram || null }),
-      width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M
-    });
-  }catch(e){ caja.textContent = "No se pudo generar."; }
-};
-// ====== PANELES (lista / usuario / vincular) ======
+// ====== PANELES (lista) — Usuarios y Vincular viven en el ⚙️ del inicio ======
 const tabLista = document.getElementById("tabLista");
-const tabUsuario = document.getElementById("tabUsuario");
-const tabVincular = document.getElementById("tabVincular");
-const panelUsuario = document.getElementById("panelUsuario");
-const panelVincular = document.getElementById("panelVincular");
 function todosApagados(){
-  [tabLista, tabUsuario, tabVincular].forEach(b=>b.classList.remove("activo"));
-  panelUsuario.classList.remove("ver");
-  panelVincular.classList.remove("ver");
+  [tabLista].forEach(b=>b.classList.remove("activo"));
   listaEl.hidden = true;
   conteoEl.hidden = true;
   document.getElementById("alta").style.display = "";
@@ -482,52 +380,6 @@ tabLista.onclick = ()=>{
     conteoEl.hidden = false;
   }
 };
-tabUsuario.onclick = ()=>{
-  const abierto = tabUsuario.classList.contains("activo");
-  todosApagados();
-  if(!abierto){
-    tabUsuario.classList.add("activo");
-    ponerTitulo("Usuarios", "Cambia quién usa este celular o agrega invitados.");
-    document.getElementById("alta").style.display = "none";
-    panelUsuario.classList.add("ver");
-    pintarUsuarioCfg();
-  }
-};
-tabVincular.onclick = ()=>{
-  const abierto = tabVincular.classList.contains("activo");
-  todosApagados();
-  if(!abierto){
-    tabVincular.classList.add("activo");
-    ponerTitulo("Vincular pareja", "Comparte tu código para vincular a tu pareja.");
-    document.getElementById("alta").style.display = "none";
-    panelVincular.classList.add("ver");
-  }
-};
-async function agregarInvitadoCfg(){
-  const inp = document.getElementById("nuevoInvitado");
-  const nombre = inp.value.trim();
-  if(!nombre) return;
-  const id = "u" + Date.now().toString(36);
-  const nuevo = { id, nombre, admin: false };
-  try{
-    const ref = doc(db, "config", "ajustes");
-    const snap = await getDoc(ref);
-    const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios.slice() : [];
-    arr.push(nuevo);
-    await setDoc(ref, { usuarios: arr, actualizadoEn: serverTimestamp() }, { merge: true });
-    try{
-      const loc = JSON.parse(localStorage.getItem("pareja_usuarios") || "[]");
-      loc.push(nuevo);
-      localStorage.setItem("pareja_usuarios", JSON.stringify(loc));
-    }catch(e){}
-    inp.value = "";
-    pintarUsuarioCfg();
-  }catch(e){
-    alert("No se pudo agregar. Revisa tu conexión.");
-  }
-}
-document.getElementById("btnAddCfg").onclick = agregarInvitadoCfg;
-pintarUsuarioCfg();
 
 cargar();
 inputEl.focus();

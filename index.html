@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
   :root{
@@ -216,12 +217,30 @@
   <div id="lectorInv" style="display:none;width:100%;max-width:340px;"></div>
   <div id="invMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:4px 0 12px;"></div>
   <div id="invForm" style="display:none;width:100%;">
-    <input type="text" id="invNombre" placeholder="Tu nombre" maxlength="30" autocomplete="off">
-    <select id="invConQuien" style="width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:14px;font-size:.9rem;font-family:'Inter',sans-serif;margin-bottom:12px;"></select>
+    <label for="invNombre" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:0 0 6px;">Escribe tu nombre</label>
+    <input type="text" id="invNombre" placeholder="Ej. Tío Beto" maxlength="30" autocomplete="off" style="font-size:1rem;padding:16px;">
+    <label for="invConQuien" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:4px 0 6px;">Selecciona de quién eres invitado</label>
+    <select id="invConQuien" style="width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:16px;font-size:1rem;font-family:'Inter',sans-serif;margin-bottom:6px;"></select>
+    <p id="invVista" style="font-size:.85rem;color:var(--teal);min-height:20px;margin:0 0 8px;"></p>
     <button class="btnPri" id="invConfirmar">Entrar como invitado →</button>
   </div>
   <button class="btnPri" id="invEntrar">Entrar modo invitado 📷</button>
   <button class="btnPri" id="invSalir" style="background:var(--card);color:var(--fg);border:1px solid var(--card-border);">Salir modo invitado ↩</button>
+  <div style="width:100%;margin-top:18px;text-align:left;">
+    <h2 style="font-family:'Chakra Petch',sans-serif;font-size:1rem;margin:0 0 4px;text-align:center;">Usuarios 👥</h2>
+    <p id="invQuien" style="font-size:.82rem;color:var(--fg-muted);text-align:center;margin:0 0 10px;"></p>
+    <div id="invUsuarios" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <input type="text" id="invNuevo" placeholder="Nuevo invitado" maxlength="30" autocomplete="off" style="margin-bottom:0;">
+      <button class="btnPri" id="invAgregar" style="width:auto;margin-bottom:0;padding:14px 18px;">＋</button>
+    </div>
+  </div>
+  <div style="width:100%;margin-top:18px;text-align:center;">
+    <h2 style="font-family:'Chakra Petch',sans-serif;font-size:1rem;margin:0 0 4px;">Vincular pareja 📱</h2>
+    <p style="font-size:.82rem;color:var(--fg-muted);margin:0 0 10px;">Muéstralo en persona: quien lo escanee entra a tu base.</p>
+    <div id="qrCajaGear" style="background:#fff;padding:12px;border-radius:14px;display:none;justify-content:center;margin:0 auto 12px;width:fit-content;"></div>
+    <button class="btnPri" id="invQR">Mostrar mi código</button>
+  </div>
   <button class="btnSec" id="invVolver">‹ Volver</button>
 </div>
 
@@ -776,28 +795,38 @@ async function iniciarScan(){
     msgQR("Sin cámara o sin permiso. Revisa el navegador.");
   }
 }
-// ---------- submenú Experiencias ----------
+// ---------- submenús (el ⚙️ solo vive en el menú principal) ----------
 document.getElementById("btnExp").onclick = ()=>{
   document.getElementById("vistaMenu").style.display = "none";
   document.getElementById("vistaExp").style.display = "block";
+  document.getElementById("gearBtn").style.display = "none";
   iconoMenu("exp");
 };
 document.getElementById("btnExpVolver").onclick = ()=>{
   document.getElementById("vistaExp").style.display = "none";
   document.getElementById("vistaMenu").style.display = "block";
+  document.getElementById("gearBtn").style.display = "";
   iconoMenu("menu");
 };
 document.getElementById("btnJuegos").onclick = ()=>{
   document.getElementById("vistaMenu").style.display = "none";
   document.getElementById("vistaJuegos").style.display = "block";
+  document.getElementById("gearBtn").style.display = "none";
 };
 document.getElementById("btnJuegosVolver").onclick = ()=>{
   document.getElementById("vistaJuegos").style.display = "none";
   document.getElementById("vistaMenu").style.display = "block";
+  document.getElementById("gearBtn").style.display = "";
 };
 document.getElementById("btnExtras").onclick = ()=>{
   document.getElementById("vistaMenu").style.display = "none";
   document.getElementById("vistaExtras").style.display = "block";
+  document.getElementById("gearBtn").style.display = "none";
+};
+document.getElementById("btnExtrasVolver").onclick = ()=>{
+  document.getElementById("vistaExtras").style.display = "none";
+  document.getElementById("vistaMenu").style.display = "block";
+  document.getElementById("gearBtn").style.display = "";
 };
 // ---------- modo invitado ----------
 const CLAVE_BACKUP = "invitado_respaldo";
@@ -837,10 +866,95 @@ function invRefrescar(){
       : "Entra a otra base como invitado o vuelve a la tuya.";
   }catch(e){}
 }
+function dbActual(){
+  try{ return getFirestore(getApp()); }catch(e){ return null; }
+}
+async function pintarInvUsuarios(){
+  const box = document.getElementById("invUsuarios");
+  box.innerHTML = "";
+  const db = dbActual();
+  const us = db ? await usuariosEfectivos(db) : (leerUsuariosLocal() || []);
+  let yo = null;
+  try{ yo = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null"); }catch(e){}
+  try{
+    document.getElementById("invQuien").textContent = us.length
+      ? ("Estás como " + ((yo && yo.nombre) || "?") + ". Toca otro para cambiar.")
+      : "Sin usuarios todavía.";
+  }catch(e){}
+  us.forEach(u=>{
+    const fila = document.createElement("div");
+    fila.style.cssText = "display:flex;gap:8px;align-items:center;";
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = u.nombre + (u.admin ? " (admin)" : "") + (u.invitado ? " (invitado)" : "");
+    b.style.cssText = "flex:1;background:var(--card);border:1px solid " + ((yo && yo.id === u.id) ? "var(--teal)" : "var(--card-border)") + ";border-radius:12px;color:var(--fg);padding:12px;font-size:.95rem;font-family:'Chakra Petch',sans-serif;cursor:pointer;text-align:left;";
+    b.onclick = ()=>{
+      localStorage.setItem(CLAVE_LOCAL, JSON.stringify(u));
+      location.reload();
+    };
+    fila.appendChild(b);
+    if(!(yo && yo.id === u.id)){
+      const x = document.createElement("button");
+      x.type = "button";
+      x.textContent = "✕";
+      x.setAttribute("aria-label", "Eliminar " + u.nombre);
+      x.style.cssText = "background:none;border:none;color:var(--rojo);font-size:1.1rem;cursor:pointer;padding:8px;";
+      x.onclick = async ()=>{
+        if(!confirm("¿Eliminar a " + u.nombre + " de la app?")) return;
+        try{
+          const ref = doc(db, "config", "ajustes");
+          const snap = await getDoc(ref);
+          const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+          await setDoc(ref, { usuarios: arr.filter(v=>v.id !== u.id), actualizadoEn: serverTimestamp() }, { merge: true });
+        }catch(e){}
+        try{
+          const loc = JSON.parse(localStorage.getItem("pareja_usuarios") || "[]");
+          localStorage.setItem("pareja_usuarios", JSON.stringify(loc.filter(v=>v.id !== u.id)));
+        }catch(e){}
+        pintarInvUsuarios();
+      };
+      fila.appendChild(x);
+    }
+    box.appendChild(fila);
+  });
+}
+document.getElementById("invAgregar").onclick = async ()=>{
+  const inp = document.getElementById("invNuevo");
+  const nombre = inp.value.trim();
+  if(!nombre) return;
+  const db = dbActual();
+  if(!db) return;
+  try{
+    const ref = doc(db, "config", "ajustes");
+    const snap = await getDoc(ref);
+    const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios.slice() : [];
+    arr.push({ id: "u" + Date.now().toString(36), nombre, admin: false, invitado: true });
+    await setDoc(ref, { usuarios: arr, actualizadoEn: serverTimestamp() }, { merge: true });
+    inp.value = "";
+    guardarUsuariosLocal(arr);
+    pintarInvUsuarios();
+  }catch(e){ invMsg("No se pudo agregar. Revisa tu conexión."); }
+};
+document.getElementById("invQR").onclick = ()=>{
+  let g = null;
+  try{ g = leerConfigGuardada(); }catch(e){}
+  const caja = document.getElementById("qrCajaGear");
+  if(!g || !g.firebase){ caja.style.display = "none"; invMsg("Primero termina el asistente del inicio."); return; }
+  caja.innerHTML = "";
+  caja.style.display = "flex";
+  invMsg("");
+  try{
+    new QRCode(caja, {
+      text: JSON.stringify({ firebase: g.firebase, telegram: g.telegram || null }),
+      width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M
+    });
+  }catch(e){ caja.textContent = "No se pudo generar."; }
+};
 document.getElementById("gearBtn").onclick = ()=>{
   menuEl.style.display = "none";
   invEl.style.display = "flex";
   invRefrescar();
+  pintarInvUsuarios();
 };
 document.getElementById("invVolver").onclick = async ()=>{
   await detenerScanInv();
@@ -899,6 +1013,8 @@ document.getElementById("invEntrar").onclick = async ()=>{
             sel.appendChild(o);
           });
           document.getElementById("invForm").style.display = "block";
+          document.getElementById("invConQuien").onchange();
+          document.getElementById("invNombre").focus();
           invMsg("");
         }catch(e){
           invMsg("No se pudo leer. Intenta de nuevo.");
@@ -910,12 +1026,21 @@ document.getElementById("invEntrar").onclick = async ()=>{
     invMsg("Sin cámara o sin permiso. Revisa el navegador.");
   }
 };
-document.getElementById("invConfirmar").onclick = async ()=>{
+document.getElementById("invConQuien").onchange = ()=>{
+  const sel = document.getElementById("invConQuien");
+  const txt = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : "";
+  document.getElementById("invVista").textContent = txt ? ("Entrarás como invitado de " + txt + ".") : "";
+};
+document.getElementById("invConfirmar").onclick = async (e)=>{
   const nombre = document.getElementById("invNombre").value.trim();
-  const conQuien = document.getElementById("invConQuien").value;
+  const sel = document.getElementById("invConQuien");
+  const conQuien = sel.value;
+  const conNombre = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : "";
   if(!nombre){ invMsg("Escribe tu nombre."); return; }
   if(!dbInvitado){ invMsg("Lee primero un código QR."); return; }
   invMsg("");
+  const btn = e.target;
+  btn.disabled = true;
   try{
     const ref = doc(dbInvitado, "config", "ajustes");
     const snap = await conTiempo(getDoc(ref), 10000);
@@ -927,9 +1052,12 @@ document.getElementById("invConfirmar").onclick = async ()=>{
     await conTiempo(setDoc(ref, { usuarios: arr, actualizadoEn: serverTimestamp() }, { merge: true }), 10000);
     guardarUsuariosLocal(arr);
     localStorage.setItem(CLAVE_LOCAL, JSON.stringify(yo));
-    location.reload();
+    invMsg("");
+    document.getElementById("invVista").textContent = "¡Listo " + nombre + "! Ya entraste como invitado de " + conNombre + ".";
+    setTimeout(()=>location.reload(), 1200);
   }catch(e){
     invMsg("No se pudo registrar. Revisa tu conexión.");
+    btn.disabled = false;
   }
 };
 iniciar();
