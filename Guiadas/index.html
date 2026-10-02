@@ -966,10 +966,8 @@ function pintarPaso(){
 }
 document.getElementById("btnSig").onclick = ()=>{
   if(paso + 1 >= listaJuego.length){
-    document.getElementById("actividadAhora").textContent = "";
-    document.getElementById("finMsg").style.display = "block";
-    document.getElementById("btnSig").style.display = "none";
     borrarProg();
+    entrar();
     return;
   }
   paso++;
