@@ -797,6 +797,21 @@ async function jugarDirecto(nombre){
     if(snap.exists() && snap.data().n) datos = Object.assign(datos, snap.data().n);
   }catch(e){}
   const pendiente = leerProg();
+  try{
+    const sd = await getDoc(sesionRef());
+    if(sd.exists()){
+      const d = sd.data();
+      const esMia = d.hostUid === miIdSesion();
+      const tiengoPendientes = Array.isArray(d.lista) && d.lista.length && (d.paso || 0) < d.lista.length;
+      if(esMia && tiengoPendientes){
+        pendienteSrc = "sesion";
+        seguirEncima("¿Continuar cita anterior?",
+          (d.titulo || "Cita") + ": ibas en la " + ((d.paso || 0) + 1) + " de " + d.lista.length + ".");
+        return;
+      }
+      if(esMia) await cerrarSesion();
+    }
+  }catch(e){}
   if(pendiente && pendiente.actividad === nombre && Array.isArray(pendiente.lista) && pendiente.lista.length){
     seguirEncima("¿Continuar cita anterior?",
       nombre + ": ibas en la " + (pendiente.paso + 1) + " de " + pendiente.lista.length + ".");
@@ -870,10 +885,16 @@ function mostrarPlayer(){
 }
 document.getElementById("btnContinuar").onclick = async ()=>{
   if(pendienteSrc === "sesion"){
-    const d = sesionActual;
     pendienteSrc = "local";
     seguirFuera();
-    if(!d || !d.activa) return;
+    let d = sesionActual;
+    if(!d){
+      try{
+        const sd = await getDoc(sesionRef());
+        d = sd.exists() ? sd.data() : null;
+      }catch(e){}
+    }
+    if(!d || !Array.isArray(d.lista) || !d.lista.length) return;
     jugandoCompartido = true;
     try{
       const nsid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
