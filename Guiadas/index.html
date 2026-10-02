@@ -151,6 +151,7 @@
   </div>
   <div id="msg"></div>
   <button class="btnPri" id="btnJugar">Jugar ▶</button>
+  <button class="btnSec" id="btnBorrarAct" style="color:var(--rojo);">Eliminar actividad</button>
 </div>
 
 <!-- ============ PLAYER ============ -->
@@ -205,7 +206,7 @@
 
 <script type="module">
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, updateDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase } from "../config.js";
 import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "../taquilla.js";
@@ -992,6 +993,24 @@ function leerTomas(){
   return t;
 }
 document.getElementById("btnAtrasEd").onclick = ()=>{
+  pintarLista("listaActsCfg", "editar");
+  ver("vistaConfig");
+};
+document.getElementById("btnBorrarAct").onclick = async ()=>{
+  const esOf = mapaDocs[actividad] && mapaDocs[actividad].oficial;
+  if(!confirm("¿Eliminar \"" + actividad + "\" de tus actividades?" + (esOf ? " (Volverá al entrar mientras siga aprobada.)" : ""))) return;
+  try{ await deleteDoc(doc(db, "nivelesActividad", docActual || actividad)); }catch(e){}
+  try{ localStorage.removeItem("guia_tomas_" + (docActual || actividad)); }catch(e){}
+  borrarProg();
+  if(!esOf){
+    try{
+      const snap = await getDocs(collection(db, "actividadesExtra"));
+      const b = [];
+      snap.forEach(d=>{ if((d.data().nombre || "").trim() === actividad) b.push(deleteDoc(doc(db, "actividadesExtra", d.id))); });
+      await Promise.all(b);
+    }catch(e){}
+  }
+  cacheActs = null; cacheConteos = null;
   pintarLista("listaActsCfg", "editar");
   ver("vistaConfig");
 };
