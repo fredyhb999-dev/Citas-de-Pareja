@@ -471,33 +471,6 @@ function marcarRadio(v){
   modoJuego = v;
   document.querySelectorAll('input[name="modoJuego"]').forEach(r=>{ r.checked = (r.value === v); });
 }
-async function arrancarCompartido(){
-  if(!esAdmin()){ alert("En 'Cada quien en el suyo' la inicia " + nombreDe("A") + " (administrador)."); return; }
-  jugandoCompartido = true;
-  try{
-    await setDoc(sesionRef(), {
-      activa: true,
-      sid: String(Date.now()) + Math.random().toString(36).slice(2, 6),
-      hostUid: miIdSesion(),
-      hostNombre: (miUsuario && miUsuario.nombre) || nombreDe("A"),
-      modo: (multiActs && multiActs.length === 3) ? "multi" : "normal",
-      titulo: actividad || "Citas Guiadas",
-      actividades: (multiActs || []).slice(),
-      lista: listaJuego,
-      paso: 0,
-      empezadaEn: serverTimestamp(),
-      actualizadaEn: serverTimestamp()
-    });
-    sidMostrado = null;
-    mostrarPlayer();
-  }catch(e){
-    jugandoCompartido = false;
-    alert("Sin conexión. Se jugará en este celular.");
-    marcarRadio("local");
-    guardarProg();
-    mostrarPlayer();
-  }
-}
 async function avanzarSesion(){
   try{
     await runTransaction(db, async (tx)=>{
@@ -513,6 +486,34 @@ async function avanzarSesion(){
       tx.update(ref, { paso: np, activa: np < lista.length, actualizadaEn: serverTimestamp() });
     });
   }catch(e){}
+}
+async function iniciarSesionCompartida(datosSesion){
+  if(!esAdmin()){ alert("En 'Cada quien en el suyo' la inicia " + nombreDe("A") + " (administrador)."); return; }
+  jugandoCompartido = true;
+  const lista = datosSesion.lista || [];
+  let p = Math.max(0, Math.min(datosSesion.paso || 0, Math.max(0, lista.length - 1)));
+  while(p < lista.length - 1 && lista[p].lado !== miLado) p++;
+  const nueva = {
+    activa: true,
+    sid: String(Date.now()) + Math.random().toString(36).slice(2, 6),
+    hostUid: miIdSesion(),
+    hostNombre: (miUsuario && miUsuario.nombre) || nombreDe("A"),
+    modo: datosSesion.modo || "normal",
+    titulo: datosSesion.titulo || "Citas Guiadas",
+    actividades: (datosSesion.actividades || []).slice(),
+    lista: lista,
+    paso: p,
+    empezadaEn: serverTimestamp(),
+    actualizadaEn: serverTimestamp()
+  };
+  try{ await setDoc(sesionRef(), nueva); }catch(e){}
+  listaJuego = lista;
+  paso = p;
+  actividad = nueva.titulo;
+  if(nueva.modo === "multi" && Array.isArray(nueva.actividades)) multiActs = nueva.actividades.slice();
+  document.getElementById("plTitulo").textContent = actividad || "Citas Guiadas";
+  sidMostrado = nueva.sid;
+  mostrarPlayer();
 }
 async function cerrarSesion(){
   try{ await setDoc(sesionRef(), { activa: false, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
@@ -841,7 +842,10 @@ function empezarNuevo(){
     return;
   }
   paso = 0;
-  if(modoJuego === "compartido"){ arrancarCompartido(); return; }
+  if(modoJuego === "compartido"){
+    await iniciarSesionCompartida({ modo: "normal", titulo: actividad, lista: listaJuego, paso: 0 });
+    return;
+  }
   guardarProg();
   mostrarPlayer();
 }
@@ -853,7 +857,7 @@ function mostrarPlayer(){
   pintarPaso();
   ver("vistaPlayer");
 }
-document.getElementById("btnContinuar").onclick = ()=>{
+document.getElementById("btnContinuar").onclick = async ()=>{
   const p = leerProg();
   if(!p) return;
   actividad = p.actividad;
@@ -862,13 +866,29 @@ document.getElementById("btnContinuar").onclick = ()=>{
   listaJuego = p.lista;
   paso = Math.min(p.paso, listaJuego.length - 1);
   seguirFuera();
+  if(modoJuego === "compartido"){
+    await iniciarSesionCompartida({
+      modo: (p.modo === "multi") ? "multi" : "normal",
+      titulo: p.actividad,
+      lista: p.lista,
+      actividades: p.actividades || [],
+      paso: p.paso
+    });
+    return;
+  }
   mostrarPlayer();
 };
-document.getElementById("btnNueva").onclick = ()=>{
+document.getElementById("btnNueva").onclick = async ()=>{
   const p = leerProg();
   borrarProg();
   seguirFuera();
-  if(p && p.modo === "multi" && Array.isArray(p.actividades)){
+  const eraMulti = p && p.modo === "multi" && Array.isArray(p.actividades);
+  if(modoJuego === "compartido"){
+    if(!esAdmin()){ alert("En 'Cada quien en el suyo' quien continúa o inicia la cita es " + nombreDe("A") + " (administrador)."); return; }
+    await cerrarSesion();
+    jugandoCompartido = false;
+  }
+  if(eraMulti){
     multiActs = [];
     multiAbrirSel();
     return;
@@ -1013,7 +1033,10 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
   paso = 0;
   multiModo = false; multiSel = [];
   try{ multiRefrescar(); }catch(e){}
-  if(modoJuego === "compartido"){ arrancarCompartido(); return; }
+  if(modoJuego === "compartido"){
+    await iniciarSesionCompartida({ modo: "multi", titulo: "MultiActividades", lista: listaJuego, paso: 0, actividades: multiActs.slice() });
+    return;
+  }
   guardarProg();
   mostrarPlayer();
 };
