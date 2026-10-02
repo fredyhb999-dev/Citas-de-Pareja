@@ -137,11 +137,15 @@
   /* ---------- vincular / QR ---------- */
   #lector{ width:100%; max-width:340px; }
   #lector video{ border-radius:16px; }
+  #lectorInv{ width:100%; max-width:340px; }
+  #lectorInv video{ border-radius:16px; }
+  #pantallaInvitado select option{ background:var(--card); }
 </style>
 </head>
 <body>
 
 <a class="menu-btn" id="menuBtn" href="Tienda/" aria-label="Centro de Adquisiciones" style="display:none">🛒</a>
+<button class="menu-btn" id="gearBtn" type="button" aria-label="Invitados" style="display:none;right:64px;text-decoration:none;background:none;border:none;cursor:pointer;">⚙️</button>
 
 <div class="eyebrow">Complicidad en Pareja</div>
 
@@ -203,6 +207,22 @@
   <h1>¿Quién eres?</h1>
   <p>Selecciona tu usuario para continuar.</p>
   <div id="listaUsuarios" style="width:100%"></div>
+</div>
+
+<!-- ================= INVITADOS ================= -->
+<div id="pantallaInvitado" style="display:none;width:100%;max-width:380px;flex-direction:column;align-items:center;text-align:center;">
+  <h1>Invitados 🎟️</h1>
+  <p id="invEstado" style="color:var(--fg-muted);margin:0 0 18px;">Entra a otra base como invitado o vuelve a la tuya.</p>
+  <div id="lectorInv" style="display:none;width:100%;max-width:340px;"></div>
+  <div id="invMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:4px 0 12px;"></div>
+  <div id="invForm" style="display:none;width:100%;">
+    <input type="text" id="invNombre" placeholder="Tu nombre" maxlength="30" autocomplete="off">
+    <select id="invConQuien" style="width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:14px;font-size:.9rem;font-family:'Inter',sans-serif;margin-bottom:12px;"></select>
+    <button class="btnPri" id="invConfirmar">Entrar como invitado →</button>
+  </div>
+  <button class="btnPri" id="invEntrar">Entrar modo invitado 📷</button>
+  <button class="btnPri" id="invSalir" style="background:var(--card);color:var(--fg);border:1px solid var(--card-border);">Salir modo invitado ↩</button>
+  <button class="btnSec" id="invVolver">‹ Volver</button>
 </div>
 
 <!-- ================= MENÚ ================= -->
@@ -367,6 +387,7 @@ function mostrarMenu(nombre){
     document.getElementById("heroFecha").textContent = f.charAt(0).toUpperCase() + f.slice(1);
   }catch(e){}
   document.getElementById("menuBtn").style.display = "";
+  document.getElementById("gearBtn").style.display = "";
   iconoMenu("menu");
   document.getElementById("vistaMenu").style.display = "block";
   document.getElementById("vistaExp").style.display = "none";
@@ -536,6 +557,7 @@ function mostrarIdentidad(usuarios){
   });
   asistenteEl.style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
+  document.getElementById("gearBtn").style.display = "none";
   menuEl.style.display = "none";
   pantallaEl.style.display = "flex";
 }
@@ -777,9 +799,138 @@ document.getElementById("btnExtras").onclick = ()=>{
   document.getElementById("vistaMenu").style.display = "none";
   document.getElementById("vistaExtras").style.display = "block";
 };
-document.getElementById("btnExtrasVolver").onclick = ()=>{
-  document.getElementById("vistaExtras").style.display = "none";
-  document.getElementById("vistaMenu").style.display = "block";
+// ---------- modo invitado ----------
+const CLAVE_BACKUP = "invitado_respaldo";
+function hayRespaldo(){
+  try{ return !!localStorage.getItem(CLAVE_BACKUP); }catch(e){ return false; }
+}
+function respaldarSesion(){
+  try{
+    const snap = {};
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k === "taquilla_priv" || k === CLAVE_BACKUP) continue;
+      snap[k] = localStorage.getItem(k);
+    }
+    localStorage.setItem(CLAVE_BACKUP, JSON.stringify(snap));
+  }catch(e){}
+}
+function restaurarSesion(){
+  try{
+    const snap = JSON.parse(localStorage.getItem(CLAVE_BACKUP) || "null");
+    if(!snap) return false;
+    const priv = localStorage.getItem("taquilla_priv");
+    localStorage.clear();
+    if(priv) localStorage.setItem("taquilla_priv", priv);
+    Object.keys(snap).forEach(k=>{ try{ localStorage.setItem(k, snap[k]); }catch(e){} });
+    localStorage.removeItem(CLAVE_BACKUP);
+    return true;
+  }catch(e){ return false; }
+}
+const invEl = document.getElementById("pantallaInvitado");
+function invMsg(t){ document.getElementById("invMsg").textContent = t || ""; }
+function invRefrescar(){
+  document.getElementById("invSalir").style.display = hayRespaldo() ? "" : "none";
+  try{
+    document.getElementById("invEstado").textContent = hayRespaldo()
+      ? "Estás de visita. Al salir vuelves a tu base."
+      : "Entra a otra base como invitado o vuelve a la tuya.";
+  }catch(e){}
+}
+document.getElementById("gearBtn").onclick = ()=>{
+  menuEl.style.display = "none";
+  invEl.style.display = "flex";
+  invRefrescar();
+};
+document.getElementById("invVolver").onclick = async ()=>{
+  await detenerScanInv();
+  invEl.style.display = "none";
+  menuEl.style.display = "flex";
+};
+document.getElementById("invSalir").onclick = ()=>{
+  if(!hayRespaldo()) return;
+  if(!confirm("¿Salir de invitado y volver a tu base?")) return;
+  restaurarSesion();
+  location.reload();
+};
+let scanInv = null;
+async function detenerScanInv(){
+  try{ if(scanInv){ await scanInv.stop(); } }catch(e){}
+  try{ if(scanInv){ await scanInv.clear(); } }catch(e){}
+  scanInv = null;
+  try{ document.getElementById("lectorInv").style.display = "none"; }catch(e){}
+}
+let dbInvitado = null;
+document.getElementById("invEntrar").onclick = async ()=>{
+  invMsg("");
+  respaldarSesion();
+  invRefrescar();
+  document.getElementById("invForm").style.display = "none";
+  const box = document.getElementById("lectorInv");
+  box.style.display = "block";
+  box.innerHTML = "";
+  await detenerScanInv();
+  try{
+    scanInv = new Html5Qrcode("lectorInv");
+    await scanInv.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      async (texto)=>{
+        try{
+          const data = JSON.parse(texto);
+          const fb = data && data.firebase;
+          const need = ["apiKey","authDomain","projectId","storageBucket","messagingSenderId","appId"];
+          if(!fb || need.some(k=>!fb[k])){ invMsg("Ese QR no trae configuración válida."); return; }
+          await detenerScanInv();
+          const cfg = { firebase: fb };
+          if(data.telegram && data.telegram.token && data.telegram.chat) cfg.telegram = data.telegram;
+          guardarConfig(cfg);
+          let app2;
+          try{ app2 = getApp("invitado"); }catch(e){ app2 = initializeApp(fb, "invitado"); }
+          dbInvitado = getFirestore(app2);
+          await conTiempo(getDoc(doc(dbInvitado, "config", "ajustes")), 10000);
+          const us = await usuariosEfectivos(dbInvitado);
+          const sel = document.getElementById("invConQuien");
+          sel.innerHTML = "";
+          us.forEach(u=>{
+            const o = document.createElement("option");
+            o.value = u.id;
+            o.textContent = u.nombre;
+            sel.appendChild(o);
+          });
+          document.getElementById("invForm").style.display = "block";
+          invMsg("");
+        }catch(e){
+          invMsg("No se pudo leer. Intenta de nuevo.");
+        }
+      },
+      ()=>{}
+    );
+  }catch(e){
+    invMsg("Sin cámara o sin permiso. Revisa el navegador.");
+  }
+};
+document.getElementById("invConfirmar").onclick = async ()=>{
+  const nombre = document.getElementById("invNombre").value.trim();
+  const conQuien = document.getElementById("invConQuien").value;
+  if(!nombre){ invMsg("Escribe tu nombre."); return; }
+  if(!dbInvitado){ invMsg("Lee primero un código QR."); return; }
+  invMsg("");
+  try{
+    const ref = doc(dbInvitado, "config", "ajustes");
+    const snap = await conTiempo(getDoc(ref), 10000);
+    const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios.slice() : [];
+    let n = 1;
+    arr.forEach(u=>{ const m = /^u(\d+)$/.exec(u.id || ""); if(m) n = Math.max(n, parseInt(m[1], 10) + 1); });
+    const yo = { id: "u" + n, nombre, admin: false, invitado: true, conQuien: conQuien || null };
+    arr.push(yo);
+    await conTiempo(setDoc(ref, { usuarios: arr, actualizadoEn: serverTimestamp() }, { merge: true }), 10000);
+    guardarUsuariosLocal(arr);
+    localStorage.setItem(CLAVE_LOCAL, JSON.stringify(yo));
+    location.reload();
+  }catch(e){
+    invMsg("No se pudo registrar. Revisa tu conexión.");
+  }
 };
 iniciar();
 </script>
