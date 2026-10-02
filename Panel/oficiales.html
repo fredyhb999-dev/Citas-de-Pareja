@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Actividades Oficiales · Panel</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.6rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.desc{ font-size:.85rem; color:var(--fg-muted); max-width:420px; margin:0 0 16px; text-align:center; }
+  .caja{ width:100%; max-width:520px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .caja h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1rem; }
+  .caja .mini{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; word-break:break-all; }
+  input[type=text], input[type=number], input[type=date]{
+    width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:11px 12px; font-size:.88rem;
+    font-family:'Inter',sans-serif; margin-bottom:8px; }
+  label.chk{ display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--fg-muted); margin:4px 0 10px; }
+  label.chk input{ accent-color:var(--teal); width:18px; height:18px; }
+  .fila{ display:flex; gap:8px; }
+  .fila .btn{ flex:1; }
+  .btn{ border:none; border-radius:12px; cursor:pointer; padding:12px 14px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:.88rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btn:active{ transform:scale(.97); }
+  .btn.ghost{ background:var(--bg-2); color:var(--fg); border:1px solid var(--card-border); }
+  .btn.danger{ background:var(--rojo); color:#2b0410; }
+  .btn:disabled{ opacity:.4; }
+  .nivel{ width:100%; background:var(--bg-2); border:1px solid var(--card-border);
+    border-radius:12px; padding:12px; margin-bottom:10px; }
+  .nivel h4{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:.9rem; }
+  .nivel h4 .tag{ font-size:.68rem; color:var(--teal); border:1px solid var(--teal);
+    border-radius:8px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+  .chip{ background:var(--bg); border:1px solid var(--card-border); border-radius:20px;
+    padding:6px 8px 6px 14px; font-size:.82rem; display:flex; align-items:center; gap:6px; }
+  .chip button{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:.9rem; padding:0 4px; }
+  .filaAdd{ display:flex; gap:8px; }
+  .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:11px 12px; font-size:.88rem; font-family:'Inter',sans-serif; }
+  .filaAdd button{ border:none; border-radius:12px; cursor:pointer; padding:11px 16px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .tomasGrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:4px; }
+  .tomasGrid label{ font-size:.78rem; color:var(--fg-muted); display:flex; flex-direction:column; gap:4px; }
+  .tomasGrid input{ border-radius:10px; border:1px solid var(--card-border); background:var(--bg);
+    color:var(--fg); padding:10px; font-size:1rem; width:100%; font-family:'Inter',sans-serif; }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; max-width:520px; }
+  #msg.ok{ color:var(--teal); }
+</style>
+</head>
+<body>
+
+<a class="back" href="index.html">‹ Panel</a>
+<button id="btnGoogle" type="button" style="position:absolute;top:max(52px, calc(env(safe-area-inset-top) + 32px));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">Entrar con Google</button>
+<p class="desc" id="quienGoogle" style="display:none"></p>
+<div class="eyebrow">Panel · Oficiales</div>
+<h1>Actividades Oficiales 🏅</h1>
+<p class="desc">Las creas tú con acciones y tomas sugeridas. Al aprobarse en el Centro pasan a ser de la pareja para siempre.</p>
+
+<div class="caja">
+  <h3 id="formTitulo">Nueva Actividad Oficial</h3>
+  <p class="mini">ID con prefijo <b>of_</b> (ej. of_sensual). Es la licencia y no se cambia después.</p>
+  <input type="text" id="fId" placeholder="ID (ej. of_sensual)">
+  <input type="text" id="fTitulo" placeholder="Título (ej. Noche Sensual)">
+  <input type="text" id="fIcono" placeholder="Icono (ej. 🌙)">
+  <div id="iconos" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;"></div>
+  <input type="text" id="fDesc" placeholder="Descripción corta">
+  <input type="number" id="fOrden" placeholder="Orden" min="0" max="999" value="10">
+  <input type="date" id="fNuevo">
+  <label class="chk"><input type="checkbox" id="fActivo" checked> Activo en catálogo</label>
+  <div id="nivelesBox" style="width:100%"></div>
+  <h3 style="margin-top:6px;">Tomas sugeridas</h3>
+  <p class="mini">La pareja las puede cambiar. Solo se aplican la primera vez.</p>
+  <div class="tomasGrid" id="tomasGrid"></div>
+  <div class="fila">
+    <button class="btn" id="btnGuardar">Guardar</button>
+    <button class="btn ghost" id="btnLimpiar">Limpiar</button>
+  </div>
+  <div id="msg"></div>
+</div>
+
+<div id="lista" style="width:100%;max-width:520px;"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { TAQUILLA_FIREBASE } from "../taquilla.js";
+
+const CLAVE_PRIV = "taquilla_priv";
+try{
+  const p = JSON.parse(localStorage.getItem(CLAVE_PRIV) || "null");
+  if(!(p && p.kty === "EC" && p.d)) location.href = "index.html";
+}catch(e){ location.href = "index.html"; }
+
+const app = initializeApp(TAQUILLA_FIREBASE);
+const db = getFirestore(app);
+const auth = getAuth(app);
+let yoEmail = "";
+function pintarYo(){
+  const q = document.getElementById("quienGoogle");
+  const b = document.getElementById("btnGoogle");
+  if(yoEmail){ q.style.display = "block"; q.textContent = "✅ " + yoEmail; b.style.display = "none"; }
+  else{ q.style.display = "none"; b.style.display = ""; }
+}
+document.getElementById("btnGoogle").onclick = async ()=>{
+  msg("");
+  try{
+    const res = await signInWithPopup(auth, new GoogleAuthProvider());
+    yoEmail = String(res.user.email || "").trim().toLowerCase();
+    pintarYo();
+  }catch(e){ msg("No se pudo entrar con Google."); }
+};
+onAuthStateChanged(auth, (u)=>{
+  yoEmail = u && u.email ? String(u.email).trim().toLowerCase() : "";
+  pintarYo();
+});
+async function soyPublicador(){
+  if(!yoEmail) return false;
+  try{
+    const snap = await getDoc(doc(db, "config", "permisos"));
+    const arr = snap.exists() && Array.isArray(snap.data().correos) ? snap.data().correos : [];
+    return arr.map(e=>String(e).trim().toLowerCase()).indexOf(yoEmail) >= 0;
+  }catch(e){ return false; }
+}
+function msg(t, ok){
+  const m = document.getElementById("msg");
+  m.textContent = t || "";
+  m.className = ok ? "ok" : "";
+  m.id = "msg";
+}
+
+const NIVELES = [
+  { id: "basico", nombre: "Básico" },
+  { id: "medio", nombre: "Medio" },
+  { id: "avanzado", nombre: "Avanzado" },
+  { id: "experto", nombre: "Experto" },
+  { id: "alucinado", nombre: "Alucinado" },
+];
+const TOMAS_DEF = { basico: 2, medio: 2, avanzado: 1, experto: 1, alucinado: 1 };
+const ICONOS = ["💋","💑","🌙","🕯️","🍷","🍫","💐","💍","🌹","🎶","✨","🔥"];
+let niveles = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
+(function armarIconos(){
+  const box = document.getElementById("iconos");
+  ICONOS.forEach(em=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = em;
+    b.style.cssText = "font-size:1.3rem;background:var(--bg-2);border:1px solid var(--card-border);border-radius:10px;padding:6px 10px;cursor:pointer;";
+    b.onclick = ()=>{ document.getElementById("fIcono").value = em; validarForm(); };
+    box.appendChild(b);
+  });
+})();
+function pintarNiveles(){
+  const box = document.getElementById("nivelesBox");
+  box.innerHTML = "";
+  NIVELES.forEach(nv=>{
+    const items = niveles[nv.id] || [];
+    const div = document.createElement("div");
+    div.className = "nivel";
+    const h = document.createElement("h4");
+    h.textContent = nv.nombre;
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = items.length + (items.length === 1 ? " acción" : " acciones");
+    h.appendChild(tag);
+    div.appendChild(h);
+    const chips = document.createElement("div");
+    chips.className = "chips";
+    items.forEach((txt, i)=>{
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = txt;
+      const x = document.createElement("button");
+      x.textContent = "✕";
+      x.onclick = ()=>{ niveles[nv.id].splice(i, 1); pintarNiveles(); };
+      c.appendChild(x);
+      chips.appendChild(c);
+    });
+    div.appendChild(chips);
+    const fila = document.createElement("div");
+    fila.className = "filaAdd";
+    const inp = document.createElement("input");
+    inp.placeholder = "Nueva acción (" + nv.nombre.toLowerCase() + ")";
+    inp.maxLength = 90;
+    const btn = document.createElement("button");
+    btn.textContent = "+";
+    const agregar = ()=>{
+      const t = (inp.value || "").trim();
+      if(!t) return;
+      niveles[nv.id] = niveles[nv.id] || [];
+      if(niveles[nv.id].some(a=>a.toLowerCase() === t.toLowerCase())) return;
+      niveles[nv.id].push(t);
+      pintarNiveles();
+    };
+    btn.onclick = agregar;
+    inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregar(); });
+    fila.appendChild(inp); fila.appendChild(btn);
+    div.appendChild(fila);
+    box.appendChild(div);
+  });
+}
+function pintarTomas(vals){
+  const g = document.getElementById("tomasGrid");
+  g.innerHTML = "";
+  NIVELES.forEach(nv=>{
+    const lab = document.createElement("label");
+    lab.textContent = nv.nombre;
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.min = "0"; inp.max = "20";
+    inp.value = (vals && vals[nv.id] != null) ? vals[nv.id] : TOMAS_DEF[nv.id];
+    inp.id = "toma_" + nv.id;
+    lab.appendChild(inp);
+    g.appendChild(lab);
+  });
+}
+function leerTomas(){
+  const t = {};
+  NIVELES.forEach(nv=>{
+    const el = document.getElementById("toma_" + nv.id);
+    t[nv.id] = Math.max(0, Math.min(20, parseInt(el.value, 10) || 0));
+  });
+  return t;
+}
+pintarNiveles();
+pintarTomas(null);
+function formCompleto(){
+  const id = document.getElementById("fId").value.trim();
+  const ti = document.getElementById("fTitulo").value.trim();
+  const de = document.getElementById("fDesc").value.trim();
+  return /^of_[a-z0-9_-]{2,28}$/i.test(id) && !!ti && !!de;
+}
+function validarForm(){
+  document.getElementById("btnGuardar").disabled = !formCompleto();
+}
+["fId","fTitulo","fDesc"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", validarForm);
+});
+document.getElementById("fId").addEventListener("blur", ()=>{
+  const el = document.getElementById("fId");
+  let v = el.value.trim().toLowerCase().replace(/\s+/g, "_");
+  if(v && v !== "of_" && v.indexOf("of_") !== 0) v = "of_" + v;
+  el.value = v;
+  validarForm();
+});
+function pintarForm(f){
+  document.getElementById("fId").value = f.id || "";
+  document.getElementById("fId").disabled = !!f.id;
+  document.getElementById("fTitulo").value = f.titulo || "";
+  document.getElementById("fIcono").value = f.icono || "";
+  document.getElementById("fDesc").value = f.desc || "";
+  document.getElementById("fOrden").value = (f.orden ?? 10);
+  document.getElementById("fActivo").checked = f.activo !== false;
+  document.getElementById("fNuevo").value = f.nuevo || "";
+  niveles = Object.assign({ basico: [], medio: [], avanzado: [], experto: [], alucinado: [] }, f.niveles || {});
+  pintarNiveles();
+  pintarTomas(f.tomas || null);
+  document.getElementById("formTitulo").textContent = f.id ? ("Editar: " + f.id) : "Nueva Actividad Oficial";
+  validarForm();
+}
+document.getElementById("btnLimpiar").onclick = ()=>{ pintarForm({}); msg(""); };
+document.getElementById("btnGuardar").onclick = async (e)=>{
+  msg("");
+  const id = document.getElementById("fId").value.trim();
+  const titulo = document.getElementById("fTitulo").value.trim();
+  const desc = document.getElementById("fDesc").value.trim();
+  if(!/^of_[a-z0-9_-]{2,28}$/i.test(id)){ msg("ID inválido: debe empezar con of_ y sin espacios."); return; }
+  if(!titulo || !desc){ msg("Pon título y descripción."); return; }
+  if(!yoEmail){ msg("Entra con Google primero."); return; }
+  if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
+  e.target.disabled = true;
+  try{
+    const data = {
+      titulo, icono: document.getElementById("fIcono").value.trim() || "🏅",
+      desc, seccion: "experiencias",
+      orden: parseInt(document.getElementById("fOrden").value, 10) || 10,
+      activo: document.getElementById("fActivo").checked,
+      oficial: true, ruta: "Guiadas",
+      niveles, tomasSugeridas: leerTomas(),
+      actualizadoEn: serverTimestamp(),
+    };
+    const fv = document.getElementById("fNuevo").value;
+    data.nuevoHasta = fv ? new Date(fv + "T23:59:59") : null;
+    await setDoc(doc(db, "packs", id), data, { merge: true });
+    msg("Guardado ✅", true);
+    pintarForm({});
+    cargar();
+  }catch(err){
+    msg("No se pudo guardar. Revisa conexión y reglas.");
+  }
+  validarForm();
+};
+async function cargar(){
+  const box = document.getElementById("lista");
+  box.innerHTML = "";
+  let items = [];
+  try{
+    const snap = await getDocs(collection(db, "packs"));
+    snap.forEach(d=>{ const v = Object.assign({ id: d.id }, d.data()); if(v.oficial) items.push(v); });
+  }catch(err){
+    box.innerHTML = '<p class="desc">No se pudo leer packs. Revisa conexión y reglas (lectura).</p>';
+    return;
+  }
+  items.sort((a, b)=>((a.orden ?? 10) - (b.orden ?? 10)) || String(a.titulo || "").localeCompare(String(b.titulo || "")));
+  if(!items.length){
+    box.innerHTML = '<p class="desc">Vacío. Agrega la primera arriba.</p>';
+    return;
+  }
+  items.forEach(p=>{
+    const total = ["basico","medio","avanzado","experto","alucinado"].reduce((t, k)=>t + (((p.niveles || {})[k] || []).length), 0);
+    const div = document.createElement("div");
+    div.className = "caja";
+    const h3 = document.createElement("h3");
+    h3.textContent = (p.icono || "🏅") + " " + (p.titulo || p.id) + (p.activo === false ? " (inactivo)" : "") + " · " + total + " acciones";
+    const m = document.createElement("p");
+    m.className = "mini";
+    m.textContent = "ID: " + p.id + " · orden " + (p.orden ?? 10) + (p.desc ? " · " + p.desc : "");
+    const fila = document.createElement("div");
+    fila.className = "fila";
+    const ed = document.createElement("button");
+    ed.className = "btn"; ed.textContent = "Editar";
+    ed.onclick = ()=>{
+      let nv = "";
+      try{
+        const t = p.nuevoHasta && p.nuevoHasta.toDate ? p.nuevoHasta.toDate() : null;
+        if(t) nv = t.toISOString().slice(0, 10);
+      }catch(e){}
+      pintarForm({ id: p.id, titulo: p.titulo, icono: p.icono, desc: p.desc, orden: p.orden, activo: p.activo !== false, nuevo: nv, niveles: p.niveles, tomas: p.tomasSugeridas });
+      window.scrollTo(0, 0);
+    };
+    const act = document.createElement("button");
+    act.className = "btn"; act.textContent = (p.activo === false) ? "Activar" : "Ocultar";
+    act.onclick = async ()=>{
+      if(!yoEmail){ msg("Entra con Google primero."); return; }
+      if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
+      act.disabled = true;
+      try{ await setDoc(doc(db, "packs", p.id), { activo: !(p.activo !== false), actualizadoEn: serverTimestamp() }, { merge: true }); cargar(); }
+      catch(e){ msg("No se pudo cambiar. Revisa reglas."); }
+      act.disabled = false;
+    };
+    const bor = document.createElement("button");
+    bor.className = "btn danger"; bor.textContent = "Borrar";
+    bor.onclick = async ()=>{
+      if(!confirm("¿Borrar " + p.id + " del catálogo?")) return;
+      if(!yoEmail){ msg("Entra con Google primero."); return; }
+      if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
+      bor.disabled = true;
+      try{ await deleteDoc(doc(db, "packs", p.id)); cargar(); }
+      catch(e){ msg("No se pudo borrar. Revisa reglas."); }
+      bor.disabled = false;
+    };
+    fila.appendChild(ed); fila.appendChild(act); fila.appendChild(bor);
+    div.appendChild(h3); div.appendChild(m); div.appendChild(fila);
+    box.appendChild(div);
+  });
+}
+cargar();
+</script>
+
+</body>
+</html>

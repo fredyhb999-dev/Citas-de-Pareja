@@ -251,6 +251,7 @@ async function entrar(){
   if(await tengoAcceso()){
     multiModo = false; multiSel = [];
     try{ multiRefrescar(); }catch(e){}
+    try{ await sincronizarOficiales(); }catch(e){}
     pintarLista("listaActs", "jugar");
     ver("vistaLista", false);
     return;
@@ -449,9 +450,52 @@ function claveDoc(nombre){
   return "nivelesActividad";
 }
 
-// ---------- lista ----------
+// ---------- lista + Actividades Oficiales ----------
+let mapaDocs = {};
+let docActual = null;
+function docDe(nombre){
+  return (mapaDocs[nombre] && mapaDocs[nombre].docId) || nombre;
+}
+async function oficialesAprobados(){
+  const out = [];
+  try{
+    const lic = leerLicencias();
+    const tdb = getFirestore(appTaq());
+    const snap = await getDocs(collection(tdb, "packs"));
+    for(const d of snap.docs){
+      const p = Object.assign({ id: d.id }, d.data());
+      if(!p.oficial || p.activo === false) continue;
+      const cod = lic[p.id];
+      if(!cod) continue;
+      const pay = await verificarCodigo(cod);
+      if(pay && pay.item === p.id && pay.para === miProyecto()) out.push(p);
+    }
+  }catch(e){}
+  return out;
+}
+async function sincronizarOficiales(){
+  try{
+    const ofs = await oficialesAprobados();
+    for(const p of ofs){
+      try{
+        const ref = doc(db, "nivelesActividad", p.id);
+        const snap = await getDoc(ref);
+        if(!snap.exists()){
+          await setDoc(ref, { n: p.niveles || {}, titulo: p.titulo || p.id, oficial: true, actualizadoEn: serverTimestamp() }, { merge: true });
+        }
+      }catch(e){}
+      try{
+        const k = "guia_tomas_" + p.id;
+        if(!localStorage.getItem(k) && p.tomasSugeridas){
+          localStorage.setItem(k, JSON.stringify(Object.assign({}, TOMAS_DEF, p.tomasSugeridas)));
+        }
+      }catch(e){}
+    }
+  }catch(e){}
+}
 async function cargarActividades(){
   let base = [];
+  mapaDocs = {};
   try{ base = await (await fetch("../Citas/actividades.json")).json(); }catch(e){}
   try{
     const snap = await getDocs(collection(db, "actividadesExtra"));
@@ -461,7 +505,18 @@ async function cargarActividades(){
       if(n && !vistos.has(n.toLowerCase())){ vistos.add(n.toLowerCase()); base.push(n); }
     });
   }catch(e){}
-  return Array.isArray(base) ? base : [];
+  if(!Array.isArray(base)) base = [];
+  base.forEach(n=>{ mapaDocs[n] = { docId: n, oficial: false }; });
+  try{
+    const ofs = await oficialesAprobados();
+    const vistos = new Set(base.map(n=>(n || "").toLowerCase()));
+    ofs.forEach(p=>{
+      const t = (p.titulo || p.id).trim();
+      if(t && !vistos.has(t.toLowerCase())){ vistos.add(t.toLowerCase()); base.push(t); }
+      mapaDocs[t] = { docId: p.id, oficial: true };
+    });
+  }catch(e){}
+  return base;
 }
 let cacheActs = null;
 let cacheConteos = null;
@@ -471,7 +526,8 @@ function dibujarLista(boxId, modo, acts, conteos){
   const top = (boxId === "listaActs" && scroller) ? scroller.scrollTop : 0;
   box.innerHTML = "";
   acts.forEach(nombre=>{
-    const c = conteos[nombre] || 0;
+    const c = conteos[docDe(nombre)] || 0;
+    const esOf = !!(mapaDocs[nombre] && mapaDocs[nombre].oficial);
     if(boxId === "listaActs" && multiModo){
       const lab = document.createElement("label");
       lab.className = "btnAct";
@@ -503,6 +559,12 @@ function dibujarLista(boxId, modo, acts, conteos){
     const t = document.createElement("span");
     t.textContent = nombre;
     b.appendChild(t);
+    if(esOf && boxId === "listaActs" && modo !== "editar"){
+      const tag = document.createElement("small");
+      tag.textContent = "🏅 OFICIAL";
+      tag.style.color = "var(--teal)";
+      b.appendChild(tag);
+    }
     if(modo === "editar"){
       const s = document.createElement("small");
       s.textContent = c ? (c + (c === 1 ? " acción" : " acciones")) : "sin acciones";
@@ -537,12 +599,13 @@ async function pintarLista(boxId, modo){
 }
 async function jugarDirecto(nombre){
   actividad = nombre;
+  docActual = docDe(nombre);
   multiActs = [];
   multiModo = false; multiSel = [];
   try{ multiRefrescar(); }catch(e){}
   datos = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
   try{
-    const snap = await getDoc(doc(db, "nivelesActividad", nombre));
+    const snap = await getDoc(doc(db, "nivelesActividad", docActual));
     if(snap.exists() && snap.data().n) datos = Object.assign(datos, snap.data().n);
   }catch(e){}
   const pendiente = leerProg();
@@ -578,7 +641,7 @@ function borrarProg(){
   try{ localStorage.removeItem("guia_prog"); }catch(e){}
 }
 function empezarNuevo(){
-  const tomas = tomasGuardadas(actividad);
+  const tomas = tomasGuardadas(docActual || actividad);
   listaJuego = [];
   NIVELES.forEach(nv=>{
     const disponibles = mezclar(datos[nv.id] || []);
@@ -605,6 +668,7 @@ document.getElementById("btnContinuar").onclick = ()=>{
   const p = leerProg();
   if(!p) return;
   actividad = p.actividad;
+  docActual = docDe(p.actividad);
   multiActs = Array.isArray(p.actividades) ? p.actividades.slice() : [];
   listaJuego = p.lista;
   paso = Math.min(p.paso, listaJuego.length - 1);
@@ -718,7 +782,7 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
   const bolsas = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
   for(const nombre of multiSel){
     try{
-      const snap = await getDoc(doc(db, "nivelesActividad", nombre));
+      const snap = await getDoc(doc(db, "nivelesActividad", docDe(nombre)));
       if(snap.exists() && snap.data().n){
         const n = snap.data().n;
         NIVELES.forEach(nv=>{ (n[nv.id] || []).forEach(t=>bolsas[nv.id].push(t)); });
@@ -727,6 +791,7 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
   }
   multiActs = multiSel.slice();
   actividad = "MultiActividades";
+  docActual = null;
   listaJuego = [];
   NIVELES.forEach(nv=>{
     const disponibles = mezclar(bolsas[nv.id] || []);
@@ -756,11 +821,12 @@ function tomasGuardadas(nombre){
 }
 async function abrirEditor(nombre, empujar){
   actividad = nombre;
+  docActual = docDe(nombre);
   ultimaActividad = nombre;
   document.getElementById("edTitulo").textContent = nombre;
   datos = { basico: [], medio: [], avanzado: [], experto: [], alucinado: [] };
   try{
-    const snap = await getDoc(doc(db, "nivelesActividad", nombre));
+    const snap = await getDoc(doc(db, "nivelesActividad", docActual));
     if(snap.exists() && snap.data().n) datos = Object.assign(datos, snap.data().n);
   }catch(e){}
   pintarEditor();
@@ -809,7 +875,7 @@ function pintarEditor(){
   });
   const tg = document.getElementById("tomasGrid");
   tg.innerHTML = "";
-  const tomas = tomasGuardadas(actividad);
+  const tomas = tomasGuardadas(docActual || actividad);
   NIVELES.forEach(nv=>{
     const lab = document.createElement("label");
     lab.textContent = nv.nombre;
@@ -825,7 +891,7 @@ function pintarEditor(){
 }
 async function guardar(){
   try{
-    await setDoc(doc(db, "nivelesActividad", actividad), { n: datos, actualizadoEn: serverTimestamp() }, { merge: true });
+    await setDoc(doc(db, "nivelesActividad", docActual || actividad), { n: datos, actualizadoEn: serverTimestamp() }, { merge: true });
   }catch(e){}
 }
 async function agregarItem(nivel, texto){
@@ -848,7 +914,7 @@ function leerTomas(){
     const el = document.getElementById("toma_" + nv.id);
     t[nv.id] = Math.max(0, Math.min(20, parseInt(el.value, 10) || 0));
   });
-  try{ localStorage.setItem("guia_tomas_" + actividad, JSON.stringify(t)); }catch(e){}
+  try{ localStorage.setItem("guia_tomas_" + (docActual || actividad), JSON.stringify(t)); }catch(e){}
   return t;
 }
 document.getElementById("btnAtrasEd").onclick = ()=>{
