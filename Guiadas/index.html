@@ -838,7 +838,7 @@ function armarListaLados(fuentePorNivel, tomas){
   });
   return lista;
 }
-async async function empezarNuevo(){
+async function empezarNuevo(){
   const tomas = tomasGuardadas(docActual || actividad);
   listaJuego = armarListaLados(datos, tomas);
   if(!listaJuego.length){
