@@ -594,17 +594,25 @@ function dibujarLista(boxId, modo, acts, conteos){
     const t = document.createElement("span");
     t.textContent = nombre;
     b.appendChild(t);
-    if(esOf && boxId === "listaActs"){
-      const tag = document.createElement("small");
-      tag.textContent = "🏅";
-      b.appendChild(tag);
-    }
     if(modo === "editar"){
+      const right = document.createElement("span");
+      right.style.cssText = "display:flex;align-items:center;gap:6px;flex:0 0 auto;";
+      if(esOf){
+        const tag = document.createElement("small");
+        tag.textContent = "🏅";
+        right.appendChild(tag);
+      }
       const s = document.createElement("small");
       s.textContent = c ? (c + (c === 1 ? " acción" : " acciones")) : "sin acciones";
-      b.appendChild(s);
+      right.appendChild(s);
+      b.appendChild(right);
       b.onclick = ()=>abrirEditor(nombre);
     }else{
+      if(esOf){
+        const tag = document.createElement("small");
+        tag.textContent = "🏅";
+        b.appendChild(tag);
+      }
       if(!c){
         b.disabled = true;
         const s = document.createElement("small");
@@ -1034,7 +1042,10 @@ document.getElementById("btnJugar").onclick = ()=>{
 };
 function pintarPaso(){
   const total = listaJuego.length;
-  document.getElementById("actividadAhora").textContent = listaJuego[paso].texto;
+  const elAct = document.getElementById("actividadAhora");
+  elAct.textContent = listaJuego[paso].texto;
+  const lado = listaJuego[paso].lado;
+  elAct.style.color = lado === "A" ? "var(--teal)" : (lado === "B" ? "var(--coral)" : "");
   const tag = document.getElementById("nivelTag");
   tag.textContent = listaJuego[paso].nivel + (listaJuego[paso].lado ? " · Lado " + listaJuego[paso].lado : "");
   document.getElementById("btnSig").textContent = (paso + 1 >= total) ? "Terminar 🔥" : "Siguiente →";

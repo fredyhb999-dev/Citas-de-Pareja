@@ -130,16 +130,17 @@
   .item .chev{ color:var(--fg-muted); font-size:1.2rem; }
 
   /* ---------- editor de preset ---------- */
+  #zonaLista{ position:relative; width:100%; max-width:520px; }
   #editorWrap{
-    display:none; position:fixed; inset:0; z-index:50;
-    background: rgba(9,7,15,.8);
-    align-items:flex-end; justify-content:center;
+    display:none; position:absolute; top:0; left:0; right:0; z-index:50;
+    background: rgba(9,7,15,.85);
+    border-radius:16px; justify-content:center;
     backdrop-filter: blur(2px);
   }
   #editor{
     background: var(--bg); border:1px solid var(--card-border);
-    border-radius:22px 22px 0 0; padding:24px; width:100%; max-width:520px;
-    max-height:88dvh; overflow-y:auto;
+    border-radius:16px; padding:20px; width:100%; max-width:520px;
+    max-height:80dvh; overflow-y:auto;
   }
   #editor h2{ font-family:'Chakra Petch', sans-serif; font-size:1.25rem; margin:0 0 4px; }
   #origenPreset{
@@ -199,18 +200,20 @@
 
 <div id="msg"></div>
 <div id="conteo" hidden></div>
-<div id="lista" hidden></div>
+<div id="zonaLista">
+  <div id="lista" hidden></div>
 
-<div id="editorWrap">
-  <div id="editor">
-    <h2 id="editorTitulo"></h2>
-    <div id="origenPreset"></div>
-    <div id="checks"></div>
-    <div id="editorMsg"></div>
-    <div id="editorBotones">
-      <button id="btnGuardarPreset">Guardar</button>
-      <button id="btnQuitarPreset">Eliminar Accesorios</button>
-      <button id="btnCerrarEditor">Cerrar</button>
+  <div id="editorWrap">
+    <div id="editor">
+      <h2 id="editorTitulo"></h2>
+      <div id="origenPreset"></div>
+      <div id="checks"></div>
+      <div id="editorMsg"></div>
+      <div id="editorBotones">
+        <button id="btnGuardarPreset">Guardar</button>
+        <button id="btnQuitarPreset">Eliminar Accesorios</button>
+        <button id="btnCerrarEditor">Cerrar</button>
+      </div>
     </div>
   </div>
 </div>
