@@ -372,6 +372,7 @@ let sesionUnsub = null;
 let sesionIniciada = false;
 let sidMostrado = null;
 let pendienteSrc = "local";
+let pendienteEsMulti = false;
 let pedidosTomas = null;
 
 function cargarEnMemoria(d){
@@ -388,6 +389,27 @@ function soyCabeza(d){
 function nombreCabeza(id){
   const c = cabezas.find(x=>x.id === id) || (sesionActual && (sesionActual.cabezas || []).find(x=>x.id === id));
   return (c && c.nombre) || "alguien";
+}
+async function chequearPendiente(esMulti){
+  try{
+    const sd = await getDoc(sesionRef());
+    if(sd.exists()){
+      const d = sd.data();
+      const pend = d && d.activa && Array.isArray(d.cabezas) && d.largo && (d.ronda || 0) < d.largo;
+      if(pend && d.hostUid === miId){
+        pendienteSrc = "sesion";
+        pendienteEsMulti = !!esMulti;
+        seguirEncima("¿Continuar encuentro anterior?",
+          "Ibas en la ronda " + ((d.ronda || 0) + 1) + " de " + d.largo + ".");
+        return true;
+      }
+    }
+  }catch(e){}
+  return false;
+}
+async function iniciarSingle(nombre){
+  if(await chequearPendiente(false)) return;
+  abrirTomas([nombre]);
 }
 
 async function entrar(){
@@ -643,7 +665,7 @@ function dibujarLista(boxId, acts, conteos){
       s.textContent = "⚙️ configurar en Citas Guiadas";
       b.appendChild(s);
     }else{
-      b.onclick = ()=>abrirTomas([nombre]);
+      b.onclick = ()=>{ iniciarSingle(nombre); };
     }
     box.appendChild(b);
   });
@@ -697,7 +719,8 @@ function multiToggle(nombre, on){
   }
   multiRefrescar();
 }
-document.getElementById("btnMulti").onclick = ()=>{
+document.getElementById("btnMulti").onclick = async ()=>{
+  if(await chequearPendiente(true)) return;
   multiModo = true; multiSel = []; multiRefrescar();
   if(cacheActs && cacheConteos) dibujarLista("listaActs", cacheActs, cacheConteos);
 };
@@ -851,15 +874,15 @@ async function generarYIniciar(activities, tomas){
     empezadaEn: serverTimestamp(),
     actualizadaEn: serverTimestamp()
   };
-  if(!modoLocal){
-    try{ await setDoc(sesionRef(), nueva); }
-    catch(e){ try{ alert("No se pudo iniciar. Revisa conexión."); }catch(x){} }
-  }
   cargarEnMemoria(nueva);
   jugando = true;
   sidMostrado = sid;
   multiModo = false; multiSel = [];
   try{ multiRefrescar(); }catch(e){}
+  if(!modoLocal){
+    try{ await setDoc(sesionRef(), nueva); }
+    catch(e){ try{ alert("No se pudo iniciar. Revisa conexión."); }catch(x){} }
+  }
   document.getElementById("plTitulo").textContent = "Encuentros Guiados";
   document.getElementById("btnSig").style.display = "";
   document.getElementById("btnTerminar").style.display = "";
@@ -932,6 +955,7 @@ function seguirEncima(titulo, desc){
 function seguirFuera(){ cerrarModal("vistaSeguir"); }
 document.getElementById("btnContinuar").onclick = async ()=>{
   seguirFuera();
+  pendienteEsMulti = false;
   let d = sesionActual;
   if(!d){
     try{ const sd = await getDoc(sesionRef()); d = sd.exists() ? sd.data() : null; }catch(e){}
@@ -953,6 +977,13 @@ document.getElementById("btnNueva").onclick = async ()=>{
   if(!esAdminFlag){ alert("Quien inicia o renueva el encuentro es " + nombreAdmin() + " (administrador)."); return; }
   try{ await cerrarSesion(); }catch(e){}
   jugando = false;
+  if(pendienteEsMulti){
+    pendienteEsMulti = false;
+    multiModo = true; multiSel = []; multiRefrescar();
+    if(cacheActs && cacheConteos) dibujarLista("listaActs", cacheActs, cacheConteos);
+    ver("vistaLista");
+    return;
+  }
   pintarLista("listaActs");
   ver("vistaLista");
 };
