@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Encuentros Guiados</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  #btnAtras{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
+    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
+  }
+  .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--card); color:var(--fg); padding:13px 14px; font-size:.95rem;
+    font-family:'Inter',sans-serif; margin-bottom:14px; }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.desc{ font-size:.88rem; color:var(--fg-muted); max-width:360px; margin:0 0 18px; text-align:center; }
+  .vista{ display:none; width:100%; max-width:520px; flex-direction:column; align-items:center; }
+  .vista.ver{ display:flex; }
+  .btnAct{ width:100%; padding:16px; margin-bottom:12px; background:var(--card);
+    border:1px solid var(--card-border); border-radius:16px; color:var(--fg);
+    font-size:1.02rem; font-family:'Chakra Petch',sans-serif; font-weight:600; cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .btnAct:active{ transform:scale(.97); border-color:var(--teal); }
+  .btnAct small{ color:var(--fg-muted); font-family:'Inter',sans-serif; font-weight:400; font-size:.8rem; }
+  .btnAct:disabled{ opacity:.45; }
+  .btnPri{ width:100%; padding:16px; margin-bottom:10px; border:none; border-radius:14px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btnPri:active{ transform:scale(.97); }
+  .btnSec{ width:100%; padding:12px; background:none; border:none; cursor:pointer;
+    color:var(--fg-muted); font-size:.9rem; text-decoration:underline; }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
+  .tomasGrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tomasGrid label{ font-size:.78rem; color:var(--fg-muted); display:flex; flex-direction:column; gap:4px; }
+  .tomasGrid input{ border-radius:10px; border:1px solid var(--card-border); background:var(--bg);
+    color:var(--fg); padding:10px; font-size:1rem; width:100%; font-family:'Inter',sans-serif; }
+  .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:60;
+    align-items:center; justify-content:center; padding:20px; }
+  .modal .caja{ width:100%; max-width:380px; background:var(--card); border:1px solid var(--teal);
+    border-radius:18px; padding:22px 20px; text-align:center; }
+  /* player */
+  #progreso{ color:var(--fg-muted); font-size:.85rem; margin-bottom:6px; }
+  #nivelTag{ font-size:.75rem; color:var(--teal); border:1px solid var(--teal); border-radius:8px;
+    padding:3px 10px; margin-bottom:16px; text-transform:uppercase; letter-spacing:.15em;
+    font-family:'Chakra Petch',sans-serif; }
+  #actividadAhora{ font-family:'Chakra Petch',sans-serif; font-size:1.9rem; font-weight:700;
+    text-align:center; margin:26px 0 30px; line-height:1.45; padding:30px 24px;
+    min-height:calc(3 * 1.45em + 60px);
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, #2b2144, var(--card));
+    border:1px solid var(--card-border); border-radius:24px; width:100%;
+    box-shadow:0 14px 44px rgba(0,0,0,.45), 0 0 34px rgba(47,217,199,.12); }
+  #finMsg{ font-size:1.1rem; text-align:center; margin:20px 0; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../index.html">← Inicio</a>
+<button id="btnAtras" aria-label="Volver">← Lista</button>
+
+<div class="eyebrow">Encuentros Guiados</div>
+
+<!-- ============ BLOQUEO (sin acceso) ============ -->
+<div class="vista" id="vistaBloqueo">
+  <h1>Acceso 🔒</h1>
+  <p class="desc">Encuentros Guiados no está activado en tu menú. Pídelo en Centro de Adquisiciones y al aprobarse aparece solo.</p>
+  <button class="btnPri" id="btnTienda">Ir a Centro de Adquisiciones</button>
+  <button class="btnSec" id="btnRevisar">Ya lo pedí, revisar acceso</button>
+  <button class="btnSec" id="btnTengo">Tengo código</button>
+  <textarea id="licCodigo" style="display:none;width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:12px;font-size:.8rem;min-height:90px;" placeholder="Pega tu código aquí"></textarea>
+  <button class="btnPri" id="btnValidar" style="display:none">Validar y entrar</button>
+  <div id="licMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:6px 0;text-align:center;"></div>
+</div>
+
+<!-- ============ LISTA (admin elige actividad) ============ -->
+<div class="vista" id="vistaLista">
+  <h1 id="tituloLista">Elige actividad</h1>
+  <p class="desc" id="descLista">Se generará una lista para cada quien.</p>
+  <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar actividad..." autocomplete="off">
+  <div id="cajaActs" style="width:100%;max-height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
+    <div id="listaActs" style="width:100%"></div>
+  </div>
+  <button class="btnPri" id="btnMulti" style="margin-top:12px;">Modo MultiActividades 🔗</button>
+  <div id="filaMultiSel" style="display:none;width:100%;gap:8px;margin-top:12px;">
+    <button class="btnPri" id="btnMultiGo" disabled style="flex:1;opacity:.4;margin-bottom:0;">Combinar (0/3)</button>
+    <button class="btnSec" id="btnMultiCancel" style="width:auto;padding:12px 16px;text-decoration:none;">Cancelar</button>
+  </div>
+</div>
+
+<!-- ============ ESPERA (invitado / pareja) ============ -->
+<div class="vista" id="vistaEspera">
+  <h1>Encuentros 💫</h1>
+  <p class="desc" id="esperaDesc">Esperando a que el administrador inicie el encuentro…</p>
+  <button class="btnSec" id="btnEsperaRefrescar">Volver a revisar</button>
+</div>
+
+<!-- ============ PLAYER ============ -->
+<div class="vista" id="vistaPlayer">
+  <h1 id="plTitulo">Encuentro</h1>
+  <div id="progreso"></div>
+  <div id="nivelTag" hidden></div>
+  <div id="actividadAhora"></div>
+  <div id="finMsg" style="display:none">¡Encuentro completo! 🔥</div>
+  <button class="btnPri" id="btnSig">Siguiente →</button>
+  <button class="btnSec" id="btnTerminar">Terminar</button>
+</div>
+
+<!-- ============ CONTINUAR ============ -->
+<div class="modal" id="vistaSeguir">
+  <div class="caja">
+    <h1 id="sgTitulo" style="font-size:1.3rem;">¿Continuar encuentro anterior?</h1>
+    <p class="desc" id="sgDesc" style="max-width:none;"></p>
+    <button class="btnPri" id="btnContinuar">Continuar →</button>
+    <button class="btnSec" id="btnNueva">Encuentro nuevo</button>
+  </div>
+</div>
+
+<!-- ============ GRACIA ============ -->
+<div class="modal" id="modalGracia">
+  <div class="caja">
+    <div style="font-size:.95rem;line-height:1.5;">Su acceso venció 🥺 pero hoy no les arruinamos su encuentro 💛 les obsequiamos este último acceso</div>
+    <div style="font-size:.75rem;color:var(--fg-muted);margin-top:10px;text-align:right;">Solicite su acceso en<br>Centro de Adquisiciones</div>
+    <button class="btnPri" id="btnGraciaOk" style="margin-top:14px;">Aceptar</button>
+  </div>
+</div>
+
+<!-- ============ MULTI 2: CONFIRMAR ============ -->
+<div class="modal" id="modalMulti2">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;">¿Son estas 3?</div>
+    <div id="multiResumen" style="font-size:.95rem;margin:12px 0;line-height:1.6;"></div>
+    <button class="btnPri" id="btnMulti2Ok" style="margin-bottom:8px;">Sí, continuar →</button>
+    <button class="btnSec" id="btnMulti2Back">Re-elegir</button>
+  </div>
+</div>
+
+<!-- ============ TOMAS ============ -->
+<div class="modal" id="modalTomas">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin-bottom:4px;">¿Cuántas acciones por nivel?</div>
+    <p class="desc" id="tomasAviso" style="max-width:none;margin-bottom:12px;"></p>
+    <div class="tomasGrid" id="tomasGridEncuentros"></div>
+    <button class="btnPri" id="btnTomasOk" style="margin-top:12px;">Aceptar y jugar ▶</button>
+    <button class="btnSec" id="btnTomasBack">Atrás</button>
+  </div>
+</div>
+
+<!-- ============ UNIRSE ============ -->
+<div class="modal" id="modalUnir">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿Quieres jugar? ¿Unirte?</div>
+    <div id="unirDesc" style="font-size:.9rem;color:var(--fg-muted);margin:10px 0 0;"></div>
+    <button class="btnPri" id="btnUnirme" style="margin-top:16px;">Unirme →</button>
+    <button class="btnSec" id="btnUnirNo">Ahora no</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, limit, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase, cargarUsuarios } from "../config.js";
+import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "../taquilla.js";
+
+const NIVELES = [
+  { id: "basico", nombre: "Básico" },
+  { id: "medio", nombre: "Medio" },
+  { id: "avanzado", nombre: "Avanzado" },
+  { id: "experto", nombre: "Experto" },
+  { id: "alucinado", nombre: "Alucinado" },
+];
+const TOMAS_DEF = { basico: 2, medio: 2, avanzado: 1, experto: 1, alucinado: 1 };
+function normLados(v){
+  if(Array.isArray(v)) return { A: v.slice(), B: v.slice() };
+  v = v || {};
+  return { A: (v.A || []).slice(), B: (v.B || []).slice() };
+}
+function contarNivel(v){
+  if(Array.isArray(v)) return v.length;
+  v = v || {};
+  return ((v.A || []).length + (v.B || []).length);
+}
+function mezclar(a){
+  const x = a.slice();
+  for(let i = x.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [x[i], x[j]] = [x[j], x[i]];
+  }
+  return x;
+}
+
+const firebaseConfig = resolverFirebase(firebaseConfigBase);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const ITEM_ID = "encuentros";
+const CLAVE_LIC = "licencias";
+function miProyecto(){
+  return (firebaseConfig && firebaseConfig.projectId) || "";
+}
+function leerLicencias(){
+  try{ return JSON.parse(localStorage.getItem(CLAVE_LIC) || "{}"); }catch(e){ return {}; }
+}
+async function tengoAcceso(){
+  const lic = leerLicencias()[ITEM_ID];
+  if(!lic) return false;
+  const pay = await verificarCodigo(lic);
+  if(!pay) return false;
+  if(pay.item !== ITEM_ID) return false;
+  if(pay.para !== miProyecto()) return false;
+  return true;
+}
+function mostrarGracia(){
+  document.getElementById("modalGracia").style.display = "flex";
+}
+document.getElementById("btnGraciaOk").onclick = ()=>{
+  document.getElementById("modalGracia").style.display = "none";
+};
+let usuarioGoogle = null;
+function appTaq(){
+  try{ return getApp("taquilla"); }
+  catch(e){ return initializeApp(TAQUILLA_FIREBASE, "taquilla"); }
+}
+document.getElementById("btnTienda").onclick = ()=>{ location.href = "../Tienda/?sec=experiencias"; };
+document.getElementById("btnRevisar").onclick = async (e)=>{
+  licMsg("");
+  e.target.disabled = true;
+  try{ await entrar(); } finally{ e.target.disabled = false; }
+};
+function quitarLicencia(){
+  try{
+    const lic = leerLicencias();
+    delete lic[ITEM_ID];
+    localStorage.setItem(CLAVE_LIC, JSON.stringify(lic));
+  }catch(e){}
+}
+let stopEscucha = null;
+function escucharAprobacion(){
+  try{ if(stopEscucha) stopEscucha(); }catch(e){}
+  try{
+    const tdb = getFirestore(appTaq());
+    const q = query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30));
+    stopEscucha = onSnapshot(q, async (snap)=>{
+      const docs = snap.docs.slice().sort((a, b)=>{
+        const fa = a.data().fecha, fb = b.data().fecha;
+        const ta = fa && fa.toDate ? fa.toDate().getTime() : 0;
+        const tb = fb && fb.toDate ? fb.toDate().getTime() : 0;
+        return tb - ta;
+      });
+      try{
+        const actual = leerLicencias()[ITEM_ID];
+        if(actual){
+          const payAct = await verificarCodigo(actual);
+          if(payAct){
+            const rev = docs.find(d=>{
+              const s = d.data();
+              return s.item === ITEM_ID
+                && String(s.email || "").trim().toLowerCase() === String(payAct.email || "").trim().toLowerCase()
+                && (s.estado === "revocado" || s.estado === "negado");
+            });
+            if(rev){
+              quitarLicencia();
+              try{ if(stopEscucha) stopEscucha(); }catch(e){}
+              ver("vistaBloqueo", false);
+              licMsg("Acceso revocado por el desarrollador.");
+              return;
+            }
+          }
+        }
+      }catch(e){}
+      for(const d of docs){
+        if(d.data().item !== ITEM_ID || d.data().estado !== "aprobado") continue;
+        const c = d.data().codigo;
+        if(!c) continue;
+        const pay = await verificarCodigo(c);
+        if(pay && pay.item === ITEM_ID && pay.para === miProyecto()){
+          const lic = leerLicencias();
+          lic[ITEM_ID] = String(c).trim();
+          try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+          try{ if(stopEscucha) stopEscucha(); }catch(e){}
+          entrar();
+          return;
+        }
+      }
+    }, ()=>{});
+  }catch(e){}
+}
+document.getElementById("btnTengo").onclick = ()=>{
+  document.getElementById("licCodigo").style.display = "block";
+  document.getElementById("btnValidar").style.display = "block";
+};
+document.getElementById("btnValidar").onclick = async ()=>{
+  licMsg("");
+  const cod = document.getElementById("licCodigo").value;
+  const pay = await verificarCodigo(cod);
+  if(pay && pay.item === ITEM_ID && pay.para === miProyecto()){
+    const lic = leerLicencias();
+    lic[ITEM_ID] = cod.trim();
+    try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+    entrar();
+    return;
+  }
+  const pf = await verificarFirma(cod);
+  if(pf && pf.item === ITEM_ID && pf.para === miProyecto()){
+    const lic = leerLicencias();
+    lic[ITEM_ID] = cod.trim();
+    try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+    entrar();
+    return;
+  }
+  licMsg("Código inválido o vencido.");
+};
+function licMsg(t){ document.getElementById("licMsg").textContent = t || ""; }
+
+// ---------- identidad ----------
+let miUsuario = null;
+let usuariosLista = [];
+let miId = "anon";
+let esAdminFlag = false;
+let esInvitadoFlag = false;
+function leerQuienSoy(){
+  try{ return JSON.parse(localStorage.getItem("appPareja_quienSoy") || "null"); }catch(e){ return null; }
+}
+async function cargarIdentidad(){
+  try{ usuariosLista = await cargarUsuarios(db, getDoc, doc, []); }catch(e){ usuariosLista = []; }
+  if(!Array.isArray(usuariosLista)) usuariosLista = [];
+  const yo = leerQuienSoy();
+  miUsuario = (yo && usuariosLista.find(u=>u.id === yo.id)) || yo || null;
+  miId = (miUsuario && miUsuario.id) || "anon";
+  esAdminFlag = !!(miUsuario && miUsuario.admin);
+  esInvitadoFlag = !!(miUsuario && miUsuario.invitado);
+}
+function nombreAdmin(){
+  const a = usuariosLista.find(u=>u.admin);
+  return (a && a.nombre) || "el administrador";
+}
+
+// ---------- sesión ----------
+function sesionRef(){ return doc(db, "sesionEncuentros", "actual"); }
+let cabezas = [];
+let listas = {};
+let largo = 0;
+let ronda = 0;
+let turno = 0;
+let orden = [];
+let jugando = false;
+let modoLocal = false;
+let sesionActual = null;
+let sesionUnsub = null;
+let sesionIniciada = false;
+let sidMostrado = null;
+let pendienteSrc = "local";
+let pedidosTomas = null;
+
+function cargarEnMemoria(d){
+  cabezas = Array.isArray(d.cabezas) ? d.cabezas : [];
+  listas = d.listas || {};
+  largo = d.largo || 0;
+  ronda = d.ronda || 0;
+  turno = d.turno || 0;
+  orden = Array.isArray(d.orden) ? d.orden.slice() : [];
+}
+function soyCabeza(d){
+  return !!(d && Array.isArray(d.cabezas) && d.cabezas.some(c=>c.id === miId));
+}
+function nombreCabeza(id){
+  const c = cabezas.find(x=>x.id === id) || (sesionActual && (sesionActual.cabezas || []).find(x=>x.id === id));
+  return (c && c.nombre) || "alguien";
+}
+
+async function entrar(){
+  let ok = false;
+  try{ ok = await tengoAcceso(); }catch(e){ ok = false; }
+  if(!ok && esInvitadoFlag) ok = true; // invitado juega con el acceso del anfitrión
+  if(ok){
+    modoLocal = (typeof navigator !== "undefined" && navigator.onLine === false);
+    if(esAdminFlag){
+      if(modoLocal){ try{ alert("Sin conexión. Se jugará en este celular."); }catch(e){} }
+      pintarLista("listaActs");
+      ver("vistaLista", false);
+    }else{
+      ver("vistaEspera", false);
+    }
+    try{ escucharSesion(); }catch(e){}
+    return;
+  }
+  // cortesía única si venció
+  try{
+    const lic = leerLicencias()[ITEM_ID];
+    if(lic){
+      const pay = await verificarFirma(lic);
+      if(pay && pay.item === ITEM_ID && pay.para === miProyecto() && pay.vence && Date.now() > pay.vence){
+        const tdb = getFirestore(appTaq());
+        const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30)));
+        let docGracia = null;
+        snap.forEach(dd=>{
+          const s = dd.data();
+          if(s.item !== ITEM_ID) return;
+          if(String(s.email || "").trim().toLowerCase() !== String(pay.email || "").trim().toLowerCase()) return;
+          if(s.estado !== "aprobado" || s.graciaUsada !== false) return;
+          docGracia = { id: dd.id };
+        });
+        if(docGracia){
+          try{ await setDoc(doc(tdb, "solicitudes", docGracia.id), { graciaUsada: true, graciaFecha: serverTimestamp() }, { merge: true }); }catch(e){}
+          if(esAdminFlag){ pintarLista("listaActs"); ver("vistaLista", false); } else { ver("vistaEspera", false); }
+          mostrarGracia();
+          return;
+        }
+      }
+    }
+  }catch(e){}
+  ver("vistaBloqueo", false);
+  escucharAprobacion();
+}
+
+function escucharSesion(){
+  if(sesionIniciada) return;
+  sesionIniciada = true;
+  try{
+    sesionUnsub = onSnapshot(sesionRef(), (snap)=>{
+      try{
+        const d = snap.exists() ? snap.data() : null;
+        sesionActual = d;
+        if(d && d.activa && soyCabeza(d)){
+          if(jugando){ cargarEnMemoria(d); pintarPaso(); return; }
+          if(d.sid === sidMostrado) return;
+          sidMostrado = d.sid;
+          const soyHost = d.hostUid === miId;
+          if(soyHost){
+            pendienteSrc = "sesion";
+            seguirEncima("¿Continuar encuentro anterior?",
+              "Ibas en la ronda " + ((d.ronda || 0) + 1) + " de " + d.largo + ".");
+          }else{
+            document.getElementById("unirDesc").textContent = d.reanudada
+              ? ((d.hostNombre || "El administrador") + " retomó el encuentro. Puedes continuar donde van.")
+              : ((d.hostNombre || "El administrador") + " inició un Encuentro Guiado.");
+            document.getElementById("modalUnir").style.display = "flex";
+          }
+        }else if(jugando){
+          jugando = false;
+          entrar();
+        }
+      }catch(e){}
+    }, ()=>{});
+  }catch(e){}
+}
+
+function avanzarLocal(){
+  if(ronda >= largo) return;
+  if(turno + 1 < cabezas.length){
+    turno++;
+  }else{
+    ronda++;
+    if(ronda >= largo){ jugando = false; pintarPaso(); return; }
+    turno = 0;
+    orden = mezclar(cabezas.map(c=>c.id));
+  }
+  pintarPaso();
+}
+async function avanzarSesion(){
+  try{
+    await runTransaction(db, async (tx)=>{
+      const ref = sesionRef();
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const d = snap.data();
+      if(!d.activa) return;
+      const lista = d.cabezas || [];
+      if(!d.orden || d.orden[d.turno || 0] !== miId) return;
+      let r = d.ronda || 0, t = d.turno || 0, o = d.orden.slice();
+      if(t + 1 < lista.length){
+        t++;
+      }else{
+        r++;
+        if(r >= (d.largo || 0)){
+          tx.update(ref, { activa: false, ronda: r, turno: 0, actualizadaEn: serverTimestamp() });
+          return;
+        }
+        t = 0;
+        o = mezclar(lista.map(c=>c.id));
+      }
+      tx.update(ref, { ronda: r, turno: t, orden: o, actualizadaEn: serverTimestamp() });
+    });
+  }catch(e){}
+}
+async function cerrarSesion(){
+  try{ await setDoc(sesionRef(), { activa: false, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+}
+
+function ver(id, guardar){
+  document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
+  document.getElementById(id).classList.add("ver");
+  document.getElementById("btnAtras").style.display = (id === "vistaPlayer") ? "block" : "none";
+  if(guardar !== false){ try{ history.pushState({ v: id }, ""); }catch(e){} }
+  window.scrollTo(0, 0);
+}
+window.addEventListener("popstate", (e)=>{
+  const v = (e.state && e.state.v) || "vistaLista";
+  if(v === "vistaPlayer" && jugando){ ver("vistaPlayer", false); return; }
+  entrar();
+});
+try{ history.replaceState({ v: "vistaLista" }, ""); }catch(e){}
+document.getElementById("btnAtras").onclick = ()=>{
+  if(esAdminFlag){ pintarLista("listaActs"); ver("vistaLista"); } else { ver("vistaEspera"); }
+};
+document.getElementById("btnEsperaRefrescar").onclick = ()=>{ entrar(); };
+
+// ---------- lista de actividades (banco compartido con Guiadas) ----------
+let mapaDocs = {};
+function docDe(nombre){ return (mapaDocs[nombre] && mapaDocs[nombre].docId) || nombre; }
+async function oficialesAprobados(){
+  const out = [];
+  try{
+    const lic = leerLicencias();
+    const tdb = getFirestore(appTaq());
+    const snap = await getDocs(collection(tdb, "packs"));
+    for(const d of snap.docs){
+      const p = Object.assign({ id: d.id }, d.data());
+      if(!p.oficial || p.activo === false) continue;
+      const cod = lic[p.id];
+      if(!cod) continue;
+      const pay = await verificarCodigo(cod);
+      if(pay && pay.item === p.id && pay.para === miProyecto()) out.push(p);
+    }
+  }catch(e){}
+  return out;
+}
+async function sincronizarOficiales(){
+  try{
+    const ofs = await oficialesAprobados();
+    for(const p of ofs){
+      try{
+        const ref = doc(db, "nivelesActividad", p.id);
+        const snap = await getDoc(ref);
+        if(!snap.exists()){
+          const nn = {};
+          NIVELES.forEach(nv=>{ nn[nv.id] = normLados((p.niveles || {})[nv.id]); });
+          await setDoc(ref, { n: nn, titulo: p.titulo || p.id, oficial: true, actualizadoEn: serverTimestamp() }, { merge: true });
+        }
+      }catch(e){}
+    }
+  }catch(e){}
+}
+async function cargarActividades(){
+  let base = [];
+  mapaDocs = {};
+  try{ base = await (await fetch("../Citas/actividades.json")).json(); }catch(e){}
+  try{
+    const snap = await getDocs(collection(db, "actividadesExtra"));
+    const vistos = new Set((Array.isArray(base) ? base : []).map(n=>(n || "").toLowerCase()));
+    snap.forEach(d=>{
+      const n = (d.data().nombre || "").trim();
+      if(n && !vistos.has(n.toLowerCase())){ vistos.add(n.toLowerCase()); base.push(n); }
+    });
+  }catch(e){}
+  if(!Array.isArray(base)) base = [];
+  base.forEach(n=>{ mapaDocs[n] = { docId: n, oficial: false }; });
+  try{
+    const ofs = await oficialesAprobados();
+    const vistos = new Set(base.map(n=>(n || "").toLowerCase()));
+    ofs.forEach(p=>{
+      const t = (p.titulo || p.id).trim();
+      if(t && !vistos.has(t.toLowerCase())){ vistos.add(t.toLowerCase()); base.push(t); }
+      mapaDocs[t] = { docId: p.id, oficial: true };
+    });
+  }catch(e){}
+  return base;
+}
+let cacheActs = null;
+let cacheConteos = null;
+function dibujarLista(boxId, acts, conteos){
+  const box = document.getElementById(boxId);
+  const scroller = document.getElementById("cajaActs");
+  const top = scroller ? scroller.scrollTop : 0;
+  box.innerHTML = "";
+  const ordenadas = acts.slice().sort((a, b)=>{
+    const oa = (mapaDocs[a] && mapaDocs[a].oficial) ? 0 : 1;
+    const ob = (mapaDocs[b] && mapaDocs[b].oficial) ? 0 : 1;
+    return oa - ob;
+  });
+  ordenadas.forEach(nombre=>{
+    const c = conteos[docDe(nombre)] || 0;
+    const esOf = !!(mapaDocs[nombre] && mapaDocs[nombre].oficial);
+    if(multiModo){
+      const lab = document.createElement("label");
+      lab.className = "btnAct";
+      lab.style.cursor = c ? "pointer" : "default";
+      if(!c) lab.style.opacity = ".45";
+      const chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.disabled = !c;
+      chk.checked = multiSel.indexOf(nombre) >= 0;
+      chk.value = nombre;
+      chk.style.cssText = "width:20px;height:20px;accent-color:var(--teal);";
+      chk.onchange = ()=>{ multiToggle(nombre, chk.checked); };
+      const t = document.createElement("span");
+      t.textContent = nombre + (c ? "" : " (sin acciones)");
+      t.style.flex = "1";
+      lab.appendChild(t);
+      if(esOf){ const tag = document.createElement("small"); tag.textContent = "🏅"; lab.appendChild(tag); }
+      lab.appendChild(chk);
+      lab.onclick = (e)=>{
+        if(e.target !== chk && c){
+          e.preventDefault();
+          chk.checked = !chk.checked;
+          multiToggle(nombre, chk.checked);
+        }
+      };
+      box.appendChild(lab);
+      return;
+    }
+    const b = document.createElement("button");
+    b.className = "btnAct";
+    const t = document.createElement("span");
+    t.textContent = nombre;
+    b.appendChild(t);
+    if(esOf){ const tag = document.createElement("small"); tag.textContent = "🏅"; b.appendChild(tag); }
+    if(!c){
+      b.disabled = true;
+      const s = document.createElement("small");
+      s.textContent = "⚙️ configurar en Citas Guiadas";
+      b.appendChild(s);
+    }else{
+      b.onclick = ()=>abrirTomas([nombre]);
+    }
+    box.appendChild(b);
+  });
+  if(scroller) scroller.scrollTop = top;
+}
+async function pintarLista(boxId){
+  const acts = await cargarActividades();
+  const conteos = {};
+  try{
+    const snap = await getDocs(collection(db, "nivelesActividad"));
+    snap.forEach(d=>{
+      const n = d.data().n || {};
+      conteos[d.id] = NIVELES.reduce((t, nv)=>t + contarNivel(n[nv.id]), 0);
+    });
+  }catch(e){}
+  cacheActs = acts; cacheConteos = conteos;
+  dibujarLista(boxId, acts, conteos);
+}
+function filtrar(boxId, texto){
+  const t = (texto || "").trim().toLowerCase();
+  document.querySelectorAll("#" + boxId + " .btnAct").forEach(b=>{
+    b.style.display = (!t || b.textContent.toLowerCase().indexOf(t) >= 0) ? "" : "none";
+  });
+}
+document.getElementById("buscarLista").addEventListener("input", (e)=>filtrar("listaActs", e.target.value));
+
+// ---------- MultiActividades ----------
+let multiSel = [];
+let multiModo = false;
+function multiRefrescar(){
+  document.getElementById("tituloLista").textContent = multiModo ? "Selecciona 3 para combinar" : "Elige actividad";
+  document.getElementById("descLista").textContent = multiModo ? ("Llevas " + multiSel.length + "/3") : "Se generará una lista para cada quien.";
+  document.getElementById("btnMulti").style.display = multiModo ? "none" : "";
+  document.getElementById("filaMultiSel").style.display = multiModo ? "flex" : "none";
+  const go = document.getElementById("btnMultiGo");
+  go.textContent = "Combinar (" + multiSel.length + "/3)";
+  go.disabled = multiSel.length !== 3;
+  go.style.opacity = multiSel.length !== 3 ? ".4" : "1";
+}
+function multiToggle(nombre, on){
+  if(on){
+    if(multiSel.indexOf(nombre) >= 0){ multiRefrescar(); return; }
+    if(multiSel.length >= 3){
+      document.querySelectorAll('#listaActs input[type="checkbox"]').forEach(i=>{ if(i.value === nombre) i.checked = false; });
+      multiRefrescar();
+      return;
+    }
+    multiSel.push(nombre);
+  }else{
+    multiSel = multiSel.filter(x=>x !== nombre);
+  }
+  multiRefrescar();
+}
+document.getElementById("btnMulti").onclick = ()=>{
+  multiModo = true; multiSel = []; multiRefrescar();
+  if(cacheActs && cacheConteos) dibujarLista("listaActs", cacheActs, cacheConteos);
+};
+document.getElementById("btnMultiCancel").onclick = ()=>{
+  multiModo = false; multiSel = []; multiRefrescar();
+  if(cacheActs && cacheConteos) dibujarLista("listaActs", cacheActs, cacheConteos);
+};
+document.getElementById("btnMultiGo").onclick = ()=>{
+  if(multiSel.length !== 3) return;
+  document.getElementById("multiResumen").textContent = multiSel.join(" + ");
+  abrirModal("modalMulti2");
+};
+document.getElementById("btnMulti2Back").onclick = ()=>cerrarModal("modalMulti2");
+document.getElementById("btnMulti2Ok").onclick = ()=>{
+  cerrarModal("modalMulti2");
+  abrirTomas(multiSel.slice());
+};
+
+// ---------- tomas ----------
+function abrirModal(id){ document.getElementById(id).style.display = "flex"; }
+function cerrarModal(id){ document.getElementById(id).style.display = "none"; }
+function abrirTomas(activities){
+  pedidosTomas = activities.slice();
+  const g = document.getElementById("tomasGridEncuentros");
+  g.innerHTML = "";
+  NIVELES.forEach(nv=>{
+    const lab = document.createElement("label");
+    lab.textContent = nv.nombre;
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.min = "0"; inp.max = "50";
+    inp.value = TOMAS_DEF[nv.id] || 0;
+    inp.id = "enctoma_" + nv.id;
+    lab.appendChild(inp);
+    g.appendChild(lab);
+  });
+  const minLargo = Math.max(2, construirCabezas().length);
+  document.getElementById("tomasAviso").textContent = "Mínimo total " + minLargo + " acciones (2 + invitados).";
+  document.getElementById("btnTomasOk").textContent = "Aceptar y jugar ▶";
+  abrirModal("modalTomas");
+}
+document.getElementById("btnTomasBack").onclick = ()=>{
+  cerrarModal("modalTomas");
+  if(pedidosTomas && pedidosTomas.length > 1){ abrirModal("modalMulti2"); }
+};
+document.getElementById("btnTomasOk").onclick = async ()=>{
+  const tomas = {};
+  NIVELES.forEach(nv=>{
+    const el = document.getElementById("enctoma_" + nv.id);
+    tomas[nv.id] = Math.max(0, Math.min(50, parseInt(el.value, 10) || 0));
+  });
+  const acts = (pedidosTomas || []).slice();
+  cerrarModal("modalTomas");
+  if(acts.length) await generarYIniciar(acts, tomas);
+};
+
+// ---------- cabezas + generación ----------
+function construirCabezas(){
+  const adm = usuariosLista.find(u=>u.admin);
+  const out = [];
+  usuariosLista.forEach(u=>{
+    if(u.invitado){
+      const lado = (adm && u.conQuien === adm.id) ? "A" : "B";
+      out.push({ id: u.id, nombre: u.nombre || "Invitado", lado, admin: false, invitado: true, conQuien: u.conQuien || null });
+    }else{
+      out.push({ id: u.id, nombre: u.nombre || "", lado: u.admin ? "A" : "B", admin: !!u.admin, invitado: false });
+    }
+  });
+  return out;
+}
+function generarListas(cabezasIn, actsData, tomas){
+  const poolNivel = {};
+  const poolAll = { A: [], B: [] };
+  NIVELES.forEach(nv=>{
+    poolNivel[nv.id] = { A: [], B: [] };
+    actsData.forEach(a=>{
+      const lados = normLados(a.n ? a.n[nv.id] : null);
+      lados.A.forEach(t=> poolNivel[nv.id].A.push({ texto: t, lado: "A", nivel: nv.nombre }));
+      lados.B.forEach(t=> poolNivel[nv.id].B.push({ texto: t, lado: "B", nivel: nv.nombre }));
+    });
+    poolNivel[nv.id].A = mezclar(poolNivel[nv.id].A);
+    poolNivel[nv.id].B = mezclar(poolNivel[nv.id].B);
+  });
+  ["A", "B"].forEach(side=>{
+    NIVELES.forEach(nv=>{ poolNivel[nv.id][side].forEach(x=> poolAll[side].push(x)); });
+    poolAll[side] = mezclar(poolAll[side]);
+  });
+  const out = {};
+  cabezasIn.forEach(c=>{ out[c.id] = []; });
+  NIVELES.forEach(nv=>{
+    const t = Math.max(0, tomas[nv.id] || 0);
+    ["A", "B"].forEach(side=>{
+      const hs = cabezasIn.filter(c=>c.lado === side);
+      const pool = poolNivel[nv.id][side];
+      const combo = poolAll[side];
+      let cur = 0, comboCur = 0;
+      hs.forEach(h=>{
+        for(let i = 0; i < t; i++){
+          let item = null;
+          if(cur < pool.length) item = pool[cur++];
+          else if(combo.length) item = combo[(comboCur++) % combo.length];
+          if(item) out[h.id].push({ nivel: item.nivel, lado: side, texto: item.texto });
+        }
+      });
+    });
+  });
+  return out;
+}
+async function generarYIniciar(activities, tomas){
+  const cabezasIn = construirCabezas();
+  const largoCalc = NIVELES.reduce((t, nv)=> t + Math.max(0, tomas[nv.id] || 0), 0);
+  const minLargo = cabezasIn.length;
+  if(largoCalc < minLargo){
+    alert("El mínimo de acciones por lista es " + minLargo + " (2 + invitados registrados). Súbelo.");
+    return;
+  }
+  const actsData = [];
+  for(const nombre of activities){
+    let n = {};
+    try{
+      const snap = await getDoc(doc(db, "nivelesActividad", docDe(nombre)));
+      if(snap.exists()) n = snap.data().n || {};
+    }catch(e){}
+    actsData.push({ nombre, n });
+  }
+  const listasNuevas = generarListas(cabezasIn, actsData, tomas);
+  const realLargo = listasNuevas[cabezasIn[0].id] ? listasNuevas[cabezasIn[0].id].length : 0;
+  if(!realLargo){
+    alert("Sin acciones en esas actividades. Aliméntalas en Citas Guiadas ⚙️.");
+    return;
+  }
+  const lens = cabezasIn.map(c=> (listasNuevas[c.id] || []).length);
+  if(Math.max.apply(null, lens) !== Math.min.apply(null, lens)){
+    alert("No se pudieron armar listas parejas: falta surtido de un lado. Prueba otra actividad.");
+    return;
+  }
+  const sid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
+  const nueva = {
+    activa: true,
+    sid,
+    hostUid: miId,
+    hostNombre: (miUsuario && miUsuario.nombre) || nombreAdmin(),
+    modo: activities.length > 1 ? "multi" : "normal",
+    actividades: activities.slice(),
+    titulo: "Encuentros Guiados",
+    cabezas: cabezasIn,
+    listas: listasNuevas,
+    largo: realLargo,
+    ronda: 0,
+    turno: 0,
+    orden: mezclar(cabezasIn.map(c=>c.id)),
+    empezadaEn: serverTimestamp(),
+    actualizadaEn: serverTimestamp()
+  };
+  if(!modoLocal){
+    try{ await setDoc(sesionRef(), nueva); }
+    catch(e){ try{ alert("No se pudo iniciar. Revisa conexión."); }catch(x){} }
+  }
+  cargarEnMemoria(nueva);
+  jugando = true;
+  sidMostrado = sid;
+  multiModo = false; multiSel = [];
+  try{ multiRefrescar(); }catch(e){}
+  document.getElementById("plTitulo").textContent = "Encuentros Guiados";
+  document.getElementById("btnSig").style.display = "";
+  document.getElementById("btnTerminar").style.display = "";
+  ver("vistaPlayer");
+  pintarPaso();
+}
+
+// ---------- player ----------
+function pintarPaso(){
+  const total = largo;
+  const elAct = document.getElementById("actividadAhora");
+  const tag = document.getElementById("nivelTag");
+  const btnSig = document.getElementById("btnSig");
+  const fin = document.getElementById("finMsg");
+  const prog = document.getElementById("progreso");
+  if(!jugando || ronda >= total || !orden.length){
+    elAct.textContent = "";
+    tag.style.display = "none";
+    btnSig.style.display = "none";
+    fin.style.display = "block";
+    document.getElementById("btnTerminar").style.display = "";
+    return;
+  }
+  fin.style.display = "none";
+  const actualId = orden[turno] || "";
+  const soyYo = actualId === miId;
+  const miCab = cabezas.find(c=>c.id === miId) || {};
+  prog.textContent = "Ronda " + (ronda + 1) + " de " + total + " · Turno " + (turno + 1) + " de " + cabezas.length;
+  if(soyYo){
+    const item = (listas[miId] || [])[ronda];
+    elAct.textContent = item ? item.texto : "";
+    elAct.style.color = miCab.lado === "A" ? "var(--teal)" : "var(--coral)";
+    tag.style.display = "";
+    tag.textContent = item ? item.nivel : "";
+    btnSig.style.display = "";
+    btnSig.disabled = false;
+    btnSig.style.opacity = "1";
+    const ultimo = (ronda + 1 >= total) && (turno + 1 >= cabezas.length);
+    btnSig.textContent = ultimo ? "Terminar 🔥" : "Siguiente →";
+  }else{
+    elAct.textContent = "Turno de " + nombreCabeza(actualId) + "…";
+    elAct.style.color = "var(--fg-muted)";
+    tag.style.display = "none";
+    btnSig.style.display = "";
+    btnSig.disabled = true;
+    btnSig.style.opacity = ".4";
+    btnSig.textContent = "Espera tu turno";
+  }
+}
+document.getElementById("btnSig").onclick = async ()=>{
+  if(ronda >= largo){ return; }
+  if(!jugando) return;
+  if(modoLocal){ avanzarLocal(); return; }
+  if(orden[turno] !== miId) return;
+  await avanzarSesion();
+};
+document.getElementById("btnTerminar").onclick = async ()=>{
+  jugando = false;
+  if(!modoLocal){ await cerrarSesion(); }
+  pintarPaso();
+  entrar();
+};
+
+// ---------- continuar / unir ----------
+function seguirEncima(titulo, desc){
+  document.getElementById("sgTitulo").textContent = titulo;
+  document.getElementById("sgDesc").textContent = desc;
+  abrirModal("vistaSeguir");
+}
+function seguirFuera(){ cerrarModal("vistaSeguir"); }
+document.getElementById("btnContinuar").onclick = async ()=>{
+  seguirFuera();
+  let d = sesionActual;
+  if(!d){
+    try{ const sd = await getDoc(sesionRef()); d = sd.exists() ? sd.data() : null; }catch(e){}
+  }
+  if(!d || !Array.isArray(d.cabezas) || !d.largo) return;
+  jugando = true;
+  modoLocal = false;
+  try{
+    const nsid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
+    sidMostrado = nsid;
+    await setDoc(sesionRef(), { sid: nsid, reanudada: true, activa: true, actualizadaEn: serverTimestamp() }, { merge: true });
+  }catch(e){}
+  cargarEnMemoria(d);
+  ver("vistaPlayer");
+  pintarPaso();
+};
+document.getElementById("btnNueva").onclick = async ()=>{
+  seguirFuera();
+  if(!esAdminFlag){ alert("Quien inicia o renueva el encuentro es " + nombreAdmin() + " (administrador)."); return; }
+  try{ await cerrarSesion(); }catch(e){}
+  jugando = false;
+  pintarLista("listaActs");
+  ver("vistaLista");
+};
+document.getElementById("btnUnirme").onclick = ()=>{
+  const d = sesionActual;
+  cerrarModal("modalUnir");
+  if(!d || !d.activa || !soyCabeza(d)) return;
+  jugando = true;
+  modoLocal = false;
+  cargarEnMemoria(d);
+  ver("vistaPlayer");
+  pintarPaso();
+};
+document.getElementById("btnUnirNo").onclick = ()=>{ cerrarModal("modalUnir"); };
+
+// ---------- arranque ----------
+(async ()=>{
+  try{ await cargarIdentidad(); }catch(e){}
+  try{ await sincronizarOficiales(); }catch(e){}
+  try{ await entrar(); }
+  catch(e){
+    try{ console.error("Encuentros arranque:", e); }catch(x){}
+    try{ if(esAdminFlag){ await pintarLista("listaActs"); ver("vistaLista", false); } else { ver("vistaEspera", false); } }catch(x){}
+    try{ escucharSesion(); }catch(x){}
+  }
+})();
+</script>
+
+</body>
+</html>
