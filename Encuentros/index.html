@@ -178,11 +178,13 @@
 </div>
 
 <script type="module">
-import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, limit, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase, cargarUsuarios } from "../config.js";
-import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "../taquilla.js";
+import { verificarCodigo, verificarFirma } from "../taquilla.js";
+// Lógica de licencias compartida con el resto de la app (ver acceso.js).
+import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
 
 const NIVELES = [
   { id: "basico", nombre: "Básico" },
@@ -216,22 +218,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const ITEM_ID = "encuentros";
-const CLAVE_LIC = "licencias";
-function miProyecto(){
-  return (firebaseConfig && firebaseConfig.projectId) || "";
-}
-function leerLicencias(){
-  try{ return JSON.parse(localStorage.getItem(CLAVE_LIC) || "{}"); }catch(e){ return {}; }
-}
-async function tengoAcceso(){
-  const lic = leerLicencias()[ITEM_ID];
-  if(!lic) return false;
-  const pay = await verificarCodigo(lic);
-  if(!pay) return false;
-  if(pay.item !== ITEM_ID) return false;
-  if(pay.para !== miProyecto()) return false;
-  return true;
-}
+// miProyecto, leerLicencias, tengoAcceso, quitarLicencia, oficialesAprobados
+// y escucharItem ahora vienen de ../acceso.js (logica compartida).
 function mostrarGracia(){
   document.getElementById("modalGracia").style.display = "flex";
 }
@@ -239,73 +227,24 @@ document.getElementById("btnGraciaOk").onclick = ()=>{
   document.getElementById("modalGracia").style.display = "none";
 };
 let usuarioGoogle = null;
-function appTaq(){
-  try{ return getApp("taquilla"); }
-  catch(e){ return initializeApp(TAQUILLA_FIREBASE, "taquilla"); }
-}
+// appTaq y quitarLicencia ahora vienen de ../acceso.js.
 document.getElementById("btnTienda").onclick = ()=>{ location.href = "../Tienda/?sec=experiencias"; };
 document.getElementById("btnRevisar").onclick = async (e)=>{
   licMsg("");
   e.target.disabled = true;
   try{ await entrar(); } finally{ e.target.disabled = false; }
 };
-function quitarLicencia(){
-  try{
-    const lic = leerLicencias();
-    delete lic[ITEM_ID];
-    localStorage.setItem(CLAVE_LIC, JSON.stringify(lic));
-  }catch(e){}
-}
 let stopEscucha = null;
+// La escucha de aprobaciones/revocaciones vive en acceso.js. Esta pagina
+// solo decide que hacer cuando pasa algo: bloquea, o entra.
 function escucharAprobacion(){
-  try{ if(stopEscucha) stopEscucha(); }catch(e){}
-  try{
-    const tdb = getFirestore(appTaq());
-    const q = query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30));
-    stopEscucha = onSnapshot(q, async (snap)=>{
-      const docs = snap.docs.slice().sort((a, b)=>{
-        const fa = a.data().fecha, fb = b.data().fecha;
-        const ta = fa && fa.toDate ? fa.toDate().getTime() : 0;
-        const tb = fb && fb.toDate ? fb.toDate().getTime() : 0;
-        return tb - ta;
-      });
-      try{
-        const actual = leerLicencias()[ITEM_ID];
-        if(actual){
-          const payAct = await verificarCodigo(actual);
-          if(payAct){
-            const rev = docs.find(d=>{
-              const s = d.data();
-              return s.item === ITEM_ID
-                && String(s.email || "").trim().toLowerCase() === String(payAct.email || "").trim().toLowerCase()
-                && (s.estado === "revocado" || s.estado === "negado");
-            });
-            if(rev){
-              quitarLicencia();
-              try{ if(stopEscucha) stopEscucha(); }catch(e){}
-              ver("vistaBloqueo", false);
-              licMsg("Acceso revocado por el desarrollador.");
-              return;
-            }
-          }
-        }
-      }catch(e){}
-      for(const d of docs){
-        if(d.data().item !== ITEM_ID || d.data().estado !== "aprobado") continue;
-        const c = d.data().codigo;
-        if(!c) continue;
-        const pay = await verificarCodigo(c);
-        if(pay && pay.item === ITEM_ID && pay.para === miProyecto()){
-          const lic = leerLicencias();
-          lic[ITEM_ID] = String(c).trim();
-          try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
-          try{ if(stopEscucha) stopEscucha(); }catch(e){}
-          entrar();
-          return;
-        }
-      }
-    }, ()=>{});
-  }catch(e){}
+  stopEscucha = escucharItem(ITEM_ID, {
+    revocado(){
+      ver("vistaBloqueo", false);
+      licMsg("Acceso revocado por el desarrollador.");
+    },
+    aprobado(){ entrar(); }
+  });
 }
 document.getElementById("btnTengo").onclick = ()=>{
   document.getElementById("licCodigo").style.display = "block";
@@ -316,17 +255,13 @@ document.getElementById("btnValidar").onclick = async ()=>{
   const cod = document.getElementById("licCodigo").value;
   const pay = await verificarCodigo(cod);
   if(pay && pay.item === ITEM_ID && pay.para === miProyecto()){
-    const lic = leerLicencias();
-    lic[ITEM_ID] = cod.trim();
-    try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+    guardarLicencia(ITEM_ID, cod);
     entrar();
     return;
   }
   const pf = await verificarFirma(cod);
   if(pf && pf.item === ITEM_ID && pf.para === miProyecto()){
-    const lic = leerLicencias();
-    lic[ITEM_ID] = cod.trim();
-    try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+    guardarLicencia(ITEM_ID, cod);
     entrar();
     return;
   }

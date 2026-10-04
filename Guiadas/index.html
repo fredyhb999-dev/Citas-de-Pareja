@@ -225,11 +225,13 @@
 </div>
 
 <script type="module">
-import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, updateDoc, onSnapshot, query, where, limit, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase, cargarUsuarios } from "../config.js";
-import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "../taquilla.js";
+import { verificarCodigo, verificarFirma } from "../taquilla.js";
+// Lógica de licencias compartida con el resto de la app (ver acceso.js).
+import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
 const NIVELES = [
@@ -264,22 +266,10 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const ITEM_ID = "guiadas";
-const CLAVE_LIC = "licencias";
-function miProyecto(){
-  return (firebaseConfig && firebaseConfig.projectId) || "";
-}
-function leerLicencias(){
-  try{ return JSON.parse(localStorage.getItem(CLAVE_LIC) || "{}"); }catch(e){ return {}; }
-}
-async function tengoAcceso(){
-  const lic = leerLicencias()[ITEM_ID];
-  if(!lic) return false;
-  const pay = await verificarCodigo(lic);
-  if(!pay) return false;
-  if(pay.item !== ITEM_ID) return false;
-  if(pay.para !== miProyecto()) return false;
-  return true;
-}
+// miProyecto, leerLicencias, tengoAcceso, quitarLicencia, oficialesAprobados
+// y escucharItem ahora vienen de ../acceso.js (logica compartida).
+// NOTA: la busqueda de la cortesia (mas abajo) sigue con su propia consulta
+// porque necesita ESCRIBIR graciaUsada en el documento; ver Problemas 2.txt.
 function mostrarGracia(){
   document.getElementById("modalGracia").style.display = "flex";
 }
@@ -332,10 +322,7 @@ function licMsg(t){
   document.getElementById("licMsg").textContent = t || "";
 }
 let usuarioGoogle = null;
-function appTaq(){
-  try{ return getApp("taquilla"); }
-  catch(e){ return initializeApp(TAQUILLA_FIREBASE, "taquilla"); }
-}
+// appTaq viene de ../acceso.js.
 document.getElementById("btnTienda").onclick = ()=>{
   location.href = "../Tienda/?sec=experiencias";
 };
@@ -345,66 +332,18 @@ document.getElementById("btnRevisar").onclick = async (e)=>{
   try{ await entrar(); }
   finally{ e.target.disabled = false; }
 };
-function quitarLicencia(){
-  try{
-    const lic = leerLicencias();
-    delete lic[ITEM_ID];
-    localStorage.setItem(CLAVE_LIC, JSON.stringify(lic));
-  }catch(e){}
-}
+// quitarLicencia viene de ../acceso.js.
 let stopEscucha = null;
+// La escucha de aprobaciones/revocaciones vive en acceso.js. Esta pagina
+// solo decide que hacer cuando pasa algo: bloquea, o entra.
 function escucharAprobacion(){
-  try{ if(stopEscucha) stopEscucha(); }catch(e){}
-  try{
-    const tapp = appTaq();
-    const tdb = getFirestore(tapp);
-    const q = query(collection(tdb, "solicitudes"),
-      where("para", "==", miProyecto()), limit(30));
-    stopEscucha = onSnapshot(q, async (snap)=>{
-      const docs = snap.docs.slice().sort((a, b)=>{
-        const fa = a.data().fecha, fb = b.data().fecha;
-        const ta = fa && fa.toDate ? fa.toDate().getTime() : 0;
-        const tb = fb && fb.toDate ? fb.toDate().getTime() : 0;
-        return tb - ta;
-      });
-      // 1) Si mi licencia actual fue revocada/negada, quitarla en ese momento
-      try{
-        const actual = leerLicencias()[ITEM_ID];
-        if(actual){
-          const payAct = await verificarCodigo(actual);
-          if(payAct){
-            const rev = docs.find(d=>{
-              const s = d.data();
-              return s.item === ITEM_ID
-                && String(s.email || "").trim().toLowerCase() === String(payAct.email || "").trim().toLowerCase()
-                && (s.estado === "revocado" || s.estado === "negado");
-            });
-            if(rev){
-              quitarLicencia();
-              try{ if(stopEscucha) stopEscucha(); }catch(e){}
-              ver("vistaBloqueo", false);
-              licMsg("Acceso revocado por el desarrollador.");
-              return;
-            }
-          }
-        }
-      }catch(e){}
-      for(const d of docs){
-        if(d.data().item !== ITEM_ID || d.data().estado !== "aprobado") continue;
-        const c = d.data().codigo;
-        if(!c) continue;
-        const pay = await verificarCodigo(c);
-        if(pay && pay.item === ITEM_ID && pay.para === miProyecto()){
-          const lic = leerLicencias();
-          lic[ITEM_ID] = String(c).trim();
-          try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
-          try{ if(stopEscucha) stopEscucha(); }catch(e){}
-          entrar();
-          return;
-        }
-      }
-    }, ()=>{});
-  }catch(e){}
+  stopEscucha = escucharItem(ITEM_ID, {
+    revocado(){
+      ver("vistaBloqueo", false);
+      licMsg("Acceso revocado por el desarrollador.");
+    },
+    aprobado(){ entrar(); }
+  });
 }
 document.getElementById("btnTengo").onclick = ()=>{
   document.getElementById("licCodigo").style.display = "block";
@@ -415,18 +354,14 @@ document.getElementById("btnValidar").onclick = async ()=>{
   const cod = document.getElementById("licCodigo").value;
   const pay = await verificarCodigo(cod);
   if(pay && pay.item === ITEM_ID && pay.para === miProyecto()){
-    const lic = leerLicencias();
-    lic[ITEM_ID] = cod.trim();
-    try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+    guardarLicencia(ITEM_ID, cod);
     entrar();
     return;
   }
   // Acepta vencido con firma válida para activar la cortesía única en entrar()
   const pf = await verificarFirma(cod);
   if(pf && pf.item === ITEM_ID && pf.para === miProyecto()){
-    const lic = leerLicencias();
-    lic[ITEM_ID] = cod.trim();
-    try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(lic)); }catch(e){}
+    guardarLicencia(ITEM_ID, cod);
     entrar();
     return;
   }
@@ -623,23 +558,7 @@ let docActual = null;
 function docDe(nombre){
   return (mapaDocs[nombre] && mapaDocs[nombre].docId) || nombre;
 }
-async function oficialesAprobados(){
-  const out = [];
-  try{
-    const lic = leerLicencias();
-    const tdb = getFirestore(appTaq());
-    const snap = await getDocs(collection(tdb, "packs"));
-    for(const d of snap.docs){
-      const p = Object.assign({ id: d.id }, d.data());
-      if(!p.oficial || p.activo === false) continue;
-      const cod = lic[p.id];
-      if(!cod) continue;
-      const pay = await verificarCodigo(cod);
-      if(pay && pay.item === p.id && pay.para === miProyecto()) out.push(p);
-    }
-  }catch(e){}
-  return out;
-}
+// oficialesAprobados viene de ../acceso.js.
 async function sincronizarOficiales(){
   try{
     const ofs = await oficialesAprobados();

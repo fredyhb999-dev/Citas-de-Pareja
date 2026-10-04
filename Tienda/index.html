@@ -98,27 +98,16 @@
 <div id="lista" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
 
 <script type="module">
-import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase } from "../config.js";
-import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "../taquilla.js";
+import { verificarCodigo, verificarFirma } from "../taquilla.js";
+// Lógica de licencias compartida con el resto de la app (ver acceso.js).
+import { miProyecto, appTaq, leerLicencias, guardarLicencias, tieneCodigoValido, escucharCatalogo } from "../acceso.js";
 
-const CLAVE_LIC = "licencias";
-function appTaq(){
-  try{ return getApp("taquilla"); }
-  catch(e){ return initializeApp(TAQUILLA_FIREBASE, "taquilla"); }
-}
-function miProyecto(){
-  try{ return resolverFirebase(firebaseConfigBase).projectId || ""; }catch(e){ return ""; }
-}
-function leerLic(){
-  try{ return JSON.parse(localStorage.getItem(CLAVE_LIC) || "{}"); }catch(e){ return {}; }
-}
-function guardarLic(o){
-  try{ localStorage.setItem(CLAVE_LIC, JSON.stringify(o)); }catch(e){}
-}
+// miProyecto, appTaq, leerLicencias, guardarLicencias, tieneCodigoValido y
+// escucharCatalogo ahora vienen de ../acceso.js (logica compartida).
+// NOTA: graciaDisponible() mas abajo sigue con su propia consulta porque
+// necesita ESCRIBIR graciaUsada en el documento; ver Problemas 2.txt.
 let usuarioGoogle = null;
 let packsCache = [];
 const SEC_NOMBRES = { experiencias: "💑 Experiencias en Pareja", juegos: "🎮 Juegos", extras: "✨ Extras" };
@@ -144,16 +133,11 @@ const listaEl = document.getElementById("lista");
 const msgEl = document.getElementById("msg");
 function msg(t){ msgEl.textContent = t || ""; }
 
-async function licenciaValida(item){
-  const cod = leerLic()[item];
-  if(!cod) return false;
-  const pay = await verificarCodigo(cod);
-  return !!(pay && pay.item === item && pay.para === miProyecto());
-}
+// licenciaValida() ahora es tieneCodigoValido() de ../acceso.js.
 /** Cortesía: vencido con firma válida y graciaUsada==false en servidor. */
 async function graciaDisponible(item){
   try{
-    const cod = leerLic()[item];
+    const cod = leerLicencias()[item];
     if(!cod) return null;
     const estricto = await verificarCodigo(cod);
     if(estricto) return null;
@@ -242,7 +226,7 @@ async function tarjetaPack(p){
     est.className = "estado";
     const btn = document.createElement("button");
     div.appendChild(h); div.appendChild(d); div.appendChild(est); div.appendChild(btn);
-    if(await licenciaValida(p.id)){
+    if(await tieneCodigoValido(p.id)){
       est.className = "estado ok";
       est.textContent = "✅ Se agregó a tu menú";
       btn.className = "btn ghost";
@@ -296,9 +280,9 @@ async function pedir(p, btn, est){
         try{
           const pay = await verificarCodigo(prev.s.codigo);
           if(pay && pay.para === miProyecto() && pay.item === p.id){
-            const lic = leerLic();
+            const lic = leerLicencias();
             lic[p.id] = String(prev.s.codigo).trim();
-            guardarLic(lic);
+            guardarLicencias(lic);
             est.textContent = "✅ Ya tienes acceso. Se agregó a tu menú.";
             pintar();
             btn.disabled = false;
@@ -345,55 +329,11 @@ async function pedir(p, btn, est){
   btn.disabled = false;
 }
 
+// La revalidacion de todo el catalogo vive en acceso.js. Aqui solo se
+// decide que hacer cuando cambian los codigos: redibujar las tarjetas.
 let stopEscucha = null;
 function escuchar(){
-  try{ if(stopEscucha) stopEscucha(); }catch(e){}
-  try{
-    const tdb = getFirestore(appTaq());
-    const q = query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30));
-    stopEscucha = onSnapshot(q, async ()=>{
-      const antes = JSON.stringify(leerLic());
-      const lic = leerLic();
-      let cambio = false;
-      // revalida todo el catálogo visible
-      const tdb2 = getFirestore(appTaq());
-      let snap;
-      try{ snap = await getDocs(query(collection(tdb2, "solicitudes"), where("para", "==", miProyecto()), limit(30))); }
-      catch(e){ return; }
-      const docs = snap.docs.slice().sort((a, b)=>{
-        const fa = a.data().fecha, fb = b.data().fecha;
-        const ta = fa && fa.toDate ? fa.toDate().getTime() : 0;
-        const tb = fb && fb.toDate ? fb.toDate().getTime() : 0;
-        return tb - ta;
-      });
-      for(const d of docs){
-        const s = d.data();
-        if((s.estado === "revocado" || s.estado === "negado") && s.email){
-          try{
-            const em = String(s.email).trim().toLowerCase();
-            for(const k of Object.keys(lic)){
-              const payLoc = await verificarCodigo(lic[k]);
-              if(payLoc && String(payLoc.email || "").trim().toLowerCase() === em && payLoc.item === s.item){
-                delete lic[k];
-                cambio = true;
-              }
-            }
-          }catch(e){}
-          continue;
-        }
-        if(s.estado !== "aprobado" || !s.codigo) continue;
-        const pay = await verificarCodigo(s.codigo);
-        if(pay && pay.para === miProyecto() && !(lic[pay.item] && (await verificarCodigo(lic[pay.item])))){
-          lic[pay.item] = String(s.codigo).trim();
-          cambio = true;
-        }
-      }
-      if(cambio || JSON.stringify(lic) !== antes){
-        guardarLic(lic);
-        if(cambio) pintar();
-      }
-    }, ()=>{});
-  }catch(e){}
+  stopEscucha = escucharCatalogo({ cambio(){ pintar(); } });
 }
 
 pintar();

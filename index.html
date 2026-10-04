@@ -366,11 +366,13 @@
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, where, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "./firebase-config.js";
-import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "./taquilla.js";
+import { verificarCodigo, verificarFirma } from "./taquilla.js";
 import {
   CLAVE_CONFIG, leerConfigGuardada, guardarConfig,
   resolverFirebase, guardarUsuariosLocal, leerUsuariosLocal, cargarUsuarios
 } from "./config.js";
+// Lógica de licencias compartida con el resto de la app (ver acceso.js).
+import { miProyecto, appTaq, leerLicencias, graciasDisponibles, escucharCatalogo } from "./acceso.js";
 
 const CLAVE_LOCAL = "appPareja_quienSoy";
 const asistenteEl = document.getElementById("asistente");
@@ -446,9 +448,7 @@ function mostrarMenu(nombre){
 }
 
 // ---------- packs con acceso: solo aparecen si hay licencia ----------
-function leerLic(){
-  try{ return JSON.parse(localStorage.getItem("licencias") || "{}"); }catch(e){ return {}; }
-}
+// leerLic() ahora es leerLicencias() de ./acceso.js.
 function tarjetaPack(p){
   const a = document.createElement("a");
   a.className = "card";
@@ -485,32 +485,17 @@ async function renderPacks(){
   let packs = [{ id: "guiadas", titulo: "Citas Guiadas", icono: "🗺️",
     desc: "Niveles y secuencias paso a paso", ruta: "Guiadas", seccion: "experiencias" }];
   try{
-    let tapp;
-    try{ tapp = getApp("taquilla-menu"); }
-    catch(e){ tapp = initializeApp(TAQUILLA_FIREBASE, "taquilla-menu"); }
-    const tdb = getFirestore(tapp);
+    const tdb = getFirestore(appTaq());
     const snap = await getDocs(collection(tdb, "packs"));
     snap.forEach(d=>{
       if(d.id === "guiadas") return;
       packs.push(Object.assign({ id: d.id }, d.data()));
     });
   }catch(e){}
-  let miId = "";
-  try{ miId = resolverFirebase(firebaseConfigBase).projectId || ""; }catch(e){}
-  const lic = leerLic();
+  const miId = miProyecto();
+  const lic = leerLicencias();
   // Mapa de gracias disponibles por item (vencido + graciaUsada==false)
-  let gracias = {};
-  try{
-    let tapp2;
-    try{ tapp2 = getApp("taquilla-menu"); }
-    catch(e){ tapp2 = initializeApp(TAQUILLA_FIREBASE, "taquilla-menu"); }
-    const tdb2 = getFirestore(tapp2);
-    const snap2 = await getDocs(query(collection(tdb2, "solicitudes"), where("para", "==", miId), limit(30)));
-    snap2.forEach(d=>{
-      const s = d.data();
-      if(s.estado === "aprobado" && s.graciaUsada === false && s.item) gracias[s.item + "|" + String(s.email || "").toLowerCase()] = true;
-    });
-  }catch(e){}
+  const gracias = await graciasDisponibles();
   packs.sort((a, b)=>((a.orden ?? 10) - (b.orden ?? 10)) || String(a.titulo || a.id || "").localeCompare(String(b.titulo || b.id || "")));
   let juegos = 0;
   let extras = 0;
@@ -546,49 +531,9 @@ async function renderPacks(){
   if(juegos) btnJ.style.display = "";
   if(extras) btnX.style.display = "";
 }
-// Quita del menú en ese momento si revocan: escucha solicitudes de mi proyecto
-function escucharRevocadosMenu(){
-  try{
-    let miId = "";
-    try{ miId = resolverFirebase(firebaseConfigBase).projectId || ""; }catch(e){}
-    if(!miId) return;
-    let tapp;
-    try{ tapp = getApp("taquilla-menu"); }
-    catch(e){ tapp = initializeApp(TAQUILLA_FIREBASE, "taquilla-menu"); }
-    const tdb = getFirestore(tapp);
-    const q = query(collection(tdb, "solicitudes"), where("para", "==", miId), limit(30));
-    onSnapshot(q, async (snap)=>{
-      let lic = leerLic();
-      let cambio = false;
-      for(const d of snap.docs){
-        const s = d.data();
-        if((s.estado === "revocado" || s.estado === "negado") && s.email && s.item && lic[s.item]){
-          try{
-            const payLoc = await verificarCodigo(lic[s.item]);
-            if(payLoc && String(payLoc.email || "").toLowerCase() === String(s.email).toLowerCase()){
-              delete lic[s.item];
-              cambio = true;
-            }
-          }catch(e){}
-        }
-        if(s.estado === "aprobado" && s.codigo){
-          try{
-            const pay = await verificarCodigo(s.codigo);
-            if(pay && pay.para === miId && pay.item && !(lic[pay.item] && (await verificarCodigo(lic[pay.item])))){
-              lic[pay.item] = String(s.codigo).trim();
-              cambio = true;
-            }
-          }catch(e){}
-        }
-      }
-      if(cambio){
-        try{ localStorage.setItem("licencias", JSON.stringify(lic)); }catch(e){}
-        renderPacks();
-      }
-    }, ()=>{});
-  }catch(e){}
-}
-escucharRevocadosMenu();
+// Quita del menú en ese momento si revocan. La escucha vive en acceso.js;
+// aquí solo se redibuja el menú cuando cambian los códigos.
+escucharCatalogo({ cambio(){ renderPacks(); } });
 function mostrarIdentidad(usuarios){
   listaEl.innerHTML = "";
   usuarios.forEach(u=>{
