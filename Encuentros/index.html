@@ -308,6 +308,7 @@ let sesionIniciada = false;
 let sidMostrado = null;
 let pendienteSrc = "local";
 let pendienteEsMulti = false;
+let pendienteActividad = null;
 let pedidosTomas = null;
 
 function cargarEnMemoria(d){
@@ -325,25 +326,32 @@ function nombreCabeza(id){
   const c = cabezas.find(x=>x.id === id) || (sesionActual && (sesionActual.cabezas || []).find(x=>x.id === id));
   return (c && c.nombre) || "alguien";
 }
-async function chequearPendiente(esMulti){
+// Decide si ofrecer "Continuar o Nueva".
+// En una sola actividad solo se ofrece si la partida a medias es DE ESA
+// actividad. En MultiActividades se ofrece si hay cualquier partida a medias.
+async function chequearPendiente(esMulti, actividad){
+  pendienteActividad = null;
   try{
     const sd = await getDoc(sesionRef());
     if(sd.exists()){
       const d = sd.data();
       const pend = d && d.activa && Array.isArray(d.cabezas) && d.largo && (d.ronda || 0) < d.largo;
-      if(pend && d.hostUid === miId){
-        pendienteSrc = "sesion";
-        pendienteEsMulti = !!esMulti;
-        seguirEncima("¿Continuar encuentro anterior?",
-          "Ibas en la ronda " + ((d.ronda || 0) + 1) + " de " + d.largo + ".");
-        return true;
-      }
+      if(!pend || d.hostUid !== miId) return false;
+      const acts = Array.isArray(d.actividades) ? d.actividades : [];
+      if(!esMulti && (acts.length !== 1 || acts[0] !== actividad)) return false;
+      pendienteSrc = "sesion";
+      pendienteEsMulti = !!esMulti;
+      pendienteActividad = esMulti ? null : actividad;
+      seguirEncima("¿Continuar encuentro anterior?",
+        "Ibas en la ronda " + ((d.ronda || 0) + 1) + " de " + d.largo
+        + (acts.length ? " de " + acts.join(" + ") : "") + ".");
+      return true;
     }
   }catch(e){}
   return false;
 }
 async function iniciarSingle(nombre){
-  if(await chequearPendiente(false)) return;
+  if(await chequearPendiente(false, nombre)) return;
   abrirTomas([nombre]);
 }
 
@@ -404,12 +412,10 @@ function escucharSesion(){
           if(jugando){ cargarEnMemoria(d); pintarPaso(); return; }
           if(d.sid === sidMostrado) return;
           sidMostrado = d.sid;
-          const soyHost = d.hostUid === miId;
-          if(soyHost){
-            pendienteSrc = "sesion";
-            seguirEncima("¿Continuar encuentro anterior?",
-              "Ibas en la ronda " + ((d.ronda || 0) + 1) + " de " + d.largo + ".");
-          }else{
+          // El anfitrion YA NO recibe aviso automatico al abrir: solo se le
+          // ofrece al elegir la actividad o al oprimir MultiActividades.
+          // La pareja/invitado si recibe la invitacion para unirse.
+          if(d.hostUid !== miId){
             document.getElementById("unirDesc").textContent = d.reanudada
               ? ((d.hostNombre || "El administrador") + " retomó el encuentro. Puedes continuar donde van.")
               : ((d.hostNombre || "El administrador") + " inició un Encuentro Guiado.");
@@ -901,6 +907,14 @@ document.getElementById("btnNueva").onclick = async ()=>{
     multiModo = true; multiSel = []; multiRefrescar();
     if(cacheActs && cacheConteos) dibujarLista("listaActs", cacheActs, cacheConteos);
     ver("vistaLista");
+    return;
+  }
+  // Partida de una sola actividad: arrancar ESA MISMA de inmediato, sin
+  // regresar a la lista a elegir otra vez.
+  if(pendienteActividad){
+    const act = pendienteActividad;
+    pendienteActividad = null;
+    abrirTomas([act]);
     return;
   }
   pintarLista("listaActs");
