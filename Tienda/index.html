@@ -98,7 +98,7 @@
 <div id="lista" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
 
 <script type="module">
-import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, where, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
@@ -145,7 +145,7 @@ async function graciaDisponible(item){
     if(!pay || pay.item !== item || pay.para !== miProyecto()) return null;
     if(!(pay.vence && Date.now() > pay.vence)) return null;
     const tdb = getFirestore(appTaq());
-    const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30)));
+    const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto())));
     let mejor = null;
     snap.forEach(dd=>{
       const s = dd.data();
@@ -275,7 +275,7 @@ async function pedir(p, btn, est){
     // Evita duplicados: reutiliza la misma solicitud por correo+juego
     let prev = null;
     try{
-      const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto()), limit(30)));
+      const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto())));
       const mios = [];
       snap.forEach(dd=>{
         const s = dd.data();

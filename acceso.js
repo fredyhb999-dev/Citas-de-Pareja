@@ -7,7 +7,7 @@
 //  Este refactor NO cambia el comportamiento: solo-centraliza.
 // =====================================================
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, collection, getDocs, onSnapshot, query, where, limit } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "./firebase-config.js";
 import { resolverFirebase } from "./config.js";
 import { TAQUILLA_FIREBASE, verificarCodigo } from "./taquilla.js";
@@ -17,13 +17,12 @@ export const CLAVE_LIC = "licencias";
 // Nombre de la instancia de Firebase para la base de la taquilla.
 const APP_TAQ = "taquilla";
 const COLECCION_SOL = "solicitudes";
-// Tope de documentos por consulta.
-// OJO: esta consulta NO lleva orderBy, así que Firebase devuelve los
-// documentos más ANTIGUOS (los IDs automáticos son cronológicos). Cuando
-// la pareja supere este tope, las aprobaciones y revocaciones recientes
-// pueden no entrar. El arreglo es agregar orderBy("fecha","desc"), o mejor
-// el rediseño de cola con acuse descrito en Soluciones.txt.
-const TOPE = 30;
+// Sin tope a propósito. Las consultas leen TODAS las solicitudes de la pareja.
+// Antes había un tope de 30, pero sin orderBy Firebase devolvía las 30 más
+// ANTIGUAS, así que las aprobaciones y revocaciones nuevas quedaban fuera y no
+// se aplicaban (el usuario se quedaba bloqueado, o el revocado seguía jugando).
+// La lista no crece sola: hay un documento por (pareja + producto + correo),
+// así que traerla completa son unas decenas de documentos, no miles.
 
 // ---------- proyecto y conexión ----------
 
@@ -126,7 +125,7 @@ function ordenarPorFecha(docs){
 
 function consultaSolicitudes(){
   return query(collection(dbTaq(), COLECCION_SOL),
-    where("para", "==", miProyecto()), limit(TOPE));
+    where("para", "==", miProyecto()));
 }
 
 // Escucha UN item (el de esta página).
@@ -242,7 +241,7 @@ export async function graciasDisponibles(){
     const miId = miProyecto();
     if(!miId) return out;
     const snap = await getDocs(query(collection(dbTaq(), COLECCION_SOL),
-      where("para", "==", miId), limit(TOPE)));
+      where("para", "==", miId)));
     snap.forEach(d=>{
       const s = d.data();
       if(s.estado === "aprobado" && s.graciaUsada === false && s.item){
