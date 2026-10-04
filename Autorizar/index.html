@@ -63,6 +63,13 @@
 <h1>Accesos 🎟️</h1>
 <p class="desc">Solo tú: apruebas solicitudes y generas códigos. Tu llave privada nunca sale de este aparato.</p>
 
+<div class="caja" id="cajaGoogle">
+  <h3>Entrar con Google</h3>
+  <p class="mini">Necesario para aprobar, revocar, negar y borrar: las reglas de la base solo se lo permiten a los publicadores.</p>
+  <div id="quienGoogle" style="display:none;font-size:.9rem;color:var(--teal);margin-bottom:8px;"></div>
+  <button class="btn" id="btnGoogle">Entrar con Google</button>
+</div>
+
 <div class="caja" id="cajaLlave">
   <h3>Tu llave privada</h3>
   <p class="mini">Pégala una vez (queda solo aquí).</p>
@@ -91,12 +98,37 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { TAQUILLA_FIREBASE, firmarAcceso } from "../taquilla.js";
 
 const CLAVE_PRIV = "taquilla_priv";
 const app = initializeApp(TAQUILLA_FIREBASE);
 const db = getFirestore(app);
 const solRef = collection(db, "solicitudes");
+
+// --- sesion de Google ---
+// Las reglas de la base solo dejan aprobar/revocar/negar/borrar a los
+// publicadores, y para eso la base necesita saber quien eres. Esta pantalla
+// antes no iniciaba sesion, por eso cualquier escritura se rechazaba.
+const auth = getAuth(app);
+let yoEmail = "";
+function pintarYo(){
+  const q = document.getElementById("quienGoogle");
+  const b = document.getElementById("btnGoogle");
+  if(yoEmail){ q.style.display = "block"; q.textContent = "✅ " + yoEmail; b.style.display = "none"; }
+  else{ q.style.display = "none"; b.style.display = ""; }
+}
+document.getElementById("btnGoogle").onclick = async ()=>{
+  try{
+    const res = await signInWithPopup(auth, new GoogleAuthProvider());
+    yoEmail = String(res.user.email || "").trim().toLowerCase();
+    pintarYo();
+  }catch(e){ alert("No se pudo entrar con Google. Revisa que el dominio esté autorizado."); }
+};
+onAuthStateChanged(auth, (u)=>{
+  yoEmail = u && u.email ? String(u.email).trim().toLowerCase() : "";
+  pintarYo();
+});
 
 function leerPriv(){
   try{
@@ -228,6 +260,7 @@ function pintarSol(){
         if(!confirm("¿Revocar acceso a " + (s.email || s.quien || "?") + "? Se le quitará en ese momento si está conectado.")) return;
         rev.disabled = true;
         try{ await updateDoc(doc(db, "solicitudes", id), { estado: "revocado", revocadoEn: serverTimestamp() }); }
+        catch(e){ alert("No se pudo revocar. Entra con Google y revisa que tu correo esté en la lista de publicadores."); }
         finally{ rev.disabled = false; }
       };
       fila.appendChild(rev);
@@ -247,16 +280,19 @@ function pintarSol(){
         if(!r) return;
         const dias = parseInt(inp.value, 10);
         const finito = !!(dias && dias >= 1);
-        await updateDoc(doc(db, "solicitudes", id), {
-          estado: "aprobado", codigo: r.cod, email: r.email,
-          vence: r.vence, dias: finito ? dias : null,
-          aprobadoEn: serverTimestamp(), pideDesrevocar: false,
-          graciaUsada: finito ? false : null
-        });
+        try{
+          await updateDoc(doc(db, "solicitudes", id), {
+            estado: "aprobado", codigo: r.cod, email: r.email,
+            vence: r.vence, dias: finito ? dias : null,
+            aprobadoEn: serverTimestamp(), pideDesrevocar: false,
+            graciaUsada: finito ? false : null
+          });
+        }catch(e){ alert("No se pudo aprobar. Entra con Google y revisa que tu correo esté en la lista de publicadores."); }
       };
       no.onclick = async ()=>{
         if(!confirm("¿Negar acceso?")) return;
-        await updateDoc(doc(db, "solicitudes", id), { estado: "negado" });
+        try{ await updateDoc(doc(db, "solicitudes", id), { estado: "negado" }); }
+        catch(e){ alert("No se pudo negar. Entra con Google y revisa que tu correo esté en la lista de publicadores."); }
       };
       fila.appendChild(inp); fila.appendChild(ok); fila.appendChild(no);
       div.appendChild(fila);
