@@ -278,7 +278,7 @@ document.getElementById("btnGraciaOk").onclick = ()=>{
 };
 async function entrar(){
   let ok = false;
-  try{ ok = await tengoAcceso(); }catch(e){ ok = false; }
+  try{ ok = await tengoAcceso(ITEM_ID); }catch(e){ ok = false; }
   if(ok){
     multiModo = false; multiSel = [];
     try{ multiRefrescar(); }catch(e){}

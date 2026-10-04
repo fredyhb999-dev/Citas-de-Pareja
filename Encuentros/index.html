@@ -349,7 +349,7 @@ async function iniciarSingle(nombre){
 
 async function entrar(){
   let ok = false;
-  try{ ok = await tengoAcceso(); }catch(e){ ok = false; }
+  try{ ok = await tengoAcceso(ITEM_ID); }catch(e){ ok = false; }
   if(!ok && esInvitadoFlag) ok = true; // invitado juega con el acceso del anfitrión
   if(ok){
     modoLocal = (typeof navigator !== "undefined" && navigator.onLine === false);
@@ -487,23 +487,7 @@ document.getElementById("btnEsperaRefrescar").onclick = ()=>{ entrar(); };
 // ---------- lista de actividades (banco compartido con Guiadas) ----------
 let mapaDocs = {};
 function docDe(nombre){ return (mapaDocs[nombre] && mapaDocs[nombre].docId) || nombre; }
-async function oficialesAprobados(){
-  const out = [];
-  try{
-    const lic = leerLicencias();
-    const tdb = getFirestore(appTaq());
-    const snap = await getDocs(collection(tdb, "packs"));
-    for(const d of snap.docs){
-      const p = Object.assign({ id: d.id }, d.data());
-      if(!p.oficial || p.activo === false) continue;
-      const cod = lic[p.id];
-      if(!cod) continue;
-      const pay = await verificarCodigo(cod);
-      if(pay && pay.item === p.id && pay.para === miProyecto()) out.push(p);
-    }
-  }catch(e){}
-  return out;
-}
+// oficialesAprobados viene de ../acceso.js.
 async function sincronizarOficiales(){
   try{
     const ofs = await oficialesAprobados();

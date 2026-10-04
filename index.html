@@ -471,7 +471,21 @@ function tarjetaPack(p){
   a.appendChild(ic); a.appendChild(lab); a.appendChild(ch);
   return a;
 }
+// Candado de dibujado: impide que dos renderPacks corran a la vez y encimen
+// las tarjetas. Si llega una mientras se dibuja, se anota y se repite al final.
+let renderizando = false;
+let renderPendiente = false;
 async function renderPacks(){
+  if(renderizando){ renderPendiente = true; return; }
+  renderizando = true;
+  try{
+    do{
+      renderPendiente = false;
+      await renderPacksDeVerdad();
+    }while(renderPendiente);
+  }finally{ renderizando = false; }
+}
+async function renderPacksDeVerdad(){
   const boxExp = document.getElementById("packsExp");
   const btnJ = document.getElementById("btnJuegos");
   const btnX = document.getElementById("btnExtras");

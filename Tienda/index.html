@@ -158,7 +158,22 @@ async function graciaDisponible(item){
   }catch(e){ return null; }
 }
 
+// Candado de dibujado: impide que dos pintadas corran a la vez y encimen
+// las tarjetas (pasaba al cargar, porque el listener pedia otra pintada casi
+// al mismo tiempo). Si llega una mientras se dibuja, se anota y se repite.
+let pintando = false;
+let pintarPendiente = false;
 async function pintar(){
+  if(pintando){ pintarPendiente = true; return; }
+  pintando = true;
+  try{
+    do{
+      pintarPendiente = false;
+      await pintarDeVerdad();
+    }while(pintarPendiente);
+  }finally{ pintando = false; }
+}
+async function pintarDeVerdad(){
   listaEl.innerHTML = "";
   packsCache = [];
   try{
@@ -173,7 +188,7 @@ async function pintar(){
     listaEl.innerHTML = '<p class="desc">Aún no hay nada publicado.</p>';
     return;
   }
-  pintarDesdeCache();
+  await pintarDesdeCache();
 }
 async function pintarDesdeCache(){
   const cont = SEC_NOMBRES[secActual] ? document.getElementById("listaSec") : listaEl;
