@@ -1100,7 +1100,8 @@ document.getElementById("invConfirmar").onclick = async (e)=>{
     btn.disabled = false;
   }
 };
-document.getElementById("modalInvBtn").onclick = ()=>{ location.reload(); };
+// Tras entrar como invitado, va directo a Encuentros Guiados.
+document.getElementById("modalInvBtn").onclick = ()=>{ location.href = "Encuentros/"; };
 iniciar();
 </script>
 

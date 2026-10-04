@@ -112,7 +112,7 @@
 <!-- ============ ESPERA (invitado / pareja) ============ -->
 <div class="vista" id="vistaEspera">
   <h1>Encuentros 💫</h1>
-  <p class="desc" id="esperaDesc">Esperando a que el administrador inicie el encuentro…</p>
+  <p class="desc" id="esperaDesc">Esperando a que el anfitrión inicie el encuentro…</p>
   <button class="btnSec" id="btnEsperaRefrescar">Volver a revisar</button>
 </div>
 
@@ -124,7 +124,7 @@
   <div id="actividadAhora"></div>
   <div id="finMsg" style="display:none">¡Encuentro completo! 🔥</div>
   <button class="btnPri" id="btnSig">Siguiente →</button>
-  <button class="btnSec" id="btnTerminar">Terminar</button>
+  <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
 </div>
 
 <!-- ============ CONTINUAR ============ -->
@@ -143,6 +143,14 @@
     <div style="font-size:.95rem;line-height:1.5;">Su acceso venció 🥺 pero hoy no les arruinamos su encuentro 💛 les obsequiamos este último acceso</div>
     <div style="font-size:.75rem;color:var(--fg-muted);margin-top:10px;text-align:right;">Solicite su acceso en<br>Centro de Adquisiciones</div>
     <button class="btnPri" id="btnGraciaOk" style="margin-top:14px;">Aceptar</button>
+  </div>
+</div>
+
+<!-- ============ PAUSA (aviso a los demas jugadores) ============ -->
+<div class="modal" id="modalPausa">
+  <div class="caja">
+    <div style="font-size:.95rem;line-height:1.5;">El anfitrión pausó el encuentro. Cuando lo retome, podrás volver a unirte.</div>
+    <button class="btnPri" id="btnPausaOk" style="margin-top:14px;">Aceptar</button>
   </div>
 </div>
 
@@ -226,6 +234,11 @@ function mostrarGracia(){
 document.getElementById("btnGraciaOk").onclick = ()=>{
   document.getElementById("modalGracia").style.display = "none";
 };
+// Aviso de pausa: al aceptar, pasa a la pantalla de espera.
+document.getElementById("btnPausaOk").onclick = ()=>{
+  cerrarModal("modalPausa");
+  entrar();
+};
 let usuarioGoogle = null;
 // appTaq y quitarLicencia ahora vienen de ../acceso.js.
 document.getElementById("btnTienda").onclick = ()=>{ location.href = "../Tienda/?sec=experiencias"; };
@@ -289,7 +302,7 @@ async function cargarIdentidad(){
 }
 function nombreAdmin(){
   const a = usuariosLista.find(u=>u.admin);
-  return (a && a.nombre) || "el administrador";
+  return (a && a.nombre) || "el anfitrión";
 }
 
 // ---------- sesión ----------
@@ -338,13 +351,17 @@ async function chequearPendiente(esMulti, actividad){
       const pend = d && d.activa && Array.isArray(d.cabezas) && d.largo && (d.ronda || 0) < d.largo;
       if(!pend || d.hostUid !== miId) return false;
       const acts = Array.isArray(d.actividades) ? d.actividades : [];
-      if(!esMulti && (acts.length !== 1 || acts[0] !== actividad)) return false;
+      if(!esMulti && (acts.length !== 1 || String(acts[0]).trim() !== String(actividad).trim())) return false;
       pendienteSrc = "sesion";
       pendienteEsMulti = !!esMulti;
       pendienteActividad = esMulti ? null : actividad;
+      // Indicador de turno: de quien era el turno cuando quedo a medias.
+      const ordenP = Array.isArray(d.orden) ? d.orden : [];
+      const cab = (Array.isArray(d.cabezas) ? d.cabezas : []).find(c=>c.id === ordenP[d.turno || 0]);
+      const turnoTxt = cab ? " Le tocaba a " + (cab.nombre || "alguien") + "." : "";
       seguirEncima("¿Continuar encuentro anterior?",
         "Ibas en la ronda " + ((d.ronda || 0) + 1) + " de " + d.largo
-        + (acts.length ? " de " + acts.join(" + ") : "") + ".");
+        + (acts.length ? " de " + acts.join(" + ") : "") + "." + turnoTxt);
       return true;
     }
   }catch(e){}
@@ -409,6 +426,12 @@ function escucharSesion(){
         const d = snap.exists() ? snap.data() : null;
         sesionActual = d;
         if(d && d.activa && soyCabeza(d)){
+          // Si el anfitrion PAUSO, los demas salen. El anfitrion si puede
+          // retomar despues (la partida queda pendiente con pausada=true).
+          if(d.pausada && d.hostUid !== miId){
+            if(jugando){ jugando = false; abrirModal("modalPausa"); }
+            return;
+          }
           if(jugando){ cargarEnMemoria(d); pintarPaso(); return; }
           if(d.sid === sidMostrado) return;
           sidMostrado = d.sid;
@@ -417,8 +440,8 @@ function escucharSesion(){
           // La pareja/invitado si recibe la invitacion para unirse.
           if(d.hostUid !== miId){
             document.getElementById("unirDesc").textContent = d.reanudada
-              ? ((d.hostNombre || "El administrador") + " retomó el encuentro. Puedes continuar donde van.")
-              : ((d.hostNombre || "El administrador") + " inició un Encuentro Guiado.");
+              ? ((d.hostNombre || "El anfitrión") + " retomó el encuentro. Puedes continuar donde van.")
+              : ((d.hostNombre || "El anfitrión") + " inició un Encuentro Guiado.");
             document.getElementById("modalUnir").style.display = "flex";
           }
         }else if(jugando){
@@ -784,6 +807,7 @@ async function generarYIniciar(activities, tomas){
   const sid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
   const nueva = {
     activa: true,
+    pausada: false,
     sid,
     hostUid: miId,
     hostNombre: (miUsuario && miUsuario.nombre) || nombreAdmin(),
@@ -865,8 +889,13 @@ document.getElementById("btnSig").onclick = async ()=>{
   await avanzarSesion();
 };
 document.getElementById("btnTerminar").onclick = async ()=>{
+  // PAUSA la partida: los demas jugadores salen, pero el anfitrion puede
+  // retomarla despues eligiendo la misma actividad. Solo se cierra al
+  // completar las rondas, o al elegir "Encuentro nuevo".
   jugando = false;
-  if(!modoLocal){ await cerrarSesion(); }
+  if(!modoLocal){
+    try{ await setDoc(sesionRef(), { pausada: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+  }
   pintarPaso();
   entrar();
 };
@@ -891,7 +920,7 @@ document.getElementById("btnContinuar").onclick = async ()=>{
   try{
     const nsid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
     sidMostrado = nsid;
-    await setDoc(sesionRef(), { sid: nsid, reanudada: true, activa: true, actualizadaEn: serverTimestamp() }, { merge: true });
+    await setDoc(sesionRef(), { sid: nsid, reanudada: true, activa: true, pausada: false, actualizadaEn: serverTimestamp() }, { merge: true });
   }catch(e){}
   cargarEnMemoria(d);
   ver("vistaPlayer");
@@ -899,7 +928,7 @@ document.getElementById("btnContinuar").onclick = async ()=>{
 };
 document.getElementById("btnNueva").onclick = async ()=>{
   seguirFuera();
-  if(!esAdminFlag){ alert("Quien inicia o renueva el encuentro es " + nombreAdmin() + " (administrador)."); return; }
+  if(!esAdminFlag){ alert("Quien inicia o renueva el encuentro es " + nombreAdmin() + " (anfitrión)."); return; }
   try{ await cerrarSesion(); }catch(e){}
   jugando = false;
   if(pendienteEsMulti){
