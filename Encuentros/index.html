@@ -125,6 +125,7 @@
   <div id="finMsg" style="display:none">¡Encuentro completo! 🔥</div>
   <button class="btnPri" id="btnSig">Siguiente →</button>
   <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
+  <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
 </div>
 
 <!-- ============ CONTINUAR ============ -->
@@ -151,6 +152,14 @@
   <div class="caja">
     <div style="font-size:.95rem;line-height:1.5;">El anfitrión pausó el encuentro. Cuando lo retome, podrás volver a unirte.</div>
     <button class="btnPri" id="btnPausaOk" style="margin-top:14px;">Aceptar</button>
+  </div>
+</div>
+
+<!-- ============ FIN (aviso a los invitados) ============ -->
+<div class="modal" id="modalFin">
+  <div class="caja">
+    <div id="finTxt" style="font-size:.95rem;line-height:1.5;">¡Se acabó la partida! Gracias por jugar.</div>
+    <button class="btnPri" id="btnFinOk" style="margin-top:14px;">Aceptar</button>
   </div>
 </div>
 
@@ -239,6 +248,35 @@ document.getElementById("btnPausaOk").onclick = ()=>{
   cerrarModal("modalPausa");
   entrar();
 };
+// Fin de partida para un INVITADO: al aceptar, sale del modo invitado
+// (mismo efecto que "Salir modo invitado" del inicio) y vuelve a su espacio.
+document.getElementById("btnFinOk").onclick = async ()=>{ await salirModoInvitado(); };
+async function salirModoInvitado(){
+  // 1) Quitar al invitado de los usuarios del anfitrion.
+  try{
+    let yo = null;
+    try{ yo = JSON.parse(localStorage.getItem("appPareja_quienSoy") || "null"); }catch(e){}
+    if(yo && yo.invitado){
+      const ref = doc(db, "config", "ajustes");
+      const snap = await getDoc(ref);
+      const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+      await setDoc(ref, { usuarios: arr.filter(v=>v.id !== yo.id), actualizadoEn: serverTimestamp() }, { merge: true });
+    }
+  }catch(e){}
+  // 2) Restaurar el respaldo del invitado (su config, usuarios e identidad).
+  try{
+    const resp = JSON.parse(localStorage.getItem("invitado_respaldo") || "null");
+    if(resp){
+      const priv = localStorage.getItem("taquilla_priv");
+      localStorage.clear();
+      if(priv) localStorage.setItem("taquilla_priv", priv);
+      Object.keys(resp).forEach(k=>{ try{ localStorage.setItem(k, resp[k]); }catch(e){} });
+      localStorage.removeItem("invitado_respaldo");
+    }
+  }catch(e){}
+  // 3) Volver a su inicio.
+  location.replace("../");
+}
 let usuarioGoogle = null;
 // appTaq y quitarLicencia ahora vienen de ../acceso.js.
 document.getElementById("btnTienda").onclick = ()=>{ location.href = "../Tienda/?sec=experiencias"; };
@@ -322,6 +360,7 @@ let sidMostrado = null;
 let pendienteSrc = "local";
 let pendienteEsMulti = false;
 let pendienteActividad = null;
+let finMostrado = false;
 let pedidosTomas = null;
 
 function cargarEnMemoria(d){
@@ -426,6 +465,7 @@ function escucharSesion(){
         const d = snap.exists() ? snap.data() : null;
         sesionActual = d;
         if(d && d.activa && soyCabeza(d)){
+          finMostrado = false;
           // Si el anfitrion PAUSO, los demas salen. El anfitrion si puede
           // retomar despues (la partida queda pendiente con pausada=true).
           if(d.pausada && d.hostUid !== miId){
@@ -444,9 +484,21 @@ function escucharSesion(){
               : ((d.hostNombre || "El anfitrión") + " inició un Encuentro Guiado.");
             document.getElementById("modalUnir").style.display = "flex";
           }
-        }else if(jugando){
-          jugando = false;
-          entrar();
+        }else{
+          // Si la partida TERMINO (no pausada, no descartada) y soy invitado,
+          // se le avisa; al aceptar sale del modo invitado.
+          if(d && d.terminada && esInvitadoFlag && soyCabeza(d) && !finMostrado){
+            finMostrado = true;
+            jugando = false;
+            try{
+              document.getElementById("finTxt").textContent = d.porAdmin
+                ? "La partida fue terminada por el anfitrión."
+                : "¡Se acabó la partida! Gracias por jugar.";
+            }catch(e){}
+            abrirModal("modalFin");
+            return;
+          }
+          if(jugando){ jugando = false; entrar(); }
         }
       }catch(e){}
     }, ()=>{});
@@ -481,7 +533,7 @@ async function avanzarSesion(){
       }else{
         r++;
         if(r >= (d.largo || 0)){
-          tx.update(ref, { activa: false, ronda: r, turno: 0, actualizadaEn: serverTimestamp() });
+          tx.update(ref, { activa: false, terminada: true, ronda: r, turno: 0, actualizadaEn: serverTimestamp() });
           return;
         }
         t = 0;
@@ -808,6 +860,8 @@ async function generarYIniciar(activities, tomas){
   const nueva = {
     activa: true,
     pausada: false,
+    terminada: false,
+    porAdmin: false,
     sid,
     hostUid: miId,
     hostNombre: (miUsuario && miUsuario.nombre) || nombreAdmin(),
@@ -834,12 +888,18 @@ async function generarYIniciar(activities, tomas){
   }
   document.getElementById("plTitulo").textContent = "Encuentros Guiados";
   document.getElementById("btnSig").style.display = "";
-  document.getElementById("btnTerminar").style.display = "";
+  mostrarBotonesAdmin();
   ver("vistaPlayer");
   pintarPaso();
 }
 
 // ---------- player ----------
+// Pausar y Terminar Partida son solo del anfitrion (esAdminFlag).
+function mostrarBotonesAdmin(){
+  const dsp = esAdminFlag ? "" : "none";
+  try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
+  try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
+}
 function pintarPaso(){
   const total = largo;
   const elAct = document.getElementById("actividadAhora");
@@ -852,7 +912,7 @@ function pintarPaso(){
     tag.style.display = "none";
     btnSig.style.display = "none";
     fin.style.display = "block";
-    document.getElementById("btnTerminar").style.display = "";
+    mostrarBotonesAdmin();
     return;
   }
   fin.style.display = "none";
@@ -889,12 +949,22 @@ document.getElementById("btnSig").onclick = async ()=>{
   await avanzarSesion();
 };
 document.getElementById("btnTerminar").onclick = async ()=>{
-  // PAUSA la partida: los demas jugadores salen, pero el anfitrion puede
-  // retomarla despues eligiendo la misma actividad. Solo se cierra al
-  // completar las rondas, o al elegir "Encuentro nuevo".
+  // PAUSA la partida (se puede retomar). Solo el anfitrion.
+  if(!esAdminFlag){ alert("Pausar la partida es cosa del anfitrión."); return; }
   jugando = false;
   if(!modoLocal){
     try{ await setDoc(sesionRef(), { pausada: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+  }
+  pintarPaso();
+  entrar();
+};
+document.getElementById("btnTerminarPartida").onclick = async ()=>{
+  // TERMINA la partida de forma definitiva (no se retoma). Solo el anfitrion.
+  // A los invitados les llega el aviso y, al aceptar, salen del modo invitado.
+  if(!esAdminFlag){ alert("Terminar la partida es cosa del anfitrión."); return; }
+  jugando = false;
+  if(!modoLocal){
+    try{ await setDoc(sesionRef(), { activa: false, terminada: true, porAdmin: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
   }
   pintarPaso();
   entrar();
@@ -964,6 +1034,7 @@ document.getElementById("btnUnirNo").onclick = ()=>{ cerrarModal("modalUnir"); }
 // ---------- arranque ----------
 (async ()=>{
   try{ await cargarIdentidad(); }catch(e){}
+  try{ mostrarBotonesAdmin(); }catch(e){}
   try{ await sincronizarOficiales(); }catch(e){}
   try{ await entrar(); }
   catch(e){
