@@ -1,0 +1,66 @@
+# Carpeta de los diablitos
+
+Aquí dentro van tus imágenes. **No hay que tocar ningún código**: la página las
+busca sola.
+
+## Cómo se lasenames
+
+| Si tu diablito... | Usa esto | Por qué |
+|---|---|---|
+| No se mueve (una sola imagen) | **SVG** | Se ve nítido en cualquier tamaño y el archivo pesa muy poco |
+| No se mueve y lo tienes en PNG | **PNG con transparencia** | Sirve igual de bien |
+| Sí se mueve (animado) | **WebP animado** | Pesa mucho menos que un GIF y sí aguanta transparencia |
+
+Extensiones que la página reconoce: `.svg` `.png` `.webp` `.gif` `.jpg`
+
+## ¿Sirve un GIF?
+
+**Sí, funciona.** Un `.gif` se anima solo, sin hacer nada más.
+
+Pero para este juego es **la peor opción**, por tres razones:
+
+1. **Pesan mucho.** Un GIF de 128 px puede pesar de 1 a 3 MB. Con 20 diablitos en
+   pantalla se traba el celular.
+2. **Se ven pixeleados** al agrandarlos.
+3. **No les puedes cambiar la velocidad**: corren como los hizo quien los dibujó,
+   no con tu perilla.
+
+## Cómo las encuentra la página
+
+Hay dos formas, y la página usa la primera que le sirva:
+
+**1. Cuando la abres en tu computadora (localhost)**
+
+Allí el servidor sí muestra el contenido de la carpeta, así que la página lee
+la lista completa. Puedes nombrarlas **como quieras**:
+
+    diablito-redondo.webp
+    diablita-con-lazo.png
+    el-diablo-que-quiero.gif
+
+**2. Cuando la abres en línea (GitHub)**
+
+GitHub no muestra el contenido de las carpetas. Por eso la página adivina los
+nombres probando uno por uno. Para que funcione, **nómbralas con números**:
+
+    1.webp
+    2.png
+    3.gif
+
+La página prueba `1.svg`, `1.png`, `1.webp`, `1.gif`, `1.jpg` y se queda con
+la que exista. Después sigue con el 2, el 3, etc. Se detiene cuando ya no
+encuentra ninguno.
+
+Ventaja: si borras el 2 y pones un 5, todo sigue funcionando solo. No hay que
+avisarle nada a nadie.
+
+## Consejo
+
+Si quieres que se vean igual en tu computadora **y** en línea, usa los
+números. Es lo que funciona en los dos lados.
+
+## Resumen rápido
+
+1. Mete tus archivos en esta carpeta
+2. Nombrarlos `1`, `2`, `3`... (con su extensión)
+3. Listo. No hay que mover nada más

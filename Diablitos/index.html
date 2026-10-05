@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sala de Espera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fondo:#120e1c;
+  --tarjeta:#201933;
+  --borde:#322a4a;
+  --texto:#f4f1fb;
+  --apagado:#a599c7;
+  --coral:#ff6a5c;
+  --teal:#2fd9c7;
+  --verde:#6dffa0;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:
+    radial-gradient(900px 500px at 12% -10%, #2a1b3d 0%, transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, #1d2a3d 0%, transparent 55%),
+    var(--fondo);
+  color:var(--texto);
+  font-family:'Inter',system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  user-select:none;
+  overflow:hidden;
+}
+.app{
+  max-width:1100px;
+  margin:0 auto;
+  padding:12px 14px 16px;
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+header{text-align:center;flex:0 0 auto;}
+h1{
+  display:inline-block;
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:700;
+  margin:0;
+  font-size:clamp(1.35rem,5vw,2rem);
+  letter-spacing:.5px;
+  background:linear-gradient(90deg,var(--coral),var(--teal));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.sub{margin:4px 0 0;color:var(--apagado);font-size:.9rem;}
+.campo{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  margin-top:10px;
+  background:linear-gradient(180deg,#1c1630 0%,#171128 100%);
+  border:1px solid var(--borde);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:inset 0 0 60px rgba(0,0,0,.45);
+}
+.pista{
+  position:absolute;
+  inset:auto 0 0 0;
+  padding:12px;
+  text-align:center;
+  color:var(--apagado);
+  font-size:.8rem;
+  background:linear-gradient(180deg,transparent,rgba(18,14,28,.92));
+  pointer-events:none;
+  transition:opacity .5s;
+}
+.pista.gone{opacity:0;}
+.diablo{position:absolute;top:0;left:0;cursor:pointer;}
+.diablo .giro,.diablo .cuerpo{width:100%;height:100%;display:grid;place-items:center;}
+.diablo .giro.izq{transform:scaleX(-1);}
+.diablo img{width:100%;height:100%;object-fit:contain;pointer-events:none;}
+.diablo.huyendo .cuerpo{animation:corra .24s linear infinite;}
+@keyframes corra{
+  0%,100%{transform:rotate(-9deg) translateY(0);}
+  50%{transform:rotate(9deg) translateY(-4px);}
+}
+.diablo.atacado .cuerpo{animation:estalla .3s ease-out forwards;}
+@keyframes estalla{
+  0%{transform:scale(1);}
+  30%{transform:scale(1.5);}
+  100%{transform:scale(.15);opacity:0;}
+}
+.habla{
+  position:absolute;
+  transform:translate(-50%,-100%);
+  background:var(--tarjeta);
+  border:1px solid var(--borde);
+  border-radius:10px;
+  color:var(--texto);
+  font-size:.74rem;
+  line-height:1.2;
+  padding:4px 9px;
+  white-space:nowrap;
+  pointer-events:none;
+  box-shadow:0 5px 16px rgba(0,0,0,.55);
+  z-index:2;
+}
+.habla:after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-6px;
+  margin-left:-5px;
+  width:0;
+  height:0;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  border-top:6px solid var(--borde);
+}
+.sube{
+  position:absolute;
+  pointer-events:none;
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:700;
+  font-size:1rem;
+  color:var(--verde);
+  text-shadow:0 2px 6px rgba(0,0,0,.6);
+  animation:sube .7s ease-out forwards;
+  z-index:3;
+}
+@keyframes sube{
+  0%{transform:translate(-50%,0) scale(.7);opacity:0;}
+  25%{transform:translate(-50%,-12px) scale(1.1);opacity:1;}
+  100%{transform:translate(-50%,-46px) scale(1);opacity:0;}
+}
+.engrane{
+  position:absolute;
+  top:8px;
+  right:10px;
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid var(--borde);
+  background:var(--tarjeta);
+  color:var(--apagado);
+  font-size:1.2rem;
+  line-height:1;
+  cursor:pointer;
+  z-index:6;
+  transition:transform .12s, color .15s;
+}
+.engrane:hover{color:var(--teal);transform:rotate(35deg);}
+.pantalla{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  background:
+    radial-gradient(900px 420px at 12% -8%, #2a1b3d 0%, transparent 62%),
+    var(--fondo);
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+.col{
+  max-width:460px;
+  margin:0 auto;
+  padding:16px 16px 26px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.volver{
+  position:absolute;
+  top:12px;
+  left:14px;
+  background:none;
+  border:none;
+  color:var(--apagado);
+  font-family:'Inter',sans-serif;
+  font-size:.78rem;
+  cursor:pointer;
+  padding:6px 4px;
+  z-index:2;
+}
+.volver:hover{color:var(--teal);}
+.kicker{
+  margin:26px 0 0;
+  text-align:center;
+  color:var(--apagado);
+  font-size:.66rem;
+  font-weight:600;
+  letter-spacing:2.4px;
+  text-transform:uppercase;
+}
+.tituloCfg{
+  margin:2px 0 0;
+  text-align:center;
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:700;
+  font-size:clamp(1.3rem,5vw,1.8rem);
+  letter-spacing:.5px;
+  background:linear-gradient(90deg,var(--coral),var(--teal));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.sub2{
+  margin:2px 0 6px;
+  text-align:center;
+  color:var(--apagado);
+  font-size:.78rem;
+  line-height:1.45;
+}
+.listaCfg{
+  background:rgba(32,25,51,.75);
+  border:1px solid var(--borde);
+  border-radius:16px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  max-height:46vh;
+  overflow-y:auto;
+}
+.tope{
+  margin:0;
+  color:var(--rojo);
+  font-size:.74rem;
+  text-align:center;
+}
+.filaCfg{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--tarjeta);
+  border:1px solid var(--borde);
+  border-radius:12px;
+  padding:9px 10px 9px 12px;
+}
+.filaCfg input{
+  flex:1;
+  min-width:0;
+  background:none;
+  border:none;
+  color:var(--texto);
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:600;
+  font-size:.82rem;
+  padding:0;
+}
+.filaCfg input:focus{outline:none;}
+.cont{
+  font-size:.66rem;
+  color:var(--apagado);
+  min-width:36px;
+  text-align:right;
+  flex:0 0 auto;
+}
+.cont.lleno{color:var(--rojo);}
+.quitar{
+  width:26px;
+  height:26px;
+  flex:0 0 auto;
+  border-radius:8px;
+  border:none;
+  background:none;
+  color:var(--apagado);
+  font-size:.85rem;
+  line-height:1;
+  cursor:pointer;
+}
+.quitar:hover{color:var(--rojo);background:rgba(255,92,122,.14);}
+#nuevoMsg{
+  background:var(--tarjeta);
+  border:1px solid var(--borde);
+  border-radius:12px;
+  color:var(--texto);
+  font-family:'Inter',sans-serif;
+  font-size:.86rem;
+  padding:12px 14px;
+}
+#nuevoMsg:focus{outline:none;border-color:var(--teal);}
+.gradiente{
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:600;
+  font-size:.95rem;
+  border:none;
+  border-radius:12px;
+  padding:13px 16px;
+  cursor:pointer;
+  background:linear-gradient(90deg,var(--coral),var(--teal));
+  color:#1a1024;
+}
+.gradiente:disabled{
+  background:var(--borde);
+  color:var(--apagado);
+  cursor:not-allowed;
+  opacity:.65;
+}
+.fantasma{
+  background:none;
+  border:none;
+  color:var(--apagado);
+  font-family:'Inter',sans-serif;
+  font-size:.76rem;
+  text-decoration:underline;
+  cursor:pointer;
+  padding:6px;
+}
+.fantasma:hover{color:var(--teal);}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Sala de Espera</h1>
+    <p class="sub">Si me alcanzas.......</p>
+    <button id="engrane" class="engrane" style="display:none" title="Mensajes">⚙</button>
+  </header>
+
+  <div class="campo" id="campo">
+    <div class="pista" id="pista">Se escapan si no los tocas</div>
+  </div>
+
+  <div class="pantalla" id="pantallaCfg" style="display:none">
+    <button id="cerrarCfg" class="volver">‹ Volver</button>
+    <div class="col">
+      <p class="kicker">Diablitos</p>
+      <h2 class="tituloCfg">Mensajes</h2>
+      <p class="sub2">Lo que dicen los diablitos al atraparlos.<br>Máximo 30 letras y hasta 15 mensajes.</p>
+      <div class="listaCfg" id="listaCfg"></div>
+      <p class="tope" id="tope" style="display:none">Ya hay 15 mensajes: no se pueden agregar más.</p>
+      <input id="nuevoMsg" type="text" placeholder="Escribe un mensaje" maxlength="30">
+      <button id="agregar" class="gradiente">Agregar</button>
+      <button id="fabrica" class="fantasma">Volver a los originales</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var IMAGENES = [];
+
+  var campo = document.getElementById('campo');
+  var pista = document.getElementById('pista');
+
+  var ROJO = '#ff5c7a';
+  var TAM_MIN = 64;
+  var TAM_MAX = 120;
+  var VEL_MIN = 50;
+  var VEL_MAX = 130;
+  var VEL_PISO = 3;
+  var VEL_TOPE = 10;
+  var APAR_LENTO = 270;
+  var APAR_MIN = 120;
+  var SEGS_CICLO = 31;
+  var MAX_VIVOS = 20;
+  var CLAVE_MSG = 'diablitos_frases';
+  var MAX_CHARS = 30;
+  var MAX_MSGS = 15;
+  var FRASES_FABRICA = [
+    '¡Ay!',
+    '¡No me caigo!',
+    '¡Eso sí dolió!',
+    '¡Ya me voy!',
+    '¡Suerte en la otra!',
+    '¡Siguiente!',
+    '¡No me toques!',
+    '¡Es broma!',
+    '¡Hasta la próxima!',
+    '¡Ahí nos vemos!',
+    '¡Cuidado!',
+    '¡Me salvé!'
+  ];
+  var FRASES = [];
+  var TAQUITOS = [];
+  var LISTAS = [];
+
+  var W = 0, H = 0, ESC = 1;
+  var corriendo = false;
+  var ultimo = 0;
+  var acumulador = 0;
+  var fase = 0;
+  var pausaFondo = false;
+  var pausaCfg = false;
+  var guardado = false;
+  var hayAlmacen = false;
+  var esInvitado = false;
+  var devils = [];
+
+  function rnd(a, b){ return a + Math.random() * (b - a); }
+
+  function puedeGuardar(){
+    try{
+      localStorage.setItem('__prueba', '1');
+      localStorage.removeItem('__prueba');
+      return true;
+    }catch(e){ return false; }
+  }
+
+  function esModoInvitado(){
+    try{
+      if(localStorage.getItem('invitado_respaldo')) return true;
+      var yo = null;
+      try{ yo = JSON.parse(localStorage.getItem('appPareja_quienSoy') || 'null'); }catch(e){}
+      return !!(yo && yo.invitado);
+    }catch(e){ return false; }
+  }
+
+  function leerMensajes(){
+    try{
+      var crudo = localStorage.getItem(CLAVE_MSG);
+      if(!crudo) return null;
+      var arr = JSON.parse(crudo);
+      if(!Array.isArray(arr)) return null;
+      var limpio = [];
+      for(var i = 0; i < arr.length; i++){
+        if(typeof arr[i] === 'string' && arr[i].trim()) limpio.push(arr[i].trim());
+      }
+      if(!limpio.length) return null;
+      return limpio;
+    }catch(e){ return null; }
+  }
+
+  function escribirMensajes(arr){
+    try{
+      localStorage.setItem(CLAVE_MSG, JSON.stringify(arr));
+      FRASES = arr;
+      guardado = true;
+      return true;
+    }catch(e){ return false; }
+  }
+
+  function asegurarMensajes(){
+    var lista = leerMensajes();
+    if(!lista){
+      lista = FRASES_FABRICA.slice();
+      escribirMensajes(lista);
+    }
+    FRASES = lista;
+  }
+
+  function decirFrase(){
+    if(!FRASES.length) return FRASES_FABRICA[0];
+    return FRASES[Math.floor(Math.random() * FRASES.length)];
+  }
+
+  function onda(){
+    if(fase <= 1) return fase;
+    return 2 - fase;
+  }
+
+  function multVelocidad(){
+    return VEL_PISO + (VEL_TOPE - VEL_PISO) * onda();
+  }
+
+  function intervalo(){
+    return APAR_LENTO + (APAR_MIN - APAR_LENTO) * onda();
+  }
+
+  var EXTENSIONES = ['svg', 'png', 'webp', 'gif', 'jpg'];
+  var SOPORTADAS = /\.(svg|png|webp|gif|jpe?g|avif)$/i;
+
+  function escanearCarpeta(){
+    return fetch('img/')
+      .then(function(r){ return r.ok ? r.text() : ''; })
+      .then(function(txt){
+        if(!txt) return null;
+        var doc = new DOMParser().parseFromString(txt, 'text/html');
+        var as = doc.querySelectorAll('a');
+        var out = [];
+        for(var i = 0; i < as.length; i++){
+          var href = as[i].getAttribute('href') || '';
+          var limpio = href.split('/').pop().split('?')[0];
+          if(SOPORTADAS.test(limpio)) out.push(limpio);
+        }
+        return out.length ? out : null;
+      })
+      .catch(function(){ return null; });
+  }
+
+  function probarUno(numero){
+    return new Promise(function(res){
+      var i = 0;
+      function intentaExtension(){
+        if(i >= EXTENSIONES.length){ res(null); return; }
+        var nombre = numero + '.' + EXTENSIONES[i];
+        var img = new Image();
+        img.onload = function(){ res(nombre); };
+        img.onerror = function(){ i++; intentaExtension(); };
+        img.src = 'img/' + nombre;
+      }
+      intentaExtension();
+    });
+  }
+
+  function probarNumerados(){
+    var nombres = [];
+    var n = 1;
+    var fallos = 0;
+    function siguiente(){
+      if(n > 60 || fallos >= 5) return Promise.resolve(nombres);
+      var actual = n++;
+      return probarUno(actual).then(function(nombre){
+        if(nombre){ nombres.push(nombre); fallos = 0; }
+        else { fallos++; }
+        return siguiente();
+      });
+    }
+    return siguiente();
+  }
+
+  function cargar(){
+    if(IMAGENES.length){
+      LISTAS = IMAGENES.map(function(n){ return 'img/' + n; });
+      return Promise.resolve();
+    }
+    return escanearCarpeta().then(function(lista){
+      if(lista){
+        LISTAS = lista.map(function(n){ return 'img/' + n; });
+        return;
+      }
+      return probarNumerados().then(function(nombres){
+        LISTAS = nombres.map(function(n){ return 'img/' + n; });
+      });
+    });
+  }
+
+  function svgDemonio(tipo){
+    var pelo = tipo === 'f'
+      ? '<path d="M12 20 q-3 12 4 17 q-2-9 1-14 z" fill="#2a2140"/>' +
+        '<path d="M32 20 q3 12 -4 17 q2-9 -1-14 z" fill="#2a2140"/>'
+      : '';
+    var lazo = tipo === 'f'
+      ? '<path d="M31 11 l-5-3.5 v7 z" fill="#f4c94c"/>' +
+        '<path d="M31 11 l5-3.5 v7 z" fill="#f4c94c"/>' +
+        '<circle cx="31" cy="11" r="1.7" fill="#ff6a5c"/>'
+      : '';
+    var cuernos = tipo === 'f'
+      ? '<path d="M15 14 q-4-8 1-10 q1 6 5 7 z" fill="#f6f1ff"/>' +
+        '<path d="M29 14 q4-8 -1-10 q-1 6 -5 7 z" fill="#f6f1ff"/>'
+      : '<path d="M15 14 L10 3 L20 10 z" fill="#f6f1ff"/>' +
+        '<path d="M29 14 L34 3 L24 10 z" fill="#f6f1ff"/>';
+    return '<svg viewBox="0 0 44 44" width="100%" height="100%" aria-hidden="true">' +
+      '<path d="M11 26 C2 27 2 37 9 37" fill="none" stroke="' + ROJO + '" stroke-width="3" stroke-linecap="round"/>' +
+      '<path d="M9 37 l-4-3 l1 5 z" fill="' + ROJO + '"/>' +
+      pelo +
+      '<ellipse cx="22" cy="26" rx="11" ry="10" fill="' + ROJO + '"/>' +
+      '<ellipse cx="22" cy="29" rx="6" ry="5.5" fill="rgba(0,0,0,.16)"/>' +
+      cuernos +
+      '<circle cx="18.5" cy="24" r="3.1" fill="#fff"/><circle cx="25.5" cy="24" r="3.1" fill="#fff"/>' +
+      '<circle cx="19.3" cy="24.7" r="1.4" fill="#120e1c"/><circle cx="26.3" cy="24.7" r="1.4" fill="#120e1c"/>' +
+      '<path d="M18 30.5 q4 3.5 8 0" fill="none" stroke="#120e1c" stroke-width="1.8" stroke-linecap="round"/>' +
+      '<path d="M19.5 32 l1 2 l1-2 z" fill="#fff"/><path d="M22.5 32 l1 2 l1-2 z" fill="#fff"/>' +
+      lazo +
+      '</svg>';
+  }
+
+  function cuerpo(tipo){
+    if(LISTAS.length){
+      var r = LISTAS[Math.floor(Math.random() * LISTAS.length)];
+      return '<img src="' + r + '" alt="">';
+    }
+    return svgDemonio(tipo);
+  }
+
+  function medir(){
+    var r = campo.getBoundingClientRect();
+    W = r.width;
+    H = r.height;
+    ESC = W / 1000;
+    if(ESC < 0.4) ESC = 0.4;
+    if(ESC > 1) ESC = 1;
+  }
+
+  function limites(alcance){
+    var arriba = alcance / 2 + 4;
+    var abajo = H - alcance / 2 - 4;
+    if(arriba >= abajo){ arriba = H / 2; abajo = H / 2; }
+    return { arriba: arriba, abajo: abajo };
+  }
+
+  function crear(){
+    var esF = Math.random() < 0.5;
+    var alcance = Math.round(rnd(TAM_MIN, TAM_MAX)) * (ESC < 0.6 ? 0.8 : 1) + 16;
+    var lim = limites(alcance);
+    var hacia = Math.random() < 0.5 ? 1 : -1;
+
+    var d = document.createElement('div');
+    d.className = 'diablo';
+    d.style.width = alcance + 'px';
+    d.style.height = alcance + 'px';
+    d.innerHTML = '<div class="giro"><div class="cuerpo">' +
+      cuerpo(esF ? 'f' : 'm') + '</div></div>';
+
+    var y = rnd(lim.arriba, lim.abajo) - alcance / 2;
+    var x = hacia > 0 ? -alcance : W + alcance;
+
+    var obj = {
+      el: d,
+      giro: d.querySelector('.giro'),
+      cuerpoEl: d.querySelector('.cuerpo'),
+      tipo: esF ? 'f' : 'm',
+      x: x,
+      y: y,
+      cx: x + alcance / 2,
+      cy: y + alcance / 2,
+      alcance: alcance,
+      hacia: hacia,
+      velH: rnd(VEL_MIN, VEL_MAX) * ESC,
+      fase: rnd(0, 6.28),
+      faseV: rnd(0.7, 1.9),
+      ampY: Math.min((lim.abajo - lim.arriba) / 2, rnd(18, 90)),
+      baseY: rnd(lim.arriba, lim.abajo),
+      lim: lim,
+      cambio: rnd(1.6, 3.6),
+      muerto: false,
+      huyendo: false,
+      habla: null
+    };
+
+    d.addEventListener('pointerdown', function(ev){
+      ev.preventDefault();
+      golpear(obj, ev);
+    });
+
+    devils.push(obj);
+    campo.appendChild(d);
+    colocar(obj);
+  }
+
+  function colocar(d){
+    d.el.style.transform = 'translate3d(' + d.x + 'px,' + d.y + 'px,0)';
+  }
+
+  function decir(d, px, py){
+    if(TAQUITOS.length > 9) return;
+    var b = document.createElement('div');
+    b.className = 'habla';
+    b.textContent = decirFrase();
+    b.style.left = px + 'px';
+    b.style.top = py + 'px';
+    campo.appendChild(b);
+    TAQUITOS.push(b);
+    d.habla = b;
+  }
+
+  function borrarHabla(d){
+    if(!d.habla) return;
+    if(d.habla.parentNode) d.habla.parentNode.removeChild(d.habla);
+    var i = TAQUITOS.indexOf(d.habla);
+    if(i >= 0) TAQUITOS.splice(i, 1);
+    d.habla = null;
+  }
+
+  function golpear(d, ev){
+    if(d.muerto) return;
+    d.muerto = true;
+
+    var r = campo.getBoundingClientRect();
+    var px = ev.clientX - r.left;
+    var py = ev.clientY - r.top;
+    if(!ev.clientX && !ev.clientY){ px = d.cx; py = d.cy; }
+
+    burbuja(px, py, '+1');
+    decir(d, px, py);
+
+    if(!pista.classList.contains('gone')) pista.classList.add('gone');
+
+    if(Math.random() < 0.5){
+      d.huyendo = true;
+      d.el.classList.add('huyendo');
+      d.hacia = d.cx < W / 2 ? 1 : -1;
+      d.baseY = Math.max(d.lim.arriba, Math.min(d.lim.abajo, d.cy));
+      d.ampY = 0;
+      d.faseV = 0;
+      d.cambio = 999;
+    } else {
+      d.el.classList.add('atacado');
+      var obj = d;
+      setTimeout(function(){ quitar(obj, false); }, 300);
+      setTimeout(function(){ borrarHabla(obj); }, 3000);
+    }
+  }
+
+  function burbuja(px, py, txt){
+    if(TAQUITOS.length > 12) return;
+    var b = document.createElement('div');
+    b.className = 'sube';
+    b.textContent = txt;
+    b.style.left = px + 'px';
+    b.style.top = py + 'px';
+    campo.appendChild(b);
+    TAQUITOS.push(b);
+    setTimeout(function(){
+      if(b.parentNode) b.parentNode.removeChild(b);
+      var i = TAQUITOS.indexOf(b);
+      if(i >= 0) TAQUITOS.splice(i, 1);
+    }, 700);
+  }
+
+  function quitar(d, conMensaje){
+    if(conMensaje !== false) borrarHabla(d);
+    if(d.el.parentNode) d.el.parentNode.removeChild(d.el);
+  }
+
+  function mover(dt){
+    var mult = multVelocidad();
+    for(var i = devils.length - 1; i >= 0; i--){
+      var d = devils[i];
+      if(d.muerto && !d.huyendo){ devils.splice(i, 1); continue; }
+
+      if(d.cambio <= 0){
+        d.cambio = rnd(1.6, 3.6);
+        if(!d.huyendo){
+          if(Math.random() < 0.35) d.hacia = -d.hacia;
+          d.velH = rnd(VEL_MIN, VEL_MAX) * ESC;
+          d.faseV = rnd(0.7, 1.9);
+          d.ampY = Math.min((d.lim.abajo - d.lim.arriba) / 2, rnd(18, 90));
+        }
+      }
+      d.cambio -= dt;
+      d.fase += d.faseV * dt;
+
+      var v = d.velH * mult * (d.huyendo ? 1.8 : 1);
+      d.x += d.hacia * v * dt;
+
+      var objetivo = d.baseY + Math.sin(d.fase) * d.ampY;
+      d.y += (objetivo - d.cy) * Math.min(1, dt * 4);
+
+      d.cx = d.x + d.alcance / 2;
+      d.cy = d.y + d.alcance / 2;
+
+      d.giro.classList.toggle('izq', d.hacia < 0);
+      if(!d.huyendo){
+        d.cuerpoEl.style.transform = 'rotate(' +
+          Math.max(-15, Math.min(15, Math.cos(d.fase) * 13)) + 'deg)';
+      }
+
+      if(d.huyendo){
+        if(d.cx < -d.alcance * 1.6 || d.cx > W + d.alcance * 1.6){
+          quitar(d);
+          devils.splice(i, 1);
+          continue;
+        }
+      } else if(d.cx < -d.alcance || d.cx > W + d.alcance){
+        quitar(d);
+        devils.splice(i, 1);
+        continue;
+      }
+
+      colocar(d);
+    }
+  }
+
+  function generar(dt){
+    acumulador += dt * 1000;
+    if(acumulador < intervalo()) return;
+    acumulador = 0;
+    if(devils.length < MAX_VIVOS) crear();
+  }
+
+  function paso(ts){
+    if(!ultimo) ultimo = ts;
+    var dt = Math.min((ts - ultimo) / 1000, 0.05);
+    ultimo = ts;
+    if(corriendo){
+      fase += dt / (SEGS_CICLO / 2);
+      if(fase >= 2) fase -= 2;
+      mover(dt);
+      generar(dt);
+    }
+    requestAnimationFrame(paso);
+  }
+
+  function correr(){
+    medir();
+    corriendo = true;
+    if(devils.length === 0){
+      crear(); crear(); crear(); crear();
+    }
+  }
+
+  function parar(){
+    corriendo = false;
+  }
+
+  function reiniciar(){
+    fase = 0;
+    while(devils.length){
+      quitar(devils.pop());
+    }
+    while(TAQUITOS.length){
+      var b = TAQUITOS.pop();
+      if(b.parentNode) b.parentNode.removeChild(b);
+    }
+    pista.classList.remove('gone');
+    medir();
+    crear(); crear(); crear(); crear();
+  }
+
+  var elEngrane = document.getElementById('engrane');
+  var elCfg = document.getElementById('pantallaCfg');
+  var elListaCfg = document.getElementById('listaCfg');
+  var elNuevo = document.getElementById('nuevoMsg');
+  var elTope = document.getElementById('tope');
+  var btnAgregar = document.getElementById('agregar');
+
+  function pintarMensajes(){
+    var lista = leerMensajes() || FRASES_FABRICA.slice();
+    elListaCfg.innerHTML = '';
+    for(var i = 0; i < lista.length; i++){
+      elListaCfg.appendChild(filaMensaje(i, lista[i]));
+    }
+    var lleno = lista.length >= MAX_MSGS;
+    btnAgregar.disabled = lleno;
+    elTope.style.display = lleno ? 'block' : 'none';
+  }
+
+  function filaMensaje(indice, texto){
+    var fila = document.createElement('div');
+    fila.className = 'filaCfg';
+
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.value = texto;
+    inp.maxLength = MAX_CHARS;
+    inp.setAttribute('aria-label', 'Mensaje ' + (indice + 1));
+
+    var cont = document.createElement('span');
+    cont.className = 'cont';
+    cont.textContent = inp.value.length + '/' + MAX_CHARS;
+    if(inp.value.length >= MAX_CHARS) cont.className = 'cont lleno';
+
+    var btn = document.createElement('button');
+    btn.className = 'quitar';
+    btn.type = 'button';
+    btn.textContent = '✕';
+    btn.title = 'Borrar este mensaje';
+    btn.onclick = function(){ quitarMensaje(indice); };
+
+    inp.oninput = function(){
+      cont.textContent = inp.value.length + '/' + MAX_CHARS;
+      cont.className = inp.value.length >= MAX_CHARS ? 'cont lleno' : 'cont';
+    };
+    inp.onchange = function(){ cambiarMensaje(indice, inp.value, inp); };
+
+    fila.appendChild(inp);
+    fila.appendChild(cont);
+    fila.appendChild(btn);
+    return fila;
+  }
+
+  function cambiarMensaje(indice, valor, inp){
+    var lista = leerMensajes() || FRASES_FABRICA.slice();
+    var limpio = (valor || '').trim().slice(0, MAX_CHARS);
+    if(!limpio){
+      inp.value = lista[indice] !== undefined ? lista[indice] : FRASES_FABRICA[0];
+      return;
+    }
+    lista[indice] = limpio;
+    if(escribirMensajes(lista)) inp.value = limpio;
+  }
+
+  function quitarMensaje(indice){
+    var lista = leerMensajes() || FRASES_FABRICA.slice();
+    if(lista.length <= 1){
+      avisar('Debe quedar al menos un mensaje.');
+      return;
+    }
+    lista.splice(indice, 1);
+    escribirMensajes(lista);
+    pintarMensajes();
+  }
+
+  function agregarMensaje(){
+    var valor = (elNuevo.value || '').trim().slice(0, MAX_CHARS);
+    if(!valor){
+      avisar('Escribe un mensaje primero.');
+      return;
+    }
+    var lista = leerMensajes() || FRASES_FABRICA.slice();
+    if(lista.length >= MAX_MSGS){
+      avisar('Ya tienes ' + MAX_MSGS + ' mensajes. Borra alguno primero.');
+      return;
+    }
+    lista.push(valor);
+    escribirMensajes(lista);
+    elNuevo.value = '';
+    pintarMensajes();
+    elNuevo.focus();
+  }
+
+  function volverAlOriginal(){
+    var lista = leerMensajes() || [];
+    var editados = 0;
+    for(var i = 0; i < Math.min(lista.length, FRASES_FABRICA.length); i++){
+      if(lista[i] !== FRASES_FABRICA[i]) editados++;
+    }
+    var extra = Math.max(0, lista.length - FRASES_FABRICA.length);
+    if(!editados && !extra){
+      avisar('Ya son los mensajes originales.');
+      return;
+    }
+    if(!confirm('¿Volver a los ' + FRASES_FABRICA.length +
+      ' mensajes originales?\n\nPerderás ' + (editados + extra) + ' de los tuyos.')) return;
+    escribirMensajes(FRASES_FABRICA.slice());
+    pintarMensajes();
+  }
+
+  function avisar(texto){
+    var n = document.createElement('div');
+    n.className = 'sube';
+    n.textContent = texto;
+    n.style.left = '50%';
+    n.style.top = '42%';
+    campo.appendChild(n);
+    TAQUITOS.push(n);
+    setTimeout(function(){
+      if(n.parentNode) n.parentNode.removeChild(n);
+      var i = TAQUITOS.indexOf(n);
+      if(i >= 0) TAQUITOS.splice(i, 1);
+    }, 1400);
+  }
+
+  function abrirCfg(){
+    pintarMensajes();
+    elCfg.style.display = 'block';
+    pausaCfg = corriendo;
+    parar();
+    elNuevo.value = '';
+    window.scrollTo(0, 0);
+    elCfg.scrollTop = 0;
+  }
+
+  function cerrarCfg(){
+    elCfg.style.display = 'none';
+    FRASES = leerMensajes() || FRASES_FABRICA.slice();
+    if(pausaCfg) correr();
+    pausaCfg = false;
+  }
+
+  document.addEventListener('keydown', function(e){
+    if(e.code === 'Space'){
+      e.preventDefault();
+      if(corriendo){ parar(); } else { correr(); }
+    }
+    if(e.key === 'r' || e.key === 'R'){ reiniciar(); }
+    if(e.key === 'Escape' && elCfg.style.display !== 'none'){ cerrarCfg(); }
+  });
+
+  elEngrane.onclick = function(){
+    if(elCfg.style.display === 'none'){ abrirCfg(); } else { cerrarCfg(); }
+  };
+  document.getElementById('cerrarCfg').onclick = cerrarCfg;
+  document.getElementById('agregar').onclick = agregarMensaje;
+  document.getElementById('fabrica').onclick = volverAlOriginal;
+  elNuevo.onkeydown = function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); agregarMensaje(); }
+  };
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      pausaFondo = corriendo;
+      parar();
+    } else if(pausaFondo){
+      pausaFondo = false;
+      correr();
+    }
+  });
+
+  window.addEventListener('resize', medir);
+  window.addEventListener('orientationchange', medir);
+
+  try{
+    var arrancado = false;
+    function arrancar(){
+      if(arrancado) return;
+      arrancado = true;
+      correr();
+    }
+    hayAlmacen = puedeGuardar();
+    esInvitado = esModoInvitado();
+    if(hayAlmacen){
+      asegurarMensajes();
+      if(!esInvitado) elEngrane.style.display = 'block';
+    } else {
+      FRASES = FRASES_FABRICA.slice();
+    }
+    elNuevo.maxLength = MAX_CHARS;
+    medir();
+    requestAnimationFrame(paso);
+    cargar().then(arrancar, arrancar);
+    setTimeout(arrancar, 1200);
+  }catch(e){
+    campo.insertAdjacentHTML('beforeend',
+      '<p style="padding:20px;color:#ff5c7a">No se pudo iniciar: ' +
+      String(e && e.message ? e.message : e) + '</p>');
+  }
+})();
+</script>
+</body>
+</html>
