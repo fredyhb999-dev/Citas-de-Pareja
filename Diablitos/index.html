@@ -60,11 +60,26 @@ h1{
   flex:1 1 auto;
   min-height:0;
   margin-top:10px;
-  background:linear-gradient(180deg,#1c1630 0%,#171128 100%);
+  background:
+    radial-gradient(1.5px 1.5px at 18% 24%, rgba(255,255,255,.55), transparent 100%),
+    radial-gradient(1.1px 1.1px at 62% 11%, rgba(255,255,255,.34), transparent 100%),
+    radial-gradient(1.8px 1.8px at 83% 57%, rgba(255,255,255,.44), transparent 100%),
+    radial-gradient(1px 1px at 34% 79%, rgba(255,255,255,.28), transparent 100%),
+    radial-gradient(1.3px 1.3px at 73% 89%, rgba(255,255,255,.26), transparent 100%),
+    radial-gradient(1.2px 1.2px at 47% 47%, rgba(255,255,255,.18), transparent 100%),
+    linear-gradient(180deg,#1a1332 0%,#120d20 100%);
+  background-size:
+    160px 160px,
+    190px 190px,
+    210px 210px,
+    140px 140px,
+    170px 170px,
+    230px 230px,
+    100% 100%;
   border:1px solid var(--borde);
   border-radius:18px;
   overflow:hidden;
-  box-shadow:inset 0 0 60px rgba(0,0,0,.45);
+  box-shadow:inset 0 0 90px rgba(0,0,0,.75);
 }
 .pista{
   position:absolute;
@@ -78,6 +93,14 @@ h1{
   transition:opacity .5s;
 }
 .pista.gone{opacity:0;}
+.pista.grande{
+  color:var(--coral);
+  font-family:'Chakra Petch',sans-serif;
+  font-size:1.2rem;
+  font-weight:600;
+  line-height:1.3;
+  padding:14px 16px 16px;
+}
 .diablo{position:absolute;top:0;left:0;cursor:pointer;}
 .diablo .giro,.diablo .cuerpo{width:100%;height:100%;display:grid;place-items:center;}
 .diablo .giro.izq{transform:scaleX(-1);}
@@ -99,7 +122,7 @@ h1{
   background:var(--tarjeta);
   border:1px solid var(--borde);
   border-radius:10px;
-  color:var(--texto);
+  color:var(--coral);
   font-size:.74rem;
   line-height:1.2;
   padding:4px 9px;
@@ -164,7 +187,7 @@ h1{
   overflow-x:hidden;
 }
 .col{
-  max-width:460px;
+  max-width:560px;
   margin:0 auto;
   padding:16px 16px 26px;
   display:flex;
@@ -195,6 +218,7 @@ h1{
   text-transform:uppercase;
 }
 .tituloCfg{
+  display:inline-block;
   margin:2px 0 0;
   text-align:center;
   font-family:'Chakra Petch',sans-serif;
@@ -224,6 +248,33 @@ h1{
   max-height:46vh;
   overflow-y:auto;
 }
+.pestanas{
+  display:flex;
+  gap:6px;
+  background:var(--tarjeta);
+  border:1px solid var(--borde);
+  border-radius:12px;
+  padding:4px;
+}
+.pest{
+  flex:1;
+  background:none;
+  border:none;
+  border-radius:9px;
+  color:var(--apagado);
+  font-family:'Chakra Petch',sans-serif;
+  font-weight:600;
+  font-size:.82rem;
+  padding:8px;
+  cursor:pointer;
+  transition:filter .15s;
+}
+.pest:hover{color:var(--texto);}
+.pest.activa{
+  background:linear-gradient(90deg,var(--coral),var(--teal));
+  color:#1a1024;
+}
+.seccion{display:flex;flex-direction:column;gap:9px;}
 .tope{
   margin:0;
   color:var(--rojo);
@@ -247,7 +298,7 @@ h1{
   color:var(--texto);
   font-family:'Chakra Petch',sans-serif;
   font-weight:600;
-  font-size:.82rem;
+  font-size:1.2rem;
   padding:0;
 }
 .filaCfg input:focus{outline:none;}
@@ -272,14 +323,14 @@ h1{
   cursor:pointer;
 }
 .quitar:hover{color:var(--rojo);background:rgba(255,92,122,.14);}
-#nuevoMsg{
+#nuevoMsg,#nuevoAviso{
   background:var(--tarjeta);
   border:1px solid var(--borde);
   border-radius:12px;
   color:var(--texto);
   font-family:'Inter',sans-serif;
-  font-size:.86rem;
-  padding:12px 14px;
+  font-size:1rem;
+  padding:13px 15px;
 }
 #nuevoMsg:focus{outline:none;border-color:var(--teal);}
 .gradiente{
@@ -329,12 +380,26 @@ h1{
     <div class="col">
       <p class="kicker">Diablitos</p>
       <h2 class="tituloCfg">Mensajes</h2>
-      <p class="sub2">Lo que dicen los diablitos al atraparlos.<br>Máximo 30 letras y hasta 15 mensajes.</p>
-      <div class="listaCfg" id="listaCfg"></div>
-      <p class="tope" id="tope" style="display:none">Ya hay 15 mensajes: no se pueden agregar más.</p>
-      <input id="nuevoMsg" type="text" placeholder="Escribe un mensaje" maxlength="30">
-      <button id="agregar" class="gradiente">Agregar</button>
-      <button id="fabrica" class="fantasma">Volver a los originales</button>
+      <div class="pestanas">
+        <button id="pestMsg" class="pest activa">Frases</button>
+        <button id="pestAviso" class="pest">Avisos</button>
+      </div>
+      <div id="secMsg" class="seccion">
+        <p class="sub2">Lo que dicen los diablitos al atraparlos.<br>Máximo 30 letras y hasta 15 mensajes.</p>
+        <div class="listaCfg" id="listaMsg"></div>
+        <p class="tope" id="topeMsg" style="display:none">Ya hay 15 mensajes: no se pueden agregar más.</p>
+        <input id="nuevoMsg" type="text" placeholder="Escribe un mensaje" maxlength="30">
+        <button id="agregarMsg" class="gradiente">Agregar</button>
+        <button id="fabricaMsg" class="fantasma">Volver a los originales</button>
+      </div>
+      <div id="secAviso" class="seccion" style="display:none">
+        <p class="sub2">Lo que aparece abajo del recuadro cada 20 toques.<br>Máximo 50 letras y hasta 10 avisos.</p>
+        <div class="listaCfg" id="listaAviso"></div>
+        <p class="tope" id="topeAviso" style="display:none">Ya hay 15 avisos: no se pueden agregar más.</p>
+        <input id="nuevoAviso" type="text" placeholder="Escribe un aviso" maxlength="50">
+        <button id="agregarAviso" class="gradiente">Agregar</button>
+        <button id="fabricaAviso" class="fantasma">Volver a los originales</button>
+      </div>
     </div>
   </div>
 </div>
@@ -356,10 +421,15 @@ h1{
   var APAR_LENTO = 270;
   var APAR_MIN = 120;
   var SEGS_CICLO = 31;
-  var MAX_VIVOS = 20;
+  var MAX_VIVOS = 8;
   var CLAVE_MSG = 'diablitos_frases';
+  var CLAVE_AVISO = 'diablitos_avisos';
   var MAX_CHARS = 30;
   var MAX_MSGS = 15;
+  var MAX_CHARS_AVISO = 50;
+  var MAX_AVISOS = 15;
+  var AVISO_CADA = 15;
+  var TOQUES = 0;
   var FRASES_FABRICA = [
     '¡Ay!',
     '¡No me caigo!',
@@ -375,6 +445,21 @@ h1{
     '¡Me salvé!'
   ];
   var FRASES = [];
+  var AVISOS = [];
+  var AVISOS_FABRICA = [
+    '¡Vas muy bien, sigue así!',
+    '¡Media vuelta! Ahora a por todas.',
+    '¡Qué buena puntería, no fallaste una!',
+    '¡Sigue, que ya casi lo logras!',
+    '¡Wow, esos diablitos no se salvaron!',
+    '¡Vas imparable, no te detengas!',
+    '¡Bravo! Eso estuvo muy bien, crack!',
+    '¡Ya dominaste a los diablitos!',
+    '¡Mitad del camino, sigue fuerte!',
+    '¡Cada vez mejor, crack!'
+  ];
+  var PISTA = 'Se escapan si no los tocas';
+  var avisoTimer = null;
   var TAQUITOS = [];
   var LISTAS = [];
 
@@ -385,6 +470,7 @@ h1{
   var fase = 0;
   var pausaFondo = false;
   var pausaCfg = false;
+  var alterna = true;
   var guardado = false;
   var hayAlmacen = false;
   var esInvitado = false;
@@ -409,9 +495,9 @@ h1{
     }catch(e){ return false; }
   }
 
-  function leerMensajes(){
+  function leerLista(clave){
     try{
-      var crudo = localStorage.getItem(CLAVE_MSG);
+      var crudo = localStorage.getItem(clave);
       if(!crudo) return null;
       var arr = JSON.parse(crudo);
       if(!Array.isArray(arr)) return null;
@@ -424,27 +510,47 @@ h1{
     }catch(e){ return null; }
   }
 
-  function escribirMensajes(arr){
+  function escribirLista(clave, arr){
     try{
-      localStorage.setItem(CLAVE_MSG, JSON.stringify(arr));
-      FRASES = arr;
-      guardado = true;
+      localStorage.setItem(clave, JSON.stringify(arr));
       return true;
     }catch(e){ return false; }
   }
 
-  function asegurarMensajes(){
-    var lista = leerMensajes();
+  function asegurarLista(clave, fabrica){
+    var lista = leerLista(clave);
     if(!lista){
-      lista = FRASES_FABRICA.slice();
-      escribirMensajes(lista);
+      lista = fabrica.slice();
+      escribirLista(clave, lista);
     }
-    FRASES = lista;
+    return lista;
+  }
+
+  function asegurarMensajes(){
+    FRASES = asegurarLista(CLAVE_MSG, FRASES_FABRICA);
+    AVISOS = asegurarLista(CLAVE_AVISO, AVISOS_FABRICA);
   }
 
   function decirFrase(){
     if(!FRASES.length) return FRASES_FABRICA[0];
     return FRASES[Math.floor(Math.random() * FRASES.length)];
+  }
+
+  function decirAviso(){
+    if(!AVISOS.length) return AVISOS_FABRICA[0];
+    return AVISOS[Math.floor(Math.random() * AVISOS.length)];
+  }
+
+  function mostrarAviso(){
+    pista.textContent = decirAviso();
+    pista.classList.remove('gone');
+    pista.classList.add('grande');
+    if(avisoTimer) clearTimeout(avisoTimer);
+    avisoTimer = setTimeout(function(){
+      pista.textContent = PISTA;
+      pista.classList.remove('grande');
+      pista.classList.add('gone');
+    }, 5000);
   }
 
   function onda(){
@@ -586,7 +692,8 @@ h1{
     var esF = Math.random() < 0.5;
     var alcance = Math.round(rnd(TAM_MIN, TAM_MAX)) * (ESC < 0.6 ? 0.8 : 1) + 16;
     var lim = limites(alcance);
-    var hacia = Math.random() < 0.5 ? 1 : -1;
+    var hacia = alterna ? 1 : -1;
+    alterna = !alterna;
 
     var d = document.createElement('div');
     d.className = 'diablo';
@@ -596,7 +703,7 @@ h1{
       cuerpo(esF ? 'f' : 'm') + '</div></div>';
 
     var y = rnd(lim.arriba, lim.abajo) - alcance / 2;
-    var x = hacia > 0 ? -alcance : W + alcance;
+    var x = hacia > 0 ? -alcance : W;
 
     var obj = {
       el: d,
@@ -667,7 +774,12 @@ h1{
     burbuja(px, py, '+1');
     decir(d, px, py);
 
-    if(!pista.classList.contains('gone')) pista.classList.add('gone');
+    if(!pista.classList.contains('grande')){
+      if(!pista.classList.contains('gone')) pista.classList.add('gone');
+    }
+
+    TOQUES++;
+    if(TOQUES % AVISO_CADA === 0) mostrarAviso();
 
     if(Math.random() < 0.5){
       d.huyendo = true;
@@ -733,7 +845,7 @@ h1{
       d.cx = d.x + d.alcance / 2;
       d.cy = d.y + d.alcance / 2;
 
-      d.giro.classList.toggle('izq', d.hacia < 0);
+      d.giro.classList.toggle('izq', d.hacia > 0);
       if(!d.huyendo){
         d.cuerpoEl.style.transform = 'rotate(' +
           Math.max(-15, Math.min(15, Math.cos(d.fase) * 13)) + 'deg)';
@@ -803,111 +915,148 @@ h1{
 
   var elEngrane = document.getElementById('engrane');
   var elCfg = document.getElementById('pantallaCfg');
-  var elListaCfg = document.getElementById('listaCfg');
-  var elNuevo = document.getElementById('nuevoMsg');
-  var elTope = document.getElementById('tope');
-  var btnAgregar = document.getElementById('agregar');
-
-  function pintarMensajes(){
-    var lista = leerMensajes() || FRASES_FABRICA.slice();
-    elListaCfg.innerHTML = '';
-    for(var i = 0; i < lista.length; i++){
-      elListaCfg.appendChild(filaMensaje(i, lista[i]));
+  var SEC = {
+    msg: {
+      clave: CLAVE_MSG,
+      fabrica: FRASES_FABRICA,
+      maxChars: MAX_CHARS,
+      maxMsgs: MAX_MSGS,
+      lista: document.getElementById('listaMsg'),
+      nuevo: document.getElementById('nuevoMsg'),
+      agregar: document.getElementById('agregarMsg'),
+      tope: document.getElementById('topeMsg'),
+      fabricaBtn: document.getElementById('fabricaMsg'),
+      sec: document.getElementById('secMsg'),
+      pest: document.getElementById('pestMsg')
+    },
+    aviso: {
+      clave: CLAVE_AVISO,
+      fabrica: AVISOS_FABRICA,
+      maxChars: MAX_CHARS_AVISO,
+      maxMsgs: MAX_AVISOS,
+      lista: document.getElementById('listaAviso'),
+      nuevo: document.getElementById('nuevoAviso'),
+      agregar: document.getElementById('agregarAviso'),
+      tope: document.getElementById('topeAviso'),
+      fabricaBtn: document.getElementById('fabricaAviso'),
+      sec: document.getElementById('secAviso'),
+      pest: document.getElementById('pestAviso')
     }
-    var lleno = lista.length >= MAX_MSGS;
-    btnAgregar.disabled = lleno;
-    elTope.style.display = lleno ? 'block' : 'none';
+  };
+  var SEC_ACTIVA = 'msg';
+
+  function seccion(){ return SEC[SEC_ACTIVA]; }
+
+  function pintar(){
+    var s = seccion();
+    var lista = leerLista(s.clave) || s.fabrica.slice();
+    s.lista.innerHTML = '';
+    for(var i = 0; i < lista.length; i++){
+      s.lista.appendChild(fila(i, lista[i], s));
+    }
+    var lleno = lista.length >= s.maxMsgs;
+    s.agregar.disabled = lleno;
+    s.tope.style.display = lleno ? 'block' : 'none';
   }
 
-  function filaMensaje(indice, texto){
-    var fila = document.createElement('div');
-    fila.className = 'filaCfg';
+  function fila(indice, texto, s){
+    var div = document.createElement('div');
+    div.className = 'filaCfg';
 
     var inp = document.createElement('input');
     inp.type = 'text';
     inp.value = texto;
-    inp.maxLength = MAX_CHARS;
-    inp.setAttribute('aria-label', 'Mensaje ' + (indice + 1));
+    inp.maxLength = s.maxChars;
 
     var cont = document.createElement('span');
     cont.className = 'cont';
-    cont.textContent = inp.value.length + '/' + MAX_CHARS;
-    if(inp.value.length >= MAX_CHARS) cont.className = 'cont lleno';
+    cont.textContent = inp.value.length + '/' + s.maxChars;
+    if(inp.value.length >= s.maxChars) cont.className = 'cont lleno';
 
     var btn = document.createElement('button');
     btn.className = 'quitar';
     btn.type = 'button';
     btn.textContent = '✕';
-    btn.title = 'Borrar este mensaje';
-    btn.onclick = function(){ quitarMensaje(indice); };
+    btn.onclick = function(){ quitarFila(indice, s); };
 
     inp.oninput = function(){
-      cont.textContent = inp.value.length + '/' + MAX_CHARS;
-      cont.className = inp.value.length >= MAX_CHARS ? 'cont lleno' : 'cont';
+      cont.textContent = inp.value.length + '/' + s.maxChars;
+      cont.className = inp.value.length >= s.maxChars ? 'cont lleno' : 'cont';
     };
-    inp.onchange = function(){ cambiarMensaje(indice, inp.value, inp); };
+    inp.onchange = function(){ cambiar(indice, inp.value, inp, s); };
 
-    fila.appendChild(inp);
-    fila.appendChild(cont);
-    fila.appendChild(btn);
-    return fila;
+    div.appendChild(inp);
+    div.appendChild(cont);
+    div.appendChild(btn);
+    return div;
   }
 
-  function cambiarMensaje(indice, valor, inp){
-    var lista = leerMensajes() || FRASES_FABRICA.slice();
-    var limpio = (valor || '').trim().slice(0, MAX_CHARS);
+  function cambiar(indice, valor, inp, s){
+    var lista = leerLista(s.clave) || s.fabrica.slice();
+    var limpio = (valor || '').trim().slice(0, s.maxChars);
     if(!limpio){
-      inp.value = lista[indice] !== undefined ? lista[indice] : FRASES_FABRICA[0];
+      inp.value = lista[indice] !== undefined ? lista[indice] : s.fabrica[0];
       return;
     }
     lista[indice] = limpio;
-    if(escribirMensajes(lista)) inp.value = limpio;
+    if(escribirLista(s.clave, lista)) inp.value = limpio;
   }
 
-  function quitarMensaje(indice){
-    var lista = leerMensajes() || FRASES_FABRICA.slice();
+  function quitarFila(indice, s){
+    var lista = leerLista(s.clave) || s.fabrica.slice();
     if(lista.length <= 1){
-      avisar('Debe quedar al menos un mensaje.');
+      avisar('Debe quedar al menos uno.');
       return;
     }
     lista.splice(indice, 1);
-    escribirMensajes(lista);
-    pintarMensajes();
+    escribirLista(s.clave, lista);
+    pintar();
   }
 
-  function agregarMensaje(){
-    var valor = (elNuevo.value || '').trim().slice(0, MAX_CHARS);
+  function agregar(s){
+    var valor = (s.nuevo.value || '').trim().slice(0, s.maxChars);
     if(!valor){
-      avisar('Escribe un mensaje primero.');
+      avisar('Escribe algo primero.');
       return;
     }
-    var lista = leerMensajes() || FRASES_FABRICA.slice();
-    if(lista.length >= MAX_MSGS){
-      avisar('Ya tienes ' + MAX_MSGS + ' mensajes. Borra alguno primero.');
+    var lista = leerLista(s.clave) || s.fabrica.slice();
+    if(lista.length >= s.maxMsgs){
+      avisar('Ya tienes ' + s.maxMsgs + '. Borra alguno primero.');
       return;
     }
     lista.push(valor);
-    escribirMensajes(lista);
-    elNuevo.value = '';
-    pintarMensajes();
-    elNuevo.focus();
+    escribirLista(s.clave, lista);
+    s.nuevo.value = '';
+    pintar();
+    s.nuevo.focus();
   }
 
-  function volverAlOriginal(){
-    var lista = leerMensajes() || [];
+  function volverAlOriginal(s){
+    var lista = leerLista(s.clave) || [];
     var editados = 0;
-    for(var i = 0; i < Math.min(lista.length, FRASES_FABRICA.length); i++){
-      if(lista[i] !== FRASES_FABRICA[i]) editados++;
+    for(var i = 0; i < Math.min(lista.length, s.fabrica.length); i++){
+      if(lista[i] !== s.fabrica[i]) editados++;
     }
-    var extra = Math.max(0, lista.length - FRASES_FABRICA.length);
+    var extra = Math.max(0, lista.length - s.fabrica.length);
     if(!editados && !extra){
-      avisar('Ya son los mensajes originales.');
+      avisar('Ya son los originales.');
       return;
     }
-    if(!confirm('¿Volver a los ' + FRASES_FABRICA.length +
-      ' mensajes originales?\n\nPerderás ' + (editados + extra) + ' de los tuyos.')) return;
-    escribirMensajes(FRASES_FABRICA.slice());
-    pintarMensajes();
+    if(!confirm('¿Volver a los ' + s.fabrica.length +
+      ' originales?\n\nPerderás ' + (editados + extra) + ' de los tuyos.')) return;
+    escribirLista(s.clave, s.fabrica.slice());
+    pintar();
+  }
+
+  function cambiarPestana(cual){
+    SEC_ACTIVA = cual;
+    for(var k in SEC){
+      var s = SEC[k];
+      var activa = (k === cual);
+      s.sec.style.display = activa ? 'flex' : 'none';
+      s.pest.className = activa ? 'pest activa' : 'pest';
+    }
+    pintar();
   }
 
   function avisar(texto){
@@ -926,23 +1075,32 @@ h1{
   }
 
   function abrirCfg(){
-    pintarMensajes();
+    cambiarPestana(SEC_ACTIVA);
     elCfg.style.display = 'block';
     pausaCfg = corriendo;
     parar();
-    elNuevo.value = '';
+    SEC.msg.nuevo.value = '';
+    SEC.aviso.nuevo.value = '';
     window.scrollTo(0, 0);
     elCfg.scrollTop = 0;
   }
 
   function cerrarCfg(){
     elCfg.style.display = 'none';
-    FRASES = leerMensajes() || FRASES_FABRICA.slice();
+    FRASES = leerLista(CLAVE_MSG) || FRASES_FABRICA.slice();
+    AVISOS = leerLista(CLAVE_AVISO) || AVISOS_FABRICA.slice();
     if(pausaCfg) correr();
     pausaCfg = false;
   }
 
+  function escribiendo(e){
+    var t = e.target;
+    if(!t) return false;
+    return t.tagName === 'INPUT' || t.tagName === 'TEXTAREA';
+  }
+
   document.addEventListener('keydown', function(e){
+    if(escribiendo(e)) return;
     if(e.code === 'Space'){
       e.preventDefault();
       if(corriendo){ parar(); } else { correr(); }
@@ -955,11 +1113,16 @@ h1{
     if(elCfg.style.display === 'none'){ abrirCfg(); } else { cerrarCfg(); }
   };
   document.getElementById('cerrarCfg').onclick = cerrarCfg;
-  document.getElementById('agregar').onclick = agregarMensaje;
-  document.getElementById('fabrica').onclick = volverAlOriginal;
-  elNuevo.onkeydown = function(e){
-    if(e.key === 'Enter'){ e.preventDefault(); agregarMensaje(); }
-  };
+  for(var llave in SEC){
+    (function(s, k){
+      s.agregar.onclick = function(){ agregar(s); };
+      s.fabricaBtn.onclick = function(){ volverAlOriginal(s); };
+      s.pest.onclick = function(){ cambiarPestana(k); };
+      s.nuevo.onkeydown = function(e){
+        if(e.key === 'Enter'){ e.preventDefault(); agregar(s); }
+      };
+    })(SEC[llave], llave);
+  }
 
   document.addEventListener('visibilitychange', function(){
     if(document.hidden){
@@ -989,7 +1152,9 @@ h1{
     } else {
       FRASES = FRASES_FABRICA.slice();
     }
-    elNuevo.maxLength = MAX_CHARS;
+    SEC.msg.nuevo.maxLength = MAX_CHARS;
+    SEC.aviso.nuevo.maxLength = MAX_CHARS_AVISO;
+    pista.textContent = PISTA;
     medir();
     requestAnimationFrame(paso);
     cargar().then(arrancar, arrancar);
