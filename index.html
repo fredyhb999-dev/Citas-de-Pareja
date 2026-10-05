@@ -728,7 +728,39 @@ async function iniciar(){
     verPaso(0);
     return;
   }
+  if(await volverSiInvitadoSinPartida(db)) return;
   entrar(db);
+}
+
+// Al abrir la app como INVITADO: si NO hay una partida activa en la que
+// participes, vuelve EN SILENCIO a tu propio espacio. Asi el telefono del
+// invitado no se queda con la configuracion ni los datos del anfitrion.
+// Devuelve true si restauro (y recargo) el espacio propio.
+async function volverSiInvitadoSinPartida(db){
+  try{
+    if(!hayRespaldo()) return false;
+    let yo = null;
+    try{ yo = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null"); }catch(e){}
+    if(!yo || !yo.invitado) return false;
+    let leido = false, hayPartida = false;
+    try{
+      const sd = await conTiempo(getDoc(doc(db, "sesionEncuentros", "actual")), 8000);
+      const d = sd.exists() ? sd.data() : null;
+      hayPartida = !!(d && d.activa && Array.isArray(d.cabezas) && d.cabezas.some(c=>c.id === yo.id));
+      leido = true;
+    }catch(e){}
+    // Si no se pudo confirmar (por ejemplo sin conexion), se queda como invitado.
+    if(!leido || hayPartida) return false;
+    // Quitar al invitado de los usuarios del anfitrion (mejor esfuerzo).
+    try{
+      const ref = doc(db, "config", "ajustes");
+      const snap = await conTiempo(getDoc(ref), 8000);
+      const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+      await conTiempo(setDoc(ref, { usuarios: arr.filter(v=>v.id !== yo.id), actualizadoEn: serverTimestamp() }, { merge: true }), 8000);
+    }catch(e){}
+    if(restaurarSesion()){ location.reload(); return true; }
+  }catch(e){}
+  return false;
 }
 
 // ---------- elección inicial ----------
