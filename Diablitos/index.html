@@ -90,9 +90,8 @@ h1{
   font-size:.8rem;
   background:linear-gradient(180deg,transparent,rgba(18,14,28,.92));
   pointer-events:none;
-  transition:opacity .5s;
 }
-.pista.gone{opacity:0;}
+.pista.gone{visibility:hidden;}
 .pista.grande{
   color:var(--coral);
   font-family:'Chakra Petch',sans-serif;
@@ -218,8 +217,8 @@ h1{
   text-transform:uppercase;
 }
 .tituloCfg{
-  display:inline-block;
-  margin:2px 0 0;
+  width:fit-content;
+  margin:2px auto 0;
   text-align:center;
   font-family:'Chakra Petch',sans-serif;
   font-weight:700;
@@ -372,7 +371,7 @@ h1{
   </header>
 
   <div class="campo" id="campo">
-    <div class="pista" id="pista">Se escapan si no los tocas</div>
+    <div class="pista gone" id="pista"></div>
   </div>
 
   <div class="pantalla" id="pantallaCfg" style="display:none">
@@ -458,7 +457,6 @@ h1{
     '¡Mitad del camino, sigue fuerte!',
     '¡Cada vez mejor, crack!'
   ];
-  var PISTA = 'Se escapan si no los tocas';
   var avisoTimer = null;
   var TAQUITOS = [];
   var LISTAS = [];
@@ -547,7 +545,7 @@ h1{
     pista.classList.add('grande');
     if(avisoTimer) clearTimeout(avisoTimer);
     avisoTimer = setTimeout(function(){
-      pista.textContent = PISTA;
+      pista.textContent = '';
       pista.classList.remove('grande');
       pista.classList.add('gone');
     }, 5000);
@@ -774,10 +772,6 @@ h1{
     burbuja(px, py, '+1');
     decir(d, px, py);
 
-    if(!pista.classList.contains('grande')){
-      if(!pista.classList.contains('gone')) pista.classList.add('gone');
-    }
-
     TOQUES++;
     if(TOQUES % AVISO_CADA === 0) mostrarAviso();
 
@@ -908,7 +902,8 @@ h1{
       var b = TAQUITOS.pop();
       if(b.parentNode) b.parentNode.removeChild(b);
     }
-    pista.classList.remove('gone');
+    pista.classList.add('gone');
+    pista.classList.remove('grande');
     medir();
     crear(); crear(); crear(); crear();
   }
@@ -1154,11 +1149,10 @@ h1{
     }
     SEC.msg.nuevo.maxLength = MAX_CHARS;
     SEC.aviso.nuevo.maxLength = MAX_CHARS_AVISO;
-    pista.textContent = PISTA;
     medir();
     requestAnimationFrame(paso);
     cargar().then(arrancar, arrancar);
-    setTimeout(arrancar, 1200);
+    setTimeout(arrancar, 8000);
   }catch(e){
     campo.insertAdjacentHTML('beforeend',
       '<p style="padding:20px;color:#ff5c7a">No se pudo iniciar: ' +
