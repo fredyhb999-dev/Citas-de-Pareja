@@ -487,7 +487,9 @@ function escucharSesion(){
         }else{
           // Si la partida TERMINO (no pausada, no descartada) y soy invitado,
           // se le avisa; al aceptar sale del modo invitado.
-          if(d && d.terminada && esInvitadoFlag && soyCabeza(d) && !finMostrado){
+          // Solo si ESTABA jugando. Asi una partida ya terminada (vieja) no
+          // vuelve a sacar al invitado al abrir la pagina.
+          if(d && d.terminada && jugando && esInvitadoFlag && soyCabeza(d) && !finMostrado){
             finMostrado = true;
             jugando = false;
             try{
