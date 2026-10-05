@@ -1075,7 +1075,8 @@ document.getElementById("invEntrar").onclick = async ()=>{
           try{ app2 = getApp("invitado"); }catch(e){ app2 = initializeApp(fb, "invitado"); }
           dbInvitado = getFirestore(app2);
           await conTiempo(getDoc(doc(dbInvitado, "config", "ajustes")), 10000);
-          const us = await usuariosEfectivos(dbInvitado);
+          // Solo perfiles base (admin y pareja): nunca invitados de invitados.
+          const us = (await usuariosEfectivos(dbInvitado)).filter(u => !u.invitado);
           const sel = document.getElementById("invConQuien");
           sel.innerHTML = "";
           us.forEach(u=>{
