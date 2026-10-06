@@ -24,7 +24,20 @@ const COLECCION_SOL = "solicitudes";
 // La lista no crece sola: hay un documento por (pareja + producto + correo),
 // así que traerla completa son unas decenas de documentos, no miles.
 
-// ---------- proyecto y conexión ----------
+// ---------- quién está mirando ----------
+
+// Mientras la identidad diga "invitado", la configuración del teléfono es la
+// del anfitrión. El catálogo que se escucha entonces es el DE ÉL, y guardar
+// ahí sus códigos de acceso sería poner el producto comercial en un teléfono
+// prestado. Mientras seas invitado no se guarda ningún código nuevo.
+function soyInvitadoAhora(){
+  try{
+    const yo = JSON.parse(localStorage.getItem("appPareja_quienSoy") || "null");
+    return !!(yo && yo.invitado);
+  }catch(e){ return false; }
+}
+
+// ---------- proyectos y conexión ----------
 
 // ProjectId de la pareja. Se lee en cada llamada y no al cargar el módulo
 // porque el Asistente puede escribir el config en localStorage después de
@@ -195,6 +208,10 @@ export function escucharCatalogo(hooks){
       try{ snap = await getDocs(consultaSolicitudes()); }
       catch(e){ return; }
       const docs = ordenarPorFecha(snap.docs);
+      // De visita: se revisa lo del anfitrión pero NO se guarda nada suyo en
+      // este teléfono. Al salir de invitado, restaurar() deja las licencias
+      // como estaban, así que aquí tampoco se borra nada propio.
+      const deVisita = soyInvitadoAhora();
 
       for(const d of docs){
         const s = d.data();
@@ -214,6 +231,7 @@ export function escucharCatalogo(hooks){
         }
 
         // Aprobado: guardar el código si no hay uno válido para ese item.
+        if(deVisita) continue;
         if(s.estado !== "aprobado" || !s.codigo) continue;
         const pay = await verificarCodigo(s.codigo);
         if(pay && pay.para === miProyecto()

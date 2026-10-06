@@ -374,6 +374,25 @@ h1{
     <div class="pista gone" id="pista"></div>
   </div>
 
+  <!-- ============ INVITACIONES (solo para invitados) ============ -->
+  <!-- La sala de espera. No tiene salida: cuando el invitado entra a un juego
+       se queda ahi hasta que la partida acaba, y entonces se le devuelve su
+       propia base. Este bloque va aparte del juego: si la red falla, el juego
+       de diablitos sigue funcionando igual. -->
+  <div id="salaInv" style="display:none;margin-top:10px;width:100%;max-width:560px;">
+    <div id="salaEsperando" style="background:rgba(32,25,51,.8);border:1px solid var(--borde);border-radius:14px;padding:11px 14px;text-align:center;color:var(--apagado);font-size:.86rem;">
+      Esperando Invitación…
+    </div>
+    <div id="salaCarta" style="display:none;background:var(--tarjeta);border:1px solid var(--teal);border-radius:16px;padding:14px;align-items:center;gap:12px;">
+      <span id="salaIcono" style="font-size:1.8rem;line-height:1;">🎲</span>
+      <span style="flex:1;min-width:0;">
+        <span id="salaTitulo" style="display:block;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1rem;color:var(--texto);"></span>
+        <span id="salaQuien" style="display:block;font-size:.78rem;color:var(--apagado);margin-top:2px;"></span>
+      </span>
+      <button id="salaIr" style="flex:0 0 auto;border:none;border-radius:12px;padding:11px 16px;cursor:pointer;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.9rem;color:#1a1024;background:linear-gradient(90deg,var(--coral),var(--teal));">Entrar →</button>
+    </div>
+  </div>
+
   <div class="pantalla" id="pantallaCfg" style="display:none">
     <button id="cerrarCfg" class="volver">‹ Volver</button>
     <div class="col">
@@ -485,8 +504,10 @@ h1{
   }
 
   function esModoInvitado(){
+    // SOLO la identidad cuenta. Tener la copia de seguridad significa que hay
+    // algo que restaurar, no que ya se entro como invitado: preguntar por la
+    // copia escondia el engrane desde el momento en que se abria el escaner.
     try{
-      if(localStorage.getItem('invitado_respaldo')) return true;
       var yo = null;
       try{ yo = JSON.parse(localStorage.getItem('appPareja_quienSoy') || 'null'); }catch(e){}
       return !!(yo && yo.invitado);
@@ -1159,6 +1180,60 @@ h1{
       String(e && e.message ? e.message : e) + '</p>');
   }
 })();
+</script>
+
+<!-- ============ SALA DE ESPERA: invitaciones a partidas ============ -->
+<!-- Aparte del juego, a proposito. Si Firebase no responde, esta seccion se
+     queda callada y los diablitos siguen jugando: no hay forma de que se rompa. -->
+<script type="module">
+import { soyInvitado, vigilarInvitaciones, salirDeInvitado } from "../invitado.js";
+
+const panel = document.getElementById("salaInv");
+const esperando = document.getElementById("salaEsperando");
+const carta = document.getElementById("salaCarta");
+const btnIr = document.getElementById("salaIr");
+let destino = "";
+// Si me invitaron y luego la invitacion desaparece, la partida se acabo.
+let huboInvitacion = false;
+
+function pintar(mias){
+  if(!mias || !mias.length){
+    panel.style.display = "block";
+    carta.style.display = "none";
+    esperando.style.display = "block";
+    if(huboInvitacion){
+      // Se acabo la partida: se le devuelve su base, sin preguntar.
+      huboInvitacion = false;
+      salirDeInvitado().then(()=>{ location.replace("../"); });
+    }
+    return;
+  }
+  huboInvitacion = true;
+  const v = mias[0];
+  destino = v.ruta || "";
+  panel.style.display = "block";
+  esperando.style.display = "none";
+  carta.style.display = "flex";
+  document.getElementById("salaIcono").textContent = v.icono || "🎲";
+  document.getElementById("salaTitulo").textContent = v.titulo || "Hay una partida";
+  document.getElementById("salaQuien").textContent = (v.hostNombre || "Tu anfitrión") + " te está esperando";
+}
+
+function arrancar(){
+  try{
+    if(!soyInvitado()) return;          // no eres invitado: la sala no se muestra
+    panel.style.display = "block";
+    esperando.style.display = "block";
+    vigilarInvitaciones({ cambio: pintar });
+  }catch(e){}
+}
+
+btnIr.addEventListener("click", ()=>{
+  if(!destino) return;
+  location.href = "../" + destino + "/";
+});
+
+arrancar();
 </script>
 </body>
 </html>

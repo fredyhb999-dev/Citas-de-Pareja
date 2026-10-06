@@ -236,6 +236,8 @@
     <div id="lectorInv" style="display:none;width:100%;max-width:340px;"></div>
     <div id="invMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:4px 0 12px;"></div>
     <div id="invForm" style="display:none;width:100%;">
+      <p id="invSolicitando" style="font-family:'Chakra Petch',sans-serif;font-size:1.05rem;font-weight:700;color:var(--teal);text-align:center;margin:0 0 4px;letter-spacing:.04em;">Solicitando Acceso</p>
+      <p style="font-size:.78rem;color:var(--fg-muted);text-align:center;margin:0 0 14px;">Completa los dos datos para entrar. Si te sales, se restaura tu base.</p>
       <label for="invNombre" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:0 0 6px;">Escribe tu nombre</label>
       <input type="text" id="invNombre" placeholder="Ej. Tío Beto" maxlength="30" autocomplete="off" style="font-size:1rem;padding:16px;">
       <label for="invConQuien" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:4px 0 6px;">Selecciona de quién eres invitado (elige uno)</label>
@@ -261,13 +263,6 @@
       <input type="text" id="invNuevo" placeholder="Nuevo invitado" maxlength="30" autocomplete="off" style="margin-bottom:0;">
       <button class="btnPri" id="invAgregar" style="width:auto;margin-bottom:0;padding:14px 18px;">＋</button>
     </div>
-  </div>
-</div>
-
-<div id="modalInvOk" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:60;align-items:center;justify-content:center;padding:20px;">
-  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:22px 20px;text-align:center;">
-    <div id="modalInvTxt" style="font-size:.95rem;line-height:1.5;"></div>
-    <button class="btnPri" id="modalInvBtn" style="margin-top:14px;">Aceptar</button>
   </div>
 </div>
 
@@ -373,8 +368,12 @@ import {
 } from "./config.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, graciasDisponibles, escucharCatalogo } from "./acceso.js";
+// Modo invitado: la regla de "cuándo eres invitado de verdad" vive aquí.
+import {
+  CLAVE_BACKUP, CLAVE_LOCAL, hayRespaldo, soyInvitado, quedasteMedioCamino,
+  respaldar, restaurar, recuperarMedioCamino, salirDeInvitado, dbActual, miIdInvitado
+} from "./invitado.js";
 
-const CLAVE_LOCAL = "appPareja_quienSoy";
 const asistenteEl = document.getElementById("asistente");
 const pantallaEl = document.getElementById("pantallaUsuario");
 const listaEl = document.getElementById("listaUsuarios");
@@ -705,6 +704,10 @@ async function entrar(db){
 
 async function iniciar(){
   document.getElementById("avisoConn").style.display = "none";
+  // Si quedó a medio camino (escaneó un QR pero nunca se registró), se
+  // devuelve todo lo suyo ANTES de conectarse a cualquier base. Sin esto, el
+  // teléfono abriría la base de otra persona con la identidad de esta.
+  try{ if(recuperarMedioCamino()) return; }catch(e){}
   const g = leerConfigGuardada();
   let db = null, ok = false, hayConfig = !!(g && g.firebase);
   if(hayConfig){
@@ -738,27 +741,21 @@ async function iniciar(){
 // Devuelve true si restauro (y recargo) el espacio propio.
 async function volverSiInvitadoSinPartida(db){
   try{
-    if(!hayRespaldo()) return false;
-    let yo = null;
-    try{ yo = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null"); }catch(e){}
-    if(!yo || !yo.invitado) return false;
+    if(!soyInvitado()) return false;
     let leido = false, hayPartida = false;
     try{
-      const sd = await conTiempo(getDoc(doc(db, "sesionEncuentros", "actual")), 8000);
+      const sd = await conTiempo(getDoc(doc(db, "sesionEncuentros/actual")), 8000);
       const d = sd.exists() ? sd.data() : null;
-      hayPartida = !!(d && d.activa && Array.isArray(d.cabezas) && d.cabezas.some(c=>c.id === yo.id));
+      hayPartida = !!(d && d.activa && Array.isArray(d.cabezas) && d.cabezas.some(c=>c.id === miIdInvitado()));
       leido = true;
     }catch(e){}
     // Si no se pudo confirmar (por ejemplo sin conexion), se queda como invitado.
     if(!leido || hayPartida) return false;
-    // Quitar al invitado de los usuarios del anfitrion (mejor esfuerzo).
-    try{
-      const ref = doc(db, "config", "ajustes");
-      const snap = await conTiempo(getDoc(ref), 8000);
-      const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
-      await conTiempo(setDoc(ref, { usuarios: arr.filter(v=>v.id !== yo.id), actualizadoEn: serverTimestamp() }, { merge: true }), 8000);
-    }catch(e){}
-    if(restaurarSesion()){ location.reload(); return true; }
+    // salirDeInvitado() lo saca de la lista de usuarios del anfitrion y
+    // devuelve lo suyo (ver invitado.js).
+    await salirDeInvitado(db);
+    location.reload();
+    return true;
   }catch(e){}
   return false;
 }
@@ -847,45 +844,23 @@ document.getElementById("btnExtrasVolver").onclick = ()=>{
   document.getElementById("gearBtn").style.display = "";
 };
 // ---------- modo invitado ----------
-const CLAVE_BACKUP = "invitado_respaldo";
-function hayRespaldo(){
-  try{ return !!localStorage.getItem(CLAVE_BACKUP); }catch(e){ return false; }
-}
-function respaldarSesion(){
-  try{
-    const snap = {};
-    for(let i = 0; i < localStorage.length; i++){
-      const k = localStorage.key(i);
-      if(k === "taquilla_priv" || k === CLAVE_BACKUP) continue;
-      snap[k] = localStorage.getItem(k);
-    }
-    localStorage.setItem(CLAVE_BACKUP, JSON.stringify(snap));
-  }catch(e){}
-}
-function restaurarSesion(){
-  try{
-    const snap = JSON.parse(localStorage.getItem(CLAVE_BACKUP) || "null");
-    if(!snap) return false;
-    const priv = localStorage.getItem("taquilla_priv");
-    localStorage.clear();
-    if(priv) localStorage.setItem("taquilla_priv", priv);
-    Object.keys(snap).forEach(k=>{ try{ localStorage.setItem(k, snap[k]); }catch(e){} });
-    localStorage.removeItem(CLAVE_BACKUP);
-    return true;
-  }catch(e){ return false; }
-}
+// Las reglas viven en ./invitado.js. Aquí solo se ajustan las pantallas.
 const invEl = document.getElementById("pantallaInvitado");
 function invMsg(t){ document.getElementById("invMsg").textContent = t || ""; }
+// Tres estados, y solo uno cuenta como "ya entraste":
+//   1) nada            -> la opción normal
+//   2) escaneó, sin registrar -> "Solicitando Acceso" (todavía NO eres invitado)
+//   3) te registró    -> "Estás de visita" + botón para salir
 function invRefrescar(){
-  document.getElementById("invSalir").style.display = hayRespaldo() ? "" : "none";
+  const soy = soyInvitado();
+  document.getElementById("invSalir").style.display = soy ? "" : "none";
   try{
-    document.getElementById("invEstado").textContent = hayRespaldo()
+    document.getElementById("invEstado").textContent = soy
       ? "Estás de visita. Al salir vuelves a tu base."
-      : "Entra a otra base como invitado o vuelve a la tuya.";
+      : (hayRespaldo()
+          ? "Solicitando Acceso"
+          : "Entra a otra base como invitado o vuelve a la tuya.");
   }catch(e){}
-}
-function dbActual(){
-  try{ return getFirestore(getApp()); }catch(e){ return null; }
 }
 async function pintarInvUsuarios(){
   const box = document.getElementById("invUsuarios");
@@ -991,19 +966,33 @@ function invVer(cual){
 }
 function invModoScan(on){
   document.getElementById("invEntrar").style.display = on ? "none" : "";
-  document.getElementById("invSalir").style.display = on ? "none" : (hayRespaldo() ? "" : "none");
+  document.getElementById("invSalir").style.display = on ? "none" : (soyInvitado() ? "" : "none");
   document.getElementById("invVinc").style.display = on ? "none" : "";
   if(!on){
     document.getElementById("invForm").style.display = "none";
     document.getElementById("lectorInv").style.display = "none";
   }
 }
-document.getElementById("invBackDeInv").onclick = async ()=>{
+// Si se sale antes de registrarse, todo vuelve a como estaba y sin preguntar.
+// Sin esto el teléfono se quedaría apuntando a la base de otra persona.
+async function salirSinHaberEntrado(){
   await detenerScanInv();
+  if(!quedasteMedioCamino()) return false;
+  restaurar();
+  location.reload();
+  return true;
+}
+document.getElementById("invBackDeInv").onclick = async ()=>{
+  if(await salirSinHaberEntrado()) return;
   invModoScan(false);
   invVer(null);
+  invRefrescar();
 };
-document.getElementById("invBackDeUsu").onclick = ()=>{ invVer(null); };
+document.getElementById("invBackDeUsu").onclick = async ()=>{
+  if(await salirSinHaberEntrado()) return;
+  invVer(null);
+  invRefrescar();
+};
 document.getElementById("gearBtn").onclick = ()=>{
   menuEl.style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
@@ -1016,6 +1005,7 @@ document.getElementById("gearBtn").onclick = ()=>{
 document.getElementById("invCardInv").onclick = ()=>{ invVer("inv"); };
 document.getElementById("invCardUsu").onclick = ()=>{ invVer("usu"); pintarInvUsuarios(); };
 document.getElementById("invVolverTop").onclick = async ()=>{
+  if(await salirSinHaberEntrado()) return;
   await detenerScanInv();
   invEl.style.display = "none";
   menuEl.style.display = "flex";
@@ -1023,21 +1013,10 @@ document.getElementById("invVolverTop").onclick = async ()=>{
   document.getElementById("gearBtn").style.display = "";
 };
 document.getElementById("invSalir").onclick = async ()=>{
-  if(!hayRespaldo()) return;
+  if(!soyInvitado()) return;
   if(!confirm("¿Salir de invitado y volver a tu base? También te borro de sus usuarios.")) return;
-  try{
-    let yo = null;
-    try{ yo = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null"); }catch(e){}
-    const db = dbActual();
-    if(db && yo && yo.invitado){
-      const ref = doc(db, "config", "ajustes");
-      const snap = await conTiempo(getDoc(ref), 10000);
-      const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
-      await conTiempo(setDoc(ref, { usuarios: arr.filter(v=>v.id !== yo.id), actualizadoEn: serverTimestamp() }, { merge: true }), 10000);
-    }
-  }catch(e){}
-  restaurarSesion();
-  location.reload();
+  await salirDeInvitado(dbActual());
+  location.replace("./");
 };
 let scanInv = null;
 async function detenerScanInv(){
@@ -1049,8 +1028,9 @@ async function detenerScanInv(){
 let dbInvitado = null;
 document.getElementById("invEntrar").onclick = async ()=>{
   invMsg("");
-  respaldarSesion();
-  invRefrescar();
+  // OJO: aquí NO se guarda nada. Todavía no eres invitado: solo se abre
+  // el escáner. La copia se toma al escanear un QR válido, porque es el
+  // momento en que vamos a cambiar la base y necesitamos poder volver atrás.
   invModoScan(true);
   const box = document.getElementById("lectorInv");
   await detenerScanInv();
@@ -1070,6 +1050,9 @@ document.getElementById("invEntrar").onclick = async ()=>{
           await detenerScanInv();
           const cfg = { firebase: fb };
           if(data.telegram && data.telegram.token && data.telegram.chat) cfg.telegram = data.telegram;
+          // Último momento antes de cambiar la base: aquí se guarda la copia
+          // para poder devolver todo si el invitado se sale antes de registrarse.
+          respaldar();
           guardarConfig(cfg);
           let app2;
           try{ app2 = getApp("invitado"); }catch(e){ app2 = initializeApp(fb, "invitado"); }
@@ -1089,6 +1072,7 @@ document.getElementById("invEntrar").onclick = async ()=>{
           document.getElementById("invConQuien").onchange();
           document.getElementById("invNombre").focus();
           invMsg("");
+          invRefrescar();
         }catch(e){
           invMsg("No se pudo leer. Intenta de nuevo.");
         }
@@ -1108,7 +1092,6 @@ document.getElementById("invConfirmar").onclick = async (e)=>{
   const nombre = document.getElementById("invNombre").value.trim();
   const sel = document.getElementById("invConQuien");
   const conQuien = sel.value;
-  const conNombre = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : "";
   if(!nombre){ invMsg("Escribe tu nombre."); return; }
   if(!dbInvitado){ invMsg("Lee primero un código QR."); return; }
   invMsg("");
@@ -1126,15 +1109,17 @@ document.getElementById("invConfirmar").onclick = async (e)=>{
     guardarUsuariosLocal(arr);
     localStorage.setItem(CLAVE_LOCAL, JSON.stringify(yo));
     invMsg("");
-    document.getElementById("modalInvTxt").textContent = "¡Listo " + nombre + "! Ya entraste como invitado de " + conNombre + ".";
-    document.getElementById("modalInvOk").style.display = "flex";
+    // Ya quedo registrado: se va directo a la SALA DE ESPERA. Alli espera a
+    // que le llegue la invitacion de cualquier juego con invitados.
+    // La sala no tiene salida: se sale cuando la partida acaba y le devuelven
+    // su base. Se usa replace y no href para que el boton atras del celular no
+    // lo devuelva al formulario de registro de otra persona.
+    location.replace("Diablitos/");
   }catch(e){
     invMsg("No se pudo registrar. Revisa tu conexión.");
     btn.disabled = false;
   }
 };
-// Tras entrar como invitado, va directo a Encuentros Guiados.
-document.getElementById("modalInvBtn").onclick = ()=>{ location.href = "Encuentros/"; };
 iniciar();
 </script>
 

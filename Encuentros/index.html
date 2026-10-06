@@ -22,11 +22,6 @@
     padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
   .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
     font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
-  #btnAtras{
-    position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
-    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
-    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
-  }
   .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
     background:var(--card); color:var(--fg); padding:13px 14px; font-size:.95rem;
     font-family:'Inter',sans-serif; margin-bottom:14px; }
@@ -77,8 +72,7 @@
 </head>
 <body>
 
-<a class="back" href="../index.html">← Inicio</a>
-<button id="btnAtras" aria-label="Volver">← Lista</button>
+<a class="back" id="lnkInicio" href="../index.html">← Inicio</a>
 
 <div class="eyebrow">Encuentros Guiados</div>
 
@@ -124,6 +118,7 @@
   <div id="actividadAhora"></div>
   <div id="finMsg" style="display:none">¡Encuentro completo! 🔥</div>
   <button class="btnPri" id="btnSig">Siguiente →</button>
+  <button class="btnSec" id="btnSaltar">Saltar turno</button>
   <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
   <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
 </div>
@@ -202,6 +197,8 @@ import { resolverFirebase, cargarUsuarios } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
+// Invitados: este juego solo publica y retira su invitación. No sabe nada de la sala.
+import { publicarInvitacion, retirarInvitacion } from "../invitado.js";
 
 const NIVELES = [
   { id: "basico", nombre: "Básico" },
@@ -248,9 +245,14 @@ document.getElementById("btnPausaOk").onclick = ()=>{
   cerrarModal("modalPausa");
   entrar();
 };
-// Fin de partida para un INVITADO: al aceptar, sale del modo invitado
-// (mismo efecto que "Salir modo invitado" del inicio) y vuelve a su espacio.
-document.getElementById("btnFinOk").onclick = async ()=>{ await salirModoInvitado(); };
+// Fin de partida: al invitado lo saca del modo invitado (mismo efecto que
+// "Salir modo invitado" del inicio); al anfitrion y a la pareja solo los
+// regresa a la lista, sin tocar nada de su almacenamiento.
+document.getElementById("btnFinOk").onclick = async ()=>{
+  if(esInvitadoFlag){ await salirModoInvitado(); return; }
+  cerrarModal("modalFin");
+  entrar();
+};
 async function salirModoInvitado(){
   // 1) Quitar al invitado de los usuarios del anfitrion.
   try{
@@ -362,6 +364,9 @@ let pendienteEsMulti = false;
 let pendienteActividad = null;
 let finMostrado = false;
 let pedidosTomas = null;
+// Se pone true cuando la ultima ronda acaba la partida sola, para avisarle a
+// la sala despues de la transaccion (dentro de ella no se puede).
+let terminoLaPartida = false;
 
 function cargarEnMemoria(d){
   cabezas = Array.isArray(d.cabezas) ? d.cabezas : [];
@@ -373,6 +378,40 @@ function cargarEnMemoria(d){
 }
 function soyCabeza(d){
   return !!(d && Array.isArray(d.cabezas) && d.cabezas.some(c=>c.id === miId));
+}
+// Si alguien dejo de estar en la app (por ejemplo un invitado que salio del
+// modo invitado), sigue apareciendo en el orden de turnos y el juego se queda
+// esperando a alguien que ya no esta: la partida se congela y no tiene salida.
+// Aqui se limpia: se saca a los que ya no estan del turno y se sigue con los
+// que quedan. Si le tocaba a uno de ellos, ahora le toca al siguiente que quede.
+function sanearSesion(d){
+  if(!d || !Array.isArray(d.cabezas) || !Array.isArray(d.orden) || !d.orden.length) return d;
+  const validos = new Set(usuariosLista.map(u=>u && u.id).filter(Boolean));
+  const fuera = d.cabezas.filter(c=>!validos.has(c.id));
+  if(!fuera.length) return d;
+  const ordenNuevo = d.orden.filter(id=>validos.has(id));
+  if(!ordenNuevo.length) return d;
+  const turnoViejo = d.turno || 0;
+  let siguiente = null;
+  for(let i = turnoViejo; i < d.orden.length; i++){
+    if(validos.has(d.orden[i])){ siguiente = d.orden[i]; break; }
+  }
+  if(!siguiente) siguiente = ordenNuevo[0];
+  const turnoNuevo = Math.max(0, ordenNuevo.indexOf(siguiente));
+  d.cabezas = d.cabezas.filter(c=>validos.has(c.id));
+  d.orden = ordenNuevo;
+  d.turno = turnoNuevo;
+  // Las listas de los que se fueron tambien se borran del documento (merge
+  // con null = borrar el campo), para que no queden sus acciones ahi.
+  const borrarListas = {};
+  fuera.forEach(c=>{ borrarListas[c.id] = null; });
+  try{
+    setDoc(sesionRef(), {
+      cabezas: d.cabezas, orden: d.orden, turno: turnoNuevo,
+      listas: borrarListas, actualizadaEn: serverTimestamp()
+    }, { merge: true });
+  }catch(e){}
+  return d;
 }
 function nombreCabeza(id){
   const c = cabezas.find(x=>x.id === id) || (sesionActual && (sesionActual.cabezas || []).find(x=>x.id === id));
@@ -463,8 +502,11 @@ function escucharSesion(){
     sesionUnsub = onSnapshot(sesionRef(), (snap)=>{
       try{
         const d = snap.exists() ? snap.data() : null;
-        sesionActual = d;
         if(d && d.activa && soyCabeza(d)){
+          // Antes de mirar nada mas: si alguien ya no esta en la app, se lo
+          // quita del turno para que el juego no se quede esperando a nadie.
+          sanearSesion(d);
+          sesionActual = d;
           finMostrado = false;
           // Si el anfitrion PAUSO, los demas salen. El anfitrion si puede
           // retomar despues (la partida queda pendiente con pausada=true).
@@ -485,11 +527,12 @@ function escucharSesion(){
             document.getElementById("modalUnir").style.display = "flex";
           }
         }else{
-          // Si la partida TERMINO (no pausada, no descartada) y soy invitado,
-          // se le avisa; al aceptar sale del modo invitado.
-          // Solo si ESTABA jugando. Asi una partida ya terminada (vieja) no
-          // vuelve a sacar al invitado al abrir la pagina.
-          if(d && d.terminada && jugando && esInvitadoFlag && soyCabeza(d) && !finMostrado){
+          // Si la partida TERMINO (no pausada, no descartada) se avisa a TODOS
+          // los que estaban jugando: al invitado (que al aceptar sale del modo
+          // invitado), al anfitrion y a la pareja.
+          // Solo si ESTABAN jugando. Asi una partida ya terminada (vieja) no
+          // saca a nadie al abrir la pagina.
+          if(d && d.terminada && jugando && soyCabeza(d) && !finMostrado){
             finMostrado = true;
             jugando = false;
             try{
@@ -535,6 +578,7 @@ async function avanzarSesion(){
       }else{
         r++;
         if(r >= (d.largo || 0)){
+          terminoLaPartida = true;
           tx.update(ref, { activa: false, terminada: true, ronda: r, turno: 0, actualizadaEn: serverTimestamp() });
           return;
         }
@@ -545,26 +589,95 @@ async function avanzarSesion(){
     });
   }catch(e){}
 }
+// Cuando alguien se le cae la red o se le apaga el celular, sigue en el turno
+// y el juego lo espera para siempre. El anfitrion puede brincarselo.
+// Solo el anfitrion, y solo cuando el turno es de otra persona.
+async function saltarTurno(){
+  const d = sesionActual;
+  if(!d || !d.activa || d.hostUid !== miId){
+    alert("Solo el anfitrión puede saltar un turno.");
+    return;
+  }
+  const deQuien = nombreCabeza((d.orden || [])[d.turno || 0]);
+  if(d.orden[d.turno || 0] === miId){ pintarPaso(); return; }
+  if(!confirm("¿Saltar el turno de " + deQuien + "?\n\nEsa persona pierde su turno y el juego sigue con el siguiente.")) return;
+  try{
+    await runTransaction(db, async (tx)=>{
+      const ref = sesionRef();
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const s = snap.data();
+      if(!s.activa || s.hostUid !== miId) return;
+      if(!s.orden || !s.orden.length) return;
+      if(s.orden[s.turno || 0] === miId) return;
+      const lista = s.cabezas || [];
+      let r = s.ronda || 0, t = s.turno || 0, o = s.orden.slice();
+      if(t + 1 < lista.length){
+        t++;
+      }else{
+        r++;
+        if(r >= (s.largo || 0)){
+          tx.update(ref, { activa: false, terminada: true, ronda: r, turno: 0, actualizadaEn: serverTimestamp() });
+          return;
+        }
+        t = 0;
+        o = mezclar(lista.map(c=>c.id));
+      }
+      tx.update(ref, { ronda: r, turno: t, orden: o, actualizadaEn: serverTimestamp() });
+    });
+    // Si la partida se acabo sola, la sala debe enterarse para expulsar a los
+    // invitados que nunca llegaron a entrar.
+    if(terminoLaPartida){ terminoLaPartida = false; await retirarInvitacion(JUEGO_INV); }
+  }catch(e){}
+}
+// Cada juego anuncia su partida en un solo lugar (ver ../invitado.js). La
+// sala de espera lo escucha. Este juego no sabe nada de la sala: solo publica
+// y retira. Asi el siguiente juego con invitados no copia nada de esto.
+const JUEGO_INV = "encuentros";
+function anunciarInvitacion(sid, cabezas, hostNombre){
+  try{
+    publicarInvitacion({
+      juego: JUEGO_INV,
+      titulo: "Encuentros Guiados",
+      icono: "💫",
+      ruta: "Encuentros",
+      hostUid: miId,
+      hostNombre: hostNombre || "",
+      participantes: (cabezas || []).map(c=>c && c.id).filter(Boolean),
+      sid: sid || ""
+    });
+  }catch(e){}
+}
 async function cerrarSesion(){
   try{ await setDoc(sesionRef(), { activa: false, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+  // La partida ya no existe, asi que tampoco hay nada que invitar.
+  await retirarInvitacion(JUEGO_INV);
 }
 
 function ver(id, guardar){
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
   document.getElementById(id).classList.add("ver");
-  document.getElementById("btnAtras").style.display = (id === "vistaPlayer") ? "block" : "none";
+  // Nadie sale de la partida: durante el juego se ocultan las dos salidas
+  // automaticas (el enlace al inicio y el boton de lista). Quedan solo
+  // "Pausar y Salir" y "Terminar Partida".
+  try{ document.getElementById("lnkInicio").style.display = (id === "vistaPlayer") ? "none" : ""; }catch(e){}
   if(guardar !== false){ try{ history.pushState({ v: id }, ""); }catch(e){} }
   window.scrollTo(0, 0);
 }
+// El gesto de atras del celular tampoco saca de la partida: se devuelve al
+// estado del juego en vez de dejarlo en la pantalla anterior.
+let reponiendo = false;
 window.addEventListener("popstate", (e)=>{
-  const v = (e.state && e.state.v) || "vistaLista";
-  if(v === "vistaPlayer" && jugando){ ver("vistaPlayer", false); return; }
+  if(reponiendo){ reponiendo = false; return; }
+  const enJuego = jugando && document.getElementById("vistaPlayer").classList.contains("ver");
+  if(enJuego){
+    reponiendo = true;
+    try{ history.go(1); }catch(e){ reponiendo = false; }
+    return;
+  }
   entrar();
 });
 try{ history.replaceState({ v: "vistaLista" }, ""); }catch(e){}
-document.getElementById("btnAtras").onclick = ()=>{
-  if(esAdminFlag){ pintarLista("listaActs"); ver("vistaLista"); } else { ver("vistaEspera"); }
-};
 document.getElementById("btnEsperaRefrescar").onclick = ()=>{ entrar(); };
 
 // ---------- lista de actividades (banco compartido con Guiadas) ----------
@@ -813,19 +926,26 @@ function generarListas(cabezasIn, actsData, tomas){
   cabezasIn.forEach(c=>{ out[c.id] = []; });
   NIVELES.forEach(nv=>{
     const t = Math.max(0, tomas[nv.id] || 0);
+    if(!t) return;
     ["A", "B"].forEach(side=>{
       const hs = cabezasIn.filter(c=>c.lado === side);
+      if(!hs.length) return;
       const pool = poolNivel[nv.id][side];
       const combo = poolAll[side];
+      // Se reparte por posicion: en cada una TODOS los de este lado sacan del
+      // mismo nivel, para que el primero no se lleve el nivel entero. Cuando
+      // el nivel no alcanza para todos se repite una del mismo nivel antes de
+      // mezclar niveles distintos: asi el nivel que se pidio se respeta.
       let cur = 0, comboCur = 0;
-      hs.forEach(h=>{
-        for(let i = 0; i < t; i++){
+      for(let i = 0; i < t; i++){
+        hs.forEach(h=>{
           let item = null;
-          if(cur < pool.length) item = pool[cur++];
+          if(pool.length) item = pool[cur % pool.length];
           else if(combo.length) item = combo[(comboCur++) % combo.length];
+          cur++;
           if(item) out[h.id].push({ nivel: item.nivel, lado: side, texto: item.texto });
-        }
-      });
+        });
+      }
     });
   });
   return out;
@@ -887,6 +1007,8 @@ async function generarYIniciar(activities, tomas){
   if(!modoLocal){
     try{ await setDoc(sesionRef(), nueva); }
     catch(e){ try{ alert("No se pudo iniciar. Revisa conexión."); }catch(x){} }
+    // Anunciar la partida para que la sala de espera avise a los invitados.
+    anunciarInvitacion(sid, cabezasIn, nueva.hostNombre);
   }
   document.getElementById("plTitulo").textContent = "Encuentros Guiados";
   document.getElementById("btnSig").style.display = "";
@@ -901,12 +1023,14 @@ function mostrarBotonesAdmin(){
   const dsp = esAdminFlag ? "" : "none";
   try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
   try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
+  if(!esAdminFlag){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
 }
 function pintarPaso(){
   const total = largo;
   const elAct = document.getElementById("actividadAhora");
   const tag = document.getElementById("nivelTag");
   const btnSig = document.getElementById("btnSig");
+  const btnSaltar = document.getElementById("btnSaltar");
   const fin = document.getElementById("finMsg");
   const prog = document.getElementById("progreso");
   if(!jugando || ronda >= total || !orden.length){
@@ -915,6 +1039,7 @@ function pintarPaso(){
     btnSig.style.display = "none";
     fin.style.display = "block";
     mostrarBotonesAdmin();
+    try{ btnSaltar.style.display = "none"; }catch(e){}
     return;
   }
   fin.style.display = "none";
@@ -933,6 +1058,8 @@ function pintarPaso(){
     btnSig.style.opacity = "1";
     const ultimo = (ronda + 1 >= total) && (turno + 1 >= cabezas.length);
     btnSig.textContent = ultimo ? "Terminar 🔥" : "Siguiente →";
+    // Con el turno propio no hay nada que saltar.
+    try{ btnSaltar.style.display = "none"; }catch(e){}
   }else{
     elAct.textContent = "Turno de " + nombreCabeza(actualId) + "…";
     elAct.style.color = "var(--fg-muted)";
@@ -941,8 +1068,14 @@ function pintarPaso(){
     btnSig.disabled = true;
     btnSig.style.opacity = ".4";
     btnSig.textContent = "Espera tu turno";
+    // Brincar al que no esta es decision del anfitrion.
+    try{
+      btnSaltar.style.display = esAdminFlag ? "" : "none";
+      btnSaltar.textContent = "Saltar turno de " + nombreCabeza(actualId);
+    }catch(e){}
   }
 }
+try{ document.getElementById("btnSaltar").onclick = ()=>{ saltarTurno(); }; }catch(e){}
 document.getElementById("btnSig").onclick = async ()=>{
   if(ronda >= largo){ return; }
   if(!jugando) return;
@@ -967,6 +1100,8 @@ document.getElementById("btnTerminarPartida").onclick = async ()=>{
   jugando = false;
   if(!modoLocal){
     try{ await setDoc(sesionRef(), { activa: false, terminada: true, porAdmin: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+    // La sala se entera y expulsa a los que se quedaron esperando.
+    await retirarInvitacion(JUEGO_INV);
   }
   pintarPaso();
   entrar();
@@ -993,8 +1128,9 @@ document.getElementById("btnContinuar").onclick = async ()=>{
     const nsid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
     sidMostrado = nsid;
     await setDoc(sesionRef(), { sid: nsid, reanudada: true, activa: true, pausada: false, actualizadaEn: serverTimestamp() }, { merge: true });
+    anunciarInvitacion(nsid, (d && d.cabezas) || [], d && d.hostNombre);
   }catch(e){}
-  cargarEnMemoria(d);
+  cargarEnMemoria(sanearSesion(d));
   ver("vistaPlayer");
   pintarPaso();
 };
@@ -1027,17 +1163,39 @@ document.getElementById("btnUnirme").onclick = ()=>{
   if(!d || !d.activa || !soyCabeza(d)) return;
   jugando = true;
   modoLocal = false;
-  cargarEnMemoria(d);
+  cargarEnMemoria(sanearSesion(d));
   ver("vistaPlayer");
   pintarPaso();
 };
 document.getElementById("btnUnirNo").onclick = ()=>{ cerrarModal("modalUnir"); };
 
 // ---------- arranque ----------
+// Si a alguien se le quita de la app (o se borra) mientras hay partida en
+// curso, hay que recalcular el turno en el momento, no solo al retomar: asi la
+// partida sigue con los que quedan sin que nadie quede esperando a un fantasma.
+function escucharGrupo(){
+  try{
+    onSnapshot(doc(db, "config", "ajustes"), (snap)=>{
+      try{
+        const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+        if(!Array.isArray(arr) || !arr.length) return;
+        const antes = usuariosLista.map(u=>u && u.id).join(",");
+        usuariosLista = arr;
+        if(antes === arr.map(u=>u && u.id).join(",")) return;
+        if(sesionActual && sesionActual.activa && jugando){
+          sanearSesion(sesionActual);
+          cargarEnMemoria(sesionActual);
+          pintarPaso();
+        }
+      }catch(e){}
+    }, ()=>{});
+  }catch(e){}
+}
 (async ()=>{
   try{ await cargarIdentidad(); }catch(e){}
   try{ mostrarBotonesAdmin(); }catch(e){}
   try{ await sincronizarOficiales(); }catch(e){}
+  try{ escucharGrupo(); }catch(e){}
   try{ await entrar(); }
   catch(e){
     try{ console.error("Encuentros arranque:", e); }catch(x){}
