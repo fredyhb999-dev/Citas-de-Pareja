@@ -240,9 +240,13 @@ function mostrarGracia(){
 document.getElementById("btnGraciaOk").onclick = ()=>{
   document.getElementById("modalGracia").style.display = "none";
 };
-// Aviso de pausa: al aceptar, pasa a la pantalla de espera.
+// Aviso de pausa: el INVITADO vuelve a la SALA DE ESPERA. La partida esta
+// PAUSADA, no terminada, asi que no se le expulsa: la invitacion sigue viva y
+// desde la sala puede volver a entrar cuando el anfitrion la retome.
+// La pareja NO es invitada: se queda aqui en su pantalla de espera.
 document.getElementById("btnPausaOk").onclick = ()=>{
   cerrarModal("modalPausa");
+  if(esInvitadoFlag){ location.replace("../Diablitos/"); return; }
   entrar();
 };
 // Fin de partida: al invitado lo saca del modo invitado (mismo efecto que

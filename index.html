@@ -495,13 +495,21 @@ async function renderPacksDeVerdad(){
   boxX.innerHTML = "";
   btnJ.style.display = "none";
   btnX.style.display = "none";
-  let packs = [{ id: "guiadas", titulo: "Citas Guiadas", icono: "🗺️",
-    desc: "Niveles y secuencias paso a paso", ruta: "Guiadas", seccion: "experiencias" }];
+  // Los que van siempre van aqui, no en el catalogo. Los que NO llevan candado
+  // se marcan con libre:true y se muestran sin pedir acceso.
+  let packs = [
+    { id: "guiadas", titulo: "Citas Guiadas", icono: "🗺️",
+      desc: "Niveles y secuencias paso a paso", ruta: "Guiadas", seccion: "experiencias" },
+    { id: "diablitos", titulo: "Diablitos", icono: "👹",
+      desc: "La sala de espera: toca diablitos mientras llega tu juego",
+      ruta: "Diablitos", seccion: "juegos", libre: true }
+  ];
+  const FIJOS = ["guiadas", "diablitos"];
   try{
     const tdb = getFirestore(appTaq());
     const snap = await getDocs(collection(tdb, "packs"));
     snap.forEach(d=>{
-      if(d.id === "guiadas") return;
+      if(FIJOS.indexOf(d.id) >= 0) return;
       packs.push(Object.assign({ id: d.id }, d.data()));
     });
   }catch(e){}
@@ -528,7 +536,7 @@ async function renderPacksDeVerdad(){
         }
       }catch(e){}
     }
-    if(!ok && !gracia) continue;
+    if(!p.libre && !ok && !gracia) continue;
     if(p.oficial) continue;
     const card = tarjetaPack(p);
     if((p.seccion || "experiencias") === "juegos"){

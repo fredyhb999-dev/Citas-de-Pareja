@@ -8,7 +8,7 @@ contexto.
 Alcance: **corrección de lo que ya existía** + **un lugar común para las
 partidas con invitados**.
 
-Estado: **hecho y verificado con 21 pruebas automáticas. Pendiente de probar en
+Estado: **hecho y verificado con 22 pruebas automáticas. Pendiente de probar en
 el celular por Fredy. NO se ha subido todavía.**
 
 ---
@@ -252,6 +252,18 @@ base de la pareja, con las mismas reglas de siempre.
 | Eres invitado, con partida | Tarjeta con icono, título y "Anfitrión te está esperando" + botón **Entrar** |
 | La invitación desaparece | Expulsión automática y regreso a su propia base |
 
+**La sala es SOLO para invitados** (decisión de Fredy, oct-2026). La pareja no
+es invitada: no ve el panel ni entra aquí por su cuenta.
+
+**Al pausar el anfitrión** (quien ve el aviso de pausa):
+- **El invitado** va a la sala. La partida está PAUSADA, no terminada, así que
+  **no se le expulsa**: la invitación sigue viva y desde la sala puede volver a
+  entrar con "Entrar" cuando el anfitrión retome.
+- **La pareja** se queda en la pantalla de espera de Encuentros, que es suya.
+
+Al terminar la partida (no al pausar) la invitación se retira y el invitado sale
+solo, esté donde esté.
+
 ### 5.5 Lo importante: la sala NO puede romper el juego
 
 El bloque que escucha invitaciones va **aparte**, en un `<script type="module">`
@@ -261,6 +273,17 @@ propio. El juego de diablitos sigue siendo un `<script>` normal sin internet:
   queda callado y **el juego funciona exactamente igual que antes**.
 - No se le importó nada de Firebase al juego.
 
+### 5.6 Dónde aparece Diablitos en el menú
+
+**Fijo para todos, sin candado** (decisión de Fredy, oct-2026). No va por el
+catálogo: está escrito en `renderPacksDeVerdad()` con `libre: true`, que salta la
+comprobación de licencia. Así el submenú **🎮 Juegos** aparece siempre y
+Diablitos se ve sin pedir acceso.
+
+Los demás juegos siguen **armándose solos** desde el catálogo (`packs`), con su
+candado. `FIJOS` es la lista de los que no se leen del catálogo (`guiadas` y
+`diablitos`), para que no se dupliquen si algún día alguien los da de alta ahí.
+
 ---
 
 ## 6. Archivos tocados
@@ -268,9 +291,9 @@ propio. El juego de diablitos sigue siendo un `<script>` normal sin internet:
 | Archivo | Qué cambió |
 |---|---|
 | **`invitado.js`** | **Nuevo.** Un solo lugar para: cuándo eres invitado de verdad, copiar/restaurar, salir, y **publicar/retirar/vigilar invitaciones** |
-| `index.html` | Usa `invitado.js`; el modo invitado solo empieza al registrarse; "Solicitando Acceso"; salidas en silencio; recuperación al abrir; **el invitado registrado va a la sala** (antes a Encuentros) |
+| `index.html` | Usa `invitado.js`; el modo invitado solo empieza al registrarse; "Solicitando Acceso"; salidas en silencio; recuperación al abrir; **el invitado registrado va a la sala** (antes a Encuentros); **Diablitos fijo en el menú, sin candado** |
 | `acceso.js` | `soyInvitadoAhora()` + guarda en `escucharCatalogo` para no guardar códigos siendo invitado |
-| `Encuentros/index.html` | Secciones 3.2 a 3.6 + publicar/retirar invitación |
+| `Encuentros/index.html` | Secciones 3.2 a 3.6 + publicar/retirar invitación + al pausar, el invitado vuelve a la sala |
 | `Diablitos/index.html` | Panel de la sala (espera, tarjeta, entrada, expulsión) + `esModoInvitado()` corregido |
 
 Se borraron del inicio las copias de `hayRespaldo()` / `respaldarSesion()` /
@@ -287,10 +310,10 @@ Chrome headless**. No es "se ve bien", es la app corriendo de verdad.
 | Suite | Casos |
 |---|---|
 | **Encuentros** (12) | niveles · invitación · anfitrión · botón saltar · fin · invitación al invitado · pareja · pausa · fin con limpieza · se fue un invitado · multi · partida vieja · sin licencia |
-| **Inicio** (5) | nada · escaneo a medio camino · registro completo · recuperación al abrir · invitado ya registrado con códigos |
+| **Inicio** (6) | nada · escaneo a medio camino · registro completo · recuperación al abrir · invitado ya registrado con códigos · menú (Diablitos sin candado) |
 | **Sala** (4) | no eres invitado · invitado esperando · con invitación · expulsión al acabar |
 
-**21 casos, todos sin errores de JavaScript.**
+**22 casos, todos sin errores de JavaScript.**
 
 Lo que se comprobó de la sala, en orden:
 
@@ -315,18 +338,22 @@ el juego de diablitos   -> arranca en los 4 escenarios, con y sin internet
 3. Cuando le toque a tu pareja, sale "Saltar turno de [nombre]".
 4. Termina la última ronda: les llega el mensaje a ti y a tu pareja.
 5. Desde el ⚙️ borras a un invitado en pleno juego: el turno **se brinca solo**.
+6. **Pausa**: el invitado vuelve a la **sala**; tu pareja se queda en la pantalla de espera de Encuentros. Al retomar, el invitado entra otra vez desde la tarjeta de la sala.
+
+**Menú**
+7. En el inicio debe estar el botón **🎮 Juegos** y, dentro, **Diablitos** sin candado.
 
 **Modo invitado**
-6. ⚙️ → Invitados → "Entrar modo invitado" y **te sales sin escanear**: todo igual, sin rastro.
-7. Escanea un QR y te sales: **todo se restaura solo**.
-8. Escanea y **te registras**: **te manda directo a la sala** (sin ventana de "Listo" que aplastar), ves "Esperando Invitación…", y si abres el ⚙️ dice "Estás de visita" con su botón de salir.
-9. Con la partida en curso, **borra al invitado** desde el ⚙️: al volver a abrir la app se expulsa solo.
+8. ⚙️ → Invitados → "Entrar modo invitado" y **te sales sin escanear**: todo igual, sin rastro.
+9. Escanea un QR y te sales: **todo se restaura solo**.
+10. Escanea y **te registras**: **te manda directo a la sala** (sin ventana de "Listo" que aplastar), ves "Esperando Invitación…", y si abres el ⚙️ dice "Estás de visita" con su botón de salir.
+11. Con la partida en curso, **borra al invitado** desde el ⚙️: al volver a abrir la app se expulsa solo.
 
 **Sala (necesita dos teléfonos)**
-10. Teléfono A: entra como invitado, llega a Diablitos, ve "Esperando Invitación…".
-11. Teléfono B: anfitrión arma una partida en Encuentros.
-12. En A debe salir la tarjeta. Entrar. Jugar.
-13. Al terminar la partida, A debe salir solo del modo invitado y volver a su base.
+12. Teléfono A: entra como invitado, llega a Diablitos, ve "Esperando Invitación…".
+13. Teléfono B: anfitrión arma una partida en Encuentros.
+14. En A debe salir la tarjeta. Entrar. Jugar.
+15. Al terminar la partida, A debe salir solo del modo invitado y volver a su base.
 
 **Pendiente por falta de una segunda persona:** el paso 10–13 completo con dos
 teléfonos reales. Hasta esa prueba, la sala queda a medio validar.
@@ -346,26 +373,25 @@ teléfonos reales. Hasta esa prueba, la sala queda a medio validar.
 
 ---
 
-## 10. Decisiones tomadas y lo que queda de ellas
+## 10. Decisiones tomadas
 
-**Ya decidido por Fredy (oct-2026):**
+**Decidido por Fredy (oct-2026):**
 
 | Decisión | Detalle |
 |---|---|
 | Al registrarse, **directo a la sala** | Sin ventana de "¡Listo!". Con `location.replace` para que atrás no regrese al formulario de otra persona |
-| **Diablitos NO lleva candado** | Se muestra siempre. Hoy no está en el menú: solo se llega registrando como invitado o por dirección |
+| **Diablitos NO lleva candado, y va en el menú** | Fijo en el submenú **🎮 Juegos** para todos (ver 5.6). El resto de juegos se sigue armando solo desde el catálogo |
+| **La sala es solo para invitados** | La pareja no es invitada: no ve el panel ni entra por su cuenta |
+| **Al pausar**: el invitado va a la sala, la pareja se queda | Ver 5.4. Al *terminar* (no al pausar) el invitado sale solo, esté donde esté |
+| **Se brinca al que ya no está** | En vez de parar la partida (sección 3.3) |
+| **Nivel escondido** | El tag de nivel se pidió oculto: no es bug (sección 3.1) |
 
-**Pendiente, para cuando haya más juegos:**
+**Pendiente de Fredy (no de código):**
 
-**Dar de alta Diablitos en el submenú "🎮 Juegos"** del menú principal. Ese
-submenú **ya existe** (trae las tarjetas del catálogo con `seccion: "juegos"`),
-así que es sobre todo **datos, no código**. Como Diablitos no lleva candado, hay
-que decidir cómo se mezcla con los juegos que sí lo llevan: hoy `renderPacks()`
-**solo muestra los que tienen acceso firmado**, así que Diablitos necesita un
-camino aparte hasta que se decida la regla.
-
-Decisión de Fredy: **por ahora se deja así**; cuando se vayan incorporando más
-juegos se verá dónde posicionarlo.
+- **Probar la sala con dos teléfonos reales.** Es lo único del flujo de la sala
+  que no se ha validado en vivo (todo lo demás se probó con la app simulada).
+- Cuando haya más juegos con invitados, **ver dónde posicionarlos** en el
+  submenú Juegos (hoy Diablitos está fijo; el resto sale del catálogo).
 
 ---
 
