@@ -374,6 +374,11 @@ h1{
     <div class="pista gone" id="pista"></div>
   </div>
 
+  <!-- Botón de regresar: SOLO para quien NO es invitado (vino por el menú).
+       El invitado no tiene salida a propósito: no debe pasearse por los datos
+       del anfitrión. Lo muestra el bloque de la sala. -->
+  <button id="volverSala" type="button" style="display:none;position:absolute;top:8px;right:10px;z-index:7;background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;color:var(--apagado);font-family:'Inter',sans-serif;font-size:.78rem;padding:9px 12px;cursor:pointer;">‹ Inicio</button>
+
   <!-- ============ INVITACIONES (solo para invitados) ============ -->
   <!-- La sala de espera. No tiene salida: cuando el invitado entra a un juego
        se queda ahi hasta que la partida acaba, y entonces se le devuelve su
@@ -1197,19 +1202,31 @@ let destino = "";
 let huboInvitacion = false;
 
 function pintar(mias){
-  if(!mias || !mias.length){
+  const vivas = (mias || []).filter(v=>v && v.activa === true);
+  if(!vivas.length){
+    // No hay ninguna partida viva. Si antes habia una, se acabo: se le
+    // devuelve su base, sin preguntar.
     panel.style.display = "block";
     carta.style.display = "none";
     esperando.style.display = "block";
+    esperando.textContent = "Esperando Invitación…";
     if(huboInvitacion){
-      // Se acabo la partida: se le devuelve su base, sin preguntar.
       huboInvitacion = false;
       salirDeInvitado().then(()=>{ location.replace("../"); });
     }
     return;
   }
+  // La partida sigue viva (por eso no se expulsa). Falta ver si ya se puede
+  // entrar o si esta en pausa.
   huboInvitacion = true;
-  const v = mias[0];
+  const unibles = vivas.filter(v=>!v.pausada);
+  if(!unibles.length){
+    carta.style.display = "none";
+    esperando.style.display = "block";
+    esperando.textContent = "La partida está en pausa…";
+    return;
+  }
+  const v = unibles[0];
   destino = v.ruta || "";
   panel.style.display = "block";
   esperando.style.display = "none";
@@ -1221,16 +1238,25 @@ function pintar(mias){
 
 function arrancar(){
   try{
-    if(!soyInvitado()) return;          // no eres invitado: la sala no se muestra
+    if(!soyInvitado()){
+      // Vino por el menu (no es invitado): se le deja salir y NO se le muestra
+      // la sala. El invitado, en cambio, no tiene salida a proposito.
+      document.getElementById("volverSala").style.display = "block";
+      return;
+    }
     panel.style.display = "block";
     esperando.style.display = "block";
     vigilarInvitaciones({ cambio: pintar });
   }catch(e){}
 }
 
+document.getElementById("volverSala").addEventListener("click", ()=>{ location.href = "../"; });
+
 btnIr.addEventListener("click", ()=>{
   if(!destino) return;
-  location.href = "../" + destino + "/";
+  // ?entrar=1 le dice al juego que venga de la sala: entra directo, sin
+  // volver a preguntarle si quiere unirse.
+  location.href = "../" + destino + "/?entrar=1";
 });
 
 arrancar();

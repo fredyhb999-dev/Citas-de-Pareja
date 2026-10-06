@@ -8,7 +8,7 @@ contexto.
 Alcance: **corrección de lo que ya existía** + **un lugar común para las
 partidas con invitados**.
 
-Estado: **hecho y verificado con 22 pruebas automáticas. Pendiente de probar en
+Estado: **hecho y verificado con 26 pruebas automáticas. Pendiente de probar en
 el celular por Fredy. NO se ha subido todavía.**
 
 ---
@@ -229,16 +229,23 @@ Documento `invitaciones/{idDelJuego}` en la base de la pareja. **Uno por juego**
 no una lista que crezca:
 
 ```js
-{ juego:"encuentros", titulo:"Encuentros Guiados", icono:"💫", ruta:"Encuentros",
-  hostUid, hostNombre, participantes:[ids], activa:true, sid }
+{ juego:"encuentros", titulo, icono, ruta, hostUid, hostNombre,
+  participantes:[ids], sesion:"sesionEncuentros/actual", activa:true, pausada:false, sid }
 ```
 
-- Un juego publica con `publicarInvitacion()` al arrancar y con
-  `retirarInvitacion()` al acabar (natural o "Terminar Partida").
-- **Al pausar NO se retira**: la partida no acabó, los que esperan siguen
-  teniendo razón para entrar.
-- La sala escucha con `vigilarInvitaciones()` y solo muestra las invitaciones
-  donde el invitado está en `participantes`.
+- Un juego publica con `publicarInvitacion()` al arrancar y al **retomar**; con
+  `retirarInvitacion()` al **acabar** (natural o "Terminar Partida").
+- **Al pausar NO se retira**, se marca en pausa con `pausarInvitacion()`. Es
+  importante: si se retirara, la sala creería que la partida terminó y
+  **expulsaría al invitado** que está esperando.
+- La sala escucha con `vigilarInvitaciones()` y **comprueba que la partida siga
+  viva**: lee el documento de `sesion` y exige `activa:true` y el mismo `sid`.
+
+**Por qué esa comprobación (hallazgo de Fredy, oct-2026).** El aviso es un
+documento aparte, así que **se quedaba pegado**: una partida que se cerró sin
+retirarlo (una prueba, o el anfitrión cerrando la app a media partida) dejaba el
+aviso vivo, y se lo comía el siguiente invitado que llegara a la sala. Ahora un
+aviso solo vale si **la partida que lo publicó sigue corriendo**.
 
 **Nada de esto necesita reglas nuevas de Firestore**: es un documento más en la
 base de la pareja, con las mismas reglas de siempre.
@@ -247,10 +254,20 @@ base de la pareja, con las mismas reglas de siempre.
 
 | Estado | Qué aparece |
 |---|---|
-| No eres invitado | Nada. El juego de diablitos normal, con su engrane |
+| No eres invitado (entraste por el menú) | Nada de la sala. El juego normal, su engrane, y un **"‹ Inicio"** arriba a la derecha |
 | Eres invitado, sin partida | "Esperando Invitación…" |
+| Eres invitado, **con la partida en pausa** | "La partida está en pausa…" (no se puede entrar todavía, y **no se expulsa**) |
 | Eres invitado, con partida | Tarjeta con icono, título y "Anfitrión te está esperando" + botón **Entrar** |
-| La invitación desaparece | Expulsión automática y regreso a su propia base |
+| La partida termina (de verdad) | Expulsión automática y regreso a su propia base |
+| Aviso de una partida que ya no existe | Se ignora (ver 5.3) |
+
+**El botón "Sala" y el juego van juntos:** al apretar **Entrar**, la sala manda a
+`{ruta}/?entrar=1`, y el juego con eso **entra directo al juego**, sin volver a
+preguntar "¿quieres unirte?". Antes preguntaba en la sala y otra vez en el juego
+(hallazgo de Fredy, oct-2026).
+
+**Regresar (hallazgo de Fredy, oct-2026):** el "‹ Inicio" de arriba a la derecha
+**solo sale si NO eres invitado**. El invitado no tiene salida, a propósito.
 
 **La sala es SOLO para invitados** (decisión de Fredy, oct-2026). La pareja no
 es invitada: no ve el panel ni entra aquí por su cuenta.
@@ -290,11 +307,11 @@ candado. `FIJOS` es la lista de los que no se leen del catálogo (`guiadas` y
 
 | Archivo | Qué cambió |
 |---|---|
-| **`invitado.js`** | **Nuevo.** Un solo lugar para: cuándo eres invitado de verdad, copiar/restaurar, salir, y **publicar/retirar/vigilar invitaciones** |
+| **`invitado.js`** | **Nuevo.** Un solo lugar para: cuándo eres invitado de verdad, copiar/restaurar, salir, y **publicar/retirar/pausar/vigilar invitaciones**. `vigilarInvitaciones()` comprueba que la partida siga viva |
 | `index.html` | Usa `invitado.js`; el modo invitado solo empieza al registrarse; "Solicitando Acceso"; salidas en silencio; recuperación al abrir; **el invitado registrado va a la sala** (antes a Encuentros); **Diablitos fijo en el menú, sin candado** |
 | `acceso.js` | `soyInvitadoAhora()` + guarda en `escucharCatalogo` para no guardar códigos siendo invitado |
-| `Encuentros/index.html` | Secciones 3.2 a 3.6 + publicar/retirar invitación + al pausar, el invitado vuelve a la sala |
-| `Diablitos/index.html` | Panel de la sala (espera, tarjeta, entrada, expulsión) + `esModoInvitado()` corregido |
+| `Encuentros/index.html` | Secciones 3.2 a 3.6 + publicar/retirar/pausar su invitación + al pausar, el invitado vuelve a la sala + **entrar directo con `?entrar=1`** |
+| `Diablitos/index.html` | Panel de la sala (espera / en pausa / tarjeta / entrada / expulsión) + `esModoInvitado()` corregido + **"‹ Inicio" solo si no eres invitado** + el botón Entrar manda a `?entrar=1` |
 
 Se borraron del inicio las copias de `hayRespaldo()` / `respaldarSesion()` /
 `restaurarSesion()`: quedan en un solo lugar, que es la razón por la que este
@@ -309,11 +326,11 @@ Chrome headless**. No es "se ve bien", es la app corriendo de verdad.
 
 | Suite | Casos |
 |---|---|
-| **Encuentros** (12) | niveles · invitación · anfitrión · botón saltar · fin · invitación al invitado · pareja · pausa · fin con limpieza · se fue un invitado · multi · partida vieja · sin licencia |
+| **Encuentros** (13) | niveles · invitación · **entrar directo** · anfitrión · botón saltar · fin · invitación al invitado · pareja · pausa · fin con limpieza · se fue un invitado · multi · partida vieja · sin licencia |
 | **Inicio** (6) | nada · escaneo a medio camino · registro completo · recuperación al abrir · invitado ya registrado con códigos · menú (Diablitos sin candado) |
-| **Sala** (4) | no eres invitado · invitado esperando · con invitación · expulsión al acabar |
+| **Sala** (7) | no eres invitado (con regresar) · invitado esperando · con invitación (Entrar directo) · **en pausa** · **aviso de partida muerta** · **aviso viejo sin `sesion`** · expulsión al acabar |
 
-**22 casos, todos sin errores de JavaScript.**
+**26 casos, todos sin errores de JavaScript.**
 
 Lo que se comprobó de la sala, en orden:
 
@@ -338,10 +355,10 @@ el juego de diablitos   -> arranca en los 4 escenarios, con y sin internet
 3. Cuando le toque a tu pareja, sale "Saltar turno de [nombre]".
 4. Termina la última ronda: les llega el mensaje a ti y a tu pareja.
 5. Desde el ⚙️ borras a un invitado en pleno juego: el turno **se brinca solo**.
-6. **Pausa**: el invitado vuelve a la **sala**; tu pareja se queda en la pantalla de espera de Encuentros. Al retomar, el invitado entra otra vez desde la tarjeta de la sala.
+6. **Pausa**: el invitado vuelve a la **sala** y ahí ve *"La partida está en pausa…"* (sin tarjeta y **sin salir del modo invitado**); tu pareja se queda en la pantalla de espera de Encuentros. Al **retomar**, en la sala del invitado reaparece la tarjeta.
 
 **Menú**
-7. En el inicio debe estar el botón **🎮 Juegos** y, dentro, **Diablitos** sin candado.
+7. En el inicio debe estar el botón **🎮 Juegos** y, dentro, **Diablitos** sin candado. Al entrar por el menú, arriba a la derecha debe salir **"‹ Inicio"**.
 
 **Modo invitado**
 8. ⚙️ → Invitados → "Entrar modo invitado" y **te sales sin escanear**: todo igual, sin rastro.
@@ -352,7 +369,7 @@ el juego de diablitos   -> arranca en los 4 escenarios, con y sin internet
 **Sala (necesita dos teléfonos)**
 12. Teléfono A: entra como invitado, llega a Diablitos, ve "Esperando Invitación…".
 13. Teléfono B: anfitrión arma una partida en Encuentros.
-14. En A debe salir la tarjeta. Entrar. Jugar.
+14. En A debe salir la tarjeta. Al apretar **Entrar** debe caer **directo en el juego** (sin volver a preguntar).
 15. Al terminar la partida, A debe salir solo del modo invitado y volver a su base.
 
 **Pendiente por falta de una segunda persona:** el paso 10–13 completo con dos
@@ -381,10 +398,15 @@ teléfonos reales. Hasta esa prueba, la sala queda a medio validar.
 |---|---|
 | Al registrarse, **directo a la sala** | Sin ventana de "¡Listo!". Con `location.replace` para que atrás no regrese al formulario de otra persona |
 | **Diablitos NO lleva candado, y va en el menú** | Fijo en el submenú **🎮 Juegos** para todos (ver 5.6). El resto de juegos se sigue armando solo desde el catálogo |
+| **Un aviso sin `sesion` no se muestra** | Descarta los avisos publicados antes de existir el campo (el caso que le salió al probar) |
 | **La sala es solo para invitados** | La pareja no es invitada: no ve el panel ni entra por su cuenta |
 | **Al pausar**: el invitado va a la sala, la pareja se queda | Ver 5.4. Al *terminar* (no al pausar) el invitado sale solo, esté donde esté |
 | **Se brinca al que ya no está** | En vez de parar la partida (sección 3.3) |
 | **Nivel escondido** | El tag de nivel se pidió oculto: no es bug (sección 3.1) |
+| **El aviso solo vale si la partida vive** | La sala comprueba la `sesion` antes de mostrar nada (sección 5.3) |
+| **En pausa no se puede entrar, pero tampoco se expulsa** | Se marca el aviso en pausa, no se retira (sección 5.3) |
+| **Entrar desde la sala es directo** | `?entrar=1`; sin doble pregunta (sección 5.4) |
+| **"‹ Inicio" en Diablitos solo si no eres invitado** | El invitado sigue sin salida (sección 5.4) |
 
 **Pendiente de Fredy (no de código):**
 

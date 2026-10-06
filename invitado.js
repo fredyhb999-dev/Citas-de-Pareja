@@ -164,9 +164,11 @@ export function vigilarInvitaciones(hooks){
   const db = dbActual();
   if(!db) return function(){ try{ h.cambio && h.cambio([]); }catch(e){} };
   let parar = null;
+  let ultimo = 0;
   try{
-    parar = onSnapshot(collection(db, COLECCION_INV), (snap)=>{
-      const mias = [];
+    parar = onSnapshot(collection(db, COLECCION_INV), async (snap)=>{
+      const marca = ++ultimo;
+      const candidatas = [];
       try{
         const yo = miIdInvitado();
         snap.forEach(d=>{
@@ -174,9 +176,31 @@ export function vigilarInvitaciones(hooks){
           if(!v || v.activa !== true) return;
           const partes = Array.isArray(v.participantes) ? v.participantes : null;
           if(partes && partes.length && yo && partes.indexOf(yo) < 0) return;
-          mias.push(v);
+          candidatas.push(v);
         });
       }catch(e){}
+
+      // Un aviso solo vale si LA PARTIDA QUE LO PUBLICO SIGUE VIVA.
+      // El aviso es un documento aparte; sin esta comprobacion se quedaba
+      // pegado (de una prueba anterior, o de una partida que se cerro sin
+      // retirarlo) y le salia a quien llegara a la sala. Cada juego dice cual
+      // es su documento de partida en el campo "sesion".
+      const mias = [];
+      for(const v of candidatas){
+        // Sin "sesion" no hay forma de comprobar que la partida viva: NO se
+        // muestra. Es lo que descarta los avisos viejos (de antes de existir
+        // este campo), que si no se quedarian pegados para siempre.
+        if(!v.sesion) continue;
+        try{
+          const p = String(v.sesion).split("/");
+          const sd = await getDoc(doc(db, p[0], p[1]));
+          const s = sd.exists() ? sd.data() : null;
+          if(!s || s.activa !== true) continue;          // la partida ya no esta
+          if(v.sid && s.sid && v.sid !== s.sid) continue; // es otra partida
+        }catch(e){ continue; }
+        mias.push(v);
+      }
+      if(marca !== ultimo) return;   // llego una actualizacion mas nueva
       try{ h.cambio && h.cambio(mias); }catch(e){}
     }, ()=>{ try{ h.cambio && h.cambio([]); }catch(e){} });
   }catch(e){}
@@ -201,8 +225,31 @@ export async function publicarInvitacion(info){
       hostUid: i.hostUid || "",
       hostNombre: i.hostNombre || "",
       participantes: Array.isArray(i.participantes) ? i.participantes : [],
+      // Donde vive la partida (ej. "sesionEncuentros/actual"). La sala la lee
+      // para no mostrar avisos de partidas que ya no estan.
+      sesion: i.sesion || "",
       activa: true,
+      // En pausa no se puede entrar, pero la partida SIGUE EXISTIENDO. Por eso
+      // no se retira el aviso (eso haria creer a la sala que se acabo y
+      // expulsaria al invitado): solo se marca en pausa.
+      pausada: false,
       sid: i.sid || "",
+      actualizadaEn: serverTimestamp()
+    }, { merge: true });
+  }catch(e){}
+}
+
+/**
+ * Un juego pausado: la partida sigue viva pero no se puede entrar.
+ * Si se retirara el aviso, la sala creeria que la partida termino.
+ */
+export async function pausarInvitacion(juego, enPausa){
+  if(!juego) return;
+  try{
+    const db = dbActual();
+    if(!db) return;
+    await setDoc(doc(db, COLECCION_INV, juego), {
+      pausada: !!enPausa,
       actualizadaEn: serverTimestamp()
     }, { merge: true });
   }catch(e){}

@@ -198,7 +198,7 @@ import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
 // Invitados: este juego solo publica y retira su invitación. No sabe nada de la sala.
-import { publicarInvitacion, retirarInvitacion } from "../invitado.js";
+import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
 
 const NIVELES = [
   { id: "basico", nombre: "Básico" },
@@ -371,6 +371,11 @@ let pedidosTomas = null;
 // Se pone true cuando la ultima ronda acaba la partida sola, para avisarle a
 // la sala despues de la transaccion (dentro de ella no se puede).
 let terminoLaPartida = false;
+// ?entrar=1 lo pone la sala de espera al mandar al invitado: asi entra directo
+// al juego, sin preguntarle otra vez si quiere unirse.
+const entrarDirecto = (()=>{
+  try{ return new URLSearchParams(location.search).get("entrar") === "1"; }catch(e){ return false; }
+})();
 
 function cargarEnMemoria(d){
   cabezas = Array.isArray(d.cabezas) ? d.cabezas : [];
@@ -525,6 +530,9 @@ function escucharSesion(){
           // ofrece al elegir la actividad o al oprimir MultiActividades.
           // La pareja/invitado si recibe la invitacion para unirse.
           if(d.hostUid !== miId){
+            // Si viene de la sala de espera (?entrar=1) entra DIRECTO, para no
+            // preguntarle dos veces lo mismo (en la sala ya acepto entrar).
+            if(entrarDirecto && soyCabeza(d)){ entrarAlJuego(d); return; }
             document.getElementById("unirDesc").textContent = d.reanudada
               ? ((d.hostNombre || "El anfitrión") + " retomó el encuentro. Puedes continuar donde van.")
               : ((d.hostNombre || "El anfitrión") + " inició un Encuentro Guiado.");
@@ -648,6 +656,9 @@ function anunciarInvitacion(sid, cabezas, hostNombre){
       hostUid: miId,
       hostNombre: hostNombre || "",
       participantes: (cabezas || []).map(c=>c && c.id).filter(Boolean),
+      // La sala comprueba este documento antes de avisar: si la partida no
+      // esta activa, el aviso no sale aunque siga escrito.
+      sesion: "sesionEncuentros/actual",
       sid: sid || ""
     });
   }catch(e){}
@@ -1093,6 +1104,10 @@ document.getElementById("btnTerminar").onclick = async ()=>{
   jugando = false;
   if(!modoLocal){
     try{ await setDoc(sesionRef(), { pausada: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+    // En pausa NO se puede entrar, pero la partida sigue viva. Se marca el
+    // aviso en pausa en vez de retirarlo: retirarlo haria creer a la sala que
+    // la partida termino, y expulsaria al invitado que esta esperando.
+    await pausarInvitacion(JUEGO_INV, true);
   }
   pintarPaso();
   entrar();
@@ -1161,15 +1176,20 @@ document.getElementById("btnNueva").onclick = async ()=>{
   pintarLista("listaActs");
   ver("vistaLista");
 };
-document.getElementById("btnUnirme").onclick = ()=>{
-  const d = sesionActual;
-  cerrarModal("modalUnir");
+// Entrar a la partida que ya esta corriendo. Lo usan el boton "Unirme" y el
+// acceso directo desde la sala (?entrar=1).
+function entrarAlJuego(d){
   if(!d || !d.activa || !soyCabeza(d)) return;
   jugando = true;
   modoLocal = false;
   cargarEnMemoria(sanearSesion(d));
   ver("vistaPlayer");
   pintarPaso();
+}
+document.getElementById("btnUnirme").onclick = ()=>{
+  const d = sesionActual;
+  cerrarModal("modalUnir");
+  entrarAlJuego(d);
 };
 document.getElementById("btnUnirNo").onclick = ()=>{ cerrarModal("modalUnir"); };
 
