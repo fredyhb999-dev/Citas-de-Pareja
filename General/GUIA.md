@@ -1091,6 +1091,8 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | Entrar desde la sala es **directo** | `?entrar=1`; sin doble pregunta |
 | "Inicio" en Diablitos **solo si no eres invitado** | El invitado sigue sin salida |
 | Un aviso sin `sesion` **no se muestra** | Descarta los avisos publicados antes de existir el campo |
+| El icono de Diablitos va **dibujado, no como emoji** | SVG en `SVG_DIABLITOS` (`index.html`). Se ve igual en todos los telefonos. Elegido por Fredy (oct-2026) |
+| Su descripcion es `Diviertete picando diablitos traviesos` | Antes decia "la sala de espera", que era literal y comercialmente flojo |
 
 ### De la forma de trabajar
 
@@ -1163,6 +1165,27 @@ hoy no esta en las reglas. Ver Parte 3, seccion 6.
 | El retorno del invitado se evalua **solo en el inicio** | Si abre `Encuentros/` por link guardado, el chequeo no corre |
 | Doble `getDocs` de `escucharCatalogo()` | No es bug, solo gasto extra |
 | Una sesion vieja marcada `activa: true` sigue contando | El aviso nuevo si se ata a la sesion, pero una partida vieja abierta no se autodetecta |
+
+### Iconos dibujados (SVG) en vez de emoji
+
+`index.html` trae `const SVG_DIABLITOS = '...'`: el diablito malo con risita
+maligna. Se inserta con `ic.innerHTML`, pero **solo** para ese juego y **solo**
+con el dibujo que esta en el propio archivo.
+
+**Por que asi:**
+- Un emoji se ve distinto en cada telefono (el de Diablitos salia morado en
+  unos y de otro color en otros). Dibujado, se ve igual en todos.
+- Se mide en `1em`, asi que crece con el tamano de letra del menu sin tocar CSS.
+- **No se mete nada de la base de datos con `innerHTML`.** La tarjeta de la sala
+  (`Diablitos/index.html`) sigue usando `textContent`, a proposito: ese texto
+  viene de Firestore.
+
+**Como cambiarlo:** editar las rutas dentro de `SVG_DIABLITOS`. Para hacerlo
+mas grande o mas pequeno, cambiar los numeros del `viewBox`, **no** el `width`.
+Para cambiar el color, cambiar los `fill`.
+
+**Como volver al emoji:** en `tarjetaPack()`, dejar la linea del `if` y en la
+definicion del pack poner el emoji en `icono`.
 
 ### Notas de mantenimiento
 

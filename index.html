@@ -446,15 +446,39 @@ function mostrarMenu(nombre){
   renderPacks();
 }
 
-// ---------- packs con acceso: solo aparecen si hay licencia ----------
-// leerLic() ahora es leerLicencias() de ./acceso.js.
-function tarjetaPack(p){
+// Icono dibujado de Diablitos: diablito malo con risita maligna.
+  // Se mide en "em" para que crezca y se encoja con el tamano de letra del
+  // menu, igual que un emoji. Para cambiarlo: editar estas rutas y ya.
+  // (Cambiar tamano = cambiar el numero de las coordenadas, no el width.)
+  const SVG_DIABLITOS = '<svg viewBox="0 0 120 120" width="1em" height="1em" style="display:block" aria-hidden="true" focusable="false">'
+    + '<path d="M38 34 C26 10 50 8 52 30 Z" fill="#15141d"/>'
+    + '<path d="M82 34 C94 10 70 8 68 30 Z" fill="#15141d"/>'
+    + '<circle cx="60" cy="64" r="33" fill="#c9253a"/>'
+    + '<path d="M36 48 L56 56" stroke="#15141d" stroke-width="6" stroke-linecap="round"/>'
+    + '<path d="M84 48 L64 56" stroke="#15141d" stroke-width="6" stroke-linecap="round"/>'
+    + '<ellipse cx="47" cy="62" rx="10" ry="6" fill="#ffd93b"/>'
+    + '<ellipse cx="73" cy="62" rx="10" ry="6" fill="#ffd93b"/>'
+    + '<circle cx="50" cy="62" r="3" fill="#15141d"/>'
+    + '<circle cx="76" cy="62" r="3" fill="#15141d"/>'
+    + '<path d="M42 78 Q58 90 80 76 Q60 92 48 86 Z" fill="#fff"/>'
+    + '<path d="M66 86 L70 100 L73 88 Z" fill="#c9253a"/>'
+    + '</svg>';
+
+  // ---------- packs con acceso: solo aparecen si hay licencia ----------
+  // leerLic() ahora es leerLicencias() de ./acceso.js.
+  function tarjetaPack(p){
   const a = document.createElement("a");
   a.className = "card";
   a.href = p.ruta + "/";
   const ic = document.createElement("span");
   ic.className = "icon";
-  ic.textContent = p.icono || "🎁";
+  if(p.id === "diablitos" && SVG_DIABLITOS){
+    // Solo para este juego y solo con el dibujo de aqui arriba: nunca se mete
+    // en la pagina texto que venga de la base de datos.
+    ic.innerHTML = SVG_DIABLITOS;
+  }else{
+    ic.textContent = p.icono || "🎁";
+  }
   const lab = document.createElement("span");
   lab.className = "label";
   const t = document.createElement("div");
@@ -497,11 +521,13 @@ async function renderPacksDeVerdad(){
   btnX.style.display = "none";
   // Los que van siempre van aqui, no en el catalogo. Los que NO llevan candado
   // se marcan con libre:true y se muestran sin pedir acceso.
+  // El icono de Diablitos va dibujado (SVG_DIABLITOS, unas lineas mas arriba)
+  // en vez de emoji, para que se vea igual de bien en todos los telefonos.
   let packs = [
     { id: "guiadas", titulo: "Citas Guiadas", icono: "🗺️",
       desc: "Niveles y secuencias paso a paso", ruta: "Guiadas", seccion: "experiencias" },
-    { id: "diablitos", titulo: "Diablitos", icono: "👹",
-      desc: "La sala de espera: toca diablitos mientras llega tu juego",
+    { id: "diablitos", titulo: "Diablitos",
+      desc: "Diviértete picando diablitos traviesos",
       ruta: "Diablitos", seccion: "juegos", libre: true }
   ];
   const FIJOS = ["guiadas", "diablitos"];
