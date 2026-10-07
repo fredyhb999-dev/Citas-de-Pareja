@@ -1,0 +1,207 @@
+REGLAS DE FIRESTORE - proyecto "taquilla-juegos"
+=================================================
+
+ESTADO: aplicadas y verificadas el 6 de octubre de 2026.
+Fredy las pego en la consola y probo: pedir, aprobar, revocar y el Panel.
+Todo funciono normal.
+
+Este archivo tiene DOS versiones:
+  - La VIGENTE (arriba): la que esta pegada ahora mismo en la consola.
+  - La ANTERIOR (abajo): la de respaldo, por si algun dia hay que volver.
+
+
+================================================================
+1. REGLAS VIGENTES (las que estan en la consola hoy)
+================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Solo pueden publicar los correos que esten en config/permisos.
+    function esPublicador() {
+      return request.auth != null
+        && request.auth.token.email in get(/databases/$(database)/documents/config/permisos).data.correos;
+    }
+
+    match /solicitudes/{d} {
+
+      // Leer: la app lo necesita para enterarse de aprobaciones y
+      // revocaciones. Sigue abierto a proposito, porque el menu y los
+      // juegos leen esto sin internet y sin iniciar sesion.
+      allow read: if true;
+
+      // Crear (pedir un producto).
+      // Solo se admite si quien pide esta firmado con Google y el correo
+      // guardado es el suyo. Asi nadie puede crear una solicitud con el
+      // correo de otro cliente, que era la forma de "echar" a un cliente o
+      // de inventarse una cortesia.
+      // Los 7 campos son los unicos que escribe Tienda al pedir. Los demas
+      // (codigo, aprobadoEn, vence, dias) los agrega el publicador al
+      // aprobar, y eso es una modificacion, no una creacion.
+      allow create: if esPublicador()
+        || (request.auth != null
+            && request.resource.data.email is string
+            && request.resource.data.email.lower() == request.auth.token.email.lower()
+            && request.resource.data.estado == 'pendiente'
+            && request.resource.data.keys().hasOnly(
+                 ['para','item','quien','email','estado','fecha','intentos']));
+
+      // Modificar: solo el desarrollador, con dos excepciones acotadas.
+      allow update: if esPublicador()
+        || request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['graciaUsada','graciaFecha'])
+        || (request.auth != null
+            && request.resource.data.estado == 'pendiente'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['estado','fecha','quien','intentos','pideDesrevocar']));
+
+      // Borrar: solo el desarrollador.
+      allow delete: if esPublicador();
+    }
+
+    match /packs/{d} {
+      allow read: if true;
+      allow write: if esPublicador();
+    }
+
+    // La lista de correos que publican ya no es publica.
+    match /config/permisos {
+      allow read: if esPublicador();
+      allow write: if esPublicador();
+    }
+
+    // Todo lo demas, prohibido.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
+
+
+================================================================
+2. QUE SE CAMBIO EL 6 DE OCTUBRE DE 2026
+================================================================
+
+Solo dos cosas. Nada mas.
+
+a) "allow create: if true"  ->  pedir exige correo verificado
+
+   Por que estaba mal: acceso.js, al escuchar las solicitudes, borra el
+   codigo local de un cliente si ve un documento con estado "revocado" o
+   "negado". Esa rama NO valida ninguna firma: se fia de que "estado" y
+   "email" sean ciertos. Y como "read: if true", cualquiera podia LEER el
+   "para" y el "email" de los clientes y luego crear una solicitud falsa
+   con esos datos -> ese cliente perdia el acceso al abrir la app.
+   Eso era "echar usuarios".
+
+   El arreglo: la solicitud solo se puede crear con el correo de quien
+   pide, que Firebase ya tiene verificado, y solo en estado "pendiente".
+   Con eso caen de golpe: echar usuarios, aprobarse a uno mismo y
+   fabricarse cortesias.
+
+b) config/permisos: lectura publica  ->  solo para publicadores
+
+   Antes cualquiera que abriera la app podia ver la lista de correos que
+   publican. Ahora solo la ven los que publican. Las tres paginas que la
+   leen (Panel/permisos, Panel/catalogo, Panel/oficiales) se autentican
+   con Google y manejan el fallo sin romperse.
+
+LO QUE NO SE TOCO (y por que es importante saberlo):
+
+- allow read de solicitudes: sigue abierto a PROPOSITO. El menu y los
+  juegos leen esa coleccion sin internet y sin sesion de Google. Si se
+  cerrara, se caeria el modo sin conexion. Por eso los correos de los
+  clientes siguen siendo legibles: es el precio de que el juego funcione
+  offline. Arreglarlo es el trabajo de arquitectura pendiente.
+
+- update, delete, packs y la regla que cierra todo lo demas: sin cambios.
+
+- Los codigos ya guardados: sin cambios. Quien ya tiene acceso, sigue
+  jugando.
+
+
+================================================================
+3. SI ALGUN DIA LAS COMPRAS DEJAN DE FUNCIONAR
+================================================================
+
+La causa mas probable es esta lista:
+
+  ['para','item','quien','email','estado','fecha','intentos']
+
+Son los 7 campos que Tienda/index.html escribe al pedir (linea 333).
+Si en el futuro el codigo anade un campo al pedir, hay que agregarlo aqui
+tambien. La falla es visible y de inmediato (el boton avisa que no se pudo
+pedir), nunca silenciosa.
+
+COMO SABER SI FUE ESO: abrir en la consola una solicitud recien creada y
+contar cuantos campos tiene. Si son mas de 7, esta lista esta vieja.
+
+
+================================================================
+4. REGLAS ANTERIORES (respaldo - 6 de octubre de 2026 y antes)
+================================================================
+
+Se conservan solo como referencia. Si algo se rompe, pegar esto y se
+vuelve al estado de antes.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function esPublicador() {
+      return request.auth != null
+        && request.auth.token.email in get(/databases/$(database)/documents/config/permisos).data.correos;
+    }
+    match /solicitudes/{d} {
+      // Leer: la app lo necesita para enterarse de aprobaciones y revocaciones.
+      allow read: if true;
+
+      // Crear: pedir un producto. Se deja igual que antes.
+      allow create: if true;
+
+      // Modificar: solo el desarrollador, con dos excepciones acotadas.
+      allow update: if esPublicador()
+        // la cortesía marca que ya se usó (únicamente esos 2 campos)
+        || request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['graciaUsada','graciaFecha'])
+        // re-pedido después de una revocación (solo campos de solicitud)
+        || (request.auth != null
+            && request.resource.data.estado == 'pendiente'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['estado','fecha','quien','intentos','pideDesrevocar']));
+
+      // Borrar: solo el desarrollador.
+      allow delete: if esPublicador();
+    }
+    match /packs/{d} {
+      allow read: if true;
+      allow write: if esPublicador();
+    }
+    match /config/permisos {
+      allow read: if true;
+      allow write: if esPublicador();
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
+
+
+================================================================
+5. SI ALGUIEN CAMBIA LAS REGLAS, HAY QUE PROBAR 4 COSAS
+================================================================
+
+En este orden, y en este orden se nota si algo fallo:
+
+1. Tienda -> entrar con Google con una cuenta que NO sea publicador -> pedir
+   algo. Debe salir "Solicitud enviada".
+   OJO: no probar con la cuenta de publicador, porque esPublicador() se
+   cumple sola y la prueba no valdría.
+
+2. Autorizar/ -> Aprobar esa solicitud. Debe verse en el menu.
+
+3. Autorizar/ -> Revocar. Debe desaparecer.
+
+4. Panel/permisos.html -> debe abrir y mostrar la lista.
+
+Si el 1 falla, el problema son las reglas: pegar la version de la seccion 4.
+Si el 2 o el 3 fallan, casi siempre es que esPublicador() dejo de funcionar:
+revisar que el correo de Fredy siga en config/permisos y que Autorizar/
+muestre el OK de "Entrar con Google".

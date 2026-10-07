@@ -1,0 +1,1195 @@
+# GUIA - Citas de Pareja (documento maestro)
+
+**Este es el unico documento con el detalle tecnico del proyecto.**
+Vive **dentro del repo** a proposito: asi, cualquier persona o cualquier modelo
+que abra `Citas-de-Pareja` lo encuentra, sin que nadie tenga que acordarse.
+
+Ademas el repo tiene `AGENTS.md`, que le ordena a cualquier modelo leer este
+archivo antes de tocar nada. Ese es el mecanismo que evita rehacer trabajo.
+
+## Como se usa
+
+| Si quieres... | Lee |
+|---|---|
+| Como funciona el modo invitado, la sala o el juego | Parte 1 |
+| El detalle fino con numeros de linea, el "por que" y la lista de pruebas | Parte 2 |
+| Licencias, `acceso.js`, catalogo, el limite de 30 | Parte 3 |
+| `Autorizar/` y las reglas de Firebase | Parte 4 |
+| Decisiones ya tomadas (no sobrescribir sin preguntar) | Parte 5 |
+| Pendientes, limites conocidos y notas de mantenimiento | Parte 6 |
+
+## Regla de escritura (evita copias y doble escritura)
+
+- **Detalle de codigo** de este proyecto -> **solo aqui** (`General/GUIA.md`).
+- **Acuerdos de trabajo y panorama de proyectos** ->
+  `Documents\Default Project\General\GUIA-PROYECTOS.md`.
+- Si algo aplica a los dos, en `GUIA-PROYECTOS.md` va **una linea que apunta
+  aqui**, nunca una copia. Ese fue el origen de la duplicacion que se limpio
+  el oct-2026.
+
+## Estado de las reglas de Firebase (cerrado y revisado)
+
+**Las reglas de `solicitudes` estan CERRADAS y fueron revisadas el 6-oct-2026.**
+El aviso anterior de este documento decia que estaban abiertas: **era falso**.
+
+Se cerro lo que si estaba abierto:
+
+1. **Nadie puede crear una solicitud con el correo de otro.** Era la forma de
+   "echar" a un cliente (el listener borra codigos con `estado:"revocado"` sin
+   validar firma). Ahora `create` exige el correo verificado de quien pide.
+2. **La lista de correos que publican ya no es publica.**
+
+Sigue abierto **a proposito y por arquitectura**: el menu y los juegos leen
+`solicitudes` **sin internet y sin sesion**, asi que `read` no puede cerrarse
+sin romper el modo sin conexion. Por eso los correos de clientes son legibles.
+Ese es el trabajo pendiente, no un descuido.
+
+**Texto integro de las reglas vigentes y de las anteriores de respaldo:
+`General/reglas-firebase-taquilla.txt`.**
+
+**Si alguien toca las reglas, hay que probar 4 cosas** (pedir, aprobar, revocar
+y el Panel). La razon en el archivo, seccion 5.
+
+Todo lo demas de la Parte 1 esta **cerrado, verificado y probado por Fredy**.
+
+---
+## Parte 1 - Fase 1: Encuentros Guiados, modo invitado y sala de espera
+
+oct-2026 · repo `Documents\GitHub\Citas-de-Pareja`
+
+Qué se hizo en esta ronda y por qué, para que cualquier chat siga sin perder
+contexto.
+
+Alcance: **corrección de lo que ya existía** + **un lugar común para las
+partidas con invitados**.
+
+Estado: **hecho y verificado con 26 pruebas automáticas. Pendiente de probar en
+el celular por Fredy. NO se ha subido todavía.**
+
+---
+
+### 1. La regla que resume todo
+
+> **El invitado solo está dentro mientras dura la partida. Cuando termina, se le
+> devuelve su información y sale. No hay salida libre, en ningún juego.**
+
+Consecuencia que costó aprender: **tener copia de seguridad NO significa ser
+invitado.** Son dos cosas distintas, y antes el código las confundía. Esa
+confusión era el origen de casi todo lo que se arregló aquí.
+
+---
+
+### 2. Modo invitado
+
+#### 2.1 Lo que estaba mal
+
+Al apretar "Entrar modo invitado 📷" se guardaba la copia de seguridad **antes
+de escanear nada**, y esa copia era lo que decidía si el invitado "estaba de
+visita". Encadenado:
+
+| Dónde se notaba | Síntoma |
+|---|---|
+| Pantalla de Invitados | Decía "Estás de visita" y ofrecía el botón "Salir modo invitado" |
+| Ese botón | Preguntaba *"También te borro de sus usuarios"* sin haberse registrado nunca |
+| **Diablitos** | **Escondía el engrane**, porque pregunta por la misma copia |
+
+Es decir: entrar a ver la opción y salirse ya te dejaba marcado.
+
+#### 2.2 Y un problema más serio
+
+Al **escanear un QR válido** la app sobrescribe la configuración de Firebase con
+la del anfitrión, pero la identidad seguía siendo la propia y **nunca se te
+registraba** en su lista de usuarios. Si te salías en ese punto, el teléfono
+quedaba apuntando a la base de datos de otra persona: se podía **leer y escribir
+en la base de alguien que no te había invitado**.
+
+Por eso la copia se toma **en el momento exacto de escanear** (es lo último
+antes de cambiar la base) y no antes.
+
+#### 2.3 Lo que quedó
+
+| Momento | Qué dice la app | Botón de salir | Diablitos |
+|---|---|---|---|
+| Solo miraste la opción | "Entra a otra base como invitado…" | no sale | engrane normal |
+| Escaneaste, estás escribiendo tu nombre | **"Solicitando Acceso"** | no sale | engrane normal |
+| **Ya te registraste** | "Estás de visita. Al salir vuelves a tu base." | **sí sale** | engrane oculto |
+| Escaneaste y te saliste | Vuelve todo a como estaba, **solo y sin preguntar** | — | — |
+| Cerraste la app a medio camino | Al abrir, restaura **antes de conectarse a nada** | — | — |
+
+"Salir sin preguntar" es a propósito (decisión de Fredy): si te sales a medio
+camino, se deshace todo en silencio.
+
+**Ese es el momento exacto en que se es invitado: cuando te registraste.**
+
+Al registrarte **no aparece ninguna ventana**: se va directo a la sala de
+espera. Se usa `location.replace` y no `href`, para que el botón atrás del
+celular no devuelva al formulario de registro de otra persona.
+
+#### 2.4 Lo que queda en el teléfono mientras eres invitado
+
+| Qué | Qué tan grave |
+|---|---|
+| Lista de nombres de usuarios del anfitrión | Bajo, son nombres |
+| Config de Firebase del anfitrión (la "dirección" de su base) | Bajo |
+| **Códigos de acceso del anfitrión** | **Eliminado (ver sección 4)** |
+
+Cuando se te expulsa, tu copia restaura todo y esos datos desaparecen.
+
+---
+
+### 3. Encuentros Guiados — los 5 problemas
+
+#### 3.1 El tag de nivel nunca se veía — **NO ERA UN BUG**
+
+`Encuentros/index.html:123` traía `<div id="nivelTag" hidden>` y el código solo
+hacía `tag.style.display = ""`, que **borra** la declaración en línea pero no
+quita el atributo `hidden`. Se preguntó y **Fredy confirmó que el nivel se
+pidió escondido a propósito**: se queda así. El texto se escribe igual, pero no
+se muestra.
+
+Ojo: el mismo patrón está en `Guiadas/index.html:171`. Si algún día se quiere
+mostrar, hay que quitar el `hidden` o poner `tag.hidden = false`.
+
+#### 3.2 Se podía salir de la partida sin querer — **ARREGLADO**
+
+Había **tres** salidas automáticas y solo dos eran las oficiales
+("Pausar y Salir" y "Terminar Partida"):
+
+| # | Cómo se salía | ¿Quedaba registrada la salida? |
+|---|---|---|
+| 1 | Botón "← Lista" (arriba a la derecha) | no |
+| 2 | **Gesto de atrás del celular** | no |
+| 3 | Enlace "← Inicio" (arriba a la izquierda) | no |
+
+Regla de Fredy: **durante la partida nadie sale**. Ahora las tres están cerradas:
+el botón se borró, "← Inicio" se oculta mientras juegas, y el gesto de atrás no
+hace nada (se devuelve al estado del juego en vez de dejarte salir). Los dos
+botones oficiales siguen igual.
+
+**Consecuencia:** el invitado también queda atrapado en la partida. Se queda
+hasta que la partida acaba, y entonces el juego lo expulsa.
+
+#### 3.3 La partida se trababa si alguien ya no estaba — **ARREGLADO**
+
+`avanzarSesion()` exige `d.orden[d.turno] === miId`. Si ese jugador ya no
+existe, **nadie puede avanzar nunca** y la partida queda congelada. Se reprodujo:
+4 clics, ronda sin avanzar.
+
+Causa: al salir del modo invitado se borraba al usuario de `config/ajustes` pero
+**no de `sesionEncuentros/actual.cabezas/orden`**. Quedaba fantasma.
+
+**Decisión de Fredy: se brinca y siguen los que quedan.** Se implementó
+`sanearSesion()`: quita a los que ya no están de `cabezas`, `orden` y `listas`,
+y si le tocaba a uno de ellos ahora le toca al siguiente que quede. Se aplica al
+retomar, al unirse, **y en vivo** (una escucha de `config/ajustes` recalcula el
+turno en el momento). De paso, **las acciones del que se va se borran del
+documento**.
+
+#### 3.4 A los invitados les llegaban acciones de otro nivel — **ARREGLADO**
+
+Eran dos fallas separadas:
+
+1. **Injusticia**: el pool de cada nivel se repartía "el que llega primero", y
+   el anfitrión se lo llevaba entero.
+2. **Faltan datos**: con tomas `básico:3` y 2 personas del mismo lado se
+   necesitan 6 y solo hay 3. Eso no es un bug, es que no hay suficientes.
+
+Arreglo: reparto por posición (en cada una, **todos los del mismo lado sacan
+del mismo nivel**) y, cuando el nivel no alcanza, **se repite una de ese mismo
+nivel** antes de mezclar niveles. La mezcla de niveles solo ocurre si la
+actividad **no tiene ninguna** acción de ese nivel.
+
+Comprobado con tomas `2,2,1,1,1` y 3 jugadores: **los tres reciben exactamente
+`Básico > Básico > Medio > Medio > Avanzado > Experto > Alucinado`**.
+
+#### 3.5 El anfitrión nunca veía el aviso de fin — **ARREGLADO**
+
+El aviso "¡Se acabó la partida!" solo le llegaba a los invitados; el anfitrión y
+la pareja caían mudos a la lista. `#finMsg` ("¡Encuentro completo! 🔥") era
+**código muerto**: solo se alcanzaba jugando sin internet.
+
+Ahora les llega a los tres. Ojo: cuando **el anfitrión aprieta "Terminar
+Partida"** no le sale a nadie, porque él mismo lo decidió.
+
+#### 3.6 Botón "Saltar turno" (nuevo, solo anfitrión)
+
+Para cuando a alguien se le **cae la red o se le apaga el celular**: sigue en el
+turno y el juego lo espera para siempre.
+
+- Solo el anfitrión lo ve.
+- Solo aparece cuando **no es su turno**.
+- El texto dice a quién: "Saltar turno de Pareja".
+- Pide confirmación.
+- Si el saltado era el último de la ronda, la ronda avanza y se revuelve el
+  orden.
+
+---
+
+### 4. Fuga de códigos de acceso (corregida)
+
+**El hallazgo más delicado de la ronda.**
+
+Mientras eres invitado, la configuración del teléfono es la del anfitrión. La
+app escucha el catálogo de esa base y, sin protección, **guardaba en el teléfono
+del invitado los códigos de acceso del anfitrión**, de forma automática al
+volver a abrir la app.
+
+Comprobado de las dos formas:
+
+| | Contenido de `licencias` en el teléfono del invitado |
+|---|---|
+| **Sin** protección | `{"guided":"COD-MIO", "encuentros":"encuentros\|host\|host@ejemplo.mx"}` |
+| **Con** protección | `{"guided":"COD-MIO"}` |
+
+Choca con lo que ya decía la guía ("las licencias NO viajan al modo invitado").
+Arreglo en `acceso.js`: mientras la identidad diga invitado, se revisa el
+catálogo del anfitrión pero **no se guarda ningún código nuevo**. Al expulsarse,
+`restaurar()` deja las licencias como estaban.
+
+**Nota sobre las pruebas:** la primera versión de esta prueba daba "OK" aunque la
+protección no estuviera — estaba mal planteada. Hubo que rehacerla y comprobar
+que **sin** la protección **falla**. Regla que queda: si una prueba da verde,
+hay que verificarla **quitando lo que se acaba de arreglar**.
+
+---
+
+### 5. La sala de espera (`Diablitos`)
+
+#### 5.1 Qué era y qué es
+
+`Diablitos` ya se llamaba "Sala de Espera" pero era solo eso: un juego local
+tocar-diablitos. No tenía salida a ningún lado, no usaba internet y no tenía
+forma de enterarse de una partida.
+
+Ahora es **el lugar donde espera el invitado**. Sin salida, a propósito: el
+invitado no puede pasearse por los datos del anfitrión. Al terminar de
+registrarse, el invitado **cae aquí directo**: no hay ninguna ventana que
+confirmar.
+
+#### 5.2 El patrón, para que se repita en cada juego nuevo
+
+```
+Un juego arranca   →  publica su invitación en un documento compartido
+La sala la escucha →  le sale la tarjeta con "Entrar"
+El invitado entra  →  se queda ahí hasta que la partida acaba
+La partida acaba   →  la sala lo expulsa sola y le devuelve su información
+```
+
+Un juego con invitados **no copia nada de lógica**: solo publica su invitación.
+Ese es el motivo de centralizarlo en `invitado.js`.
+
+#### 5.3 Dónde viven las invitaciones
+
+Documento `invitaciones/{idDelJuego}` en la base de la pareja. **Uno por juego**,
+no una lista que crezca:
+
+```js
+{ juego:"encuentros", titulo, icono, ruta, hostUid, hostNombre,
+  participantes:[ids], sesion:"sesionEncuentros/actual", activa:true, pausada:false, sid }
+```
+
+- Un juego publica con `publicarInvitacion()` al arrancar y al **retomar**; con
+  `retirarInvitacion()` al **acabar** (natural o "Terminar Partida").
+- **Al pausar NO se retira**, se marca en pausa con `pausarInvitacion()`. Es
+  importante: si se retirara, la sala creería que la partida terminó y
+  **expulsaría al invitado** que está esperando.
+- La sala escucha con `vigilarInvitaciones()` y **comprueba que la partida siga
+  viva**: lee el documento de `sesion` y exige `activa:true` y el mismo `sid`.
+
+**Por qué esa comprobación (hallazgo de Fredy, oct-2026).** El aviso es un
+documento aparte, así que **se quedaba pegado**: una partida que se cerró sin
+retirarlo (una prueba, o el anfitrión cerrando la app a media partida) dejaba el
+aviso vivo, y se lo comía el siguiente invitado que llegara a la sala. Ahora un
+aviso solo vale si **la partida que lo publicó sigue corriendo**.
+
+**Nada de esto necesita reglas nuevas de Firestore**: es un documento más en la
+base de la pareja, con las mismas reglas de siempre.
+
+#### 5.4 Qué se ve en la sala
+
+| Estado | Qué aparece |
+|---|---|
+| No eres invitado (entraste por el menú) | Nada de la sala. El juego normal, su engrane, y un **"‹ Inicio"** arriba a la derecha |
+| Eres invitado, sin partida | "Esperando Invitación…" |
+| Eres invitado, **con la partida en pausa** | "La partida está en pausa…" (no se puede entrar todavía, y **no se expulsa**) |
+| Eres invitado, con partida | Tarjeta con icono, título y "Anfitrión te está esperando" + botón **Entrar** |
+| La partida termina (de verdad) | Expulsión automática y regreso a su propia base |
+| Aviso de una partida que ya no existe | Se ignora (ver 5.3) |
+
+**El botón "Sala" y el juego van juntos:** al apretar **Entrar**, la sala manda a
+`{ruta}/?entrar=1`, y el juego con eso **entra directo al juego**, sin volver a
+preguntar "¿quieres unirte?". Antes preguntaba en la sala y otra vez en el juego
+(hallazgo de Fredy, oct-2026).
+
+**Regresar (hallazgo de Fredy, oct-2026):** el "‹ Inicio" de arriba a la derecha
+**solo sale si NO eres invitado**. El invitado no tiene salida, a propósito.
+
+**La sala es SOLO para invitados** (decisión de Fredy, oct-2026). La pareja no
+es invitada: no ve el panel ni entra aquí por su cuenta.
+
+**Al pausar el anfitrión** (quien ve el aviso de pausa):
+- **El invitado** va a la sala. La partida está PAUSADA, no terminada, así que
+  **no se le expulsa**: la invitación sigue viva y desde la sala puede volver a
+  entrar con "Entrar" cuando el anfitrión retome.
+- **La pareja** se queda en la pantalla de espera de Encuentros, que es suya.
+
+Al terminar la partida (no al pausar) la invitación se retira y el invitado sale
+solo, esté donde esté.
+
+#### 5.5 Lo importante: la sala NO puede romper el juego
+
+El bloque que escucha invitaciones va **aparte**, en un `<script type="module">`
+propio. El juego de diablitos sigue siendo un `<script>` normal sin internet:
+
+- Si no hay internet, o la configuración falla, o algo se cae → el bloque se
+  queda callado y **el juego funciona exactamente igual que antes**.
+- No se le importó nada de Firebase al juego.
+
+#### 5.6 Dónde aparece Diablitos en el menú
+
+**Fijo para todos, sin candado** (decisión de Fredy, oct-2026). No va por el
+catálogo: está escrito en `renderPacksDeVerdad()` con `libre: true`, que salta la
+comprobación de licencia. Así el submenú **🎮 Juegos** aparece siempre y
+Diablitos se ve sin pedir acceso.
+
+Los demás juegos siguen **armándose solos** desde el catálogo (`packs`), con su
+candado. `FIJOS` es la lista de los que no se leen del catálogo (`guiadas` y
+`diablitos`), para que no se dupliquen si algún día alguien los da de alta ahí.
+
+---
+
+### 6. Archivos tocados
+
+| Archivo | Qué cambió |
+|---|---|
+| **`invitado.js`** | **Nuevo.** Un solo lugar para: cuándo eres invitado de verdad, copiar/restaurar, salir, y **publicar/retirar/pausar/vigilar invitaciones**. `vigilarInvitaciones()` comprueba que la partida siga viva |
+| `index.html` | Usa `invitado.js`; el modo invitado solo empieza al registrarse; "Solicitando Acceso"; salidas en silencio; recuperación al abrir; **el invitado registrado va a la sala** (antes a Encuentros); **Diablitos fijo en el menú, sin candado** |
+| `acceso.js` | `soyInvitadoAhora()` + guarda en `escucharCatalogo` para no guardar códigos siendo invitado |
+| `Encuentros/index.html` | Secciones 3.2 a 3.6 + publicar/retirar/pausar su invitación + al pausar, el invitado vuelve a la sala + **entrar directo con `?entrar=1`** |
+| `Diablitos/index.html` | Panel de la sala (espera / en pausa / tarjeta / entrada / expulsión) + `esModoInvitado()` corregido + **"‹ Inicio" solo si no eres invitado** + el botón Entrar manda a `?entrar=1` |
+
+Se borraron del inicio las copias de `hayRespaldo()` / `respaldarSesion()` /
+`restaurarSesion()`: quedan en un solo lugar, que es la razón por la que este
+repo ya tiene `acceso.js` y ahora también `invitado.js`.
+
+---
+
+### 7. Cómo se verificó
+
+Con un arnés propio (`Temp\opencode\`): **Firestore simulado en memoria +
+Chrome headless**. No es "se ve bien", es la app corriendo de verdad.
+
+| Suite | Casos |
+|---|---|
+| **Encuentros** (13) | niveles · invitación · **entrar directo** · anfitrión · botón saltar · fin · invitación al invitado · pareja · pausa · fin con limpieza · se fue un invitado · multi · partida vieja · sin licencia |
+| **Inicio** (6) | nada · escaneo a medio camino · registro completo · recuperación al abrir · invitado ya registrado con códigos · menú (Diablitos sin candado) |
+| **Sala** (7) | no eres invitado (con regresar) · invitado esperando · con invitación (Entrar directo) · **en pausa** · **aviso de partida muerta** · **aviso viejo sin `sesion`** · expulsión al acabar |
+
+**26 casos, todos sin errores de JavaScript.**
+
+Lo que se comprobó de la sala, en orden:
+
+```
+invitado, sin partida  -> "Esperando Invitación…", sin tarjeta
+con invitación        -> tarjeta con título/icono/anfitrión, Entrar -> Encuentros
+la invitación se retira -> expulsión solo: respaldo borrado, base y identidad propias
+el juego de diablitos   -> arranca en los 4 escenarios, con y sin internet
+```
+
+---
+
+### 8. Cómo volver a probarlo
+
+1. Fredy sube con **GitHub Desktop**.
+2. Espera 1–2 min.
+3. Incógnito o **Ctrl+Shift+R**.
+
+**Encuentros**
+1. Arma partida con invitado; confirma que **todos** reciben el mismo orden de niveles.
+2. Intenta salir con gesto de atrás y con "← Inicio": **no te deja**.
+3. Cuando le toque a tu pareja, sale "Saltar turno de [nombre]".
+4. Termina la última ronda: les llega el mensaje a ti y a tu pareja.
+5. Desde el ⚙️ borras a un invitado en pleno juego: el turno **se brinca solo**.
+6. **Pausa**: el invitado vuelve a la **sala** y ahí ve *"La partida está en pausa…"* (sin tarjeta y **sin salir del modo invitado**); tu pareja se queda en la pantalla de espera de Encuentros. Al **retomar**, en la sala del invitado reaparece la tarjeta.
+
+**Menú**
+7. En el inicio debe estar el botón **🎮 Juegos** y, dentro, **Diablitos** sin candado. Al entrar por el menú, arriba a la derecha debe salir **"‹ Inicio"**.
+
+**Modo invitado**
+8. ⚙️ → Invitados → "Entrar modo invitado" y **te sales sin escanear**: todo igual, sin rastro.
+9. Escanea un QR y te sales: **todo se restaura solo**.
+10. Escanea y **te registras**: **te manda directo a la sala** (sin ventana de "Listo" que aplastar), ves "Esperando Invitación…", y si abres el ⚙️ dice "Estás de visita" con su botón de salir.
+11. Con la partida en curso, **borra al invitado** desde el ⚙️: al volver a abrir la app se expulsa solo.
+
+**Sala (necesita dos teléfonos)**
+12. Teléfono A: entra como invitado, llega a Diablitos, ve "Esperando Invitación…".
+13. Teléfono B: anfitrión arma una partida en Encuentros.
+14. En A debe salir la tarjeta. Al apretar **Entrar** debe caer **directo en el juego** (sin volver a preguntar).
+15. Al terminar la partida, A debe salir solo del modo invitado y volver a su base.
+
+**Pendiente por falta de una segunda persona:** el paso 10–13 completo con dos
+teléfonos reales. Hasta esa prueba, la sala queda a medio validar.
+
+---
+
+### 9. Límites conocidos que dejó esta ronda
+
+| Límite | Nota |
+|---|---|
+| Invitado apaga el celular o pierde red | Sigue en el turno. Mitigación: botón "Saltar turno" del anfitrión |
+| **Sin internet**, el invitado no se expulsa al abrir | Deliberado y viejo: no se expulsa a nadie de una partida en curso por un corte de red. Solo afecta al reinicio |
+| Invitado que nunca recibe invitación | Espera indefinidamente en la sala. Cerrar la app lo resuelve |
+| Escaneó y se salió | Se pierde el QR y hay que escanear de nuevo. Preferible a quedar pegado a una base ajena |
+| Varios juegos con invitación a la vez | La sala muestra el primero. Falta decidir el orden |
+| Datos viejos de "invitado de invitado" | No se limpian (ya estaba en pendientes antes de esta ronda) |
+
+---
+
+### 10. Decisiones tomadas
+
+**Decidido por Fredy (oct-2026):**
+
+| Decisión | Detalle |
+|---|---|
+| Al registrarse, **directo a la sala** | Sin ventana de "¡Listo!". Con `location.replace` para que atrás no regrese al formulario de otra persona |
+| **Diablitos NO lleva candado, y va en el menú** | Fijo en el submenú **🎮 Juegos** para todos (ver 5.6). El resto de juegos se sigue armando solo desde el catálogo |
+| **Un aviso sin `sesion` no se muestra** | Descarta los avisos publicados antes de existir el campo (el caso que le salió al probar) |
+| **La sala es solo para invitados** | La pareja no es invitada: no ve el panel ni entra por su cuenta |
+| **Al pausar**: el invitado va a la sala, la pareja se queda | Ver 5.4. Al *terminar* (no al pausar) el invitado sale solo, esté donde esté |
+| **Se brinca al que ya no está** | En vez de parar la partida (sección 3.3) |
+| **Nivel escondido** | El tag de nivel se pidió oculto: no es bug (sección 3.1) |
+| **El aviso solo vale si la partida vive** | La sala comprueba la `sesion` antes de mostrar nada (sección 5.3) |
+| **En pausa no se puede entrar, pero tampoco se expulsa** | Se marca el aviso en pausa, no se retira (sección 5.3) |
+| **Entrar desde la sala es directo** | `?entrar=1`; sin doble pregunta (sección 5.4) |
+| **"‹ Inicio" en Diablitos solo si no eres invitado** | El invitado sigue sin salida (sección 5.4) |
+
+**Pendiente de Fredy (no de código):**
+
+- **Probar la sala con dos teléfonos reales.** Es lo único del flujo de la sala
+  que no se ha validado en vivo (todo lo demás se probó con la app simulada).
+- Cuando haya más juegos con invitados, **ver dónde posicionarlos** en el
+  submenú Juegos (hoy Diablitos está fijo; el resto sale del catálogo).
+
+---
+
+### 11. Nota de mantenimiento
+
+- **`General/` es la consolidada.** Cualquier cambio de esta fase debe
+  reflejarse en `GUIA-PROYECTOS.md` (estado general + pendientes) con el formato
+  `Hecho (mes, publicado): ...`, cuando se suba.
+- Al guardar texto en Windows, si un archivo sale con los acentos duplicados la
+  causa es doble conversión UTF-8. Ver `GUIA-PROYECTOS.md` §10.
+
+---
+
+## Parte 2 - Detalle de `Encuentros/` y del modo invitado (verificado oct-2026)
+
+> Origen: `Encuentros-y-Modo-Invitado.md` (04/10/2026), conservado literal.
+> Aqui esta el detalle fino, con numeros de linea, el "por que" de cada
+> correccion y la lista de verificacion. La Parte 1 lo resume; esto lo respalda.
+
+
+#### 1. Resumen de la ronda
+
+| Tema | Qué quedó |
+|---|---|
+| Continuación | Se retoma **la actividad que se estaba jugando**, no la última abierta |
+| Pausa | El anfitrión pausa y sale; los demás reciben un aviso |
+| Terminación | El anfitrión puede terminar la partida; los invitados reciben el aviso de fin y salen del modo invitado |
+| Datos del anfitrión | Si el invitado abre la app **sin partida activa**, vuelve **en silencio** a su propio espacio |
+| Aviso de fin | Ya no se repite al volver a entrar a jugar |
+| Selector de invitado | Solo muestra los perfiles base (admin y pareja), nunca a otros invitados |
+
+#### 2. Cómo está guardado el estado de la partida
+
+Todo vive en **un** documento: `sesionEncuentros/actual` (en la base de la
+pareja). Campos que se agregaron o se usan hoy:
+
+| Campo | Para qué |
+|---|---|
+| `activa` | La partida está corriendo |
+| `pausada` | El anfitrión pausó y salió |
+| `terminada` | La partida se acabó (por ronda o por el anfitrión) |
+| `porAdmin` | La terminó el anfitrión, no se llegó al final |
+| `sid` / `reanudada` | Identifica la partida y marca que se retomó |
+| `ronda` / `turno` | A quién le toca en este momento |
+| `cabezas` | Quiénes participan (admin, pareja e invitados) |
+
+`terminada` **no se borra**: se sobrescribe cuando el anfitrión inicia una
+partida nueva (`generarYIniciar` la vuelve a dejar en `false`). Por eso una
+partida vieja puede seguir marcada con `terminada: true` — de ahí el cuidado del
+punto 6.1.
+
+#### 3. Continuación por actividad
+
+`chequearPendiente(esMulti, actividad)` (`Encuentros/index.html:384`) se llama
+al tocar una actividad (`410`) y al abrir MultiActividades (`725`).
+
+- La búsqueda filtra **por la actividad elegida**, no "la última abierta".
+- Si hay partida pendiente **de esa misma actividad**, se ofrece continuar.
+- **No** hay aviso automático al abrir la página: si el usuario no toca esa
+  actividad, no se le interrumpe.
+- El botón **"Encuentro nuevo"** (`137`) reinicia esa misma actividad desde
+  cero, sin volver al selector.
+- Mientras corre, el que espera ve **"Turno de {nombre}"** (`937`).
+
+Al continuar, la sesión se reactiva con `sid` nuevo y `reanudada: true`
+(`995`), que es lo que hace que el otro lado reciba el aviso de que la partida
+se retomó.
+
+#### 4. Pausa y terminación
+
+| Botón | Quién lo ve | Qué escribe |
+|---|---|---|
+| **Pausar y Salir** (`127`) | solo anfitrión | `pausada: true` (`958`) |
+| **Terminar Partida** (`128`) | solo anfitrión | `activa: false, terminada: true, porAdmin: true` (`969`) |
+
+- Los dos botones **se ocultan a los invitados** en `mostrarBotonesAdmin()`
+  (`899`): no es que fallen, es que no existen para ellos.
+- Cuando el anfitrión pausa, los demás que.no son él ven el modal de pausa
+  (`471-472`: `d.pausada && d.hostUid !== miId`).
+- Cuando la partida termina de forma natural, el avance de ronda escribe
+  `terminada: true` (`538`).
+- El texto del aviso de fin distingue los dos casos (`496-497`):
+  - `porAdmin` → "La partida fue terminada por el anfitrión."
+  - natural → "¡Se acabó la partida! Gracias por jugar."
+- En ambos casos el invitado acepta y se ejecuta `salirModoInvitado()` (`253`).
+- En toda la interfaz se dice **anfitrión**, no "administrador".
+
+#### 5. Modo invitado: que no se queden datos ajenos
+
+##### 5.1 Salida explícita (`salirModoInvitado`, `254`)
+
+1. Quita al invitado de los usuarios del anfitrión (`config/ajustes`).
+2. Restaura su respaldo: `invitado_respaldo` (config, usuarios, identidad).
+   Se conserva `taquilla_priv` porque es **la llave de la pareja**, no del
+   invitado.
+3. Borra el respaldo y regresa al inicio.
+
+Lo que el invitado usó (lo prestado) se queda en la base del anfitrión, que es
+lo correcto.
+
+##### 5.2 Criterio A — volver solo si no hay partida
+
+`volverSiInvitadoSinPartida(db)` (`index.html:739`), llamado desde `iniciar()`
+(`731`) **antes** de entrar a la app:
+
+1. Solo aplica si hay respaldo y la identidad tiene `invitado`.
+2. Lee `sesionEncuentros/actual`.
+3. Si **no** hay partida activa en la que participe → sale en silencio: quita
+   al invitado de los usuarios, restaura su config y recarga.
+4. Si **hay** partida activa → se queda como invitado, para poder seguir.
+5. Si **no se pudo confirmar** (sin internet) → **se queda como invitado**. No
+   se expulsa a nadie de una partida en curso por un corte de red.
+
+##### Por qué A y no la opción B (vencimiento por tiempo)
+
+Se evaluó agregar una caducidad (por ejemplo 12 horas) y se descartó: si el
+invitado **cierra la app**, el código que revisa el tiempo no vuelve a correr,
+así que el vencimiento **nunca se aplicaría**. A no depende de que el usuario
+vuelva a abrir la app, y por eso **fuerza** la limpieza.
+
+Que la configuración del anfitrión **se sobrescriba** en el teléfono del
+invitado es justamente el objetivo: es la protección de los datos. No es una
+pérdida, es el comportamiento deseado.
+
+##### Límite conocido
+
+La revisión ocurre en el **inicio**. Si el invitado abre `Encuentros/` directo
+por un link guardado, el chequeo no corre hasta que pase por el inicio.
+
+#### 6. Correcciones de esta ronda
+
+##### 6.1 El aviso de fin salía repetido al volver a jugar
+
+** Síntoma:** al terminar la partida, el invitado salía del modo invitado
+(correcto). Luego entraba de nuevo como invitado, aceptaba el "¡Listo!", y
+**de inmediato** le volvía a salir con "Se acabó la partida".
+
+**Causa:** el documento conserva `terminada: true` hasta que el anfitrión inicia
+otra partida. Al abrir `Encuentros/` por primera vez, el listener detectaba ese
+documento viejo y, como no miraba si el invitado **estaba jugando**, lo sacaba
+como si la partida acabara de terminar.
+
+**Arreglo:** la condición del aviso de fin ahora exige `&& jugando` (`492`).
+Es decir, el aviso sale **solo en la transición real** (estaba jugando y la
+partida terminó), nunca por un documento viejo.
+
+**Estado:** probado por Fredy, funciona bien.
+
+##### 6.2 El selector "de quién eres invitado" mostraba a los invitados
+
+**Síntoma:** el primer invitado veía correctamente solo a la pareja, pero del
+segundo invitado en adelante el selector también listaba a los invitados
+anteriores, permitiendo **ser invitado de un invitado**.
+
+**Causa:** la lista se llenaba con `usuariosEfectivos()`, que devuelve **todos**
+los usuarios de la base del anfitrión, invitados de sesiones anteriores
+incluidos.
+
+**Arreglo:** se filtra a los que **no** son invitados
+(`index.html:1078`), dejando solo los perfiles base (admin y pareja).
+
+**Nota:** el filtro aplica a partir de ahora. Si algún invitado ya registrado
+antes eligió "invitado de invitado", ese dato viejo permanece en la base; no
+afecta el funcionamiento.
+
+#### 7. Archivos tocados en esta ronda
+
+| Archivo | Qué cambió |
+|---|---|
+| `Encuentros/index.html` | Continuación por actividad, indicador de turno, "Encuentro nuevo", pausa/terminación, avisos, `salirModoInvitado()`, guarda `&& jugando` en el aviso de fin |
+| `index.html` | `volverSiInvitadoSinPartida()` + llamada en `iniciar()`; filtro del selector de invitado; redirección del invitado a `Encuentros/` al aceptar |
+
+#### 8. Verificación
+
+##### 8.1 Estática (sin navegador)
+
+Scripts en `Temp\opencode\`, sobre los archivos con `<script>` embebido:
+
+| Script | Qué revisa |
+|---|---|
+| `jscheck.py` | Equilibrio de `{}[]()`, ignorando strings, comentarios y regex |
+| `undef.py` | Funciones llamadas pero no definidas ni importadas (pantalla en blanco) |
+| `expcheck.py` | Que todo lo importado de `acceso.js` exista de verdad |
+| `argcheck.py` | Argumentos de las funciones de `acceso.js` |
+| `dupcheck.py` | Nombres declarados dos veces |
+
+Los 5 pasan. Falsos positivos conocidos (preexistentes, no de estos cambios):
+`Error`, `Invitado`, `button`, `completo`, `rechazar`, `URLSearchParams`.
+
+##### 8.2 Manual, en el celular (Fredy) — TODO PROBADO
+
+Probado y **confirmado funcionando en el celular**:
+
+- Pedir → Aprobar → Revocar desde `Autorizar/`.
+- Continuar la partida de **la actividad elegida**.
+- Pausa del anfitrión y aviso a los demás.
+- Terminar partida y el aviso de fin con salida del invitado.
+- Volver a entrar como invitado **sin** que salte el aviso de fin.
+- El invitado vuelve solo a su propio espacio cuando abre la app sin partida
+  activa (criterio A).
+- El selector "de quién eres invitado" muestra **solo** la pareja, también en
+  el segundo invitado y en adelante (ya no hay invitados de invitados).
+
+**Estado: la ronda queda cerrada y verificada (oct-2026).**
+
+##### 8.3 Cómo volver a probar
+
+1. Fredy sube con **GitHub Desktop**.
+2. Espera **1–2 minutos** (Pages).
+3. Entra en **incógnito** o con **Ctrl+Shift+R** (`Cache-Control: max-age=600`).
+
+#### 9. Límites conocidos (no bloquean)
+
+- El retorno automático del invitado se evalúa **solo en el inicio** (5.2).
+- Datos viejos de "invitado de invitado" **no se limpian** (6.2). Solo afecta a
+  registros anteriores al arreglo; no rompe nada.
+- El doble `getDocs` de `escucharCatalogo()` sigue ahí (leer el mismo dato dos
+  veces). No es un bug, solo gasto extra.
+
+#### 10. Nota de mantenimiento
+
+- `GUIA-PROYECTOS.md` **ya quedó reparado** (oct-2026). Estaba doble-codificado:
+  el texto se guardó ya convertido en una segunda pasada UTF-8, así que los
+  acentos y los emojis aparecían como caracteres raros (dos letras deforme en
+  lugar de una, y el guion largo partido en tres). Se deskodificó con el script
+  `Temp\opencode\fixencoding.py` (respaldo en `GUIA-PROYECTOS.md.bak`) y se
+  verificó que el texto sin acentos quedó idéntico al original. Los demás
+  archivos de `General/` y de `Downloads/` se revisaron y están sanos.
+
+> Al guardar texto en Windows, si un archivo sale con los acentos duplicados,
+> la causa es que se escribió dos veces: UTF-8 guardado como si fuera
+> Windows-1252 y luego vuelto a guardar como UTF-8. A mano no se arregla: hay
+> que deshacer la doble conversión.
+
+- No hay `firestore.rules` en el repo: las reglas viven en la consola. La
+  revisión de esos paths sigue pendiente (está en `GUIA-PROYECTOS.md`).
+
+---
+
+## Parte 3 - Licencias, `acceso.js` y catalogo (oct-2026)
+
+> Origen: `Modulo-Accesos.md` (04/10/2026), conservado literal. El modulo
+> `acceso.js` centraliza la logica de licencias que antes estaba copiada en 4
+> paginas. **Nada de esto existia en la Parte 1.**
+
+
+#### 1. Qué se hizo
+
+Antes, la lógica de licencias estaba **copiada** en 4 páginas. La consulta
+problemática (`solicitudes` con `limit(30)`) estaba escrita **8 veces**.
+
+Ahora las 4 páginas importan todo de un solo archivo: **`acceso.js`**.
+
+**Este refactor NO cambia el comportamiento.** La app debe seguir
+funcionando exactamente igual. Solo se eliminó la duplicación.
+
+Motivo real del refactor: con la lógica en 8 lugares, cualquier corrección
+del límite de 30 había que aplicarla 8 veces, y era fácil olvidar una. Con
+el módulo, es una sola vez.
+
+#### 2. Qué exporta `acceso.js`
+
+| Export | Qué hace |
+|---|---|
+| `miProyecto()` | ProjectId de la pareja. **Se lee en cada llamada**, no al cargar el módulo, porque el Asistente puede escribir el config en `localStorage` después de que la página cargó |
+| `appTaq()` | Instancia de la base de taquilla (nombre `"taquilla"`), creada una sola vez |
+| `leerLicencias()` | Lee `localStorage["licencias"]` → `{ [item]: "codigo.firma" }` |
+| `guardarLicencias(obj)` | Sobrescribe el objeto completo |
+| `guardarLicencia(item, cod)` | Guarda un código para un item |
+| `quitarLicencia(item)` | Borra el código de un item, sin tocar los demás |
+| `tieneCodigoValido(item)` | Verifica firma + item + para + vencimiento |
+| `tengoAcceso(item)` | Atajo de `tieneCodigoValido` |
+| `oficialesAprobados()` | Packs oficiales que el usuario ya tiene autorizados |
+| `escucharItem(item, hooks)` | Escucha **un** item. `hooks.revocado()` / `hooks.aprobado()`. Devuelve la función para cancelar |
+| `escucharCatalogo(hooks)` | Revisa **todo** el catálogo. `hooks.cambio(licencias)` |
+| `graciasDisponibles()` | Mapa `"item\|email"` → `true` de cortesías sin usar |
+
+##### Decisión de diseño: los nombres
+
+Se conservaron los nombres que el código **ya usaba** (`miProyecto`, `appTaq`,
+`leerLicencias`, `quitarLicencia`…), no nombres nuevos más claros. Motivo:
+así **casi ninguna llamada cambia** y el diff es mínimo, que es lo que hace
+seguro un refactor de este tipo.
+
+Excepción: en Tienda e index el lector local se llamaba `leerLic()`; se
+estandarizó a `leerLicencias()` (9 call sites, cambio mecánico).
+
+##### Decisión de diseño: las rutas
+
+`acceso.js` está en la **raíz** y hace sus propios imports con rutas relativas
+a sí mismo (`./firebase-config.js`, `./config.js`, `./taquilla.js`).
+
+Las rutas de un módulo se resuelven contra la **ubicación del módulo**, no
+contra el archivo que lo importa. Por eso el mismo archivo funciona igual
+desde el índice (`./acceso.js`) que desde una carpeta (`../acceso.js`), sin
+duplicarlo.
+
+#### 3. Cómo quedó cada archivo
+
+##### `acceso.js` (nuevo, 227 líneas)
+
+Contiene toda la lógica compartida, comentada. Incluye las dos consultas
+antes repetidas y el `TOPE = 30` en una sola constante con la advertencia
+del problema documentada.
+
+##### `index.html` (menú) — 1149 → ~1055 líneas
+
+| Antes | Ahora |
+|---|---|
+| `leerLic()` local (3 líneas) | importa `leerLicencias()` |
+| `getApp("taquilla-menu")` + `initializeApp` en 3 sitios | `appTaq()` del módulo |
+| `gracias` armado a mano (líneas 501-513, con `limit(30)`) | `await graciasDisponibles()` |
+| `escucharRevocadosMenu()` (42 líneas, con `limit(30)`) | `escucharCatalogo({ cambio(){ renderPacks(); } })` |
+
+Lo que **quedó aquí**: `tarjetaPack()`, el dibujado del catálogo, el Asistente,
+el modo invitado y la pantalla de identidad. Nada de eso se tocó.
+
+##### `Tienda/index.html` — 404 → ~334 líneas
+
+| Antes | Ahora |
+|---|---|
+| `appTaq()`, `miProyecto()`, `leerLic()`, `guardarLic()`, `CLAVE_LIC` | importados del módulo |
+| `licenciaValida(item)` (6 líneas) | `tieneCodigoValido(item)` del módulo |
+| `escuchar()` (49 líneas, 2× `limit(30)`) | `escucharCatalogo({ cambio(){ pintar(); } })` |
+
+Lo que **quedó aquí**: el pintado de tarjetas, el buscador, el login con
+Google, la petición del item (`addDoc`) y el flujo de re-pedido.
+
+##### `Guiadas/index.html` — 1367 → ~1258 líneas
+
+| Antes | Ahora |
+|---|---|
+| `CLAVE_LIC`, `miProyecto()`, `leerLicencias()`, `tengoAcceso()` (17 líneas) | importados |
+| `appTaq()` | importado |
+| `quitarLicencia()` | importado |
+| `escucharAprobacion()` (53 líneas, con `limit(30)`) | `escucharItem(ITEM_ID, { revocado, aprobado })` — 11 líneas |
+| `oficialesAprobados()` (17 líneas) | importado |
+| `localStorage.setItem(CLAVE_LIC, …)` en 2 sitios | `guardarLicencia(ITEM_ID, cod)` |
+
+Lo que **quedó aquí**: todo el juego (niveles, lados A/B, tomas, MultiActividades,
+sesión compartida, editor de actividades).
+
+##### `Encuentros/index.html` — 1016 → ~921 líneas
+
+Migración **idéntica** a Guiadas (era una copia de ese mismo bloque).
+
+| Antes | Ahora |
+|---|---|
+| `CLAVE_LIC`, `miProyecto()`, `leerLicencias()`, `tengoAcceso()` | importados |
+| `appTaq()`, `quitarLicencia()` | importados |
+| `escucharAprobacion()` (50 líneas, con `limit(30)`) | `escucharItem(...)` |
+| `oficialesAprobados()` | importado |
+
+Lo que **quedó aquí**: la generación de listas por cabeza, los turnos por
+rondas, `runTransaction`, las tomas, el modo local sin internet.
+
+#### 4. Lo que NO se tocó, y por qué
+
+##### Las 4 consultas que siguen en las páginas
+
+| Archivo | Línea | Por qué no se centralizó |
+|---|---|---|
+| `Guiadas/index.html` | 299 | La cortesía necesita **escribir** `graciaUsada` en el documento |
+| `Encuentros/index.html` | 373 | Ídem |
+| `Tienda/index.html` | 164 | Ídem |
+| `Tienda/index.html` | 279 | Evita pedidos duplicados: necesita comparar con las **solicitudes previas** |
+
+No se movieron porque no son solo lectura: dependen del `doc.id` para poder
+escribir. Centralizarlas exigiría un rediseño (la cola con acuse de
+`Soluciones.txt`), no un simple traslado.
+
+##### Detalle de la instancia de Firebase
+
+Antes `index.html` usaba el nombre `"taquilla-menu"` y las otras tres
+páginas `"taquilla"`. Ahora **todas usan `"taquilla"`** (la constante
+`APP_TAQ` del módulo). Misma configuración, así que es equivalente, pero
+hay una instancia menos.
+
+##### Diferencia de comportamiento menor (intencional)
+
+`escucharCatalogo()` hace una lectura extra (`getDocs`) cada vez que se
+dispara el listener, porque fusionó las dos versiones que existían (la del
+índice usaba solo el snapshot, la de Tienda re-leía). Lee los mismos datos;
+solo cambia quién los pide.
+
+#### 5. Verificación hecha
+
+Como no hay Node en la máquina, se escribieron verificadores en Python
+(`Temp\opencode\`):
+
+- **`jscheck.py`** — equilibrio de `{}[]()`, ignorando strings, comentarios y
+  regex literales. Los 7 archivos pasan.
+- **`undef.py`** — detecta funciones llamadas pero no definidas ni importadas
+  (la causa clásica de pantalla en blanco). Los 7 archivos pasan.
+- **`expcheck.py`** — comprueba que **todo lo que las páginas importan de
+  `acceso.js` exista de verdad**. Esto es crítico: en módulos ES, importar un
+  nombre inexistente rompe la página entera.
+- **`argcheck.py`** — que las llamadas a las funciones de `acceso.js` lleven los
+  argumentos correctos.
+- **`dupcheck.py`** — que no haya nombres declarados dos veces en un mismo
+  archivo. Esto detectó dos fallas reales durante el refactor.
+
+Estado: los 6 avisos restantes del verificador son falsos positivos
+preexistentes (identificados **antes** de tocar los archivos).
+
+##### Verificación en el celular — HECHA (oct-2026)
+
+No hay navegador ni celular en este entorno, así que esta lista se pasó para
+que la probara Fredy. **Las 4 quedaron probadas y funcionando:**
+
+| # | Prueba | Resultado |
+|---|---|---|
+| 1 | Abrir el **menú** en incógnito → cargan las tarjetas y un producto con acceso aparece | OK |
+| 2 | Entrar a **Citas Guiadas** y a **Encuentros** → no sale la pantalla de acceso bloqueado | OK |
+| 3 | En la **Tienda**, pedir algo desde otro navegador → se activa solo | OK |
+| 4 | Revocar desde **Autorizar** → la tarjeta desaparece del menú | OK |
+
+**Con esto el refactor de `acceso.js` queda cerrado: no rompió nada.**
+
+Si alguna vez una de las 4 falla, el error más probable es una ruta de import
+mal escrita: se ve en blanco la pantalla y la consola dice "Failed to resolve
+module specifier".
+
+#### 6. El límite de 30 — ELIMINADO (oct-2026)
+
+**Resuelto.** Cuando se escribió este documento, el tope seguía puesto a
+propósito (ese paso era solo centralizar). Después se quitó.
+
+##### Por qué se quitó, y por qué NO se usó `orderBy`
+
+La primera idea fue `orderBy("fecha","desc")` para que entraran las 30 más
+recientes. Se descartó por dos razones:
+
+1. **No arregla el caso peligroso.** Sigue devolviendo solo 30. Una revocación
+   antigua podía seguir sin verse.
+2. **Exige crear un índice compuesto** (`para` + `fecha`) en la consola.
+
+Y el motivo para cortar desapareció al revisar el diseño: **la lista no crece
+sola.** La Tienda reutiliza la misma solicitud por (correo + producto), así que
+hay como máximo un documento por producto y usuario —unas decenas por pareja,
+no miles—.
+
+##### Qué se cambió
+
+Se quitaron los 6 topes y la constante `TOPE`:
+
+| Dónde | Qué era |
+|---|---|
+| `acceso.js` → `consultaSolicitudes()` | Cubre `escucharItem` y `escucharCatalogo` |
+| `acceso.js` → `graciasDisponibles()` | El mapa de cortesías |
+| `Tienda/index.html` | El control de duplicados y la cortesía |
+| `Guiadas/index.html` | La cortesía |
+| `Encuentros/index.html` | La cortesía |
+
+Ahora cada consulta lee **todas** las solicitudes de la pareja. Efectos:
+
+- Las aprobaciones nuevas siempre se ven (el usuario no se queda bloqueado)
+- Las revocaciones antiguas también se ven (el revocado no sigue jugando)
+- El control de duplicados vuelve a funcionar → la lista deja de crecer
+
+##### Costo
+
+Bajo, porque la lista es chica por diseño. Firestore cobra por documento leído;
+una pareja normal tiene unas decenas, contra una capa gratis de 50,000 lecturas
+al día **por proyecto**. El detalle está en `General/Escala-Millones.md`.
+
+##### Lo que NO se tocó
+
+El Panel (`Autorizar/`) ya leía todas las solicitudes (usa `orderBy` sin tope),
+así que no necesitó cambios.
+
+##### Verificación
+
+Los 5 verificadores pasan: sintaxis, referencias, argumentos, imports y
+nombres duplicados.
+
+#### 7. Siguiente paso
+
+ Según lo acordado, el orden es:
+
+1. **Revisar las reglas de Firebase** en la consola — bloqueante, porque el
+   rediseño necesita que la app pueda **borrar** en `solicitudes`.
+2. Revocación al entrar en cada página (cierra el acceso por URL directo).
+3. Catálogo marcando lo que ya tienes desde local.
+4. Cola con acuse (aprobaciones) + revocaciones persistentes.
+5. Doc por item + cortesía a local.
+
+Todo está detallado en `Descargas\Soluciones.txt` y los pendientes en
+`Descargas\Problemas 2.txt`.
+
+---
+
+## Parte 4 - `Autorizar/` y reglas de Firebase (oct-2026) - **revisado y cerrado**
+
+> Origen: `Modulo-Accesos.md` (04/10/2026), conservado literal.
+> **Esta es la unica parte que no existia en ningun otro documento.** Sin ella se
+> perdia el hallazgo del login y el estado en que quedaron las reglas.
+>
+> **Estado (oct-2026):** el login de `Autorizar/` ya esta escrito, pendiente de
+> subir. Las reglas siguen abiertas **a proposito y por decision de Fredy**: se
+> ### ESTADO REAL (6-oct-2026) - esto sustituye lo que dice el texto de abajo
+>
+> Las reglas **NO estan abiertas**. Fredy ya las reviso y las dejo cerradas
+> (`allow create`, `update` y `delete` con condiciones). El texto original de
+> esta parte decia "temporalmente regresadas a `solicitudes: if true`" y
+> "`Autorizar/` no se ha subido": **eso era falso** y ya se corrigio.
+>
+> Lo que quedo abierto de verdad, y **ya se cerro el 6-oct-2026**:
+>
+> 1. **`create: if true`** permitia crear una solicitud con el correo de otro
+>    cliente. Como el listener de `acceso.js` borra el codigo local de quien
+>    ve un documento con `estado: "revocado"` **sin validar firma**, eso
+>    permitia "echar" a un cliente real. Ahora `create` exige el correo
+>    verificado de quien pide y estado `pendiente`.
+> 2. **`config/permisos` era legible por cualquiera**, dejando la lista de
+>    correos publicadores a la vista. Ahora solo la ven los publicadores.
+>
+> **Reglas vigentes completas (y las anteriores de respaldo) en
+> `General/reglas-firebase-taquilla.txt`.**
+>
+> Sigue abierto **por decision de arquitectura**: `allow read: if true` en
+> `solicitudes`. No se puede cerrar sin romper el modo sin conexion, porque el
+> menu y los juegos leen esa coleccion sin sesion. Por eso los correos de los
+> clientes siguen siendo legibles. Ver Parte 3, seccion 6.
+
+
+#### 8. El inicio de sesión de `Autorizar/` (oct-2026)
+
+##### El hallazgo
+
+Al cerrar las reglas de `solicitudes` (para que solo el publicador pudiera
+modificar y borrar), **aprobar y revocar dejaron de funcionar**, sin ningún
+error visible.
+
+La causa no era la lista de publicadores ni el correo del dueño. Era que
+**`Autorizar/index.html` nunca iniciaba sesión con Google**: no tenía
+`getAuth`, ni `signInWithPopup`, ni nada. Otras páginas del Panel sí lo tienen.
+
+Entonces, con las reglas cerradas:
+
+| Regla | Qué pasaba |
+|---|---|
+| `request.auth` | Siempre `null` (la página nunca se firmaba) |
+| `esPublicador()` | Siempre `false` |
+| `update` / `delete` | **Siempre rechazados** |
+| `create` (pedir) | Funcionaba: no pide sesión |
+| `read` | Funcionaba: está abierto |
+
+Y como los botones Aprobar, Revocar y Negar hacían `await updateDoc(...)`
+**sin `catch`**, el rechazo no se mostraba. El código aparecía y "desaparecía"
+sin ninguna pista.
+
+##### Por qué las reglas viejas estaban abiertas
+
+`solicitudes: if true` no era un descuido. **Era obligatorio**, precisamente
+porque `Autorizar/` no tiene forma de identificarse. Al cerrar las reglas se
+le pidió ser publicador a una pantalla que nunca inicia sesión.
+
+##### El cambio hecho
+
+En `Autorizar/index.html`:
+
+1. **Botón "Entrar con Google"** + `onAuthStateChanged`, copiando el patrón de
+   `Panel/permisos.html`. Ahora `request.auth` sí se llena.
+2. **`catch` en Aprobar, Revocar y Negar**, con `alert()` visible. Antes
+   cualquier rechazo de reglas era invisible.
+
+Se usó `alert()` y no el `#msg` de la página, porque ese mensaje vive dentro
+de la caja de la llave privada, y esa caja se oculta cuando la llave ya está
+guardada.
+
+##### Estado
+
+- Las reglas están **temporalmente regresadas** a `solicitudes: if true`
+  (el agujero está abierto otra vez: cualquiera puede leer los correos y
+  echar usuarios).
+- `Autorizar/` ya tiene el inicio de sesión, pero **no se ha subido todavía**.
+
+##### La secuencia para cerrar las reglas
+
+1. Subir `Autorizar/index.html` con GitHub Desktop.
+2. Abrir `Autorizar/` y tocar **"Entrar con Google"**. Debe aparecer
+   `✅ <correo>`.
+3. **Solo si el paso 2 funcionó**, volver a poner las reglas cerradas
+   en la consola.
+4. Probar aprobar y revocar. Si algo falla, ahora sale un aviso.
+
+##### Lección
+
+Al cerrar reglas de Firebase en una app sin login, hay que revisar **cada
+pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
+única del Panel que escribía sin autenticarse, y por eso rompió.
+
+> Regla práctica: **todo botón que escriba en Firestore necesita `catch` con
+> aviso visible.** El de Eliminar ya lo tenía; los otros tres no, y eso costó
+> un buen rato de diagnóstico.
+---
+
+## Parte 5 - Decisiones (no sobrescribir sin preguntar)
+
+### Del proyecto Citas de Pareja
+
+| Decision | Detalle |
+|---|---|
+| La app se manda desde GitHub Desktop | Fredy sube, espera 1-2 min (Pages) y prueba en incognito o `Ctrl+Shift+R` (`Cache-Control: max-age=600`) |
+| Modo invitado sin salir de la app | Es una pantalla normal, no un modo aparte: el invitado **no puede registrarse** ni tiene menus que lo delaten |
+| Al registrarse va directo a la sala | A `Diablitos/`, sin ventana de "Listo". Si el anfitrion aun no publico nada, ve "Esperando Invitacion..." |
+| El invitado **no tiene salida** | Ni en la pantalla de espera ni durante la partida. Se queda hasta que termine |
+| La pareja **no** se expulsa nunca por un corte de red | La salida automatica solo se aplica al abrir la app, no durante la partida |
+| Al terminar, el invitado sale solo | Este o "Terminar Partida": mensaje, acepta, `salirModoInvitado()` |
+| En toda la interfaz se dice **anfitrion** | No "administrador" |
+| Aviso de fin solo en la transicion real | Exige `&& jugando`, para que un documento viejo no lo displays otra vez |
+| El selector de invitado solo muestra perfiles base | Nunca a otros invitados, para que no haya invitado-de-invitado |
+| Sin caducidad por tiempo para el invitado | Si cierra la app, el chequeo no corre: el vencimiento nunca se aplicaria |
+| La sala es **solo para invitados** | La pareja no la ve ni entra por su cuenta |
+| Diablitos **sin candado**, fijo en el menu | Submenu **Juegos**, para todos |
+| Se brinca al que ya no esta | En vez de parar la partida. Con el boton "Saltar turno" del anfitrion |
+| Un aviso **solo vale si la partida vive** | La sala comprueba la sesion antes de mostrar nada |
+| En pausa no se puede entrar, pero tampoco se expulsa | Se marca el aviso en pausa, no se retira |
+| Entrar desde la sala es **directo** | `?entrar=1`; sin doble pregunta |
+| "Inicio" en Diablitos **solo si no eres invitado** | El invitado sigue sin salida |
+| Un aviso sin `sesion` **no se muestra** | Descarta los avisos publicados antes de existir el campo |
+
+### De la forma de trabajar
+
+| Decision | Detalle |
+|---|---|
+| Fredy decide, el modelo ejecuta | Si algo es decision de producto, **preguntar antes** de aplicar |
+| Explicar antes de programar | En espanol claro y sin codigo para el usuario |
+| No inventar reglas nuevas de Firestore | Se reutiliza la base y las reglas que ya funcionan |
+| No tocar algo que no tenga que ver con el pedido | Cambios minimos y verificables |
+| Documentar en este archivo | Es la unica memoria del proyecto |
+| Verificar antes de decir "listo" | Pruebas automaticas y, cuando se puede, prueba real en el celular |
+
+---
+
+## Parte 6 - Pendientes, limites y mantenimiento
+
+### Reglas de `solicitudes`: cerrado (resuelto 6-oct-2026)
+
+**Lo que se cerro:**
+- `create` ya no acepta una solicitud con el correo de otro cliente (era la
+  forma de "echar" a un cliente). Exige el correo verificado de quien pide.
+- `config/permisos` ya no es legible por cualquiera.
+
+**Lo que sigue abierto, y por que esta bien:**
+- `read: if true` en `solicitudes`. El menu y los juegos leen esa coleccion
+  **sin internet y sin sesion de Google**. Cerrarla rompia el modo sin
+  conexion. Por eso los correos de los clientes siguen siendo legibles: es el
+  precio consciente de que el juego funcione offline.
+
+**Como volver atras:** `General/reglas-firebase-taquilla.txt` tiene el texto
+vigente y el anterior completo. Pegar el anterior y listo.
+
+**Como no romperlo:** si se tocan las reglas, probar las 4 cosas de la
+seccion 5 del archivo (pedir, aprobar, revocar, Panel). Y probar "pedir" con
+una cuenta que **no** sea publicador, o la prueba no vale.
+
+**El trabajo de arquitectura que queda:** mover el correo del cliente a otra
+coleccion (3 archivos: `Tienda`, `Autorizar`, `acceso.js`) y, mas adelante,
+aislar cada cliente en su propia ruta. Requiere el permiso de `borrar`, que
+hoy no esta en las reglas. Ver Parte 3, seccion 6.
+
+### Pendientes de licencias (Parte 3, "Siguiente paso")
+
+1. ~~Revisar las reglas de Firebase~~ **[HECHO oct-2026: revisadas y cerradas.**
+   Ver `General/reglas-firebase-taquilla.txt`. Falta solo el permiso de `borrar`
+   para el rediseño de la cola.]
+2. Revocacion al entrar en cada pagina (cierra el acceso por URL directo).
+3. Catalogo marcando lo que ya tienes desde local.
+4. Cola con acuse (aprobaciones) + revocaciones persistentes.
+5. Doc por item + cortesia a local.
+
+### Otros pendientes
+
+- Rotar la llave expuesta en `Default Project\General\README.md` y sacarla de ahi.
+- Arnés de la sala: **falta la prueba con dos telefonos reales**.
+- Sesion de Encuentros en `sesionEncuentros/actual`: la lista de TODOS los
+  participantes (incluidos invitados) vive en un solo documento. Confirmar en la
+  consola que ese path no queda abierto a lectura ajena.
+
+### Limites conocidos (no bloquean)
+
+| Limite | Nota |
+|---|---|
+| Invitado apaga el celular o pierde red | Sigue en el turno. Mitigacion: "Saltar turno" del anfitrion |
+| **Sin internet**, el invitado no se expulsa al abrir | Deliberado: no se expulsa a nadie de una partida en curso por un corte de red |
+| Invitado que nunca recibe invitacion | Espera indefinidamente en la sala. Cerrar la app lo resuelve |
+| Escaneo y se salio | Se pierde el QR y hay que escanear de nuevo |
+| Varios juegos con invitacion a la vez | La sala muestra el primero. Falta decidir el orden |
+| Datos viejos de "invitado de invitado" | No se limpian (ya estaba en pendientes) |
+| El retorno del invitado se evalua **solo en el inicio** | Si abre `Encuentros/` por link guardado, el chequeo no corre |
+| Doble `getDocs` de `escucharCatalogo()` | No es bug, solo gasto extra |
+| Una sesion vieja marcada `activa: true` sigue contando | El aviso nuevo si se ata a la sesion, pero una partida vieja abierta no se autodetecta |
+
+### Notas de mantenimiento
+
+- **Acentos duplicados al guardar texto en Windows:** la causa es que el archivo
+  se escribio dos veces (UTF-8 guardado como Windows-1252 y vuelto a guardar).
+  A mano no se arregla: hay que deshacer la doble conversion. Se uso
+  `Temp\opencode\fixencoding.py` (respaldo en `GUIA-PROYECTOS.md.bak`).
+  Al revisar documentos, buscar caracteres CJK: senal de doble conversion.
+- **No hay `firestore.rules` en el repo:** las reglas viven en la consola de
+  Firebase. Por eso "revisar las reglas" es siempre una accion manual.
+- **En este entorno no hay `git` en el PATH** ni navegador real: las pruebas se
+  hacen con scripts en `Temp\opencode\` y mocks de Firebase.
+- **Los scripts del arnes se deben reconstruir antes de inyectar**
+  (`build_*.py` y luego `inject_*.py`). Inyectar dos veces sin reconstruir deja
+  el arnes corrupto y produce "fallas" que no son del codigo real.
+- **Falsa alarma conocida:** el caso `invitado&flag=fin&respaldo=1` termina en
+  otra pagina y por eso no imprime la linea de errores JS. No es un error.
+- **Un resumen de conversacion no lee estos archivos.** Si una sesion se corta
+  por limite de tokens, lo que se pierde es el detalle fino. Este archivo es la
+  red de seguridad: cualquier sesion nueva debe empezar leyendolo.
+
+### Documentos que se archivaron (contenido volcado aqui)
+
+Los documentos de abajo se movieron a
+`Default Project\General\archivo\` el oct-2026. **Todo su contenido esta en
+las Partes 1 a 4 de este archivo**, sin recortes.
+
+- `Fase-1.md` -> Parte 1
+- `Encuentros-y-Modo-Invitado.md` -> Parte 2
+- `Modulo-Accesos.md` -> Partes 3 y 4
