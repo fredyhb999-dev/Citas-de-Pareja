@@ -1095,6 +1095,9 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | Su descripcion es `Diviertete picando diablitos traviesos` | Antes decia "la sala de espera", que era literal y comercialmente flojo |
 | El boton de volver de un juego se llama **`Volver`** y va al submenu del que salio | Usa `#juegos` / `#experiencias`. Antes decia "Inicio" y se iba hasta el principio |
 | El invitado **no ve la salida** en Encuentros | Se oculta siempre. Cumplía la regla de Fase 1 en todos lados menos ahí |
+| El `Volver` de los submenus va **arriba a la derecha**, los tres | Clase `.volverSub`. Antes uno estaba a la izquierda y dos venian abajo |
+| **Cambiar usuario** solo en **Usuarios**, arriba a la izquierda | Se quitó de `Citas/`: ya solo servia para pruebas |
+| Los titulos con degradado llevan `width:fit-content` | Sin eso el color se reparte por toda la pantalla y se ve clarito |
 | Los botones de esquina (engrane, carrito) son **solo del menu principal** | En submenus no salen. El engrane va arriba a la **izquierda** |
 
 ### De la forma de trabajar
@@ -1206,6 +1209,26 @@ botones de menú y submenús salieran del mismo tamaño. Oct-2026.
 
 Unificar los viejos es trabajo aparte, pantalla por pantalla, porque requiere
 verlos. **Lo que si se aplica desde ya: todo lo nuevo usa la tabla.**
+
+### Botones de volver, de esquina y "cambiar usuario"
+
+| Botón | Dónde | Nombre |
+|---|---|---|
+| Volver de un submenú | Arriba a la **derecha**, los tres | `volverSub` |
+| Engrane (invitados) | Menú principal, arriba a la **izquierda** | `gearBtn` |
+| Carrito (adquisiciones) | Menú principal, arriba a la derecha | `menuBtn` |
+| Volver de un juego | Cada juego, dentro de la pantalla | varía |
+| Cambiar usuario | Pantalla **Usuarios**, arriba a la izquierda | `invCambiarUsu` |
+
+`invCambiarUsu` borra `CLAVE_LOCAL` y recarga, para que el inicio vuelva a
+preguntar quién eres. Antes estaba en `Citas/` (`btnCambiarUsuario`) y ya no
+existe ahí.
+
+### Degradado en los títulos
+
+Los `h1` llevan `width:fit-content`. Sin eso la caja ocupa todo el ancho y el
+degradado de 90° solo pinta una franja thereof sobre las letras, que se ve
+clarita y sin color.
 
 ### Botones de volver y de esquina
 

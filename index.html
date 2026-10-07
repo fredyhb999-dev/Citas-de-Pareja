@@ -49,6 +49,10 @@
   h1{
     font-family:'Chakra Petch', sans-serif;
     font-weight:700; font-size:1.9rem; margin:0 0 12px; text-align:center;
+    /* width:fit-content hace que la caja se ajuste al texto. Sin esto el
+       degradado se repartia por todo el ancho de la pantalla y sobre las
+       letras Solo caia una fraccion: se veía clarito y sin color. */
+    width:fit-content; margin:0 auto 12px;
     background: linear-gradient(90deg, var(--coral), var(--teal));
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
@@ -99,8 +103,15 @@
   #menu .card .title{ font-size:1.25rem; }
   .subTitulo{ width:100%; font-family:'Chakra Petch',sans-serif; font-size:.8rem; font-weight:600;
     letter-spacing:.25em; text-transform:uppercase; color:var(--fg-muted); margin:10px 0 12px; }
-  #btnExpVolver{ position:fixed; top:max(18px, env(safe-area-inset-top)); left:18px;
-    font-size:.85rem; width:auto; padding:8px 10px; }
+  /* "Volver" de los submenús: siempre en la MISMA esquina (arriba a la derecha),
+     en los tres. Antes este andaba arriba a la izquierda y los otros dos venían
+     en el flujo de la lista, más abajo. */
+  .volverSub{ position:fixed; top:max(18px, env(safe-area-inset-top)); right:18px;
+    z-index:8; width:auto; margin:0; padding:8px 10px; border-radius:12px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; font-weight:600;
+    color:var(--fg-muted); background:var(--card); border:1px solid var(--card-border);
+    cursor:pointer; }
+  .volverSub:active{ transform: scale(.97); color:var(--fg); }
   /* ---------- asistente ---------- */
   #asistente{ display:none; width:100%; max-width:420px; flex-direction:column; }
   .paso{ display:none; width:100%; }
@@ -256,6 +267,7 @@
   </div>
   <div id="invVistaUsu" style="display:none;width:100%;text-align:left;">
     <button id="invBackDeUsu" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Invitados</button>
+    <button id="invCambiarUsu" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));left:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">Cambiar usuario</button>
     <h1 style="font-size:1.4rem;text-align:center;">Usuarios 👥</h1>
     <p id="invQuien" style="font-size:.82rem;color:var(--fg-muted);text-align:center;margin:0 0 10px;"></p>
     <div id="invUsuarios" style="display:flex;flex-direction:column;gap:10px;"></div>
@@ -322,19 +334,19 @@
 </div>
 
 <div id="vistaJuegos" style="display:none;width:100%">
-<button class="btnSec" id="btnJuegosVolver" type="button">‹ Volver</button>
+<button class="volverSub" id="btnJuegosVolver" type="button">‹ Volver</button>
   <div class="subTitulo">Juegos 🎮</div>
   <div id="packsJuegos" style="width:100%"></div>
 </div>
 
 <div id="vistaExtras" style="display:none;width:100%">
-<button class="btnSec" id="btnExtrasVolver" type="button">‹ Volver</button>
+<button class="volverSub" id="btnExtrasVolver" type="button">‹ Volver</button>
   <div class="subTitulo">Retos especiales 🏁</div>
   <div id="packsExtras" style="width:100%"></div>
 </div>
 
 <div id="vistaExp" style="display:none;width:100%">
-<button class="btnSec" id="btnExpVolver" type="button">‹ Volver</button>
+<button class="volverSub" id="btnExpVolver" type="button">‹ Volver</button>
 <a class="card" href="Citas/">
   <span class="icon"><svg width="38" height="38" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="gCal" x1="0" y1="0" x2="24" y2="24"><stop offset="0" stop-color="#ff6a5c"/><stop offset="1" stop-color="#2fd9c7"/></linearGradient></defs><rect x="3.5" y="5" width="17" height="15.5" rx="3.5" stroke="url(#gCal)" stroke-width="1.8"/><path d="M3.5 9.5h17" stroke="url(#gCal)" stroke-width="1.8"/><path d="M8 3v3.4M16 3v3.4" stroke="url(#gCal)" stroke-width="1.8" stroke-linecap="round"/><path d="M12 17.4s-2.5-1.6-3.45-3C7.76 13.36 8.11 12.1 9.22 11.63c.66-.27 1.39-.16 2 .35.61-.51 1.34-.62 2-.35 1.11.47 1.46 1.73.67 2.77-.95 1.4-3.45 3-3.45 3z" fill="url(#gCal)"/></svg></span>
   <span class="label">
@@ -1046,6 +1058,14 @@ document.getElementById("invBackDeUsu").onclick = async ()=>{
   if(await salirSinHaberEntrado()) return;
   invVer(null);
   invRefrescar();
+};
+// "Cambiar usuario" (arriba a la izquierda en Usuarios). Antes vivia en
+// Citas/ y ayudaba para hacer pruebas al principio; ahora esta aqui, que es
+// donde tiene sentido. Borra quien eres y deja que el inicio pregunte otra vez.
+document.getElementById("invCambiarUsu").onclick = async ()=>{
+  if(await salirSinHaberEntrado()) return;
+  try{ localStorage.removeItem(CLAVE_LOCAL); }catch(e){}
+  location.reload();
 };
 document.getElementById("gearBtn").onclick = ()=>{
   menuEl.style.display = "none";

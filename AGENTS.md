@@ -96,6 +96,14 @@ regresa **al submenú del que salió el juego**, no a la pantalla inicial:
 (`abrirJuegos()` / `abrirExp()`). Para agregar otro submenú: se agrega su
 `abrirX()` / `cerrarX()` junto a las demás y se añade su línea en ese `if`.
 
+**1b. El "Volver" de los SUBMENÚS va arriba a la DERECHA**, siempre los tres
+(Juegos, Experiencias, Retos). Clase `.volverSub`, que ya trae la posición. No
+se pone cada uno por su lado: si se agrega un submenú, usa esa misma clase.
+
+**1c. "Cambiar usuario" vive SOLO en la pantalla de Usuarios** (arriba a la
+izquierda, `#invCambiarUsu`). Se quitó de `Citas/`, donde solo servía para las
+pruebas del principio (oct-2026).
+
 **2. Los botones de la esquina (el ⚙️ de invitados y el 🛒 de adquisiciones)
 son del MENÚ PRINCIPAL.** En un submenú no se muestran: ahí solo vive el
 `‹ Volver`. El ⚙️ va arriba a la **izquierda** (a la derecha se encimaba con el
@@ -106,7 +114,11 @@ Volver" se le oculta siempre (`pintarSalidas()`), porque la regla de Fase 1 dice
 que el invitado no se va por su cuenta. La pareja y el anfitrión sí lo ven,
 salvo durante la partida.
 
-**4. El guardado de cada pantalla es `position:fixed` o `absolute` con
+**4. Los títulos centrados con degradado llevan `width:fit-content`.** Sin eso
+el degradado se reparte por todo el ancho de la pantalla y sobre las letras solo
+cae una fracción: se ve clarito y sin color.
+
+**5. El guardado de cada pantalla es `position:fixed` o `absolute` con
 `top:max(18px, env(safe-area-inset-top))`.** Nunca sin esa protección: en
 celulares con notch los botones se esconden bajo la barra.
 

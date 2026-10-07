@@ -8,6 +8,7 @@ os.makedirs(OUT, exist_ok=True)
 
 targets = [
     ("Encuentros/index.html", "encuentros"),
+    ("Citas/index.html", "citas"),
     ("index.html", "raiz"),
     ("Guiadas/index.html", "guiadas"),
     ("Tienda/index.html", "tienda"),
