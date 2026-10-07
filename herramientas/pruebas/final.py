@@ -1,5 +1,9 @@
 import io, os, subprocess, sys
 
+AQUI = os.path.dirname(os.path.abspath(__file__))
+# BASE = donde se GENERA todo (arnés, perfiles, reportes). Es la carpeta
+# temporal a proposito: son archivos pesados y se pueden borrar sin pena.
+# AQUI = donde viven estos scripts, para que el repo sea el unico que importa.
 BASE = r"C:\Users\Fred\AppData\Local\Temp\opencode"
 H = os.path.join(BASE, "harness")
 
@@ -20,15 +24,15 @@ CASOS = [
 ]
 
 print("construyendo arnes...", flush=True)
-subprocess.run([sys.executable, "build_harness.py"], cwd=BASE, stdout=subprocess.DEVNULL, check=True)
-subprocess.run([sys.executable, "inject_driver.py"], cwd=BASE, stdout=subprocess.DEVNULL, check=True)
+subprocess.run([sys.executable, "build_harness.py"], cwd=AQUI, stdout=subprocess.DEVNULL, check=True)
+subprocess.run([sys.executable, "inject_driver.py"], cwd=AQUI, stdout=subprocess.DEVNULL, check=True)
 
 salidas = []
 errores = 0
 for i, (esc, extra) in enumerate(CASOS):
     dest = os.path.join(BASE, "final_%02d.txt" % i)
-    subprocess.run([sys.executable, "run_enc.py", esc, extra], cwd=BASE, stdout=subprocess.DEVNULL, check=True)
-    subprocess.run([sys.executable, "extract_out.py", dest], cwd=BASE, stdout=subprocess.DEVNULL, check=True)
+    subprocess.run([sys.executable, "run_enc.py", esc, extra], cwd=AQUI, stdout=subprocess.DEVNULL, check=True)
+    subprocess.run([sys.executable, "extract_out.py", dest], cwd=AQUI, stdout=subprocess.DEVNULL, check=True)
     t = io.open(dest, encoding="utf-8").read()
     tag = "[%s%s]" % (esc, extra)
     salidas.append("#" * 20 + " %s" % tag)

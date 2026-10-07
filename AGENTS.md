@@ -43,6 +43,12 @@ tenia el contexto a la mano.
   como error las llaves que esten DENTRO de una expresion regular; el navegador
   real es la autoridad.
 
+  **Los scripts existen SOLO en `herramientas/pruebas/`.** Antes habia una copia
+  tambien en la carpeta temporal y se paramcheaba la equivocada: las pruebas
+  corrieron con la vieja y la comprobacion nueva nunca se ejecuto. Se borro la
+  copia de la temporal. La carpeta temporal solo guarda lo GENERADO (arnes,
+  perfiles de Chrome, reportes), y eso se puede borrar sin consecuencia.
+
 ## Reglas de la casa
 
 1. Si la decision es de producto (que se ve, quien puede salir, que pasa al

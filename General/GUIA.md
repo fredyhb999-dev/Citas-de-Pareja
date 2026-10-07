@@ -1243,6 +1243,25 @@ en su sitio en vez de desaparecer en silencio.
 **Lección:** un juego va en **un** submenú. Si aparece en dos lados, uno de los
 dos queda vacío y el botón "Volver" miente.
 
+**El bug queBZ salió de eso (y que casi se va sin ver).** Al poner la tarjeta de
+Retos a mano dentro del submenú, el botón **"Retos" desapareció del menú
+principal**: `btnRetos` nace oculto y `renderPacksDeVerdad()` solo lo enciende
+si la lista de su submenú tiene algo. Esa lista solo se llenaba con el catálogo,
+y Retos no viene del catálogo. Resultado: **no se podía entrar a Retos** (lo
+reportó Fredy).
+
+**El arreglo fue mover Retos al mismo mecanismo que Diablitos:** está en la lista
+`packs` con `seccion:"retos"` y `libre:true`, y en `FIJOS`. Así el botón se
+enciende solo y la tarjeta se pinta como las demás.
+
+**Regla que quedó:** si un submenú tiene algo escrito a mano, **ese submenú no
+puede depender del catálogo para mostrarse**. O todo pasa por `packs`, o el botón
+se enciende siempre.
+
+**Y por eso el `menu` ahora comprueba los tres submenús** (`btnExp`, `btnJuegos`,
+`btnRetos`) y que el de Retos traiga su tarjeta. Antes las pruebas pasaban
+iguales con el menú roto: nadie miraba esos botones.
+
 ### El flujo de "Cambiar usuario" (y lo que se aprendió)
 
 **Cómo quedó:**

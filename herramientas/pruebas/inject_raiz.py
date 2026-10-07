@@ -69,6 +69,21 @@ async function empezarEscaneo(){
     P("[M] el submenu 'Juegos' debe existir y traer Diablitos SIN candado");
     await esperar(()=>vis("menu")==="visible", 15000, "menu");
     await dormir(3000);
+    P("  los 3 submenus (Experiencias, Juegos, Retos) deben verse todos:");
+    ["btnExp", "btnJuegos", "btnRetos"].forEach(function(b){
+      const v = vis(b);
+      P("    " + b + " = " + v);
+      if(v !== "visible"){ P("  FALLA: " + b + " no aparece en el menu"); }
+    });
+    P("  y el de Retos debe traer la tarjeta de Retos:");
+    document.getElementById("btnRetos").click();
+    await dormir(500);
+    P("    submenu abierto=" + vis("vistaRetos")
+      + " tarjetas=" + document.querySelectorAll("#packsRetos .card").length);
+    if(vis("vistaRetos") !== "visible"){ P("  FALLA: el submenu de Retos no abre"); }
+    if(document.querySelectorAll("#packsRetos .card").length < 1){ P("  FALLA: Retos no trae ninguna tarjeta"); }
+    document.getElementById("btnRetosVolver").click();
+    await dormir(500);
     P("  boton 'Juegos' visible? " + vis("btnJuegos") + "  (necesita al menos un juego para aparecer)");
     P("  submenu abierto? " + vis("vistaJuegos"));
     document.getElementById("btnJuegos").click();

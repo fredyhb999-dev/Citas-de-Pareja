@@ -343,14 +343,6 @@
 <div id="vistaRetos" style="display:none;width:100%">
 <button class="volverSub" id="btnRetosVolver" type="button">‹ Volver</button>
   <div class="subTitulo">Retos 🏆</div>
-  <a class="card" href="Retos/">
-    <span class="icon">🏆</span>
-    <span class="label">
-      <div class="title">Retos</div>
-      <div class="subtitle">Propón retos, gana puntos y cobra recompensas</div>
-    </span>
-    <span class="chevron">›</span>
-  </a>
   <div id="packsRetos" style="width:100%"></div>
 </div>
 
@@ -550,9 +542,16 @@ async function renderPacksDeVerdad(){
       desc: "Niveles y secuencias paso a paso", ruta: "Guiadas", seccion: "experiencias" },
     { id: "diablitos", titulo: "Diablitos",
       desc: "Diviértete picando diablitos traviesos",
-      ruta: "Diablitos", seccion: "juegos", libre: true }
+      ruta: "Diablitos", seccion: "juegos", libre: true },
+    // Retos iba como tarjeta escrita a mano DENTRO del submenú. Eso rompía el
+    // botón del submenú: btnRetos se esconde si no hay nada en su lista, y la
+    // lista solo se llenaba con el catálogo. Con Retos aquí ya pasa por el mismo
+    // camino que Diablitos y el botón aparece siempre (oct-2026).
+    { id: "retos", titulo: "Retos", icono: "🏆",
+      desc: "Propón retos, gana puntos y cobra recompensas",
+      ruta: "Retos", seccion: "retos", libre: true }
   ];
-  const FIJOS = ["guiadas", "diablitos"];
+  const FIJOS = ["guiadas", "diablitos", "retos"];
   try{
     const tdb = getFirestore(appTaq());
     const snap = await getDocs(collection(tdb, "packs"));

@@ -79,6 +79,18 @@ El reporte (`FINAL.txt`) queda en la carpeta temporal.
   reporte) se generan en la carpeta temporal del sistema, **no** en este repo.
   Por eso esta carpeta solo tiene los 13 scripts.
 
+## OJO: los scripts viven SOLO en el repo
+
+Hubo una copia de estos scripts en la carpeta temporal del sistema
+(`C:\Users\Fred\AppData\Local\Temp\opencode\`) y ya se **borró**. Con dos
+copias pasó esto: se parché la de la temporal, se corrió la del repo, y la
+comprobación nueva nunca se ejecutó. Parecía que las pruebas no miraban.
+
+**Regla:** todo parche va en `herramientas/pruebas/` y las pruebas se corren
+desde ahí. La carpeta temporal solo guarda lo **generado** (las copias para
+probar, los perfiles de Chrome, los reportes), y eso se puede borrar sin
+consecuencia.
+
 ## Nada de esto sube a internet
 
 El arnés usa una base simulada y un Chrome con perfil temporal. **No toca
