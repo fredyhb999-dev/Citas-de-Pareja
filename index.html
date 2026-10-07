@@ -102,7 +102,10 @@
   #menu .card .icon{ font-size:2.4rem; }
   #menu .card .title{ font-size:1.25rem; }
   .subTitulo{ width:100%; font-family:'Chakra Petch',sans-serif; font-size:.8rem; font-weight:600;
-    letter-spacing:.25em; text-transform:uppercase; color:var(--fg-muted); margin:10px 0 12px; }
+    letter-spacing:.25em; text-transform:uppercase; color:var(--fg-muted); margin:10px 0 12px;
+    /* Centrado: con textos largos como 'COMUNICACION Y ALGO MAS' se notaba
+       que se quedaban pegados a la izquierda (oct-2026). */
+    text-align:center; }
   /* "Volver" de los submenús: siempre en la MISMA esquina (arriba a la derecha),
      en los tres. Antes este andaba arriba a la izquierda y los otros dos venían
      en el flujo de la lista, más abajo. */
@@ -320,7 +323,7 @@
   <span class="icon">💬</span>
   <span class="label">
     <div class="title">Comunicaciones</div>
-    <div class="subtitle">Chat en vivo y un acompanante de ideas</div>
+    <div class="subtitle">Chate en vivo y algo más</div>
   </span>
   <span class="chevron">›</span>
 </button>
@@ -358,8 +361,6 @@
     <span class="chevron">›</span>
   </a>
 </div>
-  <div id="packsRetos" style="width:100%"></div>
-</div>
 
 <div id="vistaExp" style="display:none;width:100%">
 <button class="volverSub" id="btnExpVolver" type="button">‹ Volver</button>
@@ -372,10 +373,10 @@
   <span class="chevron">›</span>
 </a>
 
-
 <div id="packsExp" style="width:100%"></div>
 </div>
 </div>
+
 
 <script type="module">
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";

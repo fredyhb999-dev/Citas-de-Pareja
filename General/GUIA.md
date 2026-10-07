@@ -1230,11 +1230,18 @@ verlos. **Lo que si se aplica desde ya: todo lo nuevo usa la tabla.**
 | Retos | Retos + lo del catálogo |
 | **Comunicaciones** 💬 | Chat y Acompañante |
 
-El botón **Comunicaciones** va **al final** del menú, y dentro la pantalla se
-llama **"Comunicación y algo más 😉"**.
+El botón **Comunicaciones** va **al final** del menú, con la descripción
+"Chate en vivo y algo más", y dentro la pantalla se llama **"Comunicación y
+algo más 😉"**.
+
+Chat y Acompañante tienen su "Volver" y van a `#com`, como todos los demás.
 
 **Las piezas:** `#btnCom`, `#vistaCom`, `abrirCom()` / `cerrarCom()`, y el hash
 `#com`. Es el mismo molde que los otros tres submenús.
+
+**Los títulos de los submenús van centrados** (`.subTitulo{ text-align:center }`).
+Con "COMUNICACIÓN Y ALGO MÁS", que es largo, se notaba que se quedaba pegado a
+la izquierda.
 
 **Y aplicó la lección del bug de Retos:** `#btnCom` **nace visible** y
 `renderPacksDeVerdad()` no lo toca. Un submenú con tarjetas escritas a mano no

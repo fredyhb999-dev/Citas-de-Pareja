@@ -148,7 +148,8 @@ botón y se cierran con el mismo `.volverSub`. No hay entradas "sueltas" al
 menú: si algo nuevo entra, entra en un submenú.
 
 **1f. "Volver" SIEMPRE arriba a la DERECHA** en toda la app: submenús del menú y
-pantallas de juego (Encuentros, Guiadas, Diablitos, Citas, Retos). Lo que viva
+pantallas de juego (Encuentros, Guiadas, Diablitos, Citas, Retos, **Chat y
+Acompañante**, que van a `#com`). Lo que viva
 en la esquina **izquierda** es el botón contextual de esa pantalla (el engrane,
 "Jugar", "Configurar"), y **jamás hay dos en el mismo lado a la vez**: en cada
 pantalla se muestra solo uno.
@@ -170,6 +171,17 @@ salvo durante la partida.
 **4. Los títulos centrados con degradado llevan `width:fit-content`.** Sin eso
 el degradado se reparte por todo el ancho de la pantalla y sobre las letras solo
 cae una fracción: se ve clarito y sin color.
+
+**4b. Los títulos de los submenús (`.subTitulo`) van CENTRADOS.** Con textos
+largos como "COMUNICACIÓN Y ALGO MÁS" se notaba que se quedaban pegados a la
+izquierda (oct-2026).
+
+**4c. Al agregar o mover un bloque de `<div>` en el HTML: contar que el número
+de `<div>` y de `</div>` cuadre.** Pasó dos veces: un `</div>` de más cerró el
+contenedor `#menu` antes de tiempo y todo se amontonó a la izquierda, y un
+`packsRetos` quedó duplicado (los ids duplicados no dan error, solo hacen
+cosas raras). Se revisa con un conteo de `<div` / `</div>` por página, y
+buscando ids repetidos.
 
 **5. El guardado de cada pantalla es `position:fixed` o `absolute` con
 `top:max(18px, env(safe-area-inset-top))`.** Nunca sin esa protección: en
