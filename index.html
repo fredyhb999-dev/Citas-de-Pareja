@@ -645,6 +645,9 @@ function mostrarIdentidad(usuarios){
   document.getElementById("menuBtn").style.display = "none";
   document.getElementById("gearBtn").style.display = "none";
   menuEl.style.display = "none";
+  // Tambien se apaga el panel de invitados: "Cambiar usuario" vive dentro de
+  // ese panel, y sin esto las dos pantallas se dibujan una encima de la otra.
+  invEl.style.display = "none";
   pantallaEl.style.display = "flex";
 }
 async function usuariosEfectivos(db){
@@ -1120,6 +1123,9 @@ function abrirPanelUsuarios(){
   menuEl.style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
   document.getElementById("gearBtn").style.display = "none";
+  // Tambien se apaga la pantalla de elegir usuario: si no, al volver de
+  // "Cambiar usuario" se quedan las dos encima.
+  pantallaEl.style.display = "none";
   invEl.style.display = "flex";
   invVer("usu");
   invRefrescar();

@@ -86,6 +86,32 @@ async function empezarEscaneo(){
     await dormir(500);
     P("    tras Volver: menu=" + vis("vistaMenu") + " submenu=" + vis("vistaCom"));
     if(vis("vistaMenu") !== "visible"){ P("  FALLA: Volver no regresso al menu"); }
+    P("  Flujo de 'Cambiar usuario': las pantallas no se deben encimar");
+    document.getElementById("gearBtn").click();
+    await dormir(600);
+    P("    engrane: panelInvitados=" + vis("pantallaInvitado"));
+    const cUsu = document.getElementById("invCardUsu");
+    if(cUsu){ cUsu.click(); await dormir(600); }
+    P("    en Usuarios: vistaUsu=" + vis("invVistaUsu") + " botonCambiar=" + vis("invCambiarUsu"));
+    const cCam = document.getElementById("invCambiarUsu");
+    if(!cCam){ P("  FALLA: no esta el boton de cambiar usuario"); }
+    else{
+      cCam.click();
+      await dormir(700);
+      const pInv = vis("pantallaInvitado");
+      const pUsu = vis("pantallaUsuario");
+      P("    tras Cambiar usuario: panelInvitados=" + pInv
+        + " pantallaUsuario=" + pUsu + " botonVolver=" + vis("idVolverCambiar"));
+      if(pInv !== "oculto"){ P("  FALLA: el panel de invitados sigue visible, se encima"); }
+      if(pUsu !== "visible"){ P("  FALLA: no abrio la pantalla de elegir usuario"); }
+      if(vis("idVolverCambiar") !== "visible"){ P("  FALLA: no salio el boton Volver"); }
+      document.getElementById("idVolverCambiar").click();
+      await dormir(700);
+      P("    tras Volver: panelInvitados=" + vis("pantallaInvitado")
+        + " pantallaUsuario=" + vis("pantallaUsuario"));
+      if(vis("invVistaUsu") !== "visible"){ P("  FALLA: Volver no regreso a Usuarios"); }
+      if(vis("pantallaUsuario") !== "oculto"){ P("  FALLA: la pantalla de usuario se quedo encima"); }
+    }
     P("  y el de Retos debe traer la tarjeta de Retos:");
     document.getElementById("btnRetos").click();
     await dormir(500);
