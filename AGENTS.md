@@ -142,6 +142,21 @@ se podía salir sin cambiar, y al cambiar caía en un sitio distinto cada vez
 antes de tiempo y no recarga a ciegas**. Primero muestra, deja cancelar, y solo
 al confirmar recarga — y avisa a dónde va.
 
+**1e. Los cuatro submenús del menú son iguales:** Experiencias, Juegos,
+Retos y **Comunicaciones** (que trae Chat y Acompañante). Todos abren con un
+botón y se cierran con el mismo `.volverSub`. No hay entradas "sueltas" al
+menú: si algo nuevo entra, entra en un submenú.
+
+**1f. "Volver" SIEMPRE arriba a la DERECHA** en toda la app: submenús del menú y
+pantallas de juego (Encuentros, Guiadas, Diablitos, Citas, Retos). Lo que viva
+en la esquina **izquierda** es el botón contextual de esa pantalla (el engrane,
+"Jugar", "Configurar"), y **jamás hay dos en el mismo lado a la vez**: en cada
+pantalla se muestra solo uno.
+
+En Guiadas funciona porque `#btnCfg`, `#btnAtras` y `#btnAtrasEd` se muestran en
+pantallas **distintas** (`vistaLista`, `vistaConfig`, `vistaEditar`). Si alguna
+vez se mostraran dos, se encimarian.
+
 **2. Los botones de la esquina (el ⚙️ de invitados y el 🛒 de adquisiciones)
 son del MENÚ PRINCIPAL.** En un submenú no se muestran: ahí solo vive el
 `‹ Volver`. El ⚙️ va arriba a la **izquierda** (a la derecha se encimaba con el

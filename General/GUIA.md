@@ -1091,6 +1091,8 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | Entrar desde la sala es **directo** | `?entrar=1`; sin doble pregunta |
 | "Inicio" en Diablitos **solo si no eres invitado** | El invitado sigue sin salida |
 | Retos tiene **su propio submenú**, y **no** está en Experiencias | Antes estaba como tarjeta fija dentro de Experiencias y su submenú quedaba vacío (oct-2026) |
+| El menu tiene **4 submenus** iguales: Experiencias, Juegos, Retos y **Comunicaciones** | Chat y Acompanante ya no son entradas sueltas, viven en Comunicaciones (oct-2026) |
+| **Volver** siempre a la **derecha**, en toda la app | A la izquierda va el boton contextual de esa pantalla (oct-2026) |
 | Retos: **Volver** a Retos especiales y **sin** "Cambiar usuario" | Igual que Citas. Se agrego `#extras` al arranque |
 | Un aviso sin `sesion` **no se muestra** | Descarta los avisos publicados antes de existir el campo |
 | El icono de Diablitos va **dibujado, no como emoji** | SVG en `SVG_DIABLITOS` (`index.html`). Se ve igual en todos los telefonos. Elegido por Fredy (oct-2026) |
@@ -1212,6 +1214,47 @@ botones de menú y submenús salieran del mismo tamaño. Oct-2026.
 
 Unificar los viejos es trabajo aparte, pantalla por pantalla, porque requiere
 verlos. **Lo que si se aplica desde ya: todo lo nuevo usa la tabla.**
+
+### Comunicaciones: el cuarto submenú
+
+**Antes** el menú tenía cinco entradas, y dos eran casos especiales: **Chat** y
+**Acompañante** salían directo como enlaces, sin submenú. Los otros tres
+(Experiencias, Juegos, Retos) eran submenús de verdad.
+
+**Ahora (oct-2026)** los cuatro son iguales:
+
+| Menú | Lleva a |
+|---|---|
+| Experiencias en Pareja | Citas + lo del catálogo |
+| Juegos | Diablitos + lo del catálogo |
+| Retos | Retos + lo del catálogo |
+| **Comunicaciones** 💬 | Chat y Acompañante |
+
+El botón **Comunicaciones** va **al final** del menú, y dentro la pantalla se
+llama **"Comunicación y algo más 😉"**.
+
+**Las piezas:** `#btnCom`, `#vistaCom`, `abrirCom()` / `cerrarCom()`, y el hash
+`#com`. Es el mismo molde que los otros tres submenús.
+
+**Y aplicó la lección del bug de Retos:** `#btnCom` **nace visible** y
+`renderPacksDeVerdad()` no lo toca. Un submenú con tarjetas escritas a mano no
+puede depender del catálogo para que su botón aparezca.
+
+### Dónde va cada "Volver"
+
+**Todos a la derecha.** Antes estaban repartidos:
+
+| Pantalla | Antes | Ahora |
+|---|---|---|
+| Encuentros | izquierda | **derecha** |
+| Guiadas | izquierda | **derecha** |
+| Diablitos | derecha, pero a 8px/10px | **derecha**, a 20px y con `env(safe-area-inset-top)` |
+| Citas, Retos | derecha (en el header) | derecha |
+
+**Lo que se mueve a la izquierda** es el botón **contextual** de cada pantalla:
+el engrane, "Jugar", "Configurar". En Guiadas funcionan bien porque **nunca
+salen dos juntos**: `#btnCfg` solo en `vistaLista`, `#btnAtras` solo en
+`vistaConfig`, `#btnAtrasEd` solo en `vistaEditar`.
 
 ### Retos: sale de Experiencias y tiene submenú propio
 

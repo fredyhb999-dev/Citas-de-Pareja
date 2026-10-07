@@ -69,12 +69,23 @@ async function empezarEscaneo(){
     P("[M] el submenu 'Juegos' debe existir y traer Diablitos SIN candado");
     await esperar(()=>vis("menu")==="visible", 15000, "menu");
     await dormir(3000);
-    P("  los 3 submenus (Experiencias, Juegos, Retos) deben verse todos:");
-    ["btnExp", "btnJuegos", "btnRetos"].forEach(function(b){
+    P("  los 4 submenus deben verse todos:");
+        ["btnExp", "btnJuegos", "btnRetos", "btnCom"].forEach(function(b){
       const v = vis(b);
       P("    " + b + " = " + v);
       if(v !== "visible"){ P("  FALLA: " + b + " no aparece en el menu"); }
     });
+    P("  Comunicaciones: debe abrir y traer Chat y Acompanante:");
+    document.getElementById("btnCom").click();
+    await dormir(500);
+    const nCom = document.querySelectorAll("#vistaCom .card").length;
+    P("    abierto=" + vis("vistaCom") + " tarjetas=" + nCom);
+    if(vis("vistaCom") !== "visible"){ P("  FALLA: el submenu de Comunicaciones no abre"); }
+    if(nCom !== 2){ P("  FALLA: deberian ser 2 tarjetas (Chat y Acompanante), hay " + nCom); }
+    document.getElementById("btnComVolver").click();
+    await dormir(500);
+    P("    tras Volver: menu=" + vis("vistaMenu") + " submenu=" + vis("vistaCom"));
+    if(vis("vistaMenu") !== "visible"){ P("  FALLA: Volver no regresso al menu"); }
     P("  y el de Retos debe traer la tarjeta de Retos:");
     document.getElementById("btnRetos").click();
     await dormir(500);

@@ -297,23 +297,7 @@
   <span class="chevron">›</span>
 </button>
 
-<a class="card" href="Chat/">
-  <span class="icon">💬</span>
-  <span class="label">
-    <div class="title">Chat</div>
-    <div class="subtitle">Hablen en vivo cuando estén conectados</div>
-  </span>
-  <span class="chevron">›</span>
-</a>
 
-<a class="card" href="Acompanante/">
-  <span class="icon">💫</span>
-  <span class="label">
-    <div class="title">Acompañante</div>
-    <div class="subtitle">Conversa, ideas y retos picarones</div>
-  </span>
-  <span class="chevron">›</span>
-</a>
 
 <button class="card" id="btnJuegos" type="button" style="display:none;width:100%;text-align:left;cursor:pointer;font-family:inherit;">
   <span class="icon">🎮</span>
@@ -332,6 +316,14 @@
   </span>
   <span class="chevron">›</span>
 </button>
+<button class="card" id="btnCom" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+  <span class="icon">💬</span>
+  <span class="label">
+    <div class="title">Comunicaciones</div>
+    <div class="subtitle">Chat en vivo y un acompanante de ideas</div>
+  </span>
+  <span class="chevron">›</span>
+</button>
 </div>
 
 <div id="vistaJuegos" style="display:none;width:100%">
@@ -343,6 +335,29 @@
 <div id="vistaRetos" style="display:none;width:100%">
 <button class="volverSub" id="btnRetosVolver" type="button">‹ Volver</button>
   <div class="subTitulo">Retos 🏆</div>
+  <div id="packsRetos" style="width:100%"></div>
+</div>
+
+<div id="vistaCom" style="display:none;width:100%">
+<button class="volverSub" id="btnComVolver" type="button">‹ Volver</button>
+  <div class="subTitulo">Comunicación y algo más 😉</div>
+  <a class="card" href="Chat/">
+    <span class="icon">💬</span>
+    <span class="label">
+      <div class="title">Chat</div>
+      <div class="subtitle">Hablen en vivo cuando estén conectados</div>
+    </span>
+    <span class="chevron">›</span>
+  </a>
+  <a class="card" href="Acompanante/">
+    <span class="icon">✨</span>
+    <span class="label">
+      <div class="title">Acompañante</div>
+      <div class="subtitle">Conversa, ideas y retos picarones</div>
+    </span>
+    <span class="chevron">›</span>
+  </a>
+</div>
   <div id="packsRetos" style="width:100%"></div>
 </div>
 
@@ -445,6 +460,7 @@ function mostrarMenu(nombre){
   document.getElementById("vistaExp").style.display = "none";
   document.getElementById("vistaJuegos").style.display = "none";
   document.getElementById("vistaRetos").style.display = "none";
+  document.getElementById("vistaCom").style.display = "none";
   asistenteEl.style.display = "none";
   pantallaEl.style.display = "none";
   menuEl.style.display = "flex";
@@ -453,6 +469,7 @@ function mostrarMenu(nombre){
   if(location.hash === "#juegos") abrirJuegos();
   else if(location.hash === "#experiencias") abrirExp();
   else if(location.hash === "#retos" || location.hash === "#extras") abrirRetos();
+  else if(location.hash === "#com") abrirCom();
   renderPacks();
 }
 
@@ -925,6 +942,23 @@ document.getElementById("btnJuegos").onclick = abrirJuegos;
 document.getElementById("btnJuegosVolver").onclick = cerrarJuegos;
 document.getElementById("btnRetos").onclick = abrirRetos;
 document.getElementById("btnRetosVolver").onclick = cerrarRetos;
+// Comunicaciones. Nace SIEMPRE visible: este submenú tiene tarjetas
+// escritas a mano, así que no puede depender del catálogo para mostrarse
+// (la lección del bug de Retos, oct-2026).
+function abrirCom(){
+  document.getElementById("vistaMenu").style.display = "none";
+  document.getElementById("vistaCom").style.display = "block";
+  document.getElementById("gearBtn").style.display = "none";
+  document.getElementById("menuBtn").style.display = "none";
+}
+function cerrarCom(){
+  document.getElementById("vistaCom").style.display = "none";
+  document.getElementById("vistaMenu").style.display = "block";
+  document.getElementById("gearBtn").style.display = "";
+  document.getElementById("menuBtn").style.display = "";
+}
+document.getElementById("btnCom").onclick = abrirCom;
+document.getElementById("btnComVolver").onclick = cerrarCom;
 // ---------- modo invitado ----------
 // Las reglas viven en ./invitado.js. Aquí solo se ajustan las pantallas.
 const invEl = document.getElementById("pantallaInvitado");

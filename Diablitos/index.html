@@ -377,7 +377,7 @@ h1{
   <!-- Botón de regresar: SOLO para quien NO es invitado (vino por el menú).
        El invitado no tiene salida a propósito: no debe pasearse por los datos
        del anfitrión. Lo muestra el bloque de la sala. -->
-  <button id="volverSala" type="button" style="display:none;position:absolute;top:8px;right:10px;z-index:7;background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;color:var(--apagado);font-family:'Inter',sans-serif;font-size:.78rem;padding:9px 12px;cursor:pointer;">‹ Volver</button>
+  <button id="volverSala" type="button" style="display:none;position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;z-index:7;background:var(--tarjeta);border:1px solid var(--borde);border-radius:12px;color:var(--apagado);font-family:'Inter',sans-serif;font-size:.78rem;padding:9px 12px;cursor:pointer;">‹ Volver</button>
 
   <!-- ============ INVITACIONES (solo para invitados) ============ -->
   <!-- La sala de espera. No tiene salida: cuando el invitado entra a un juego
