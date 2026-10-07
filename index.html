@@ -450,7 +450,11 @@ function mostrarMenu(nombre){
   // Se mide en "em" para que crezca y se encoja con el tamano de letra del
   // menu, igual que un emoji. Para cambiarlo: editar estas rutas y ya.
   // (Cambiar tamano = cambiar el numero de las coordenadas, no el width.)
-  const SVG_DIABLITOS = '<svg viewBox="0 0 120 120" width="1.9em" height="1.9em" style="display:block" aria-hidden="true" focusable="false">'
+  // El 1.35em es lo que hace que el diablito se vea del MISMO tamano que los
+  // emojis de las otras tarjetas (que son 2.4rem). El dibujo solo ocupa el 75%
+  // del cuadrito, por eso el numero es mayor que 1. Mas grande o mas pequeno:
+  // cambia este 1.35em y ya.
+  const SVG_DIABLITOS = '<svg viewBox="0 0 120 120" width="1.35em" height="1.35em" style="display:block" aria-hidden="true" focusable="false">'
     + '<path d="M38 34 C26 10 50 8 52 30 Z" fill="#15141d"/>'
     + '<path d="M82 34 C94 10 70 8 68 30 Z" fill="#15141d"/>'
     + '<circle cx="60" cy="64" r="33" fill="#c9253a"/>'
