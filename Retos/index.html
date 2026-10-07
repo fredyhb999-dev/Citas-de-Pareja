@@ -92,7 +92,7 @@
   }
   #encabezado .derecha{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   #fechaHoy{ font-size:.82rem; color:var(--fg-muted); margin-top:2px; }
-  #btnVolver, #btnCambiarUsuario{
+  #btnVolver{
     background:none; color: var(--fg-muted); font-size:.75rem;
     text-decoration:underline; padding:4px; font-weight:500; font-family:'Inter',sans-serif;
   }
@@ -254,8 +254,7 @@
       <div id="fechaHoy"></div>
     </div>
     <div class="derecha">
-      <a href="../index.html" id="btnVolver">← Inicio</a>
-      <button id="btnCambiarUsuario">Cambiar usuario</button>
+      <a href="../index.html#extras" id="btnVolver">← Volver</a>
     </div>
   </div>
 
@@ -477,7 +476,6 @@ const listaUsuariosEl = document.getElementById("listaUsuarios");
 
 const appEl = document.getElementById("app");
 const nombreActualEl = document.getElementById("nombreActual");
-const btnCambiarUsuario = document.getElementById("btnCambiarUsuario");
 
 const balancesEl = document.getElementById("balances");
 const listaRetosEl = document.getElementById("listaRetos");
@@ -571,11 +569,9 @@ function mostrarApp(){
   intentarResaltar();
 }
 
-btnCambiarUsuario.onclick = ()=>{
-  localStorage.removeItem(CLAVE_LOCAL);
-  miIdentidad = null;
-  mostrarPantallaUsuario();
-};
+// "Cambiar usuario" se quito de aqui (oct-2026), igual que en Citas/:
+// vivia en esta pantalla solo para las pruebas del principio. Ahora esta en la
+// pantalla de Usuarios del menu principal, arriba a la izquierda.
 
 // ====== BALANCES ======
 function renderBalances(){

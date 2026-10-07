@@ -90,7 +90,13 @@ regresa **al submenú del que salió el juego**, no a la pantalla inicial:
 | Juego | Va a | Como |
 |---|---|---|
 | Diablitos | Juegos | `../index.html#juegos` |
-| Un juego de Experiencias | Experiencias | `../index.html#experiencias` |
+| Un juego de Experiencias (Guiadas, Encuentros, Citas) | Experiencias | `../index.html#experiencias` |
+| Retos | Retos especiales | `../index.html#extras` |
+
+**Los tres `#` tienen que estar soportados** en el `if(location.hash === ...)`
+de `index.html`. Si un juego nuevo apunta a un `#` que no está ahí, el botón no
+falla: te manda al menú principal sin querer. Ya pasó con `#extras` (oct-2026):
+Retos apuntaba ahí y nadie lo había agregado.
 
 `index.html` lee el `#` al arrancar y abre esa subpantalla directo
 (`abrirJuegos()` / `abrirExp()`). Para agregar otro submenú: se agrega su
@@ -101,8 +107,19 @@ regresa **al submenú del que salió el juego**, no a la pantalla inicial:
 se pone cada uno por su lado: si se agrega un submenú, usa esa misma clase.
 
 **1c. "Cambiar usuario" vive SOLO en la pantalla de Usuarios** (arriba a la
-izquierda, `#invCambiarUsu`). Se quitó de `Citas/`, donde solo servía para las
-pruebas del principio (oct-2026).
+izquierda, `#invCambiarUsu`). Se quitó de `Citas/` y de `Retos/`, donde solo
+servía para las pruebas del principio (oct-2026). Si aparece en otra pantalla,
+es que se coló otra vez: no pertenece ahí.
+
+**1d. Un flujo SIEMPRE tiene salida.** "Cambiar usuario" abre la lista de
+usuarios y muestra un **"‹ Volver"** (`#idVolverCambiar`). Y al escoger, se
+vuelve a **Usuarios**, no al menú. Lo anterior no cumplía ninguna de las dos: no
+se podía salir sin cambiar, y al cambiar caía en un sitio distinto cada vez
+(fredy, oct-2026).
+
+**Regla que salió de eso:** una acción que cambia la identidad **no borra nada
+antes de tiempo y no recarga a ciegas**. Primero muestra, deja cancelar, y solo
+al confirmar recarga — y avisa a dónde va.
 
 **2. Los botones de la esquina (el ⚙️ de invitados y el 🛒 de adquisiciones)
 son del MENÚ PRINCIPAL.** En un submenú no se muestran: ahí solo vive el

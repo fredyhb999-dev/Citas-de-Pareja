@@ -217,6 +217,7 @@
 
 <!-- ================= IDENTIDAD ================= -->
 <div id="pantallaUsuario">
+  <button id="idVolverCambiar" type="button" style="display:none;position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Volver</button>
   <h1>¿Quién eres?</h1>
   <p>Selecciona tu usuario para continuar.</p>
   <div id="listaUsuarios" style="width:100%"></div>
@@ -459,6 +460,7 @@ function mostrarMenu(nombre){
   // abre directo esa subpantalla en vez del menú principal.
   if(location.hash === "#juegos") abrirJuegos();
   else if(location.hash === "#experiencias") abrirExp();
+  else if(location.hash === "#extras") abrirExtras();
   renderPacks();
 }
 
@@ -609,10 +611,19 @@ function mostrarIdentidad(usuarios){
     b.textContent = u.nombre;
     b.onclick = ()=>{
       localStorage.setItem(CLAVE_LOCAL, JSON.stringify(u));
+      if(modoCambiar){
+        modoCambiar = false;
+        // Se recarga para que la app entera tome la identidad nueva, pero se
+        // deja marcado para volver a la pantalla de Usuarios al arrancar.
+        try{ sessionStorage.setItem(CLAVE_IR_USU, "1"); }catch(e){}
+        location.reload();
+        return;
+      }
       mostrarMenu(u.nombre);
     };
     listaEl.appendChild(b);
   });
+  try{ document.getElementById("idVolverCambiar").style.display = modoCambiar ? "" : "none"; }catch(e){}
   asistenteEl.style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
   document.getElementById("gearBtn").style.display = "none";
@@ -748,6 +759,12 @@ async function entrar(db){
   const guardado = leerGuardado();
   if(guardado && usuarios.some(u=>u.id === guardado.id)){
     mostrarMenu(usuarios.find(u=>u.id === guardado.id).nombre);
+    try{
+      if(sessionStorage.getItem(CLAVE_IR_USU)){
+        sessionStorage.removeItem(CLAVE_IR_USU);
+        abrirPanelUsuarios();
+      }
+    }catch(e){}
   }else if(usuarios.length){
     mostrarIdentidad(usuarios);
   }else{
@@ -1059,13 +1076,32 @@ document.getElementById("invBackDeUsu").onclick = async ()=>{
   invVer(null);
   invRefrescar();
 };
-// "Cambiar usuario" (arriba a la izquierda en Usuarios). Antes vivia en
-// Citas/ y ayudaba para hacer pruebas al principio; ahora esta aqui, que es
-// donde tiene sentido. Borra quien eres y deja que el inicio pregunte otra vez.
+// ---------- cambiar usuario ----------
+// Antes borraba la identidad y recargaba, y eso no dejaba salir: habia que
+// escoger a alguien y ademas caia en un lado distinto cada vez. Ahora se
+// muestra la lista aqui mismo, con "Volver" para dejarlo quieto.
+let modoCambiar = false;
+const CLAVE_IR_USU = "ir_a_usuarios";
+function abrirPanelUsuarios(){
+  menuEl.style.display = "none";
+  document.getElementById("menuBtn").style.display = "none";
+  document.getElementById("gearBtn").style.display = "none";
+  invEl.style.display = "flex";
+  invVer("usu");
+  invRefrescar();
+  pintarInvUsuarios();
+}
+document.getElementById("idVolverCambiar").onclick = ()=>{
+  modoCambiar = false;
+  abrirPanelUsuarios();
+};
 document.getElementById("invCambiarUsu").onclick = async ()=>{
   if(await salirSinHaberEntrado()) return;
-  try{ localStorage.removeItem(CLAVE_LOCAL); }catch(e){}
-  location.reload();
+  const db = dbActual();
+  const us = db ? await usuariosEfectivos(db) : (leerUsuariosLocal() || []);
+  if(!us || !us.length){ return; }
+  modoCambiar = true;
+  mostrarIdentidad(us);
 };
 document.getElementById("gearBtn").onclick = ()=>{
   menuEl.style.display = "none";

@@ -1090,6 +1090,7 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | En pausa no se puede entrar, pero tampoco se expulsa | Se marca el aviso en pausa, no se retira |
 | Entrar desde la sala es **directo** | `?entrar=1`; sin doble pregunta |
 | "Inicio" en Diablitos **solo si no eres invitado** | El invitado sigue sin salida |
+| Retos: **Volver** a Retos especiales y **sin** "Cambiar usuario" | Igual que Citas. Se agrego `#extras` al arranque |
 | Un aviso sin `sesion` **no se muestra** | Descarta los avisos publicados antes de existir el campo |
 | El icono de Diablitos va **dibujado, no como emoji** | SVG en `SVG_DIABLITOS` (`index.html`). Se ve igual en todos los telefonos. Elegido por Fredy (oct-2026) |
 | Su descripcion es `Diviertete picando diablitos traviesos` | Antes decia "la sala de espera", que era literal y comercialmente flojo |
@@ -1097,6 +1098,7 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | El invitado **no ve la salida** en Encuentros | Se oculta siempre. Cumplía la regla de Fase 1 en todos lados menos ahí |
 | El `Volver` de los submenus va **arriba a la derecha**, los tres | Clase `.volverSub`. Antes uno estaba a la izquierda y dos venian abajo |
 | **Cambiar usuario** solo en **Usuarios**, arriba a la izquierda | Se quitó de `Citas/`: ya solo servia para pruebas |
+| **Cambiar usuario** tiene **Volver** y al elegir regresa a **Usuarios** | Antes no se podia salir sin cambiar, y caia donde se le antojaba (oct-2026) |
 | Los titulos con degradado llevan `width:fit-content` | Sin eso el color se reparte por toda la pantalla y se ve clarito |
 | Los botones de esquina (engrane, carrito) son **solo del menu principal** | En submenus no salen. El engrane va arriba a la **izquierda** |
 
@@ -1210,6 +1212,34 @@ botones de menú y submenús salieran del mismo tamaño. Oct-2026.
 Unificar los viejos es trabajo aparte, pantalla por pantalla, porque requiere
 verlos. **Lo que si se aplica desde ya: todo lo nuevo usa la tabla.**
 
+### El flujo de "Cambiar usuario" (y lo que se aprendió)
+
+**Cómo quedó:**
+
+1. En Usuarios, arriba a la izquierda, "Cambiar usuario".
+2. Abre la lista de usuarios en la misma pantalla, con **"‹ Volver"** arriba a
+   la derecha. Ahí se puede salir sin cambiar nada.
+3. Al escoger, recarga (para que la app entera tome la identidad nueva) pero
+   deja una marca en `sessionStorage` (`ir_a_usuarios`) y **aterriza de vuelta
+   en Usuarios**, no en el menú.
+
+**Lo que estaba mal y por qué importa (hallazgo de Fredy, oct-2026):**
+
+La primera versión **borraba la identidad y recargaba**. De ahí salían dos
+molestias:
+
+- **No se podía salir sin cambiar.** Tenías que escoger a alguien.
+- **Caías donde se te antojaba.** Al recargar, la app decide según quién eras:
+  si el último usuario era invitado, te mandaba a su base; si no, al menú. Por
+  eso a veces aparecía Diablitos, a veces el menú de juegos, a veces la
+  pantalla inicial.
+
+**La lección, escrita como regla:** una acción que cambia la identidad **no
+borra nada antes de tiempo ni recarga a ciegas**. Primero muestra, deja
+cancelar, y solo al confirmar recarga — y dice a dónde va.
+
+Las piezas en el código: `modoCambiar`, `CLAVE_IR_USU`, `abrirPanelUsuarios()`.
+
 ### Botones de volver, de esquina y "cambiar usuario"
 
 | Botón | Dónde | Nombre |
@@ -1219,10 +1249,17 @@ verlos. **Lo que si se aplica desde ya: todo lo nuevo usa la tabla.**
 | Carrito (adquisiciones) | Menú principal, arriba a la derecha | `menuBtn` |
 | Volver de un juego | Cada juego, dentro de la pantalla | varía |
 | Cambiar usuario | Pantalla **Usuarios**, arriba a la izquierda | `invCambiarUsu` |
+| Cambiar usuario | **Solo** en Usuarios, no en ninguna otra |
 
-`invCambiarUsu` borra `CLAVE_LOCAL` y recarga, para que el inicio vuelva a
-preguntar quién eres. Antes estaba en `Citas/` (`btnCambiarUsuario`) y ya no
-existe ahí.
+Retos también quedó igual que Citas (oct-2026): **Volver** a Retos especiales (`#extras`) y **sin** "Cambiar usuario".
+
+**Cuidado con los `#`:** si un juego apunta a un `#` que no está en el `if(location.hash)` de `index.html`, **no da error**: simplemente te manda al menú principal. Pasó con `#extras`.
+
+`invCambiarUsu` **no borra nada ni recarga**: abre la lista de usuarios en la misma
+pantalla, con un **"< Volver"** para salirse sin cambiar. Al escoger, ahí sí
+recarga (marca `ir_a_usuarios` en `sessionStorage`) para que la app entera tome
+la identidad nueva, y **aterriza de vuelta en Usuarios**. Antes estaba en
+`Citas/` y en `Retos/` (`btnCambiarUsuario`), y ya no existe en ninguno de los dos.
 
 ### Degradado en los títulos
 
@@ -1239,12 +1276,6 @@ En `index.html` los submenús se abren con funciones (`abrirJuegos()`,
 comprueba `location.hash` y se llama a la misma función. Si fueran `onclick`
 en línea, esa llamada del arranque podría no encontrar el manejador todavía.
 
-| Botón | Dónde vive | Nombre |
-|---|---|---|
-| Engrane (invitados) | Menú principal, **arriba a la izquierda** | `gearBtn` |
-| Carrito (adquisiciones) | Menú principal, arriba a la derecha | `menuBtn` |
-| Volver de un submenú | Cada submenú | `btnXxxVolver` |
-| Volver de un juego | Cada juego, dentro de la pantalla | varía |
 
 Con `#juegos` el submenú de Juegos se abre directo al volver de un juego, sin
 pasar por la pantalla inicial.
