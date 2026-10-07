@@ -72,7 +72,7 @@
 </head>
 <body>
 
-<a class="back" id="lnkInicio" href="../index.html">← Inicio</a>
+<a class="back" id="lnkInicio" href="../index.html#experiencias">← Volver</a>
 
 <div class="eyebrow">Encuentros Guiados</div>
 
@@ -343,6 +343,20 @@ async function cargarIdentidad(){
   miId = (miUsuario && miUsuario.id) || "anon";
   esAdminFlag = !!(miUsuario && miUsuario.admin);
   esInvitadoFlag = !!(miUsuario && miUsuario.invitado);
+  // Se sabe si es invitado ya: se ocultan las salidas (regla de Fase 1).
+  pintarSalidas();
+}
+// Las salidas de la pantalla: el enlace al inicio se oculta durante la partida
+// (para nadie sale a medias) y SIEMPRE para el invitado, que no tiene salida.
+// Es una funcion aparte porque hay que aplicarla en dos momentos: cuando se
+// cambia de vista y cuando se descubre que la persona es invitada.
+function pintarSalidas(){
+  try{
+    const v = document.querySelector(".vista.ver");
+    const enJuego = !!(v && v.id === "vistaPlayer");
+    document.getElementById("lnkInicio").style.display =
+      (enJuego || esInvitadoFlag) ? "none" : "";
+  }catch(e){}
 }
 function nombreAdmin(){
   const a = usuariosLista.find(u=>u.admin);
@@ -674,8 +688,8 @@ function ver(id, guardar){
   document.getElementById(id).classList.add("ver");
   // Nadie sale de la partida: durante el juego se ocultan las dos salidas
   // automaticas (el enlace al inicio y el boton de lista). Quedan solo
-  // "Pausar y Salir" y "Terminar Partida".
-  try{ document.getElementById("lnkInicio").style.display = (id === "vistaPlayer") ? "none" : ""; }catch(e){}
+  // "Pausar y Salir" y "Terminar Partida". Y el invitado no ve ninguna salida.
+  pintarSalidas();
   if(guardar !== false){ try{ history.pushState({ v: id }, ""); }catch(e){} }
   window.scrollTo(0, 0);
 }

@@ -1093,6 +1093,9 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | Un aviso sin `sesion` **no se muestra** | Descarta los avisos publicados antes de existir el campo |
 | El icono de Diablitos va **dibujado, no como emoji** | SVG en `SVG_DIABLITOS` (`index.html`). Se ve igual en todos los telefonos. Elegido por Fredy (oct-2026) |
 | Su descripcion es `Diviertete picando diablitos traviesos` | Antes decia "la sala de espera", que era literal y comercialmente flojo |
+| El boton de volver de un juego se llama **`Volver`** y va al submenu del que salio | Usa `#juegos` / `#experiencias`. Antes decia "Inicio" y se iba hasta el principio |
+| El invitado **no ve la salida** en Encuentros | Se oculta siempre. Cumplía la regla de Fase 1 en todos lados menos ahí |
+| Los botones de esquina (engrane, carrito) son **solo del menu principal** | En submenus no salen. El engrane va arriba a la **izquierda** |
 
 ### De la forma de trabajar
 
@@ -1166,6 +1169,89 @@ hoy no esta en las reglas. Ver Parte 3, seccion 6.
 | Doble `getDocs` de `escucharCatalogo()` | No es bug, solo gasto extra |
 | Una sesion vieja marcada `activa: true` sigue contando | El aviso nuevo si se ata a la sesion, pero una partida vieja abierta no se autodetecta |
 
+### Estándares de tamaño de la interfaz
+
+**Regla: lo nuevo se copia de la pantalla inicial (`index.html`).** No se inventan
+medidas ni se pregunta por ellas: ya están decididas. Están también en
+`AGENTS.md`, que se carga solo al abrir el proyecto.
+
+| Qué | Medida |
+|---|---|
+| Ancho máximo del contenido | `max-width:380px` |
+| Botón principal | `width:100%; padding:16px; border-radius:16px; margin-bottom:12px; font-size:1.05rem` |
+| Botón secundario | `padding:12px` |
+| Botón de icono (el circulito de arriba) | `font-size:1.6rem; padding:8px 10px; border-radius:12px` |
+| Tarjeta de menú | `padding:24px 20px; border-radius:20px; margin-bottom:16px; gap:16px` |
+| Icono de tarjeta | `2.4rem` en el menú, `2rem` en otras pantallas |
+| Título de tarjeta | `1.25rem` en el menú, `1.1rem` en otras |
+| Subtítulo de tarjeta | `.85rem` |
+| Chevron de la tarjeta | `1.4rem` |
+| Título de sección | `.8rem`, mayúsculas, con espacios entre letras |
+| Radio de esquina | `12px` esquinas chicas, `16px` botones y tarjetas |
+| Al tocarse | `transform: scale(.97)` |
+
+**Por qué existe esta tabla:** Fredy tenía que pedir repetidamente que los
+botones de menú y submenús salieran del mismo tamaño. Oct-2026.
+
+**Lo que hay hoy (desorden heredado, no se arreglar de golpe):**
+
+| Archivo | Relleno | Redondeo |
+|---|---|---|
+| `index.html` `.btnUsuario` (pantalla inicial) | 16px | 16px |
+| `Guiadas` `.btnPri` / `.btnAct` | 16px | 14px |
+| `Guiadas` `.btnSec` | 12px | 14px |
+| `Tienda` `.btn` | 13px | 12px |
+| `Panel` `.btn` | 12px 18px | 12px |
+| `Panel/catalogo` `.btn` | 12px 14px | 12px |
+
+Unificar los viejos es trabajo aparte, pantalla por pantalla, porque requiere
+verlos. **Lo que si se aplica desde ya: todo lo nuevo usa la tabla.**
+
+### Botones de volver y de esquina
+
+El estándar está arriba, en las decisiones, y también en `AGENTS.md`.
+
+En `index.html` los submenús se abren con funciones (`abrirJuegos()`,
+`cerrarExp()`, …) y **no** con `onclick` en línea. Razón: al arrancar se
+comprueba `location.hash` y se llama a la misma función. Si fueran `onclick`
+en línea, esa llamada del arranque podría no encontrar el manejador todavía.
+
+| Botón | Dónde vive | Nombre |
+|---|---|---|
+| Engrane (invitados) | Menú principal, **arriba a la izquierda** | `gearBtn` |
+| Carrito (adquisiciones) | Menú principal, arriba a la derecha | `menuBtn` |
+| Volver de un submenú | Cada submenú | `btnXxxVolver` |
+| Volver de un juego | Cada juego, dentro de la pantalla | varía |
+
+Con `#juegos` el submenú de Juegos se abre directo al volver de un juego, sin
+pasar por la pantalla inicial.
+
+### El invitado no tiene salida (`pintarSalidas`)
+
+En `Encuentros/index.html`, `pintarSalidas()` decide si el enlace "‹ Volver" se ve.
+Se esconde cuando:
+
+- se está **durante la partida** (para nadie se sale a medias), o
+- la persona **es invitada** (`esInvitadoFlag`), siempre, en cualquier pantalla.
+
+Se llama desde dos lugares a propósito:
+
+1. en `ver(id)`, cada vez que se cambia de vista;
+2. al final de `cargarIdentidad()`, porque ahí es donde se descubre que la
+   persona es invitada. Si solo se llamara en `ver()`, y la identidad carga
+   después, el invitado vería la salida un instante.
+
+**Cómo se verificó:** en el arnés, `invitado&respaldo=1` y
+`invitado&flag=pausa&respaldo=1` (el invitado es `u3`) reportan `lnkInicio`
+**oculto**; los escenarios del anfitrión y `invitado&como=u2&flag=natural`
+(que en realidad juega como **la pareja**, no como invitado) reportan
+**visible**. Esa distinción importa: `u2` es la pareja, `u3` el invitado.
+
+**Ojo al agregar escenarios:** hay casos llamados `invitado` que en realidad
+actúan como la pareja, porque se fuerzan con `&como=u2`. La comprobación
+distingue por la bandera `invitado` de la identidad, no por el nombre del
+escenario.
+
 ### Iconos dibujados (SVG) en vez de emoji
 
 `index.html` trae `const SVG_DIABLITOS = '...'`: el diablito malo con risita
@@ -1199,8 +1285,10 @@ definicion del pack poner el emoji en `icono`.
   Al revisar documentos, buscar caracteres CJK: senal de doble conversion.
 - **No hay `firestore.rules` en el repo:** las reglas viven en la consola de
   Firebase. Por eso "revisar las reglas" es siempre una accion manual.
-- **En este entorno no hay `git` en el PATH** ni navegador real: las pruebas se
-  hacen con scripts en `Temp\opencode\` y mocks de Firebase.
+- **Las pruebas viven en `herramientas/pruebas/`, dentro del repo.** Antes estaban
+  en la carpeta temporal del sistema, que Windows puede borrar: se habrían perdido.
+  Abren Chrome real contra una base simulada, sin tocar Firebase. Se explica en
+  `herramientas/pruebas/LEEME.md`.
 - **Los scripts del arnes se deben reconstruir antes de inyectar**
   (`build_*.py` y luego `inject_*.py`). Inyectar dos veces sin reconstruir deja
   el arnes corrupto y produce "fallas" que no son del codigo real.

@@ -147,7 +147,7 @@
 <body>
 
 <a class="menu-btn" id="menuBtn" href="Tienda/" aria-label="Centro de Adquisiciones" style="display:none">🛒</a>
-<button class="menu-btn" id="gearBtn" type="button" aria-label="Invitados" style="display:none;right:64px;text-decoration:none;background:none;border:none;cursor:pointer;">⚙️</button>
+<button class="menu-btn" id="gearBtn" type="button" aria-label="Invitados" style="display:none;left:18px;right:auto;text-decoration:none;background:none;border:none;cursor:pointer;">⚙️</button>
 
 <div class="eyebrow">Complicidad en Pareja</div>
 
@@ -443,6 +443,10 @@ function mostrarMenu(nombre){
   asistenteEl.style.display = "none";
   pantallaEl.style.display = "none";
   menuEl.style.display = "flex";
+  // Si se llegó con #juegos o #experiencias (botón "Volver" de un juego), se
+  // abre directo esa subpantalla en vez del menú principal.
+  if(location.hash === "#juegos") abrirJuegos();
+  else if(location.hash === "#experiencias") abrirExp();
   renderPacks();
 }
 
@@ -848,39 +852,51 @@ async function iniciarScan(){
     msgQR("Sin cámara o sin permiso. Revisa el navegador.");
   }
 }
-// ---------- submenús (el ⚙️ solo vive en el menú principal) ----------
-document.getElementById("btnExp").onclick = ()=>{
+// ---------- submenús ----------
+// Son funciones (y no onclick en línea) porque también se llaman al arrancar
+// cuando se llega con #juegos o #experiencias desde el botón "Volver" de un juego.
+function abrirExp(){
   document.getElementById("vistaMenu").style.display = "none";
   document.getElementById("vistaExp").style.display = "block";
   document.getElementById("gearBtn").style.display = "none";
   iconoMenu("exp");
-};
-document.getElementById("btnExpVolver").onclick = ()=>{
+}
+function cerrarExp(){
   document.getElementById("vistaExp").style.display = "none";
   document.getElementById("vistaMenu").style.display = "block";
   document.getElementById("gearBtn").style.display = "";
   iconoMenu("menu");
-};
-document.getElementById("btnJuegos").onclick = ()=>{
+}
+// En Juegos solo vive el "‹ Volver": el carrito y el engrane son del menú
+// principal, así que se esconden los dos.
+function abrirJuegos(){
   document.getElementById("vistaMenu").style.display = "none";
   document.getElementById("vistaJuegos").style.display = "block";
   document.getElementById("gearBtn").style.display = "none";
-};
-document.getElementById("btnJuegosVolver").onclick = ()=>{
+  document.getElementById("menuBtn").style.display = "none";
+}
+function cerrarJuegos(){
   document.getElementById("vistaJuegos").style.display = "none";
   document.getElementById("vistaMenu").style.display = "block";
   document.getElementById("gearBtn").style.display = "";
-};
-document.getElementById("btnExtras").onclick = ()=>{
+  document.getElementById("menuBtn").style.display = "";
+}
+function abrirExtras(){
   document.getElementById("vistaMenu").style.display = "none";
   document.getElementById("vistaExtras").style.display = "block";
   document.getElementById("gearBtn").style.display = "none";
-};
-document.getElementById("btnExtrasVolver").onclick = ()=>{
+}
+function cerrarExtras(){
   document.getElementById("vistaExtras").style.display = "none";
   document.getElementById("vistaMenu").style.display = "block";
   document.getElementById("gearBtn").style.display = "";
-};
+}
+document.getElementById("btnExp").onclick = abrirExp;
+document.getElementById("btnExpVolver").onclick = cerrarExp;
+document.getElementById("btnJuegos").onclick = abrirJuegos;
+document.getElementById("btnJuegosVolver").onclick = cerrarJuegos;
+document.getElementById("btnExtras").onclick = abrirExtras;
+document.getElementById("btnExtrasVolver").onclick = cerrarExtras;
 // ---------- modo invitado ----------
 // Las reglas viven en ./invitado.js. Aquí solo se ajustan las pantallas.
 const invEl = document.getElementById("pantallaInvitado");
