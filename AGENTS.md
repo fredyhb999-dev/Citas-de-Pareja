@@ -91,12 +91,27 @@ regresa **al submenú del que salió el juego**, no a la pantalla inicial:
 |---|---|---|
 | Diablitos | Juegos | `../index.html#juegos` |
 | Un juego de Experiencias (Guiadas, Encuentros, Citas) | Experiencias | `../index.html#experiencias` |
-| Retos | Retos especiales | `../index.html#extras` |
+| Retos | Retos | `../index.html#retos` |
 
-**Los tres `#` tienen que estar soportados** en el `if(location.hash === ...)`
-de `index.html`. Si un juego nuevo apunta a un `#` que no está ahí, el botón no
-falla: te manda al menú principal sin querer. Ya pasó con `#extras` (oct-2026):
-Retos apuntaba ahí y nadie lo había agregado.
+**Los `#` tienen que estar soportados** en el `if(location.hash === ...)` de
+`index.html`. Si un juego apunta a un `#` que no está ahí, **no da error**: te
+manda al menú principal sin querer. Ya pasó dos veces con Retos (oct-2026).
+
+**Los tres submenús son de un solo nivel**, todos con la misma forma:
+
+| Submenú | Lleva a | Llena desde |
+|---|---|---|
+| Juegos | Diablitos | `packsJuegos` (catálogo) |
+| Experiencias | Citas, y lo del catálogo | `packsExp` (catálogo) |
+| Retos | Retos | `packsRetos` (catálogo) |
+
+`#extras` **ya no existe**: el submenú se llama Retos (`btnRetos`,
+`vistaRetos`, `packsRetos`). El código acepta `seccion:"retos"` y también
+`"extras"`, igual que los dos `#`, por si hay algo viejo en el catálogo.
+
+**Un juego se pone en UN submenú, no en dos.** Retos estaba como tarjeta fija
+dentro de Experiencias y además tenía su propio submenú vacío (oct-2026). Por eso
+"Volver" lo dejaba en un lugar sin nada.
 
 `index.html` lee el `#` al arrancar y abre esa subpantalla directo
 (`abrirJuegos()` / `abrirExp()`). Para agregar otro submenú: se agrega su

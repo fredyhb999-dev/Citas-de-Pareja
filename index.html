@@ -324,11 +324,11 @@
   <span class="chevron">›</span>
 </button>
 
-<button class="card" id="btnExtras" type="button" style="display:none;width:100%;text-align:left;cursor:pointer;font-family:inherit;">
+<button class="card" id="btnRetos" type="button" style="display:none;width:100%;text-align:left;cursor:pointer;font-family:inherit;">
   <span class="icon">🏁</span>
   <span class="label">
-    <div class="title">Retos especiales</div>
-    <div class="subtitle">Retos que te llevarán a otro nivel</div>
+    <div class="title">Retos</div>
+    <div class="subtitle">Propón retos, gana puntos y cobra recompensas</div>
   </span>
   <span class="chevron">›</span>
 </button>
@@ -340,10 +340,18 @@
   <div id="packsJuegos" style="width:100%"></div>
 </div>
 
-<div id="vistaExtras" style="display:none;width:100%">
-<button class="volverSub" id="btnExtrasVolver" type="button">‹ Volver</button>
-  <div class="subTitulo">Retos especiales 🏁</div>
-  <div id="packsExtras" style="width:100%"></div>
+<div id="vistaRetos" style="display:none;width:100%">
+<button class="volverSub" id="btnRetosVolver" type="button">‹ Volver</button>
+  <div class="subTitulo">Retos 🏆</div>
+  <a class="card" href="Retos/">
+    <span class="icon">🏆</span>
+    <span class="label">
+      <div class="title">Retos</div>
+      <div class="subtitle">Propón retos, gana puntos y cobra recompensas</div>
+    </span>
+    <span class="chevron">›</span>
+  </a>
+  <div id="packsRetos" style="width:100%"></div>
 </div>
 
 <div id="vistaExp" style="display:none;width:100%">
@@ -357,14 +365,6 @@
   <span class="chevron">›</span>
 </a>
 
-<a class="card" href="Retos/">
-  <span class="icon">🏆</span>
-  <span class="label">
-    <div class="title">Retos</div>
-    <div class="subtitle">Propón retos, gana puntos y cobra recompensas</div>
-  </span>
-  <span class="chevron">›</span>
-</a>
 
 <div id="packsExp" style="width:100%"></div>
 </div>
@@ -452,7 +452,7 @@ function mostrarMenu(nombre){
   document.getElementById("vistaMenu").style.display = "block";
   document.getElementById("vistaExp").style.display = "none";
   document.getElementById("vistaJuegos").style.display = "none";
-  document.getElementById("vistaExtras").style.display = "none";
+  document.getElementById("vistaRetos").style.display = "none";
   asistenteEl.style.display = "none";
   pantallaEl.style.display = "none";
   menuEl.style.display = "flex";
@@ -460,7 +460,7 @@ function mostrarMenu(nombre){
   // abre directo esa subpantalla en vez del menú principal.
   if(location.hash === "#juegos") abrirJuegos();
   else if(location.hash === "#experiencias") abrirExp();
-  else if(location.hash === "#extras") abrirExtras();
+  else if(location.hash === "#retos" || location.hash === "#extras") abrirRetos();
   renderPacks();
 }
 
@@ -533,9 +533,9 @@ async function renderPacks(){
 async function renderPacksDeVerdad(){
   const boxExp = document.getElementById("packsExp");
   const btnJ = document.getElementById("btnJuegos");
-  const btnX = document.getElementById("btnExtras");
+  const btnX = document.getElementById("btnRetos");
   const boxJ = document.getElementById("packsJuegos");
-  const boxX = document.getElementById("packsExtras");
+  const boxX = document.getElementById("packsRetos");
   boxExp.innerHTML = "";
   boxJ.innerHTML = "";
   boxX.innerHTML = "";
@@ -567,7 +567,7 @@ async function renderPacksDeVerdad(){
   const gracias = await graciasDisponibles();
   packs.sort((a, b)=>((a.orden ?? 10) - (b.orden ?? 10)) || String(a.titulo || a.id || "").localeCompare(String(b.titulo || b.id || "")));
   let juegos = 0;
-  let extras = 0;
+  let retos = 0;
   for(const p of packs){
     const cod = lic[p.id];
     let ok = false;
@@ -590,15 +590,15 @@ async function renderPacksDeVerdad(){
     if((p.seccion || "experiencias") === "juegos"){
       boxJ.appendChild(card);
       juegos++;
-    }else if((p.seccion || "") === "extras"){
+    }else if((p.seccion || "") === "retos" || (p.seccion || "") === "extras"){
       boxX.appendChild(card);
-      extras++;
+      retos++;
     }else{
       boxExp.appendChild(card);
     }
   }
   if(juegos) btnJ.style.display = "";
-  if(extras) btnX.style.display = "";
+  if(retos) btnX.style.display = "";
 }
 // Quita del menú en ese momento si revocan. La escucha vive en acceso.js;
 // aquí solo se redibuja el menú cuando cambian los códigos.
@@ -910,13 +910,13 @@ function cerrarJuegos(){
   document.getElementById("gearBtn").style.display = "";
   document.getElementById("menuBtn").style.display = "";
 }
-function abrirExtras(){
+function abrirRetos(){
   document.getElementById("vistaMenu").style.display = "none";
-  document.getElementById("vistaExtras").style.display = "block";
+  document.getElementById("vistaRetos").style.display = "block";
   document.getElementById("gearBtn").style.display = "none";
 }
-function cerrarExtras(){
-  document.getElementById("vistaExtras").style.display = "none";
+function cerrarRetos(){
+  document.getElementById("vistaRetos").style.display = "none";
   document.getElementById("vistaMenu").style.display = "block";
   document.getElementById("gearBtn").style.display = "";
 }
@@ -924,8 +924,8 @@ document.getElementById("btnExp").onclick = abrirExp;
 document.getElementById("btnExpVolver").onclick = cerrarExp;
 document.getElementById("btnJuegos").onclick = abrirJuegos;
 document.getElementById("btnJuegosVolver").onclick = cerrarJuegos;
-document.getElementById("btnExtras").onclick = abrirExtras;
-document.getElementById("btnExtrasVolver").onclick = cerrarExtras;
+document.getElementById("btnRetos").onclick = abrirRetos;
+document.getElementById("btnRetosVolver").onclick = cerrarRetos;
 // ---------- modo invitado ----------
 // Las reglas viven en ./invitado.js. Aquí solo se ajustan las pantallas.
 const invEl = document.getElementById("pantallaInvitado");

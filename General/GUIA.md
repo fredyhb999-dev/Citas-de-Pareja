@@ -1090,6 +1090,7 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | En pausa no se puede entrar, pero tampoco se expulsa | Se marca el aviso en pausa, no se retira |
 | Entrar desde la sala es **directo** | `?entrar=1`; sin doble pregunta |
 | "Inicio" en Diablitos **solo si no eres invitado** | El invitado sigue sin salida |
+| Retos tiene **su propio submenú**, y **no** está en Experiencias | Antes estaba como tarjeta fija dentro de Experiencias y su submenú quedaba vacío (oct-2026) |
 | Retos: **Volver** a Retos especiales y **sin** "Cambiar usuario" | Igual que Citas. Se agrego `#extras` al arranque |
 | Un aviso sin `sesion` **no se muestra** | Descarta los avisos publicados antes de existir el campo |
 | El icono de Diablitos va **dibujado, no como emoji** | SVG en `SVG_DIABLITOS` (`index.html`). Se ve igual en todos los telefonos. Elegido por Fredy (oct-2026) |
@@ -1211,6 +1212,36 @@ botones de menú y submenús salieran del mismo tamaño. Oct-2026.
 
 Unificar los viejos es trabajo aparte, pantalla por pantalla, porque requiere
 verlos. **Lo que si se aplica desde ya: todo lo nuevo usa la tabla.**
+
+### Retos: sale de Experiencias y tiene submenú propio
+
+**El problema (hallazgo de Fredy, oct-2026).** Retos estaba como **tarjeta fija
+dentro de Experiencias** y además existía un submenú "Retos especiales" que
+**nunca tenía nada**, porque ningún catálogo usaba `seccion:"extras"`. El botón
+"Volver" apuntaba a ese submenú vacío: se veía bien, pero caías en un lugar sin
+nada.
+
+**Lo que quedó:**
+
+| | |
+|---|---|
+| Retos dentro de Experiencias | **Fuera** |
+| Submenú "Retos especiales" | Renombrado a **"Retos"**, al mismo nivel que Juegos |
+| Submenú de Retos | Con la tarjeta de Retos + lo que llegue del catálogo |
+| "Volver" de Retos | A `#retos`, o sea a su submenú |
+
+**Renombres en el código** (oct-2026): `btnExtras`→`btnRetos`,
+`btnExtrasVolver`→`btnRetosVolver`, `vistaExtras`→`vistaRetos`,
+`packsExtras`→`packsRetos`, `abrirExtras`→`abrirRetos`,
+`cerrarExtras`→`cerrarRetos`.
+
+**Por seguridad se aceptan las dos claves** en el catálogo y en el `#`:
+`seccion` puede ser `"retos"` **o** `"extras"`, y el `#` puede ser `#retos` **o**
+`#extras`. Así, si hay algo viejo dado de alta en el catálogo, sigue apareciendo
+en su sitio en vez de desaparecer en silencio.
+
+**Lección:** un juego va en **un** submenú. Si aparece en dos lados, uno de los
+dos queda vacío y el botón "Volver" miente.
 
 ### El flujo de "Cambiar usuario" (y lo que se aprendió)
 
