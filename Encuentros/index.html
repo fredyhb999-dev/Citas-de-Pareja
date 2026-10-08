@@ -54,6 +54,41 @@
   .opModo{ display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--bg-2);
     border:1px solid var(--card-border); border-radius:12px; margin-top:8px; font-size:.9rem; cursor:pointer; }
   .opModo input{ width:auto; accent-color:var(--teal); }
+  /* Botones de la esquina IZQUIERDA (engrane y "volver" del editor). Uno por
+     pantalla, nunca dos en el mismo lado (regla de AGENTS.md). */
+  #btnCfg{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    background:none; border:none; font-size:1.3rem; cursor:pointer; padding:4px;
+  }
+  #btnAtras{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
+  }
+  #btnAtrasEd{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
+  }
+  /* Editor de acciones (mismo que Citas Guiadas) */
+  .nivel{ width:100%; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .nivel h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1rem; }
+  .nivel h3 .tag{ font-size:.7rem; color:var(--coral); border:1px solid var(--coral);
+    border-radius:8px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+  .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
+    padding:6px 8px 6px 14px; font-size:.82rem; display:flex; align-items:center; gap:6px; }
+  .chip button{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:.9rem; padding:0 4px; }
+  .filaAdd{ display:flex; gap:8px; }
+  .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:12px; font-size:.9rem; font-family:'Inter',sans-serif; }
+  .filaAdd button{ border:none; border-radius:12px; cursor:pointer; padding:12px 16px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .tomas{ width:100%; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin:4px 0 14px; }
+  .tomas h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 10px; font-size:1rem; }
   .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:60;
     align-items:center; justify-content:center; padding:20px; }
   .modal .caja{ width:100%; max-width:380px; background:var(--card); border:1px solid var(--teal);
@@ -76,6 +111,9 @@
 <body>
 
 <a class="back" id="lnkInicio" href="../index.html#experiencias">← Volver</a>
+<button id="btnCfg" aria-label="Configurar">⚙️</button>
+<button id="btnAtras" aria-label="Volver a jugar">← Jugar</button>
+<button id="btnAtrasEd" aria-label="Volver a configurar">← Configurar</button>
 
 <div class="eyebrow">Encuentros Guiados</div>
 
@@ -109,6 +147,27 @@
     <label class="opModo"><input type="radio" name="modoJuego" value="local"> Acciones en un Celular</label>
     <label class="opModo"><input type="radio" name="modoJuego" value="compartido" checked> Cada quien en el suyo</label>
   </div>
+</div>
+
+<!-- ============ CONFIG (elegir para editar) ============ -->
+<div class="vista" id="vistaConfig">
+  <h1>Configurar</h1>
+  <p class="desc">Elige actividad.</p>
+  <input class="buscar" id="buscarCfg" type="text" placeholder="🔍 Buscar actividad..." autocomplete="off">
+  <div id="listaActsCfg" style="width:100%"></div>
+</div>
+
+<!-- ============ EDITOR ============ -->
+<div class="vista" id="vistaEditar">
+  <h1 id="edTitulo">Actividad</h1>
+  <p class="desc">Agrega acciones por nivel.</p>
+  <div id="nivelesBox" style="width:100%"></div>
+  <div class="tomas">
+    <h3>Define acciones de cada nivel</h3>
+    <div class="tomasGrid" id="tomasGridEncEd"></div>
+  </div>
+  <div id="msg"></div>
+  <button class="btnPri" id="btnJugarEd">Jugar ▶</button>
 </div>
 
 <!-- ============ ESPERA (invitado / pareja) ============ -->
@@ -705,6 +764,11 @@ async function cerrarSesion(){
 function ver(id, guardar){
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
   document.getElementById(id).classList.add("ver");
+  // El engrane (vistaLista) y los "volver" del editor (vistaConfig /
+  // vistaEditar) van arriba a la IZQUIERDA, uno por pantalla.
+  try{ document.getElementById("btnCfg").style.display = (id === "vistaLista") ? "block" : "none"; }catch(e){}
+  try{ document.getElementById("btnAtras").style.display = (id === "vistaConfig") ? "block" : "none"; }catch(e){}
+  try{ document.getElementById("btnAtrasEd").style.display = (id === "vistaEditar") ? "block" : "none"; }catch(e){}
   // Nadie sale de la partida: durante el juego se ocultan las dos salidas
   // automaticas (el enlace al inicio y el boton de lista). Quedan solo
   // "Pausar y Salir" y "Terminar Partida". Y el invitado no ve ninguna salida.
@@ -916,6 +980,198 @@ document.getElementById("btnMulti2Ok").onclick = ()=>{
   cerrarModal("modalMulti2");
   abrirTomas(multiSel.slice());
 };
+
+// ---------- configurar actividades (engrane) ----------
+// Mismo editor que Citas Guiadas: acciones por nivel y lado (A = administrador,
+// B = pareja), rejilla de tomas y boton Jugar. SIN "Eliminar actividad":
+// borrar una actividad se hace en Citas/actividades.html.
+let actividadEd = null;
+let docActualEd = null;
+let datosEd = null;
+function nombreLado(lado){
+  try{
+    const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
+    if(u && u.nombre) return u.nombre;
+  }catch(e){}
+  return "Lado " + lado;
+}
+function tomasGuardadasEd(nombre){
+  try{
+    const t = JSON.parse(localStorage.getItem("guia_tomas_" + nombre) || "null");
+    if(t){
+      const out = {};
+      NIVELES.forEach(nv=>{
+        const v = t[nv.id];
+        out[nv.id] = (typeof v === "number") ? v : ((v && (v.A || v.B)) || 0);
+      });
+      return out;
+    }
+  }catch(e){}
+  return Object.assign({}, TOMAS_DEF);
+}
+async function pintarListaCfg(){
+  const acts = await cargarActividades();
+  const conteos = {};
+  try{
+    const snap = await getDocs(collection(db, "nivelesActividad"));
+    snap.forEach(d=>{
+      const n = d.data().n || {};
+      conteos[d.id] = NIVELES.reduce((t, nv)=>t + contarNivel(n[nv.id]), 0);
+    });
+  }catch(e){}
+  const box = document.getElementById("listaActsCfg");
+  box.innerHTML = "";
+  const ordenadas = acts.slice().sort((a, b)=>{
+    const oa = (mapaDocs[a] && mapaDocs[a].oficial) ? 0 : 1;
+    const ob = (mapaDocs[b] && mapaDocs[b].oficial) ? 0 : 1;
+    return oa - ob;
+  });
+  ordenadas.forEach(nombre=>{
+    const c = conteos[docDe(nombre)] || 0;
+    const esOf = !!(mapaDocs[nombre] && mapaDocs[nombre].oficial);
+    const b = document.createElement("button");
+    b.className = "btnAct";
+    const t = document.createElement("span");
+    t.textContent = nombre;
+    b.appendChild(t);
+    const right = document.createElement("span");
+    right.style.cssText = "display:flex;align-items:center;gap:6px;flex:0 0 auto;";
+    if(esOf){ const tag = document.createElement("small"); tag.textContent = "🏅"; right.appendChild(tag); }
+    const s = document.createElement("small");
+    s.textContent = c ? (c + (c === 1 ? " acción" : " acciones")) : "sin acciones";
+    right.appendChild(s);
+    b.appendChild(right);
+    b.onclick = ()=>abrirEditor(nombre);
+    box.appendChild(b);
+  });
+}
+async function abrirEditor(nombre, empujar){
+  actividadEd = nombre;
+  docActualEd = docDe(nombre);
+  document.getElementById("edTitulo").textContent = nombre;
+  datosEd = {};
+  NIVELES.forEach(nv=>{ datosEd[nv.id] = { A: [], B: [] }; });
+  try{
+    const snap = await getDoc(doc(db, "nivelesActividad", docActualEd));
+    if(snap.exists() && snap.data().n){
+      const n = snap.data().n;
+      NIVELES.forEach(nv=>{ datosEd[nv.id] = normLados(n[nv.id]); });
+    }
+  }catch(e){}
+  pintarEditor();
+  ver("vistaEditar", empujar !== false);
+}
+function pintarEditor(){
+  const box = document.getElementById("nivelesBox");
+  box.innerHTML = "";
+  NIVELES.forEach(nv=>{
+    const lados = normLados(datosEd[nv.id]);
+    const div = document.createElement("div");
+    div.className = "nivel";
+    const h = document.createElement("h3");
+    h.textContent = nv.nombre;
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    const total = lados.A.length + lados.B.length;
+    tag.textContent = total + (total === 1 ? " acción" : " acciones");
+    h.appendChild(tag);
+    div.appendChild(h);
+    ["A", "B"].forEach(lado=>{
+      const hl = document.createElement("div");
+      hl.style.cssText = "font-family:'Chakra Petch',sans-serif;font-size:.8rem;color:var(--teal);margin:8px 0 2px;";
+      hl.textContent = nombreLado(lado);
+      div.appendChild(hl);
+      const chips = document.createElement("div");
+      chips.className = "chips";
+      (lados[lado] || []).forEach((txt, i)=>{
+        const c = document.createElement("span");
+        c.className = "chip";
+        c.textContent = txt;
+        const x = document.createElement("button");
+        x.textContent = "✕";
+        x.onclick = ()=>{ quitarItemEd(nv.id, lado, i); };
+        c.appendChild(x);
+        chips.appendChild(c);
+      });
+      div.appendChild(chips);
+      const fila = document.createElement("div");
+      fila.className = "filaAdd";
+      const inp = document.createElement("input");
+      inp.placeholder = "Nueva acción (" + nv.nombre.toLowerCase() + ")";
+      inp.maxLength = 90;
+      const btn = document.createElement("button");
+      btn.textContent = "+";
+      const agregar = ()=>{ const li = NIVELES.indexOf(nv) * 2 + (lado === "B" ? 1 : 0); agregarItemEd(nv.id, lado, inp.value).then(()=>{ const again = document.querySelectorAll("#nivelesBox .filaAdd input")[li]; if(again) again.focus(); }); };
+      btn.onclick = agregar;
+      inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregar(); });
+      fila.appendChild(inp); fila.appendChild(btn);
+      div.appendChild(fila);
+    });
+    box.appendChild(div);
+  });
+  const tg = document.getElementById("tomasGridEncEd");
+  tg.innerHTML = "";
+  const tomas = tomasGuardadasEd(docActualEd || actividadEd);
+  NIVELES.forEach(nv=>{
+    const lab = document.createElement("label");
+    lab.textContent = nv.nombre + " (A y B)";
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.min = "0"; inp.max = "20";
+    inp.value = tomas[nv.id] || 0;
+    inp.id = "encEdToma_" + nv.id;
+    lab.appendChild(inp);
+    tg.appendChild(lab);
+  });
+  document.getElementById("msg").textContent = "";
+}
+async function guardarEditor(){
+  try{
+    await setDoc(doc(db, "nivelesActividad", docActualEd || actividadEd), { n: datosEd, actualizadoEn: serverTimestamp() }, { merge: true });
+  }catch(e){}
+}
+async function agregarItemEd(nivel, lado, texto){
+  texto = (texto || "").trim();
+  if(!texto) return;
+  datosEd[nivel] = normLados(datosEd[nivel]);
+  if(datosEd[nivel][lado].some(t=>t.toLowerCase() === texto.toLowerCase())) return;
+  datosEd[nivel][lado].push(texto);
+  await guardarEditor();
+  pintarEditor();
+}
+async function quitarItemEd(nivel, lado, i){
+  datosEd[nivel] = normLados(datosEd[nivel]);
+  datosEd[nivel][lado].splice(i, 1);
+  await guardarEditor();
+  pintarEditor();
+}
+function leerTomasEd(){
+  const t = {};
+  NIVELES.forEach(nv=>{
+    const el = document.getElementById("encEdToma_" + nv.id);
+    t[nv.id] = Math.max(0, Math.min(20, parseInt(el.value, 10) || 0));
+  });
+  try{ localStorage.setItem("guia_tomas_" + (docActualEd || actividadEd), JSON.stringify(t)); }catch(e){}
+  return t;
+}
+document.getElementById("btnCfg").onclick = ()=>{
+  pintarListaCfg();
+  ver("vistaConfig");
+};
+document.getElementById("btnAtras").onclick = ()=>{ entrar(); };
+document.getElementById("btnAtrasEd").onclick = ()=>{
+  pintarListaCfg();
+  ver("vistaConfig");
+};
+document.getElementById("btnJugarEd").onclick = async ()=>{
+  const tomas = leerTomasEd();
+  const nombre = actividadEd;
+  if(!nombre) return;
+  const total = NIVELES.reduce((t, nv)=> t + (tomas[nv.id] || 0), 0);
+  if(!total){ document.getElementById("msg").textContent = "Sube las tomas o agrega acciones."; return; }
+  await generarYIniciar([nombre], tomas);
+};
+document.getElementById("buscarCfg").addEventListener("input", (e)=>filtrar("listaActsCfg", e.target.value));
 
 // ---------- tomas ----------
 function abrirModal(id){ document.getElementById(id).style.display = "flex"; }

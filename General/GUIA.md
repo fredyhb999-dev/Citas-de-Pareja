@@ -1630,6 +1630,14 @@ definicion del pack poner el emoji en `icono`.
   automático es el **chequeo de sintaxis** en `herramientas/sintaxis/`
   (`extract.py` + `jscheck.py`); el resto se prueba **en vivo**. Ver la nota al
   inicio de este documento.
+- **Engrane de configuración en Encuentros (oct-2026):** Encuentros ahora tiene
+  el mismo engrane ⚙️ que Citas Guiadas (arriba a la izquierda, solo en la
+  pantalla de elegir actividad). Abre la lista de actividades y el editor de
+  acciones por nivel y lado (A = administrador, B = pareja, con sus **nombres**),
+  la rejilla de tomas y el botón **"Jugar ▶"** (arranca un Encuentro de esa
+  actividad con esas tomas, respetando "¿Cómo van a Jugar hoy?"). **No** tiene
+  "Eliminar actividad". En Guiadas se quitó ese botón: borrar actividades se
+  hace en `Citas/actividades.html`.
 - **Un resumen de conversacion no lee estos archivos.** Si una sesion se corta
   por limite de tokens, lo que se pierde es el detalle fino. Este archivo es la
   red de seguridad: cualquier sesion nueva debe empezar leyendolo.

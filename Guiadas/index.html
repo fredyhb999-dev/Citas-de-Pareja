@@ -57,7 +57,7 @@
   .nivel{ width:100%; background:var(--card); border:1px solid var(--card-border);
     border-radius:16px; padding:16px; margin-bottom:12px; }
   .nivel h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1rem; }
-  .nivel h3 .tag{ font-size:.7rem; color:var(--teal); border:1px solid var(--teal);
+  .nivel h3 .tag{ font-size:.7rem; color:var(--coral); border:1px solid var(--coral);
     border-radius:8px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
   .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
   .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
@@ -161,7 +161,6 @@
   </div>
   <div id="msg"></div>
   <button class="btnPri" id="btnJugar">Jugar ▶</button>
-  <button class="btnSec" id="btnBorrarAct" style="color:var(--rojo);">Eliminar actividad</button>
 </div>
 
 <!-- ============ PLAYER ============ -->
@@ -405,6 +404,15 @@ function esAdmin(){ return miLado === "A"; }
 function nombreDe(lado){
   const u = usuariosLista.find(x=> (lado === "A") ? x.admin : !x.admin);
   return (u && u.nombre) || (lado === "A" ? "el administrador" : "tu pareja");
+}
+// Para el editor: se muestra el NOMBRE de cada lado (A = administrador,
+// B = pareja). Si no hay nombre, se deja "Lado A"/"Lado B".
+function nombreLado(lado){
+  try{
+    const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
+    if(u && u.nombre) return u.nombre;
+  }catch(e){}
+  return "Lado " + lado;
 }
 function miIdSesion(){ return (miUsuario && miUsuario.id) || "anon"; }
 function sesionRef(){ return doc(db, "sesionGuiada", "actual"); }
@@ -1094,7 +1102,7 @@ function pintarEditor(){
     ["A", "B"].forEach(lado=>{
       const hl = document.createElement("div");
       hl.style.cssText = "font-family:'Chakra Petch',sans-serif;font-size:.8rem;color:var(--teal);margin:8px 0 2px;";
-      hl.textContent = "Lado " + lado;
+      hl.textContent = nombreLado(lado);
       div.appendChild(hl);
       const chips = document.createElement("div");
       chips.className = "chips";
@@ -1112,7 +1120,7 @@ function pintarEditor(){
       const fila = document.createElement("div");
       fila.className = "filaAdd";
       const inp = document.createElement("input");
-      inp.placeholder = "Nueva acción " + lado + " (" + nv.nombre.toLowerCase() + ")";
+      inp.placeholder = "Nueva acción (" + nv.nombre.toLowerCase() + ")";
       inp.maxLength = 90;
       const btn = document.createElement("button");
       btn.textContent = "+";
@@ -1170,24 +1178,6 @@ function leerTomas(){
   return t;
 }
 document.getElementById("btnAtrasEd").onclick = ()=>{
-  pintarLista("listaActsCfg", "editar");
-  ver("vistaConfig");
-};
-document.getElementById("btnBorrarAct").onclick = async ()=>{
-  const esOf = mapaDocs[actividad] && mapaDocs[actividad].oficial;
-  if(!confirm("¿Eliminar \"" + actividad + "\" de tus actividades?" + (esOf ? " (Volverá al entrar mientras siga aprobada.)" : ""))) return;
-  try{ await deleteDoc(doc(db, "nivelesActividad", docActual || actividad)); }catch(e){}
-  try{ localStorage.removeItem("guia_tomas_" + (docActual || actividad)); }catch(e){}
-  borrarProg();
-  if(!esOf){
-    try{
-      const snap = await getDocs(collection(db, "actividadesExtra"));
-      const b = [];
-      snap.forEach(d=>{ if((d.data().nombre || "").trim() === actividad) b.push(deleteDoc(doc(db, "actividadesExtra", d.id))); });
-      await Promise.all(b);
-    }catch(e){}
-  }
-  cacheActs = null; cacheConteos = null;
   pintarLista("listaActsCfg", "editar");
   ver("vistaConfig");
 };
