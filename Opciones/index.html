@@ -158,7 +158,7 @@
   <h1 id="plTitulo">Elecciones Peligrosas</h1>
   <div id="progreso"></div>
   <div id="turnoNombre"></div>
-  <div class="cards">
+  <div class="cards" id="cardsRow">
     <div class="card" id="opA"></div>
     <div class="card" id="opB"></div>
   </div>
@@ -167,8 +167,7 @@
     <button id="btnPickB">Escoge B</button>
   </div>
   <div id="esperaTurno" style="display:none"></div>
-  <div id="resultados" style="display:none"></div>
-  <div id="finMsg" style="display:none">¡Terminaron! 🔥</div>
+  <div id="finMsg" style="display:none">La partida terminó.</div>
   <button class="btnSec" id="btnSaltar" style="display:none">Saltar turno</button>
   <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
   <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
@@ -441,7 +440,8 @@ const entrarDirecto = (()=>{
 function soyCabeza(d){ return !!(d && Array.isArray(d.cabezas) && d.cabezas.some(c=>c.id === miId)); }
 
 function parDe(lista){
-  if(!Array.isArray(lista) || lista.length < 2) return null;
+  if(!Array.isArray(lista) || !lista.length) return null;
+  if(lista.length === 1) return { a: lista[0], b: "" };
   const i = Math.floor(Math.random() * lista.length);
   let j = Math.floor(Math.random() * (lista.length - 1));
   if(j >= i) j++;
@@ -462,7 +462,7 @@ function iniciarEstado(cabezasIn, pools){
 // Elige el siguiente turno entre los que aun tienen mas de 1 opcion.
 // Al dar la vuelta se revuelve el orden (turnos aleatorios, no fijos).
 function siguienteTurno(d){
-  const alive = id => (d.listas[id] || []).length > 1;
+  const alive = id => (d.listas[id] || []).length > 0;
   const vivos = d.cabezas.map(c=>c.id).filter(alive);
   if(!vivos.length) return { fin: true };
   let o = Array.isArray(d.orden) ? d.orden.slice() : [];
@@ -483,7 +483,7 @@ function aplicarPick(d, headId, choice){
   if(!Array.isArray(d.eliminadas[headId])) d.eliminadas[headId] = [];
   d.eliminadas[headId].push(quitar);
   d.pares[headId] = null;
-  const alive = id => (d.listas[id] || []).length > 1;
+  const alive = id => (d.listas[id] || []).length > 0;
   if(!d.cabezas.some(c => alive(c.id))){ d.terminada = true; return; }
   const sig = siguienteTurno(d);
   d.orden = sig.orden;
@@ -567,6 +567,7 @@ function cargarEstado(d){
     eliminadas: d.eliminadas || {},
     orden: Array.isArray(d.orden) ? d.orden.slice() : [],
     turno: d.turno || 0,
+    rondas: d.rondas || 0,
     terminada: !!d.terminada
   };
 }
@@ -577,7 +578,7 @@ function sanearSesion(d){
   if(!fuera.length) return d;
   const ordenNuevo = d.orden.filter(id=>validos.has(id));
   if(!ordenNuevo.length) return d;
-  const alive = id => ((d.listas && d.listas[id]) || []).length > 1;
+  const alive = id => ((d.listas && d.listas[id]) || []).length > 0;
   let turnoViejo = d.turno || 0;
   let siguiente = null;
   for(let i = turnoViejo; i < d.orden.length; i++){
@@ -730,42 +731,54 @@ function pintarPaso(){
   const d = estado;
   const opA = document.getElementById("opA");
   const opB = document.getElementById("opB");
+  const cardsRow = document.getElementById("cardsRow");
   const pickRow = document.getElementById("pickRow");
+  const btnA = document.getElementById("btnPickA");
+  const btnB = document.getElementById("btnPickB");
   const espera = document.getElementById("esperaTurno");
   const turnoNombre = document.getElementById("turnoNombre");
-  const res = document.getElementById("resultados");
   const fin = document.getElementById("finMsg");
   const prog = document.getElementById("progreso");
   const btnSaltar = document.getElementById("btnSaltar");
   if(!jugando || !d){ return; }
   if(d.terminada){
-    opA.textContent = ""; opB.textContent = "";
+    cardsRow.style.display = "none";
     pickRow.style.display = "none";
     espera.style.display = "none";
     turnoNombre.textContent = "";
     prog.textContent = "";
     fin.style.display = "block";
-    res.style.display = "none";
     mostrarBotonesAdmin();
     try{ btnSaltar.style.display = "none"; }catch(e){}
     return;
   }
   fin.style.display = "none";
-  res.style.display = "none";
   const cur = d.orden[d.turno] || "";
   const par = d.pares[cur] || { a: "", b: "" };
   const soy = !jugandoCompartido || cur === miId;
   const nombre = nombreCabeza(cur);
-  prog.textContent = "Turno " + ((d.turno || 0) + 1) + " de " + (d.orden || []).length;
+  const restantes = (d.listas[cur] || []).length;
+  const rondaActual = (d.rondas || 0) - restantes + 1;
+  prog.textContent = (d.rondas ? ("Ronda " + rondaActual + " de " + d.rondas) : ("Turno " + ((d.turno || 0) + 1)));
   if(soy){
+    cardsRow.style.display = "flex";
     opA.textContent = "🅰️ " + (par.a || "");
-    opB.textContent = "🅱️ " + (par.b || "");
+    if(par.b){
+      opB.style.display = "flex";
+      opB.textContent = "🅱️ " + par.b;
+      btnB.style.display = "";
+      btnA.textContent = "Escoge A";
+    }else{
+      opB.style.display = "none";
+      btnB.style.display = "none";
+      btnA.textContent = "Quitar →";
+    }
     pickRow.style.display = "flex";
     espera.style.display = "none";
     turnoNombre.textContent = (jugandoCompartido ? "Tu turno" : "Turno de " + nombre);
     try{ btnSaltar.style.display = "none"; }catch(e){}
   }else{
-    opA.textContent = ""; opB.textContent = "";
+    cardsRow.style.display = "none";
     pickRow.style.display = "none";
     espera.style.display = "block";
     espera.textContent = "Turno de " + nombre + "…";
@@ -777,8 +790,7 @@ function pintarPaso(){
   }
 }
 function finPartida(){
-  const lineas = ((estado && estado.cabezas) || []).map(c=> c.nombre + ": " + (((estado.listas || {})[c.id] || [])[0] || "—"));
-  document.getElementById("finTxt").textContent = "La partida terminó.\n\n" + lineas.join("\n");
+  document.getElementById("finTxt").textContent = "La partida terminó.";
   abrirModal("modalFin");
 }
 async function pick(choice){

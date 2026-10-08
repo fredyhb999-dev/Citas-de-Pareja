@@ -1652,8 +1652,10 @@ definicion del pack poner el emoji en `icono`.
   administrador, B = pareja; los invitados heredan la lista de quien los invitó
   (`conQuien`). **Número de rondas** (campo principal): cada quien recibe esa
   cantidad de opciones al azar de su lista (sin repetir si alcanza; se permite
-  repetir si no). Una ronda = cada jugador pasa una vez, en orden aleatorio; el
-  juego termina cuando a cada quien le queda 1. Modos (tres botones): "Jugar
+  repetir si no). Una ronda = cada jugador pasa una vez, en orden aleatorio. Se
+  juegan **exactamente R rondas** (cada opción se consume; no queda nada y no se
+  muestra resultado): en la última ronda cada quien quita su última opción y sale
+  el aviso "La partida terminó". Modos (tres botones): "Jugar
   solo" (pregunta qué lista), "Jugar con Pareja" (tú + pareja) y "Multijugador"
   (con invitados); los dos últimos preguntan "Un solo Celular" / "Cada quien en
   el suyo" (sesión `sesionOpciones/actual` + invitaciones, igual que Encuentros).
