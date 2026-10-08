@@ -51,6 +51,9 @@
   .tomasGrid label{ font-size:.78rem; color:var(--fg-muted); display:flex; flex-direction:column; gap:4px; }
   .tomasGrid input{ border-radius:10px; border:1px solid var(--card-border); background:var(--bg);
     color:var(--fg); padding:10px; font-size:1rem; width:100%; font-family:'Inter',sans-serif; }
+  .opModo{ display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--bg-2);
+    border:1px solid var(--card-border); border-radius:12px; margin-top:8px; font-size:.9rem; cursor:pointer; }
+  .opModo input{ width:auto; accent-color:var(--teal); }
   .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:60;
     align-items:center; justify-content:center; padding:20px; }
   .modal .caja{ width:100%; max-width:380px; background:var(--card); border:1px solid var(--teal);
@@ -100,6 +103,11 @@
   <div id="filaMultiSel" style="display:none;width:100%;gap:8px;margin-top:12px;">
     <button class="btnPri" id="btnMultiGo" disabled style="flex:1;opacity:.4;margin-bottom:0;">Combinar (0/3)</button>
     <button class="btnSec" id="btnMultiCancel" style="width:auto;padding:12px 16px;text-decoration:none;">Cancelar</button>
+  </div>
+  <div id="cajaModoJuego" style="width:100%;background:var(--card);border:1px solid var(--card-border);border-radius:16px;padding:14px;margin-top:12px;">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;">¿Cómo van a Jugar hoy?</div>
+    <label class="opModo"><input type="radio" name="modoJuego" value="local"> Acciones en un Celular</label>
+    <label class="opModo"><input type="radio" name="modoJuego" value="compartido" checked> Cada quien en el suyo</label>
   </div>
 </div>
 
@@ -373,6 +381,13 @@ let turno = 0;
 let orden = [];
 let jugando = false;
 let modoLocal = false;
+// modoJuego: "local" = todo en un celular (el del anfitrión);
+//            "compartido" = cada quien en el suyo (sesión + invitaciones).
+// Por defecto "compartido": es el comportamiento de siempre en Encuentros.
+let modoJuego = "compartido";
+// jugandoCompartido: si la partida EN CURSO usa la sesión compartida. En local
+// no se escribe sesión ni se invita: todo se ve en el celular del anfitrión.
+let jugandoCompartido = false;
 let sesionActual = null;
 let sesionUnsub = null;
 let sesionIniciada = false;
@@ -531,6 +546,8 @@ function escucharSesion(){
           sanearSesion(d);
           sesionActual = d;
           finMostrado = false;
+          // Partida en un solo celular: la sesión compartida no manda aquí.
+          if(jugando && !jugandoCompartido) return;
           // Si el anfitrion PAUSO, los demas salen. El anfitrion si puede
           // retomar despues (la partida queda pendiente con pausada=true).
           if(d.pausada && d.hostUid !== miId){
@@ -553,6 +570,8 @@ function escucharSesion(){
             document.getElementById("modalUnir").style.display = "flex";
           }
         }else{
+          // Partida en un solo celular: nada de sesión compartida la toca.
+          if(jugando && !jugandoCompartido) return;
           // Si la partida TERMINO (no pausada, no descartada) se avisa a TODOS
           // los que estaban jugando: al invitado (que al aceptar sale del modo
           // invitado), al anfitrion y a la pareja.
@@ -1043,16 +1062,28 @@ async function generarYIniciar(activities, tomas){
     empezadaEn: serverTimestamp(),
     actualizadaEn: serverTimestamp()
   };
+  modoLocal = (typeof navigator !== "undefined" && navigator.onLine === false);
+  const quiereCompartido = (modoJuego === "compartido");
+  // Compartido solo si de verdad hay internet; sin conexión cae a un celular.
+  const compartido = quiereCompartido && !modoLocal;
+  if(quiereCompartido && modoLocal){
+    try{ alert("Sin conexión. Se jugará en este celular."); }catch(e){}
+  }
+  jugandoCompartido = compartido;
   cargarEnMemoria(nueva);
   jugando = true;
   sidMostrado = sid;
   multiModo = false; multiSel = [];
   try{ multiRefrescar(); }catch(e){}
-  if(!modoLocal){
+  if(compartido){
     try{ await setDoc(sesionRef(), nueva); }
     catch(e){ try{ alert("No se pudo iniciar. Revisa conexión."); }catch(x){} }
     // Anunciar la partida para que la sala de espera avise a los invitados.
     anunciarInvitacion(sid, cabezasIn, nueva.hostNombre);
+  }else{
+    // Todo en un celular: no hay sesión compartida ni invitación. Se cierra
+    // cualquier sesión previa para que nadie quede esperando una partida vieja.
+    try{ await cerrarSesion(); }catch(e){}
   }
   document.getElementById("plTitulo").textContent = "Encuentros Guiados";
   document.getElementById("btnSig").style.display = "";
@@ -1089,20 +1120,25 @@ function pintarPaso(){
   fin.style.display = "none";
   const actualId = orden[turno] || "";
   const soyYo = actualId === miId;
+  // En "Acciones en un Celular" (local) todo se ve en este teléfono, el del
+  // anfitrión, respetando los turnos: se muestra la acción de quien toca y de
+  // quién es, no solo la propia.
+  const unCelular = !jugandoCompartido;
   const miCab = cabezas.find(c=>c.id === miId) || {};
+  const cabe = cabezas.find(c=>c.id === actualId) || miCab;
   prog.textContent = "Ronda " + (ronda + 1) + " de " + total + " · Turno " + (turno + 1) + " de " + cabezas.length;
-  if(soyYo){
-    const item = (listas[miId] || [])[ronda];
+  if(unCelular || soyYo){
+    const item = (listas[actualId] || [])[ronda];
     elAct.textContent = item ? item.texto : "";
-    elAct.style.color = miCab.lado === "A" ? "var(--teal)" : "var(--coral)";
+    elAct.style.color = (unCelular ? cabe.lado : miCab.lado) === "A" ? "var(--teal)" : "var(--coral)";
     tag.style.display = "";
-    tag.textContent = item ? item.nivel : "";
+    tag.textContent = (unCelular ? ((cabe.nombre || "Alguien") + " · ") : "") + (item ? item.nivel : "");
     btnSig.style.display = "";
     btnSig.disabled = false;
     btnSig.style.opacity = "1";
     const ultimo = (ronda + 1 >= total) && (turno + 1 >= cabezas.length);
     btnSig.textContent = ultimo ? "Terminar 🔥" : "Siguiente →";
-    // Con el turno propio no hay nada que saltar.
+    // Con el turno propio (o en un solo celular) no hay nada que saltar.
     try{ btnSaltar.style.display = "none"; }catch(e){}
   }else{
     elAct.textContent = "Turno de " + nombreCabeza(actualId) + "…";
@@ -1123,7 +1159,7 @@ try{ document.getElementById("btnSaltar").onclick = ()=>{ saltarTurno(); }; }cat
 document.getElementById("btnSig").onclick = async ()=>{
   if(ronda >= largo){ return; }
   if(!jugando) return;
-  if(modoLocal){ avanzarLocal(); return; }
+  if(!jugandoCompartido){ avanzarLocal(); return; }
   if(orden[turno] !== miId) return;
   await avanzarSesion();
 };
@@ -1131,7 +1167,7 @@ document.getElementById("btnTerminar").onclick = async ()=>{
   // PAUSA la partida (se puede retomar). Solo el anfitrion.
   if(!esAdminFlag){ alert("Pausar la partida es cosa del anfitrión."); return; }
   jugando = false;
-  if(!modoLocal){
+  if(jugandoCompartido){
     try{ await setDoc(sesionRef(), { pausada: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
     // En pausa NO se puede entrar, pero la partida sigue viva. Se marca el
     // aviso en pausa en vez de retirarlo: retirarlo haria creer a la sala que
@@ -1146,7 +1182,7 @@ document.getElementById("btnTerminarPartida").onclick = async ()=>{
   // A los invitados les llega el aviso y, al aceptar, salen del modo invitado.
   if(!esAdminFlag){ alert("Terminar la partida es cosa del anfitrión."); return; }
   jugando = false;
-  if(!modoLocal){
+  if(jugandoCompartido){
     try{ await setDoc(sesionRef(), { activa: false, terminada: true, porAdmin: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
     // La sala se entera y expulsa a los que se quedaron esperando.
     await retirarInvitacion(JUEGO_INV);
@@ -1172,6 +1208,7 @@ document.getElementById("btnContinuar").onclick = async ()=>{
   if(!d || !Array.isArray(d.cabezas) || !d.largo) return;
   jugando = true;
   modoLocal = false;
+  jugandoCompartido = true;
   try{
     const nsid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
     sidMostrado = nsid;
@@ -1211,6 +1248,7 @@ function entrarAlJuego(d){
   if(!d || !d.activa || !soyCabeza(d)) return;
   jugando = true;
   modoLocal = false;
+  jugandoCompartido = true;
   cargarEnMemoria(sanearSesion(d));
   ver("vistaPlayer");
   pintarPaso();
@@ -1235,7 +1273,7 @@ function escucharGrupo(){
         const antes = usuariosLista.map(u=>u && u.id).join(",");
         usuariosLista = arr;
         if(antes === arr.map(u=>u && u.id).join(",")) return;
-        if(sesionActual && sesionActual.activa && jugando){
+        if(jugandoCompartido && sesionActual && sesionActual.activa && jugando){
           sanearSesion(sesionActual);
           cargarEnMemoria(sesionActual);
           pintarPaso();
@@ -1244,6 +1282,12 @@ function escucharGrupo(){
     }, ()=>{});
   }catch(e){}
 }
+// ---------- casillas de modo (Acciones en un Celular / Cada quien en el suyo) ----------
+document.querySelectorAll('input[name="modoJuego"]').forEach(r=>{
+  r.addEventListener("change", ()=>{ if(r.checked) modoJuego = r.value; });
+});
+modoJuego = (document.querySelector('input[name="modoJuego"]:checked') || {}).value || "compartido";
+
 (async ()=>{
   try{ await cargarIdentidad(); }catch(e){}
   try{ mostrarBotonesAdmin(); }catch(e){}

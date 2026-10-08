@@ -556,6 +556,24 @@ se retomó.
 - En ambos casos el invitado acepta y se ejecuta `salirModoInvitado()` (`253`).
 - En toda la interfaz se dice **anfitrión**, no "administrador".
 
+#### 4.1 Cómo van a jugar: un solo celular o cada quien en el suyo (oct-2026)
+
+En la pantalla de elegir actividad hay un recuadro **"¿Cómo van a Jugar hoy?"**
+con dos casillas exclusivas (mismo patrón que Citas Guiadas):
+
+- **Cada quien en el suyo** (por defecto): es el comportamiento de siempre. Se
+  escribe `sesionEncuentros/actual`, se invita a pareja e invitados y cada quien
+  ve su turno en su propio celular.
+- **Acciones en un Celular**: se juega **todo en el teléfono del anfitrión**,
+  respetando los turnos y mostrando el nombre de quien toca. **No** se escribe
+  sesión ni se invita a nadie; pareja e invitados participan viendo el celular
+  del anfitrión.
+
+El estado interno es la bandera `jugandoCompartido` (`Encuentros/index.html`):
+en `true` manda la sesión compartida; en `false` todo es local (esa misma ruta
+sirve de respaldo cuando no hay internet). Mientras se juega en un solo celular,
+el listener de la sesión compartida no toca la pantalla.
+
 #### 5. Modo invitado: que no se queden datos ajenos
 
 ##### 5.1 Salida explícita (`salirModoInvitado`, `254`)
