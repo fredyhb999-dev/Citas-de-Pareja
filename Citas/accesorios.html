@@ -173,7 +173,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, leerConfigGuardada, cargarUsuarios } from "../config.js";
+import { resolverFirebase, leerConfigGuardada, cargarUsuarios, asegurarFabrica } from "../config.js";
 const firebaseConfig = resolverFirebase(firebaseConfigBase);
 
 const app = initializeApp(firebaseConfig);
@@ -187,8 +187,8 @@ const msgEl = document.getElementById("msg");
 const inputEl = document.getElementById("nombreNuevo");
 const btnAgregar = document.getElementById("btnAgregar");
 
-let catalogo = [];  // del JSON (no se pueden eliminar desde la app)
-let extras = [];    // de Firebase: [{id, nombre}] (sí se pueden eliminar)
+let catalogo = [];  // del JSON: solo instalador; si ya se sembro, va vacio
+let extras = [];    // de Firebase: [{id, nombre}] (todo se puede eliminar)
 
 let modo = "agregar";   // "agregar" | "eliminar"
 let docObjetivo = null;
@@ -289,14 +289,29 @@ function avisar(texto, ok){
 }
 
 async function cargar(){
+  // 1) La fabrica: los JSON del repo. Solo sirven para instalar.
+  //    Se leen los dos aunque esta pantalla solo use accesorios: el instalador
+  //    corre una sola vez, asi que la pantalla que abra primero debe sembrar todo.
+  let fabricaAct = [];
+  let fabricaAcc = [];
   try{
-    const r = await fetch("accesorios.json");
-    const data = await r.json();
-    catalogo = Array.isArray(data) ? data : [];
-  }catch(e){
+    const data = await (await fetch("actividades.json")).json();
+    if(Array.isArray(data)) fabricaAct = data;
+  }catch(e){}
+  try{
+    const data = await (await fetch("accesorios.json")).json();
+    if(Array.isArray(data)) fabricaAcc = data;
+  }catch(e){}
+  catalogo = fabricaAcc;
+
+  // 2) Una sola vez se copia la fabrica a la base. Si ya quedo ahi, la base
+  //    manda: lo de fabrica se vuelve tuyo y se renombra y borra de verdad.
+  const sembrado = await asegurarFabrica(db, { actividades: fabricaAct, accesorios: fabricaAcc });
+  if(sembrado){
     catalogo = [];
   }
 
+  // 3) Tu base, que ya incluye lo que se instalo.
   try{
     const snap = await getDocs(extrasRef);
     extras = [];

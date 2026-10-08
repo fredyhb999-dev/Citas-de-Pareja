@@ -1154,6 +1154,64 @@ Experiencias.
 La ultima es la que se escapa facil: si no se actualiza, esas citas quedan
 apuntando a un nombre que ya no existe, y **al editarlas se cambiarian solas**.
 
+## De "no se puede borrar" a "es tuyo" (oct-2026)
+
+**El problema.** El contenido inicial se metio en archivos del repo
+(`Citas/actividades.json`, `Citas/accesorios.json`) y las pantallas lo mezclaban con
+lo de la pareja en **cada carga**: `baseActs.concat(extrasActs.map(...))`. Como lo de
+fabrica no vivia en la base, no existia `buscarExtraAct()` para el, asi que no tenia
+boton de borrar ni renombrar. Y aunque lo tuviera, el JSON lo reponia en cada
+recarga.
+
+**La regla de ahora: los JSON son solo el instalador.** La base manda.
+
+| Antes | Ahora |
+|---|---|
+| `fabrica.concat(base)` en cada carga | `asegurarFabrica()` una vez; despues solo la base |
+| Lo de fabrica no se podia borrar | **Todo** se borra y se renombra |
+| Borrar no servia de nada | Lo borrado se queda borrado |
+| Sin lista de "ocultos" | No hace falta: no hay merge |
+
+**Como funciona** (`config.js`):
+
+1. Se lee `config/fabrica`. Si existe, no se hace nada mas.
+2. Se siembra lo que falte en `actividadesExtra` y `accesoriosExtra`, con
+   `{nombre, origen:"fabrica"}`. Se respeta lo que ya tenia: no se pisa ni se duplica.
+3. Se escribe la banderita con **los nombres instalados**
+   (`actividades:[...]`, `accesorios:[...]`) y `VERSION_FABRICA`.
+
+El paso 3 es lo que hace que **lo borrado no regrese**: el nombre sigue en la lista de
+instalados, asi que las siguientes cargas lo saltan. Y si el repo **agrega** una
+actividad nueva a `actividades.json`, esa si entra, porque su nombre no estaba en la
+lista.
+
+**Si no se puede escribir** (reglas cerradas, sin conexion) `asegurarFabrica()`
+devuelve `false` y cada pantalla conserva el JSON como lista de respaldo, tal como
+antes. Nada se rompe: se ve la fabrica pero sin poder editarla.
+
+**Las 5 pantallas** hacen exactamente lo mismo:
+
+| Pantalla | Que hace |
+|---|---|
+| `Citas/actividades.html` | `asegurarFabrica(...)`; si sembro, `baseActs=[]` y `catalogoAcc=[]` |
+| `Citas/accesorios.html` | idem con `catalogo=[]` |
+| `Citas/index.html` | `unirConFabrica(extras, fabrica)` solo si **no** sembro |
+| `Guiadas/index.html` | idem, sobre `actividadesExtra` |
+| `Encuentros/index.html` | idem, sobre `actividadesExtra` |
+
+Las 5 leen **los dos** JSON aunque no usen los dos: el instalador corre una sola vez y
+la pantalla que abra primero tiene que sembrar todo.
+
+**Ojo con `nivelesActividad` y `presetsActividad`:** sus IDs siguen siendo el nombre
+de la actividad (ver la tabla de arriba). Un item recien sembrado no tiene doc de
+niveles: eso es igual que antes. Y los presets `<Actividad>.json` se conservan como
+respaldo de `presetsActividad`, igual que `usuarios.json` con los usuarios.
+
+**Pruebas:** `herramientas/pruebas/` no cubre esto (el arnes usa un Firestore de
+mentira sin escritura). Se probo aparte con Chrome headless y una base falsa en
+memoria: 22 casos del instalador y 4-5 escenarios por pantalla (recien, instalado,
+borrada, sin_permiso, repetida) sobre las 5 pantallas reales.
+
 **Al ELIMINAR** se borran las cuatro primeras. **Las citas NO se tocan** (decision
 de Fredy, oct-2026): la cita ya agendada sigue existiendo aunque su actividad
 desaparezca de la lista.

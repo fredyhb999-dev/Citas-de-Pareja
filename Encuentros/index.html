@@ -193,7 +193,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios } from "../config.js";
+import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
@@ -732,17 +732,32 @@ async function sincronizarOficiales(){
 async function cargarActividades(){
   let base = [];
   mapaDocs = {};
-  try{ base = await (await fetch("../Citas/actividades.json")).json(); }catch(e){}
+
+  // 1) La fabrica: los JSON del repo. Solo sirven para instalar.
+  //    Se leen los dos aunque aqui no se usen accesorios, porque el instalador
+  //    corre una sola vez y la pantalla que abra primero debe sembrar todo.
+  let fabricaActs = [];
+  let fabricaAccs = [];
+  try{ const d = await (await fetch("../Citas/actividades.json")).json(); if(Array.isArray(d)) fabricaActs = d; }catch(e){}
+  try{ const d = await (await fetch("../Citas/accesorios.json")).json(); if(Array.isArray(d)) fabricaAccs = d; }catch(e){}
+
+  // 2) Una sola vez se copia la fabrica a la base. Despues manda la base.
+  const sembrado = await asegurarFabrica(db, { actividades: fabricaActs, accesorios: fabricaAccs });
+
+  // 3) Tu base, que ya incluye lo que se instalo.
+  let mias = [];
   try{
     const snap = await getDocs(collection(db, "actividadesExtra"));
-    const vistos = new Set((Array.isArray(base) ? base : []).map(n=>(n || "").toLowerCase()));
     snap.forEach(d=>{
       const n = (d.data().nombre || "").trim();
-      if(n && !vistos.has(n.toLowerCase())){ vistos.add(n.toLowerCase()); base.push(n); }
+      if(n) mias.push(n);
     });
   }catch(e){}
-  if(!Array.isArray(base)) base = [];
+
+  // La base manda. El JSON solo se suma si la siembra no pudo ocurrir.
+  base = sembrado ? mias : unirConFabrica(mias, fabricaActs);
   base.forEach(n=>{ mapaDocs[n] = { docId: n, oficial: false }; });
+
   try{
     const ofs = await oficialesAprobados();
     const vistos = new Set(base.map(n=>(n || "").toLowerCase()));

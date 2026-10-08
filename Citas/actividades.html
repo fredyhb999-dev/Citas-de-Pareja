@@ -264,7 +264,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, leerConfigGuardada, cargarUsuarios } from "../config.js";
+import { resolverFirebase, leerConfigGuardada, cargarUsuarios, asegurarFabrica } from "../config.js";
 const firebaseConfig = resolverFirebase(firebaseConfigBase);
 
 const app = initializeApp(firebaseConfig);
@@ -302,8 +302,8 @@ const btnEliminarNo = document.getElementById("btnEliminarNo");
 const borrarNombre = document.getElementById("borrarNombre");
 
 // ====== ESTADO ======
-let baseActs = [];   // del JSON (no se eliminan desde la app)
-let extrasActs = []; // de Firebase: [{id, nombre}]
+let baseActs = [];   // del JSON: solo instalador; si ya se sembro, va vacio
+let extrasActs = []; // de Firebase: [{id, nombre}] (todo se puede eliminar)
 let catalogoAcc = []; // accesorios del JSON
 let extrasAcc = [];   // accesorios extra de Firebase
 
@@ -418,6 +418,7 @@ function actualizarModo(){
 }
 
 async function cargar(){
+  // 1) La fabrica: los JSON del repo. Solo sirve para instalar.
   try{
     const r = await fetch("actividades.json");
     const data = await r.json();
@@ -427,6 +428,24 @@ async function cargar(){
   }
 
   try{
+    const r = await fetch("accesorios.json");
+    const data = await r.json();
+    catalogoAcc = Array.isArray(data) ? data : [];
+  }catch(e){
+    catalogoAcc = [];
+  }
+
+  // 2) Una sola vez se copia la fabrica a la base. Si ya quedo ahi, la base
+  //    manda: lo de fabrica se vuelve tuyo y se renombra y borra de verdad.
+  //    Si no se puede escribir, la fabrica sigue seindo lista de respaldo.
+  const sembrado = await asegurarFabrica(db, { actividades: baseActs, accesorios: catalogoAcc });
+  if(sembrado){
+    baseActs = [];
+    catalogoAcc = [];
+  }
+
+  // 3) Tu base, que ya incluye lo que se instalo.
+  try{
     const snap = await getDocs(actsRef);
     extrasActs = [];
     snap.forEach(d=>{
@@ -435,14 +454,6 @@ async function cargar(){
     });
   }catch(e){
     extrasActs = [];
-  }
-
-  try{
-    const r = await fetch("accesorios.json");
-    const data = await r.json();
-    catalogoAcc = Array.isArray(data) ? data : [];
-  }catch(e){
-    catalogoAcc = [];
   }
 
   try{

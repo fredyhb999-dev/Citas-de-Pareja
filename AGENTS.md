@@ -187,6 +187,33 @@ buscando ids repetidos.
 `top:max(18px, env(safe-area-inset-top))`.** Nunca sin esa protección: en
 celulares con notch los botones se esconden bajo la barra.
 
+## El contenido de fabrica: los JSON son SOLO el instalador
+
+Antes (oct-2026) `Citas/actividades.json` y `Citas/accesorios.json` se mezclaban con
+lo de la pareja en **cada carga**. Como lo de fabrica no estaba en la base, **no se
+podia renombrar ni borrar**: lo borrabas y volvia en el instante siguiente.
+
+**Ahora los JSON son solo el instalador.** La primera vez, `config.js` los copia a la
+base y a partir de ahi **manda la base**: todo, tambien lo de fabrica, se renombra y
+se borra de verdad.
+
+- `asegurarFabrica(db, {actividades, accesorios})` vive en `config.js`. Corre en las
+  5 pantallas: `Citas/actividades.html`, `Citas/accesorios.html`, `Citas/index.html`,
+  `Guiadas/index.html`, `Encuentros/index.html`. Las 5 leen **los dos** JSON, porque
+  corre una sola vez y la que abra primero debe sembrar todo.
+- La banderita es el doc **`config/fabrica`** y guarda **que nombres** ya se
+  instalaron. Por eso **lo que borras no vuelve** (su nombre sigue anotado como
+  instalado) y en cambio **una actividad nueva que agregues despues al JSON si entra**.
+- Si no se puede escribir (reglas cerradas o sin conexion) devuelve `false` y cada
+  pantalla conserva el JSON como lista de respaldo: se ve igual de antes, no se rompe.
+- `unirConFabrica(base, fabrica)` solo se usa en ese caso de respaldo.
+- Los presets `<Actividad>.json` siguen siendo respaldo de `presetsActividad`
+  (mismo patron que `usuarios.json`). Si el nombre cambia, el JSON ya no aplica.
+- El JSON tambien es el **respaldo**: no lo borres.
+
+Al agregar o quitar algo del JSON de fabrica hay que subir `VERSION_FABRICA` en
+`config.js`, o las instalaciones nuevas no lo reciben.
+
 ## Riesgo conocido (importante, NO urgente)
 
 - Las reglas de `solicitudes` estan **abiertas** (`solicitudes: if true`). Fredy lo
