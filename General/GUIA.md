@@ -1650,15 +1650,20 @@ definicion del pack poner el emoji en `icono`.
   viven en **Firebase** (`opcionesJuego/actual` = `{A:[...], B:[...]}`), **nunca**
   en un JSON del repo (contenido íntimo + repo público). Listas por lado: A =
   administrador, B = pareja; los invitados heredan la lista de quien los invitó
-  (`conQuien`). Modos: "Jugar solo" (eliges lista, un celular) y "Multijugador"
-  con "Un solo celular" / "Cada quien en el suyo" (sesión `sesionOpciones/actual`
-  + invitaciones, igual que Encuentros). Engrane ⚙️ arriba-izquierda (solo admin)
-  para editar las dos listas: **pestañas** por usuario, lista en **tabla** con
-  scroll acotado y **buscador**, edición en línea, borrar (✕) a la derecha, y
-  **pegar lista completa**. Turnos
-  aleatorios. Pausar/continuar/terminar/saltar turno/sacar invitados como
-  Encuentros. Licencia: item **`opciones`**. En el catálogo (`packs`): ruta
-  **`Opciones`**, sección **`experiencias`**.
+  (`conQuien`). **Número de rondas** (campo principal): cada quien recibe esa
+  cantidad de opciones al azar de su lista (sin repetir si alcanza; se permite
+  repetir si no). Una ronda = cada jugador pasa una vez, en orden aleatorio; el
+  juego termina cuando a cada quien le queda 1. Modos (tres botones): "Jugar
+  solo" (pregunta qué lista), "Jugar con Pareja" (tú + pareja) y "Multijugador"
+  (con invitados); los dos últimos preguntan "Un solo Celular" / "Cada quien en
+  el suyo" (sesión `sesionOpciones/actual` + invitaciones, igual que Encuentros).
+  Engrane ⚙️ arriba-izquierda (solo admin) para editar las dos listas:
+  **pestañas** por usuario, lista en **tabla** con scroll acotado y **buscador**,
+  edición en línea, borrar (✕) a la derecha, y **pegar lista completa**. Al
+  terminar, aviso a todos y regreso; invitados expulsados. Pausar/continuar/
+  terminar/saltar turno/sacar invitados como Encuentros. Licencia: item
+  **`opciones`**. En el catálogo (`packs`): ruta **`Opciones`**, sección
+  **`experiencias`**.
 - **Un resumen de conversacion no lee estos archivos.** Si una sesion se corta
   por limite de tokens, lo que se pierde es el detalle fino. Este archivo es la
   red de seguridad: cualquier sesion nueva debe empezar leyendolo.

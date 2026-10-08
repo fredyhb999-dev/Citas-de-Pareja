@@ -73,7 +73,7 @@
   .tabs{ display:flex; gap:8px; width:100%; }
   .tab{ flex:1; padding:12px; border-radius:12px; border:1px solid var(--card-border); background:var(--card);
     color:var(--fg-muted); font-family:'Chakra Petch',sans-serif; font-weight:600; font-size:.9rem; cursor:pointer; }
-  .tab.activo{ border-color:var(--teal); color:var(--fg); background:var(--bg-2); }
+  .tab.activo{ background:linear-gradient(90deg, var(--coral), var(--teal)); color:var(--bg); border-color:transparent; }
   .tablaBox{ width:100%; max-height:48dvh; overflow-y:auto; border:1px solid var(--card-border);
     border-radius:12px; background:var(--bg-2); padding:8px; }
   .filaOpt{ display:flex; gap:8px; align-items:center; margin-bottom:6px; }
@@ -82,6 +82,9 @@
   .filaOpt .optTexto:focus{ border-color:var(--teal); outline:none; }
   .optX{ flex:0 0 auto; background:none; border:none; color:var(--rojo); cursor:pointer; font-size:1rem; padding:6px 10px; }
   .vacio{ color:var(--fg-muted); font-size:.85rem; text-align:center; padding:16px; }
+  .rondasInput{ width:100%; text-align:center; font-size:2.2rem; font-family:'Chakra Petch',sans-serif; font-weight:700;
+    background:var(--bg); border:1px solid var(--card-border); border-radius:12px; color:var(--fg); padding:12px; }
+  #finTxt{ white-space:pre-line; }
   /* player */
   #progreso{ color:var(--fg-muted); font-size:.85rem; margin-bottom:6px; }
   #turnoNombre{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.15rem;
@@ -130,23 +133,17 @@
 <!-- ============ INICIO (admin prepara) ============ -->
 <div class="vista" id="vistaInicio">
   <h1>Elige con cuidado</h1>
-  <p class="desc">Prepara la partida.</p>
+  <p class="desc">Elijan sus Opciones</p>
+  <div class="caja">
+    <div class="cajaTitulo">Número de rondas</div>
+    <input type="number" id="rondas" class="rondasInput" min="2" max="50" value="3" inputmode="numeric">
+  </div>
   <div class="caja">
     <div class="cajaTitulo">¿Cómo van a jugar?</div>
-    <label class="opModo"><input type="radio" name="modo" value="solo"> Jugar solo</label>
-    <label class="opModo"><input type="radio" name="modo" value="multi" checked> Multijugador</label>
+    <button class="btnPri" id="btnSolo" style="margin-top:10px;">Jugar solo</button>
+    <button class="btnPri" id="btnPareja">Jugar con Pareja</button>
+    <button class="btnPri" id="btnMulti" style="margin-bottom:0;">Multijugador</button>
   </div>
-  <div class="caja" id="cajaSolo" style="display:none">
-    <div class="cajaTitulo">¿Qué lista?</div>
-    <label class="opModo"><input type="radio" name="ladoSolo" value="A" checked> <span id="nombreSoloA">Lado A</span></label>
-    <label class="opModo"><input type="radio" name="ladoSolo" value="B"> <span id="nombreSoloB">Lado B</span></label>
-  </div>
-  <div class="caja" id="cajaMulti">
-    <div class="cajaTitulo">¿Cómo van a Jugar hoy?</div>
-    <label class="opModo"><input type="radio" name="unCelular" value="local"> Un solo celular</label>
-    <label class="opModo"><input type="radio" name="unCelular" value="compartido" checked> Cada quien en el suyo</label>
-  </div>
-  <button class="btnPri" id="btnComenzar" style="margin-top:12px;">Comenzar ▶</button>
 </div>
 
 <!-- ============ ESPERA (pareja / invitado) ============ -->
@@ -241,6 +238,27 @@
     <div id="unirDesc" style="font-size:.9rem;color:var(--fg-muted);margin:10px 0 0;"></div>
     <button class="btnPri" id="btnUnirme" style="margin-top:16px;">Unirme →</button>
     <button class="btnSec" id="btnUnirNo">Ahora no</button>
+  </div>
+</div>
+
+<!-- ============ SOLO: elegir lista ============ -->
+<div class="modal" id="modalSolo">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿De quién es la lista?</div>
+    <div id="soloDesc" style="font-size:.85rem;color:var(--fg-muted);margin:8px 0 0;">Se jugará solo esa lista, en este celular.</div>
+    <button class="btnPri" id="btnSoloA" style="margin-top:14px;">Lado A</button>
+    <button class="btnPri" id="btnSoloB">Lado B</button>
+    <button class="btnSec" id="btnSoloNo">Cancelar</button>
+  </div>
+</div>
+
+<!-- ============ MODO: un celular / cada quien ============ -->
+<div class="modal" id="modalModo">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿Cómo van a Jugar?</div>
+    <button class="btnPri" id="btnModoLocal" style="margin-top:14px;">Un solo Celular</button>
+    <button class="btnPri" id="btnModoComp">Cada quien en el suyo</button>
+    <button class="btnSec" id="btnModoNo">Cancelar</button>
   </div>
 </div>
 
@@ -429,11 +447,10 @@ function parDe(lista){
   if(j >= i) j++;
   return { a: lista[i], b: lista[j] };
 }
-function iniciarEstado(cabezasIn, fuente){
+function iniciarEstado(cabezasIn, pools){
   const listas = {}, pares = {}, eliminadas = {};
   cabezasIn.forEach(c=>{
-    const base = (c.lado === "A") ? fuente.A : fuente.B;
-    listas[c.id] = mezclar(base || []);
+    listas[c.id] = (pools[c.id] || []).slice();
     pares[c.id] = null;
     eliminadas[c.id] = [];
   });
@@ -525,19 +542,21 @@ async function entrar(){
 
 function pintarInicio(){
   try{
-    document.getElementById("nombreSoloA").textContent = nombreLado("A");
-    document.getElementById("nombreSoloB").textContent = nombreLado("B");
+    document.getElementById("btnSoloA").textContent = nombreLado("A");
+    document.getElementById("btnSoloB").textContent = nombreLado("B");
   }catch(e){}
-  actualizarCajasModo();
 }
-function actualizarCajasModo(){
-  const m = (document.querySelector('input[name="modo"]:checked') || {}).value || "multi";
-  document.getElementById("cajaSolo").style.display = (m === "solo") ? "block" : "none";
-  document.getElementById("cajaMulti").style.display = (m === "multi") ? "block" : "none";
-}
-document.querySelectorAll('input[name="modo"]').forEach(r=>{
-  r.addEventListener("change", ()=>{ if(r.checked) actualizarCajasModo(); });
-});
+// Botones de modo: cada uno abre su ventana y de ahi arranca la partida.
+let modoPendiente = "multi";
+document.getElementById("btnSolo").onclick = ()=>{ abrirModal("modalSolo"); };
+document.getElementById("btnPareja").onclick = ()=>{ modoPendiente = "pareja"; abrirModal("modalModo"); };
+document.getElementById("btnMulti").onclick = ()=>{ modoPendiente = "multi"; abrirModal("modalModo"); };
+document.getElementById("btnSoloA").onclick = ()=>{ cerrarModal("modalSolo"); iniciar("solo", "A", false); };
+document.getElementById("btnSoloB").onclick = ()=>{ cerrarModal("modalSolo"); iniciar("solo", "B", false); };
+document.getElementById("btnSoloNo").onclick = ()=>{ cerrarModal("modalSolo"); };
+document.getElementById("btnModoLocal").onclick = ()=>{ cerrarModal("modalModo"); iniciar(modoPendiente, null, true); };
+document.getElementById("btnModoComp").onclick = ()=>{ cerrarModal("modalModo"); iniciar(modoPendiente, null, false); };
+document.getElementById("btnModoNo").onclick = ()=>{ cerrarModal("modalModo"); };
 
 // ---------- sesión compartida ----------
 function cargarEstado(d){
@@ -610,15 +629,13 @@ function escucharSesion(){
           if(d && d.terminada && jugando && soyCabeza(d) && !finMostrado){
             finMostrado = true;
             cargarEstado(d);
-            pintarPaso();   // el anfitrion ve los resultados aqui
-            if(d.hostUid !== miId){
-              jugando = false;
-              try{
-                document.getElementById("finTxt").textContent = d.porAdmin
-                  ? "La partida fue terminada por el anfitrión."
-                  : "¡Se acabó la partida! Gracias por jugar.";
-              }catch(e){}
+            pintarPaso();
+            jugando = false;
+            if(d.porAdmin){
+              document.getElementById("finTxt").textContent = "La partida fue terminada por el anfitrión.";
               abrirModal("modalFin");
+            }else{
+              finPartida();
             }
             return;
           }
@@ -728,17 +745,7 @@ function pintarPaso(){
     turnoNombre.textContent = "";
     prog.textContent = "";
     fin.style.display = "block";
-    res.style.display = "block";
-    res.innerHTML = "";
-    d.cabezas.forEach(c=>{
-      const queda = (d.listas[c.id] || []);
-      const div = document.createElement("div");
-      const b = document.createElement("b");
-      b.textContent = c.nombre + ": ";
-      div.appendChild(b);
-      div.appendChild(document.createTextNode(queda[0] || "—"));
-      res.appendChild(div);
-    });
+    res.style.display = "none";
     mostrarBotonesAdmin();
     try{ btnSaltar.style.display = "none"; }catch(e){}
     return;
@@ -769,6 +776,11 @@ function pintarPaso(){
     }catch(e){}
   }
 }
+function finPartida(){
+  const lineas = ((estado && estado.cabezas) || []).map(c=> c.nombre + ": " + (((estado.listas || {})[c.id] || [])[0] || "—"));
+  document.getElementById("finTxt").textContent = "La partida terminó.\n\n" + lineas.join("\n");
+  abrirModal("modalFin");
+}
 async function pick(choice){
   if(!estado || estado.terminada || !jugando) return;
   const cur = estado.orden[estado.turno];
@@ -778,6 +790,7 @@ async function pick(choice){
   }else{
     aplicarPick(estado, cur, choice);
     pintarPaso();
+    if(estado.terminada && !finMostrado){ finMostrado = true; finPartida(); }
   }
 }
 document.getElementById("btnPickA").onclick = ()=>pick("a");
@@ -785,36 +798,64 @@ document.getElementById("btnPickB").onclick = ()=>pick("b");
 document.getElementById("btnSaltar").onclick = ()=>{ saltarTurno(); };
 
 // ---------- comenzar ----------
-async function generarYIniciar(){
+function construirCabezasModo(modo, ladoSoloElegido){
+  if(modo === "solo") return [{ id: miId, nombre: (miUsuario && miUsuario.nombre) || "", lado: ladoSoloElegido, admin: true, invitado: false }];
+  if(modo === "pareja") return construirCabezas().filter(c=>!c.invitado);
+  return construirCabezas();
+}
+// Reparte R opciones por jugador desde su lado. Sin repetir si alcanza; si no,
+// se permite repetir (lo mas parejo posible entre los del mismo lado).
+function repartirOpciones(cabezasIn, fuente, R){
+  const porLado = { A: [], B: [] };
+  cabezasIn.forEach(c=>{ porLado[c.lado].push(c.id); });
+  const pools = {};
+  ["A", "B"].forEach(lado=>{
+    const lista = ((lado === "A") ? fuente.A : fuente.B) || [];
+    const ids = porLado[lado];
+    if(!ids.length) return;
+    const need = ids.length * R;
+    if(lista.length >= need){
+      const deck = mezclar(lista);
+      ids.forEach((id, k)=>{ pools[id] = deck.slice(k * R, k * R + R); });
+    }else{
+      ids.forEach(id=>{
+        const pool = mezclar(lista);
+        const out = [];
+        for(let i = 0; i < R; i++) out.push(pool[i % pool.length]);
+        pools[id] = out;
+      });
+    }
+  });
+  return pools;
+}
+async function iniciar(modo, ladoSoloElegido, unCelularFlag){
   await cargarOpciones();
-  modoJuego = (document.querySelector('input[name="modo"]:checked') || {}).value || "multi";
-  unCelular = ((document.querySelector('input[name="unCelular"]:checked') || {}).value === "local");
-  ladoSolo = (document.querySelector('input[name="ladoSolo"]:checked') || {}).value || "A";
-  const cabezasIn = (modoJuego === "solo")
-    ? [{ id: miId, nombre: (miUsuario && miUsuario.nombre) || "", lado: ladoSolo, admin: true, invitado: false }]
-    : construirCabezas();
+  const R = Math.max(2, Math.min(50, parseInt(document.getElementById("rondas").value, 10) || 2));
+  const cabezasIn = construirCabezasModo(modo, ladoSoloElegido);
   const faltan = cabezasIn.filter(c=>{
     const f = (c.lado === "A") ? opciones.A : opciones.B;
     return !Array.isArray(f) || f.length < 2;
   });
-  if(faltan.length){
-    alert("Cada lista necesita al menos 2 opciones. Configúralas en el engrane ⚙️.");
-    return;
-  }
-  const quiereCompartido = (modoJuego === "multi") && !unCelular;
+  if(faltan.length){ alert("Cada lista necesita al menos 2 opciones. Configúralas en el engrane ⚙️."); return; }
+  let maxR = 50;
+  new Set(cabezasIn.map(c=>c.lado)).forEach(l=>{ maxR = Math.min(maxR, ((l === "A") ? opciones.A : opciones.B).length); });
+  if(R > maxR){ alert("El número de rondas no puede pasar de " + maxR + " (lo que tiene la lista más corta)."); return; }
+  const quiereCompartido = (modo !== "solo") && !unCelularFlag;
   const compartido = quiereCompartido && !modoLocal;
   if(quiereCompartido && modoLocal){ try{ alert("Sin conexión. Se jugará en este celular."); }catch(e){} }
   jugandoCompartido = compartido;
-  const d = iniciarEstado(cabezasIn, opciones);
+  const pools = repartirOpciones(cabezasIn, opciones, R);
+  const d = iniciarEstado(cabezasIn, pools);
   const sid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
   const nueva = Object.assign({}, d, {
     activa: true, pausada: false, terminada: false, porAdmin: false, sid,
     hostUid: miId, hostNombre: (miUsuario && miUsuario.nombre) || nombreAdmin(),
-    modo: modoJuego, unCelular: !!unCelular, ladoSolo,
+    modo, unCelular: !!unCelularFlag, rondas: R, ladoSolo: ladoSoloElegido || null,
     empezadaEn: serverTimestamp(), actualizadaEn: serverTimestamp()
   });
   cargarEstado(nueva);
   jugando = true;
+  finMostrado = false;
   sidMostrado = sid;
   if(compartido){
     try{ await setDoc(sesionRef(), nueva); }
@@ -828,7 +869,6 @@ async function generarYIniciar(){
   ver("vistaPlayer");
   pintarPaso();
 }
-document.getElementById("btnComenzar").onclick = ()=>{ generarYIniciar(); };
 
 // ---------- pausar / terminar ----------
 document.getElementById("btnTerminar").onclick = async ()=>{
@@ -922,6 +962,7 @@ document.getElementById("btnPausaOk").onclick = ()=>{
 document.getElementById("btnFinOk").onclick = async ()=>{
   if(esInvitadoFlag){ await salirModoInvitado(); return; }
   cerrarModal("modalFin");
+  jugando = false;
   entrar();
 };
 async function salirModoInvitado(){
