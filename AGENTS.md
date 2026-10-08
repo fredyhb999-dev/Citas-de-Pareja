@@ -45,6 +45,26 @@ tenia el contexto a la mano.
   como error las llaves que esten DENTRO de una expresion regular; el navegador
   real es la autoridad.
 
+## Cuándo dejar de probar (regla dura)
+
+**Máximo 3 intentos por forma de probar.** Si a la tercera no sale:
+
+1. **Para.** No pruebes una cuarta vez "a ver si ahora sí".
+2. **Cambia de forma**: otra forma de probar, o revisión leyendo el código.
+3. **Anótalo** como "pendiente de probar a mano" y **dilo en tu respuesta**.
+4. Pasa a lo siguiente.
+
+Nunca dejes a la persona esperando en silencio mientras repites la misma prueba.
+Si una prueba se atora, **dilo de inmediato** y di qué harás en su lugar.
+
+Ejemplo real (oct-2026): el Chrome headless empezó a devolver volcados vacíos.
+Se reintentó, se colleó, y la persona quedó sin saber qué pasaba. Lo correcto:
+decir "el Chrome falló, ya verifiqué lo que se puede por arnés y código, el
+editor queda para probar a mano".
+
+**Prefiere menos pruebas y más rapido** antes que una prueba.atascada. El valor de
+probarla no justifica el rato perdido.
+
   **El escenario `nada` de la Sala da 404 desde antes de oct-2026** y **no es un
   error de la app**: ese escenario pica "Regresar" (que lleva a la pagina de
   inicio) y el arnes de Sala no copia esa pagina. Ver

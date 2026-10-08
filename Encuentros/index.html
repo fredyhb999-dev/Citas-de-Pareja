@@ -55,6 +55,36 @@
     align-items:center; justify-content:center; padding:20px; }
   .modal .caja{ width:100%; max-width:380px; background:var(--card); border:1px solid var(--teal);
     border-radius:18px; padding:22px 20px; text-align:center; }
+  /* ---------- EDITOR DE ACCIONES (solo anfitrión) ----------
+     Mismo estilo que el de Guiadas. Aquí NO hay colección aparte: se escribe
+     en `nivelesActividad`, la misma de Guiadas, para que las acciones se
+     compartan entre los dos juegos. */
+  .nivel{ width:100%; background:var(--card); border:1px solid var(--card-border);
+    border-radius:14px; padding:14px; margin-bottom:12px; }
+  .nivel h3{ font-family:'Chakra Petch',sans-serif; font-size:1rem; margin:0 0 10px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .nivel .tag{ font-family:'Inter',sans-serif; font-weight:600; font-size:.72rem;
+    color:var(--fg-muted); background:rgba(47,217,199,.10);
+    border:1px solid rgba(47,217,199,.30); border-radius:999px; padding:3px 9px;
+    white-space:nowrap; }
+  .ladoTitulo{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; color:var(--teal);
+    margin:10px 0 6px; }
+  .ladoTitulo.b{ color:var(--coral); }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+  .chips:empty{ display:none; }
+  .chip{ display:inline-flex; align-items:center; gap:6px; background:var(--bg);
+    border:1px solid var(--card-border); border-radius:999px; padding:7px 8px 7px 13px;
+    font-family:'Inter',sans-serif; font-size:.85rem; color:var(--fg); }
+  .chip button{ background:none; border:none; color:var(--fg-muted); cursor:pointer;
+    font-size:1rem; line-height:1; padding:0 3px; }
+  .chip button:active{ color:var(--rojo); }
+  .filaAdd{ display:flex; gap:8px; }
+  .filaAdd input{ flex:1; min-width:0; border-radius:10px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:11px; font-size:.9rem; font-family:'Inter',sans-serif; }
+  .filaAdd button{ width:44px; flex:none; font-family:'Chakra Petch',sans-serif; font-weight:700;
+    font-size:1.1rem; color:var(--bg);
+    background:linear-gradient(90deg,var(--coral),var(--teal)); border:none; border-radius:10px; }
+
   /* player */
   #progreso{ color:var(--fg-muted); font-size:.85rem; margin-bottom:6px; }
   #nivelTag{ font-size:.75rem; color:var(--teal); border:1px solid var(--teal); border-radius:8px;
@@ -101,6 +131,16 @@
     <button class="btnPri" id="btnMultiGo" disabled style="flex:1;opacity:.4;margin-bottom:0;">Combinar (0/3)</button>
     <button class="btnSec" id="btnMultiCancel" style="width:auto;padding:12px 16px;text-decoration:none;">Cancelar</button>
   </div>
+  <button class="btnSec" id="btnConfigAcciones" style="width:100%;margin-top:12px;">⚙️ Configurar acciones</button>
+</div>
+
+<!-- ============ EDITOR DE ACCIONES (solo anfitrión) ============ -->
+<div class="vista" id="vistaEditar">
+  <h1>Acciones del encuentro</h1>
+  <p class="desc">Cada quien escribe las suyas. <b id="edTitulo"></b></p>
+  <div id="nivelesBox" style="width:100%"></div>
+  <div id="edMsg"></div>
+  <button class="btnSec" id="btnAtrasEd" style="width:100%;margin-top:8px;">← Volver</button>
 </div>
 
 <!-- ============ ESPERA (invitado / pareja) ============ -->
@@ -168,6 +208,16 @@
   </div>
 </div>
 
+<!-- ============ EDITOR: ELEGIR ACTIVIDAD ============ -->
+<div class="modal" id="modalElegirEd">
+  <div class="caja" style="max-width:420px;">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin-bottom:4px;">¿Qué actividad?</div>
+    <p class="desc" style="max-width:none;margin-bottom:12px;">Escribe las acciones de cada quien, por nivel.</p>
+    <div id="listaElegirEd" style="max-height:52dvh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div>
+    <button class="btnSec" id="btnElegirEdBack" style="margin-top:12px;">Atrás</button>
+  </div>
+</div>
+
 <!-- ============ TOMAS ============ -->
 <div class="modal" id="modalTomas">
   <div class="caja">
@@ -225,6 +275,147 @@ function mezclar(a){
     [x[i], x[j]] = [x[j], x[i]];
   }
   return x;
+}
+
+// =====================================================
+//  ACCIONES DEL ENCUENTRO (editor del anfitrión)
+//  IMPORTANTE: aquí NO hay colección aparte. Encuentros y Guiadas comparten
+//  las mismas acciones, en la colección `nivelesActividad`, con la misma forma
+//  ({n:{basico:{A:[],B:[]},...}}). Por eso este editor escribe en la MISMA
+//  que usa Guiadas: lo que escribas en un juego se ve en el otro.
+//  Lo que SÍ es propio de cada juego es la partida en curso (el progreso y
+//  la sala), que va en su propia sesión.
+// =====================================================
+const COL_ENC = "nivelesActividad";
+function refNivelEnc(nombre){ return doc(db, COL_ENC, docDe(nombre)); }
+
+let edActividad = null;   // actividad abierta en el editor
+let edDatos = {};         // {basico:{A:[],B:[]}, ...}
+
+function edAvisar(texto, ok){
+  const m = document.getElementById("edMsg");
+  m.textContent = texto || "";
+  m.className = ok ? "ok" : "";
+}
+
+/** Nombre de quien juega del lado indicado, para las etiquetas del editor. */
+function nombreDelLado(lado){
+  const c = construirCabezas().find(c=>c.lado === lado);
+  return (c && c.nombre) || (lado === "A" ? "Anfitrión" : "Pareja");
+}
+/** Los lados que de verdad participan: si no hay invitados, no hay B. */
+function ladosActivos(){
+  const cab = construirCabezas();
+  const out = [];
+  if(cab.some(c=>c.lado === "A")) out.push("A");
+  if(cab.some(c=>c.lado === "B")) out.push("B");
+  return out.length ? out : ["A"];
+}
+
+async function abrirEditorEnc(nombre){
+  edActividad = nombre;
+  document.getElementById("edTitulo").textContent = nombre;
+  edDatos = {};
+  NIVELES.forEach(nv=>{ edDatos[nv.id] = { A: [], B: [] }; });
+  try{
+    const snap = await getDoc(refNivelEnc(nombre));
+    if(snap.exists() && snap.data().n){
+      const n = snap.data().n || {};
+      NIVELES.forEach(nv=>{ edDatos[nv.id] = normLados(n[nv.id]); });
+    }
+  }catch(e){}
+  pintarEditorEnc();
+  ver("vistaEditar", false);
+}
+
+function pintarEditorEnc(){
+  const box = document.getElementById("nivelesBox");
+  box.innerHTML = "";
+  const lados = ladosActivos();
+  NIVELES.forEach(nv=>{
+    const d = edDatos[nv.id] || { A: [], B: [] };
+    const total = d.A.length + d.B.length;
+    const div = document.createElement("div");
+    div.className = "nivel";
+
+    const h = document.createElement("h3");
+    h.textContent = nv.nombre;
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = total + (total === 1 ? " acción" : " acciones");
+    h.appendChild(tag);
+    div.appendChild(h);
+
+    lados.forEach(lado=>{
+      const hl = document.createElement("div");
+      hl.className = "ladoTitulo" + (lado === "B" ? " b" : "");
+      hl.textContent = nombreDelLado(lado) + (lado === "A" ? " (anfitrión)" : "");
+      div.appendChild(hl);
+
+      const chips = document.createElement("div");
+      chips.className = "chips";
+      (d[lado] || []).forEach((txt, i)=>{
+        const c = document.createElement("span");
+        c.className = "chip";
+        c.textContent = txt;
+        const x = document.createElement("button");
+        x.type = "button";
+        x.textContent = "✕";
+        x.setAttribute("aria-label", "Quitar " + txt);
+        x.onclick = ()=>{ quitarItemEnc(nv.id, lado, i); };
+        c.appendChild(x);
+        chips.appendChild(c);
+      });
+      div.appendChild(chips);
+
+      const fila = document.createElement("div");
+      fila.className = "filaAdd";
+      const inp = document.createElement("input");
+      inp.type = "text";
+      inp.maxLength = 90;
+      inp.placeholder = "Nueva acción (" + nv.nombre.toLowerCase() + ")";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "+";
+      const agregar = ()=>{ agregarItemEnc(nv.id, lado, inp.value); inp.value = ""; inp.focus(); };
+      btn.onclick = agregar;
+      inp.addEventListener("keydown", e=>{ if(e.key === "Enter"){ e.preventDefault(); agregar(); } });
+      fila.appendChild(inp);
+      fila.appendChild(btn);
+      div.appendChild(fila);
+    });
+    box.appendChild(div);
+  });
+  edAvisar("");
+}
+
+async function guardarEnc(){
+  if(!edActividad) return;
+  try{
+    await setDoc(refNivelEnc(edActividad), { n: edDatos, actualizadoEn: serverTimestamp() });
+  }catch(e){
+    edAvisar("No se pudo guardar. Revisa tu conexión.");
+  }
+}
+
+async function agregarItemEnc(nivel, lado, texto){
+  texto = (texto || "").trim();
+  if(!texto || !edActividad) return;
+  edDatos[nivel] = normLados(edDatos[nivel]);
+  if(edDatos[nivel][lado].some(t=>t.toLowerCase() === texto.toLowerCase())){
+    edAvisar("Esa acción ya está en ese lado.");
+    return;
+  }
+  edDatos[nivel][lado].push(texto);
+  await guardarEnc();
+  pintarEditorEnc();
+}
+
+async function quitarItemEnc(nivel, lado, i){
+  edDatos[nivel] = normLados(edDatos[nivel]);
+  edDatos[nivel][lado].splice(i, 1);
+  await guardarEnc();
+  pintarEditorEnc();
 }
 
 const firebaseConfig = resolverFirebase(firebaseConfigBase);
@@ -832,9 +1023,11 @@ function dibujarLista(boxId, acts, conteos){
 }
 async function pintarLista(boxId){
   const acts = await cargarActividades();
+  // Los conteos salen de la MISMA coleccion que Guiadas: las acciones se
+  // comparten entre los dos juegos.
   const conteos = {};
   try{
-    const snap = await getDocs(collection(db, "nivelesActividad"));
+    const snap = await getDocs(collection(db, COL_ENC));
     snap.forEach(d=>{
       const n = d.data().n || {};
       conteos[d.id] = NIVELES.reduce((t, nv)=>t + contarNivel(n[nv.id]), 0);
@@ -891,6 +1084,39 @@ document.getElementById("btnMultiGo").onclick = ()=>{
   if(multiSel.length !== 3) return;
   document.getElementById("multiResumen").textContent = multiSel.join(" + ");
   abrirModal("modalMulti2");
+};
+// ---------- editor de acciones (solo anfitrión) ----------
+function elegirParaEditar(){
+  const box = document.getElementById("listaElegirEd");
+  box.innerHTML = "";
+  const acts = cacheActs || [];
+  if(!acts.length){
+    const v = document.createElement("div");
+    v.style.cssText = "font-size:.9rem;color:var(--fg-muted);padding:12px 0;text-align:center;";
+    v.textContent = "No hay actividades todavía.";
+    box.appendChild(v);
+  }
+  acts.forEach(nombre=>{
+    const c = conteos[docDe(nombre)] || 0;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "btnSec";
+    b.style.cssText = "width:100%;padding:13px;text-align:left;";
+    b.textContent = nombre + (c ? "  ·  " + c + " acciones" : "  ·  sin acciones");
+    b.onclick = ()=>{ cerrarModal("modalElegirEd"); abrirEditorEnc(nombre); };
+    box.appendChild(b);
+  });
+  abrirModal("modalElegirEd");
+}
+document.getElementById("btnConfigAcciones").onclick = ()=>{
+  if(!esAdminFlag){ alert("Configurar acciones es cosa del anfitrión."); return; }
+  elegirParaEditar();
+};
+document.getElementById("btnElegirEdBack").onclick = ()=>cerrarModal("modalElegirEd");
+document.getElementById("btnAtrasEd").onclick = ()=>{
+  edActividad = null;
+  ver("vistaLista", false);
+  if(cacheActs && cacheConteos) dibujarLista("listaActs", cacheActs, cacheConteos);
 };
 document.getElementById("btnMulti2Back").onclick = ()=>cerrarModal("modalMulti2");
 document.getElementById("btnMulti2Ok").onclick = ()=>{
@@ -1006,7 +1232,8 @@ async function generarYIniciar(activities, tomas){
   for(const nombre of activities){
     let n = {};
     try{
-      const snap = await getDoc(doc(db, "nivelesActividad", docDe(nombre)));
+      // Las acciones compartidas con Guiadas (misma colección).
+      const snap = await getDoc(doc(db, COL_ENC, docDe(nombre)));
       if(snap.exists()) n = snap.data().n || {};
     }catch(e){}
     actsData.push({ nombre, n });
@@ -1014,7 +1241,7 @@ async function generarYIniciar(activities, tomas){
   const listasNuevas = generarListas(cabezasIn, actsData, tomas);
   const realLargo = listasNuevas[cabezasIn[0].id] ? listasNuevas[cabezasIn[0].id].length : 0;
   if(!realLargo){
-    alert("Sin acciones en esas actividades. Aliméntalas en Citas Guiadas ⚙️.");
+    alert("Sin acciones en esas actividades. Aliméntalas en ⚙️ Configurar acciones.");
     return;
   }
   const lens = cabezasIn.map(c=> (listasNuevas[c.id] || []).length);
@@ -1062,12 +1289,14 @@ async function generarYIniciar(activities, tomas){
 }
 
 // ---------- player ----------
-// Pausar y Terminar Partida son solo del anfitrion (esAdminFlag).
+// Pausar, Terminar y Configurar acciones son solo del anfitrion (esAdminFlag).
 function mostrarBotonesAdmin(){
   const dsp = esAdminFlag ? "" : "none";
   try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
   try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
   if(!esAdminFlag){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
+  // El editor de acciones es del anfitrion: al invitado y a la pareja no les sale.
+  try{ document.getElementById("btnConfigAcciones").style.display = dsp; }catch(e){}
 }
 function pintarPaso(){
   const total = largo;
