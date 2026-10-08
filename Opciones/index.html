@@ -46,7 +46,7 @@
   .btnPri:active{ transform:scale(.97); }
   .btnSec{ width:100%; padding:12px; background:none; border:none; cursor:pointer;
     color:var(--fg-muted); font-size:.9rem; text-decoration:underline; }
-  .btnPri.chico{ width:66%; margin-left:auto; margin-right:auto; }
+  .caja.cajaBotones{ width:66%; margin-left:auto; margin-right:auto; }
   #msg, #licMsg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
   .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
     background:var(--card); color:var(--fg); padding:13px 14px; font-size:.95rem;
@@ -139,11 +139,11 @@
     <div class="cajaTitulo">Número de rondas</div>
     <input type="number" id="rondas" class="rondasInput" min="2" max="50" value="3" inputmode="numeric">
   </div>
-  <div class="caja">
+  <div class="caja cajaBotones">
     <div class="cajaTitulo">¿Cómo van a jugar?</div>
-    <button class="btnPri chico" id="btnSolo" style="margin-top:10px;">Jugar solo</button>
-    <button class="btnPri chico" id="btnPareja">Jugar con Pareja</button>
-    <button class="btnPri chico" id="btnMulti" style="margin-bottom:0;">Multijugador</button>
+    <button class="btnPri" id="btnSolo" style="margin-top:10px;">Jugar solo</button>
+    <button class="btnPri" id="btnPareja">Jugar con Pareja</button>
+    <button class="btnPri" id="btnMulti" style="margin-bottom:0;">Multijugador</button>
   </div>
 </div>
 
