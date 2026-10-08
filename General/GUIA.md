@@ -7,6 +7,19 @@ que abra `Citas-de-Pareja` lo encuentra, sin que nadie tenga que acordarse.
 Ademas el repo tiene `AGENTS.md`, que le ordena a cualquier modelo leer este
 archivo antes de tocar nada. Ese es el mecanismo que evita rehacer trabajo.
 
+## Nota (oct-2026): se retiró el arnés de pruebas
+
+El arnés de pruebas con Chrome y sus scripts **se eliminaron** del repo: eran
+lentos y poco fiables (Chrome sin ventana devolvía volcados vacíos). Lo que queda
+es el **chequeo de sintaxis** en `herramientas/sintaxis/` (`extract.py` +
+`jscheck.py`) y la **prueba en vivo** (Pages y el celular de Fredy).
+
+Las menciones a "arnés", `Temp\opencode`, `undef.py`, `expcheck.py`,
+`argcheck.py`, `dupcheck.py`, `build_*.py`, `inject_*.py`, `final.py`,
+`run_*.py`, `instalador/` y demás que aparezcan más abajo son **registro
+histórico** de cómo se verificó en su momento: **esos archivos ya no existen** y
+no deben buscarse ni correrse. El único chequeo que queda es el de sintaxis.
+
 ## Como se usa
 
 | Si quieres... | Lee |
@@ -376,8 +389,9 @@ repo ya tiene `acceso.js` y ahora también `invitado.js`.
 
 ### 7. Cómo se verificó
 
-Con un arnés propio (`Temp\opencode\`): **Firestore simulado en memoria +
-Chrome headless**. No es "se ve bien", es la app corriendo de verdad.
+Con un arnés propio (`Temp\opencode\`; **ya retirado**, ver la nota al inicio):
+**Firestore simulado en memoria + Chrome headless**. No es "se ve bien", es la
+app corriendo de verdad.
 
 | Suite | Casos |
 |---|---|
@@ -1252,10 +1266,8 @@ de la actividad (ver la tabla de arriba). Un item recien sembrado no tiene doc d
 niveles: eso es igual que antes. Y los presets `<Actividad>.json` se conservan como
 respaldo de `presetsActividad`, igual que `usuarios.json` con los usuarios.
 
-**Pruebas:** `herramientas/pruebas/` no cubre esto (el arnes usa un Firestore de
-mentira sin escritura). Se probo aparte con Chrome headless y una base falsa en
-memoria: 22 casos del instalador y 4-5 escenarios por pantalla (recien, instalado,
-borrada, sin_permiso, repetida) sobre las 5 pantallas reales.
+**Pruebas:** esto se verificó en su momento con el arnés (**ya retirado**, ver la
+nota al inicio); hoy se prueba **en vivo** sobre las 5 pantallas reales.
 
 **Al ELIMINAR** se borran las cuatro primeras. **Las citas NO se tocan** (decision
 de Fredy, oct-2026): la cita ya agendada sigue existiendo aunque su actividad
@@ -1333,7 +1345,7 @@ hoy no esta en las reglas. Ver Parte 3, seccion 6.
 ### Otros pendientes
 
 - Rotar la llave expuesta en `Default Project\General\README.md` y sacarla de ahi.
-- Arnés de la sala: **falta la prueba con dos telefonos reales**.
+- Sala de espera: **falta la prueba con dos telefonos reales** (en vivo).
 - Sesion de Encuentros en `sesionEncuentros/actual`: la lista de TODOS los
   participantes (incluidos invitados) vive en un solo documento. Confirmar en la
   consola que ese path no queda abierto a lectura ajena.
@@ -1570,7 +1582,7 @@ Se llama desde dos lugares a propósito:
    persona es invitada. Si solo se llamara en `ver()`, y la identidad carga
    después, el invitado vería la salida un instante.
 
-**Cómo se verificó:** en el arnés, `invitado&respaldo=1` y
+**Cómo se verificó:** en el arnés (**ya retirado**, ver la nota al inicio), `invitado&respaldo=1` y
 `invitado&flag=pausa&respaldo=1` (el invitado es `u3`) reportan `lnkInicio`
 **oculto**; los escenarios del anfitrión y `invitado&como=u2&flag=natural`
 (que en realidad juega como **la pareja**, no como invitado) reportan
@@ -1614,15 +1626,10 @@ definicion del pack poner el emoji en `icono`.
   Al revisar documentos, buscar caracteres CJK: senal de doble conversion.
 - **No hay `firestore.rules` en el repo:** las reglas viven en la consola de
   Firebase. Por eso "revisar las reglas" es siempre una accion manual.
-- **Las pruebas viven en `herramientas/pruebas/`, dentro del repo.** Antes estaban
-  en la carpeta temporal del sistema, que Windows puede borrar: se habrían perdido.
-  Abren Chrome real contra una base simulada, sin tocar Firebase. Se explica en
-  `herramientas/pruebas/LEEME.md`.
-- **Los scripts del arnes se deben reconstruir antes de inyectar**
-  (`build_*.py` y luego `inject_*.py`). Inyectar dos veces sin reconstruir deja
-  el arnes corrupto y produce "fallas" que no son del codigo real.
-- **Falsa alarma conocida:** el caso `invitado&flag=fin&respaldo=1` termina en
-  otra pagina y por eso no imprime la linea de errores JS. No es un error.
+- **Verificación:** el arnés con Chrome se retiró (oct-2026). Hoy lo único
+  automático es el **chequeo de sintaxis** en `herramientas/sintaxis/`
+  (`extract.py` + `jscheck.py`); el resto se prueba **en vivo**. Ver la nota al
+  inicio de este documento.
 - **Un resumen de conversacion no lee estos archivos.** Si una sesion se corta
   por limite de tokens, lo que se pierde es el detalle fino. Este archivo es la
   red de seguridad: cualquier sesion nueva debe empezar leyendolo.

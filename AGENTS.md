@@ -22,63 +22,41 @@ tenia el contexto a la mano.
   Cualquier tarea sobre permisos es manual y hay que decirlo.
 - **No hay `git` disponible en el entorno de trabajo.** Para revisar cambios se
   leen los archivos directamente; Fredy es quien sube con GitHub Desktop.
-- **Las pruebas estan en `herramientas/pruebas/` (DENTRO del repo).** Abren un
-  Chrome real contra una base de datos simulada, asi que **no tocan Firebase ni
-  los datos reales**. El orden SIEMPRE es: construir, inyectar, correr.
-  Inyectar dos veces sin reconstruir deja el arnes corrupto.
+- **Verificación por sintaxis (rápida, sin navegador).** Es el único chequeo
+  automático que queda: `herramientas/sintaxis/`. Saca los `<script>` de los HTML
+  y revisa que llaves, paréntesis y corchetes cuadren. **No** usa Chrome ni toca
+  Firebase. El orden es: extraer, luego revisar.
 
   ```powershell
-  cd herramientas\pruebas
-  # Encuentros (13 casos)
-  python build_harness.py ; python inject_driver.py ; python final.py
-  # Inicio (6 escenarios)
-  python build_raiz.py ; python inject_raiz.py ; python run_raiz.py menu
-  # Sala (7 escenarios)
-  python build_sala.py ; python inject_sala.py ; python run_sala.py invitado
-  # Instalador de fabrica (47 comprobaciones, un solo comando)
-  cd instalador ; python correr.py ; cd ..
-  # Solo sintaxis, sin navegador
-  python extract.py ; python jscheck.py <archivo.js>
+  cd herramientas\sintaxis
+  python extract.py
+  python jscheck.py <archivo.js>
   ```
 
-  Detalle completo en `herramientas/pruebas/LEEME.md`. Ojo: `jscheck.py` marca
-  como error las llaves que esten DENTRO de una expresion regular; el navegador
-  real es la autoridad.
+  `extract.py` deja los scripts sueltos en `Temp\opencode\extracted`. Ojo:
+  `jscheck.py` marca como error las llaves que estén DENTRO de una expresión
+  regular; el navegador real es la autoridad.
 
-## Cuándo dejar de probar (regla dura)
+- **No hay arnés con Chrome.** Se retiró en oct-2026: era lento y poco fiable
+  (Chrome sin ventana devolvía volcados vacíos). **La verificación de verdad es
+  en vivo**, en Pages y en el celular de Fredy.
+
+## Cuándo dejar de insistir (regla dura)
+
+Aplica a cualquier forma de verificar, también a la prueba en vivo.
 
 **Máximo 3 intentos por forma de probar.** Si a la tercera no sale:
 
-1. **Para.** No pruebes una cuarta vez "a ver si ahora sí".
-2. **Cambia de forma**: otra forma de probar, o revisión leyendo el código.
+1. **Para.** No lo intentes una cuarta vez "a ver si ahora sí".
+2. **Cambia de forma**: otra manera de probar, o revisión leyendo el código.
 3. **Anótalo** como "pendiente de probar a mano" y **dilo en tu respuesta**.
 4. Pasa a lo siguiente.
 
-Nunca dejes a la persona esperando en silencio mientras repites la misma prueba.
-Si una prueba se atora, **dilo de inmediato** y di qué harás en su lugar.
+Nunca dejes a la persona esperando en silencio mientras repites lo mismo. Si algo
+se atora, **dilo de inmediato** y di qué harás en su lugar.
 
-Ejemplo real (oct-2026): el Chrome headless empezó a devolver volcados vacíos.
-Se reintentó, se colleó, y la persona quedó sin saber qué pasaba. Lo correcto:
-decir "el Chrome falló, ya verifiqué lo que se puede por arnés y código, el
-editor queda para probar a mano".
-
-**Prefiere menos pruebas y más rapido** antes que una prueba.atascada. El valor de
+**Prefiere menos pruebas y más rápido** antes que una prueba atascada. El valor de
 probarla no justifica el rato perdido.
-
-  **El escenario `nada` de la Sala da 404 desde antes de oct-2026** y **no es un
-  error de la app**: ese escenario pica "Regresar" (que lleva a la pagina de
-  inicio) y el arnes de Sala no copia esa pagina. Ver
-  `herramientas/pruebas/diagnostico_sala.py`. **No lo trates como regresion.**
-
-  `instalador/correr.py` **no debe cerrar el Chrome de la persona.** Solo espera
-  a que termine su propio Chrome headless y, si se cuelga, mata ese PID. Nunca
-  `taskkill chrome.exe`.
-
-  **Los scripts existen SOLO en `herramientas/pruebas/`.** Antes habia una copia
-  tambien en la carpeta temporal y se paramcheaba la equivocada: las pruebas
-  corrieron con la vieja y la comprobacion nueva nunca se ejecuto. Se borro la
-  copia de la temporal. La carpeta temporal solo guarda lo GENERADO (arnes,
-  perfiles de Chrome, reportes), y eso se puede borrar sin consecuencia.
 
 ## Reglas de la casa
 
