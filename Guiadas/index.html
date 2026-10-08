@@ -26,16 +26,6 @@
     position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
     background:none; border:none; font-size:1.3rem; cursor:pointer; padding:4px;
   }
-  #btnAtras{
-    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
-    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
-    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
-  }
-  #btnAtrasEd{
-    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
-    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
-    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
-  }
   .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
     background:var(--card); color:var(--fg); padding:13px 14px; font-size:.95rem;
     font-family:'Inter',sans-serif; margin-bottom:14px; }
@@ -103,10 +93,8 @@
 </head>
 <body>
 
-<a class="back" href="../index.html#experiencias">← Volver</a>
+<a class="back" id="lnkInicio" href="../index.html#experiencias">← Volver</a>
 <button id="btnCfg" aria-label="Configurar">⚙️</button>
-<button id="btnAtras" aria-label="Volver a jugar">← Jugar</button>
-<button id="btnAtrasEd" aria-label="Volver a configurar">← Configurar</button>
 
 <div class="eyebrow">Citas Guiadas</div>
 
@@ -511,8 +499,6 @@ function ver(id, guardar){
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
   document.getElementById(id).classList.add("ver");
   document.getElementById("btnCfg").style.display = (id === "vistaLista") ? "block" : "none";
-  document.getElementById("btnAtras").style.display = (id === "vistaConfig") ? "block" : "none";
-  document.getElementById("btnAtrasEd").style.display = (id === "vistaEditar") ? "block" : "none";
   if(guardar !== false){
     try{ history.pushState({ v: id, act: ultimaActividad }, ""); }catch(e){}
   }
@@ -537,9 +523,15 @@ document.getElementById("btnCfg").onclick = ()=>{
   pintarLista("listaActsCfg", "editar");
   ver("vistaConfig");
 };
-document.getElementById("btnAtras").onclick = ()=>{
-  entrar();
-};
+// El "← Volver" (arriba a la derecha) regresa a la pantalla ANTERIOR de
+// Guiadas, no al menú: del editor a la lista de configurar, y de ahí a la lista
+// de jugar. Solo desde la lista de jugar sale al menú (Experiencias).
+document.getElementById("lnkInicio").addEventListener("click", (e)=>{
+  const v = document.querySelector(".vista.ver");
+  const id = v ? v.id : "";
+  if(id === "vistaEditar"){ e.preventDefault(); pintarLista("listaActsCfg", "editar"); ver("vistaConfig"); return; }
+  if(id === "vistaConfig"){ e.preventDefault(); entrar(); return; }
+});
 function filtrar(boxId, texto){
   const t = (texto || "").trim().toLowerCase();
   document.querySelectorAll("#" + boxId + " .btnAct").forEach(b=>{
@@ -1177,10 +1169,6 @@ function leerTomas(){
   try{ localStorage.setItem("guia_tomas_" + (docActual || actividad), JSON.stringify(t)); }catch(e){}
   return t;
 }
-document.getElementById("btnAtrasEd").onclick = ()=>{
-  pintarLista("listaActsCfg", "editar");
-  ver("vistaConfig");
-};
 
 // ---------- player ----------
 document.getElementById("btnJugar").onclick = ()=>{

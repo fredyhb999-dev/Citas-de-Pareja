@@ -159,13 +159,15 @@ menú: si algo nuevo entra, entra en un submenú.
 **1f. "Volver" SIEMPRE arriba a la DERECHA** en toda la app: submenús del menú y
 pantallas de juego (Encuentros, Guiadas, Diablitos, Citas, Retos, **Chat y
 Acompañante**, que van a `#com`). Lo que viva
-en la esquina **izquierda** es el botón contextual de esa pantalla (el engrane,
-"Jugar", "Configurar"), y **jamás hay dos en el mismo lado a la vez**: en cada
-pantalla se muestra solo uno.
+en la esquina **izquierda** es el botón contextual de esa pantalla (el engrane),
+y **jamás hay dos en el mismo lado a la vez**: en cada pantalla se muestra solo
+uno.
 
-En Guiadas funciona porque `#btnCfg`, `#btnAtras` y `#btnAtrasEd` se muestran en
-pantallas **distintas** (`vistaLista`, `vistaConfig`, `vistaEditar`). Si alguna
-vez se mostraran dos, se encimarian.
+En Guiadas y Encuentros el "← Volver" de arriba a la derecha es **contextual**:
+regresa a la pantalla anterior (del editor a la lista de configurar; de ahí a la
+lista de actividades/jugar). Solo desde la lista de actividades sale al menú. El
+único botón de arriba a la izquierda es el engrane ⚙️, y solo en la lista de
+actividades (oct-2026: se quitaron los "← Jugar"/"← Configurar").
 
 **2. Los botones de la esquina (el ⚙️ de invitados y el 🛒 de adquisiciones)
 son del MENÚ PRINCIPAL.** En un submenú no se muestran: ahí solo vive el
