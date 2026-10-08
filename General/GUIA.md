@@ -1653,7 +1653,9 @@ definicion del pack poner el emoji en `icono`.
   (`conQuien`). Modos: "Jugar solo" (eliges lista, un celular) y "Multijugador"
   con "Un solo celular" / "Cada quien en el suyo" (sesión `sesionOpciones/actual`
   + invitaciones, igual que Encuentros). Engrane ⚙️ arriba-izquierda (solo admin)
-  para editar las dos listas (chips + **pegar lista completa**). Turnos
+  para editar las dos listas: **pestañas** por usuario, lista en **tabla** con
+  scroll acotado y **buscador**, edición en línea, borrar (✕) a la derecha, y
+  **pegar lista completa**. Turnos
   aleatorios. Pausar/continuar/terminar/saltar turno/sacar invitados como
   Encuentros. Licencia: item **`opciones`**. En el catálogo (`packs`): ruta
   **`Opciones`**, sección **`experiencias`**.

@@ -69,6 +69,19 @@
   .pegarBox{ margin-top:8px; }
   .pegarBox textarea{ width:100%; min-height:120px; border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg); color:var(--fg); padding:12px; font-size:.85rem; font-family:'Inter',sans-serif; }
+  /* pestañas + tabla de opciones */
+  .tabs{ display:flex; gap:8px; width:100%; }
+  .tab{ flex:1; padding:12px; border-radius:12px; border:1px solid var(--card-border); background:var(--card);
+    color:var(--fg-muted); font-family:'Chakra Petch',sans-serif; font-weight:600; font-size:.9rem; cursor:pointer; }
+  .tab.activo{ border-color:var(--teal); color:var(--fg); background:var(--bg-2); }
+  .tablaBox{ width:100%; max-height:48dvh; overflow-y:auto; border:1px solid var(--card-border);
+    border-radius:12px; background:var(--bg-2); padding:8px; }
+  .filaOpt{ display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+  .filaOpt .optTexto{ flex:1; min-width:0; border:1px solid var(--card-border); background:var(--card);
+    color:var(--fg); border-radius:10px; padding:10px; font-size:.85rem; font-family:'Inter',sans-serif; }
+  .filaOpt .optTexto:focus{ border-color:var(--teal); outline:none; }
+  .optX{ flex:0 0 auto; background:none; border:none; color:var(--rojo); cursor:pointer; font-size:1rem; padding:6px 10px; }
+  .vacio{ color:var(--fg-muted); font-size:.85rem; text-align:center; padding:16px; }
   /* player */
   #progreso{ color:var(--fg-muted); font-size:.85rem; margin-bottom:6px; }
   #turnoNombre{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.15rem;
@@ -167,9 +180,22 @@
 <!-- ============ CONFIG (editor de las dos listas) ============ -->
 <div class="vista" id="vistaConfig">
   <h1>Configurar</h1>
-  <p class="desc">Opciones de cada quien. Separa con Enter o pega un arreglo JSON.</p>
-  <div id="cfgA" class="nivel"></div>
-  <div id="cfgB" class="nivel"></div>
+  <p class="desc">Elige la lista y edítala. Separa con Enter o pega un arreglo JSON.</p>
+  <div class="tabs">
+    <button class="tab" id="tabA">Lado A</button>
+    <button class="tab" id="tabB">Lado B</button>
+  </div>
+  <input class="buscar" id="buscarOpt" type="text" placeholder="🔍 Buscar opción..." autocomplete="off" style="margin-top:12px;">
+  <div class="tablaBox" id="tablaBox"></div>
+  <div class="filaAdd" style="margin-top:12px;">
+    <input id="inpNueva" placeholder="Nueva opción" maxlength="120">
+    <button id="btnAdd">+</button>
+  </div>
+  <button class="btnSec" id="btnPegar">Pegar lista completa</button>
+  <div class="pegarBox" id="pegarBox" style="display:none">
+    <textarea id="pegarTa" placeholder="Una opción por línea, o pega un arreglo JSON."></textarea>
+    <button class="btnPri" id="btnPegarOk" style="margin-top:8px;">Agregar a la lista</button>
+  </div>
   <div id="msg"></div>
 </div>
 
@@ -926,87 +952,86 @@ async function salirModoInvitado(){
 function abrirModal(id){ document.getElementById(id).style.display = "flex"; }
 function cerrarModal(id){ document.getElementById(id).style.display = "none"; }
 
-function chipDe(lado, txt, i){
-  const c = document.createElement("span");
-  c.className = "chip";
-  c.textContent = txt;
-  const x = document.createElement("button");
-  x.textContent = "✕";
-  x.onclick = async ()=>{
-    opciones[lado].splice(i, 1);
-    await guardarOpciones();
-    pintarCfg();
-  };
-  c.appendChild(x);
-  return c;
-}
-function pintarListaCfg(cont, lado){
-  cont.innerHTML = "";
-  const h = document.createElement("h3");
-  h.textContent = nombreLado(lado);
-  const tag = document.createElement("span");
-  tag.className = "tag";
-  const n = (opciones[lado] || []).length;
-  tag.textContent = n + (n === 1 ? " opción" : " opciones");
-  h.appendChild(tag);
-  cont.appendChild(h);
-
-  const chips = document.createElement("div");
-  chips.className = "chips";
-  (opciones[lado] || []).forEach((txt, i)=>{ chips.appendChild(chipDe(lado, txt, i)); });
-  cont.appendChild(chips);
-
-  const fila = document.createElement("div");
-  fila.className = "filaAdd";
-  const inp = document.createElement("input");
-  inp.placeholder = "Nueva opción";
-  inp.maxLength = 120;
-  const btn = document.createElement("button");
-  btn.textContent = "+";
-  const agregar = async ()=>{
-    const s = (inp.value || "").trim();
-    if(!s) return;
-    if(!opciones[lado].some(t=>t.toLowerCase() === s.toLowerCase())) opciones[lado].push(s);
-    inp.value = "";
-    await guardarOpciones();
-    pintarCfg();
-  };
-  btn.onclick = agregar;
-  inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregar(); });
-  fila.appendChild(inp); fila.appendChild(btn);
-  cont.appendChild(fila);
-
-  const btnPegar = document.createElement("button");
-  btnPegar.className = "btnSec";
-  btnPegar.textContent = "Pegar lista completa";
-  const box = document.createElement("div");
-  box.className = "pegarBox";
-  box.style.display = "none";
-  const ta = document.createElement("textarea");
-  ta.placeholder = "Una opción por línea, o pega un arreglo JSON.";
-  const ok = document.createElement("button");
-  ok.className = "btnPri";
-  ok.style.marginTop = "8px";
-  ok.textContent = "Agregar a la lista";
-  ok.onclick = async ()=>{
-    const arr = parseLista(ta.value);
-    arr.forEach(s=>{ if(!opciones[lado].some(t=>t.toLowerCase() === s.toLowerCase())) opciones[lado].push(s); });
-    ta.value = "";
-    await guardarOpciones();
-    pintarCfg();
-  };
-  btnPegar.onclick = ()=>{ box.style.display = (box.style.display === "none") ? "block" : "none"; };
-  box.appendChild(ta); box.appendChild(ok);
-  cont.appendChild(btnPegar);
-  cont.appendChild(box);
+let ladoCfg = "A";
+let filtroCfg = "";
+async function agregarOpcion(texto){
+  const s = String(texto || "").trim();
+  if(!s) return false;
+  if(!opciones[ladoCfg].some(t=>t.toLowerCase() === s.toLowerCase())) opciones[ladoCfg].push(s);
+  await guardarOpciones();
+  return true;
 }
 function pintarCfg(){
-  pintarListaCfg(document.getElementById("cfgA"), "A");
-  pintarListaCfg(document.getElementById("cfgB"), "B");
+  document.getElementById("tabA").textContent = nombreLado("A");
+  document.getElementById("tabB").textContent = nombreLado("B");
+  document.getElementById("tabA").classList.toggle("activo", ladoCfg === "A");
+  document.getElementById("tabB").classList.toggle("activo", ladoCfg === "B");
+  const box = document.getElementById("tablaBox");
+  box.innerHTML = "";
+  const filtro = (filtroCfg || "").trim().toLowerCase();
+  (opciones[ladoCfg] || []).forEach((txt, i)=>{
+    if(filtro && txt.toLowerCase().indexOf(filtro) < 0) return;
+    const fila = document.createElement("div");
+    fila.className = "filaOpt";
+    const inp = document.createElement("input");
+    inp.className = "optTexto";
+    inp.value = txt;
+    inp.maxLength = 120;
+    const guardarEdit = async ()=>{
+      const s = (inp.value || "").trim();
+      if(!s){ inp.value = txt; return; }
+      if(s !== txt){ opciones[ladoCfg][i] = s; await guardarOpciones(); }
+    };
+    inp.addEventListener("blur", guardarEdit);
+    inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") inp.blur(); });
+    const x = document.createElement("button");
+    x.className = "optX";
+    x.textContent = "✕";
+    x.onclick = async ()=>{
+      opciones[ladoCfg].splice(i, 1);
+      await guardarOpciones();
+      pintarCfg();
+    };
+    fila.appendChild(inp); fila.appendChild(x);
+    box.appendChild(fila);
+  });
+  if(!box.children.length){
+    const vacio = document.createElement("div");
+    vacio.className = "vacio";
+    vacio.textContent = filtro ? "Sin resultados." : "Sin opciones todavía. Agrega o pega abajo.";
+    box.appendChild(vacio);
+  }
   document.getElementById("msg").textContent = "";
 }
+async function agregarDesdeInput(){
+  const inp = document.getElementById("inpNueva");
+  const ok = await agregarOpcion(inp.value);
+  if(ok){ inp.value = ""; filtroCfg = ""; document.getElementById("buscarOpt").value = ""; pintarCfg(); }
+}
+document.getElementById("tabA").onclick = ()=>{ ladoCfg = "A"; filtroCfg = ""; document.getElementById("buscarOpt").value = ""; pintarCfg(); };
+document.getElementById("tabB").onclick = ()=>{ ladoCfg = "B"; filtroCfg = ""; document.getElementById("buscarOpt").value = ""; pintarCfg(); };
+document.getElementById("buscarOpt").addEventListener("input", (e)=>{ filtroCfg = e.target.value; pintarCfg(); });
+document.getElementById("btnAdd").onclick = ()=>{ agregarDesdeInput(); };
+document.getElementById("inpNueva").addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregarDesdeInput(); });
+document.getElementById("btnPegar").onclick = ()=>{
+  const b = document.getElementById("pegarBox");
+  b.style.display = (b.style.display === "none") ? "block" : "none";
+};
+document.getElementById("btnPegarOk").onclick = async ()=>{
+  const arr = parseLista(document.getElementById("pegarTa").value);
+  arr.forEach(s=>{ if(!opciones[ladoCfg].some(t=>t.toLowerCase() === s.toLowerCase())) opciones[ladoCfg].push(s); });
+  document.getElementById("pegarTa").value = "";
+  await guardarOpciones();
+  filtroCfg = ""; document.getElementById("buscarOpt").value = "";
+  pintarCfg();
+};
 async function abrirCfg(){
   await cargarOpciones();
+  ladoCfg = "A"; filtroCfg = "";
+  document.getElementById("buscarOpt").value = "";
+  document.getElementById("pegarBox").style.display = "none";
+  document.getElementById("pegarTa").value = "";
+  document.getElementById("inpNueva").value = "";
   pintarCfg();
   ver("vistaConfig");
 }
