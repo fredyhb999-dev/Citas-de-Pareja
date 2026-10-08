@@ -46,6 +46,7 @@
   .btnPri:active{ transform:scale(.97); }
   .btnSec{ width:100%; padding:12px; background:none; border:none; cursor:pointer;
     color:var(--fg-muted); font-size:.9rem; text-decoration:underline; }
+  .btnPri.chico{ padding:12px; font-size:.95rem; border-radius:12px; }
   #msg, #licMsg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
   .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
     background:var(--card); color:var(--fg); padding:13px 14px; font-size:.95rem;
@@ -116,7 +117,7 @@
 <a class="back" id="lnkInicio" href="../index.html#experiencias">← Volver</a>
 <button id="btnCfg" aria-label="Configurar">⚙️</button>
 
-<div class="eyebrow">Elecciones Peligrosas</div>
+<div class="eyebrow">Elige con cuidado</div>
 
 <!-- ============ BLOQUEO (sin acceso) ============ -->
 <div class="vista" id="vistaBloqueo">
@@ -132,7 +133,7 @@
 
 <!-- ============ INICIO (admin prepara) ============ -->
 <div class="vista" id="vistaInicio">
-  <h1>Elige con cuidado</h1>
+  <h1>Elecciones Peligrosas</h1>
   <p class="desc">Elijan sus Opciones</p>
   <div class="caja">
     <div class="cajaTitulo">Número de rondas</div>
@@ -140,9 +141,9 @@
   </div>
   <div class="caja">
     <div class="cajaTitulo">¿Cómo van a jugar?</div>
-    <button class="btnPri" id="btnSolo" style="margin-top:10px;">Jugar solo</button>
-    <button class="btnPri" id="btnPareja">Jugar con Pareja</button>
-    <button class="btnPri" id="btnMulti" style="margin-bottom:0;">Multijugador</button>
+    <button class="btnPri chico" id="btnSolo" style="margin-top:10px;">Jugar solo</button>
+    <button class="btnPri chico" id="btnPareja">Jugar con Pareja</button>
+    <button class="btnPri chico" id="btnMulti" style="margin-bottom:0;">Multijugador</button>
   </div>
 </div>
 
@@ -243,9 +244,8 @@
 <!-- ============ SOLO: elegir lista ============ -->
 <div class="modal" id="modalSolo">
   <div class="caja">
-    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿De quién es la lista?</div>
-    <div id="soloDesc" style="font-size:.85rem;color:var(--fg-muted);margin:8px 0 0;">Se jugará solo esa lista, en este celular.</div>
-    <button class="btnPri" id="btnSoloA" style="margin-top:14px;">Lado A</button>
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.6rem;">¿Quién Juega?</div>
+    <button class="btnPri" id="btnSoloA" style="margin-top:18px;">Lado A</button>
     <button class="btnPri" id="btnSoloB">Lado B</button>
     <button class="btnSec" id="btnSoloNo">Cancelar</button>
   </div>
