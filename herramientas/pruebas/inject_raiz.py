@@ -86,6 +86,51 @@ async function empezarEscaneo(){
     await dormir(500);
     P("    tras Volver: menu=" + vis("vistaMenu") + " submenu=" + vis("vistaCom"));
     if(vis("vistaMenu") !== "visible"){ P("  FALLA: Volver no regresso al menu"); }
+    P("  El enlace de Personalizar Actividades (abajo de la fecha)");
+    const la = document.getElementById("linkActividades");
+    if(!la){ P("  FALLA: no existe el enlace de Personaliza tus Actividades"); }
+    else{
+      P("    visible=" + vis("linkActividades") + " texto='" + la.textContent.trim()
+        + "' href='" + la.getAttribute("href") + "'");
+      if(vis("linkActividades") !== "visible"){ P("  FALLA: el enlace no se ve"); }
+      if(la.getAttribute("href") !== "Citas/actividades.html"){ P("  FALLA: el enlace no lleva a la configuracion"); }
+      const rf = document.getElementById("heroFecha");
+      if(rf && la.getBoundingClientRect().top < rf.getBoundingClientRect().bottom){
+        P("  FALLA: el enlace no quedo debajo de la fecha");
+      }
+    }
+    P("  Experiencias: el boton de configurar NO debe quedar tapado por Volver");
+    function caja(id){
+      const e = document.getElementById(id);
+      if(!e) return null;
+      const r = e.getBoundingClientRect();
+      if(r.width === 0 && r.height === 0) return null;
+      return r;
+    }
+    function seEnciman(a, b){
+      if(!a || !b) return false;
+      return !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top);
+    }
+    document.getElementById("btnExp").click();
+    await dormir(700);
+    const mb = document.getElementById("menuBtn");
+    const rConfig = caja("menuBtn");
+    const rVolver = caja("btnExpVolver");
+    P("    configurar: visible=" + vis("menuBtn") + " texto='" + mb.textContent
+      + "' href='" + mb.getAttribute("href") + "'");
+    P("    a la izquierda? left=" + (rConfig ? Math.round(rConfig.left) : "-")
+      + "  Volver left=" + (rVolver ? Math.round(rVolver.left) : "-"));
+    if(vis("menuBtn") !== "visible"){ P("  FALLA: el boton de configurar no se ve"); }
+    if(seEnciman(rConfig, rVolver)){ P("  FALLA: el boton de configurar queda TAPADO por Volver"); }
+    document.getElementById("btnExpVolver").click();
+    await dormir(500);
+    P("  Retos: tampoco debe haber choque");
+    document.getElementById("btnRetos").click();
+    await dormir(600);
+    if(seEnciman(caja("menuBtn"), caja("btnRetosVolver"))){ P("  FALLA: en Retos hay algo tapado por Volver"); }
+    P("    menuBtn en Retos (debe estar oculto)=" + vis("menuBtn"));
+    document.getElementById("btnRetosVolver").click();
+    await dormir(500);
     P("  Flujo de 'Cambiar usuario': las pantallas no se deben encimar");
     document.getElementById("gearBtn").click();
     await dormir(600);

@@ -288,6 +288,8 @@
   <img class="heroLogo" src="icon-192.png" alt="Complicidad en Pareja">
   <div class="hola">Hola, <span id="quienNombre"></span> 💛</div>
   <div class="fecha" id="heroFecha"></div>
+  <a class="fecha" id="linkActividades" href="Citas/actividades.html"
+     style="display:inline-block;text-decoration:none;margin-top:8px;">⚙️ Personaliza tus Actividades</a>
 </div>
 
 <div id="vistaMenu">
@@ -442,10 +444,17 @@ function iconoMenu(modo){
     b.textContent = "⚙️";
     b.href = "Citas/actividades.html";
     b.setAttribute("aria-label", "Configuración");
+    // En Experiencias el botón de la esquina es el de configurar actividades,
+    // o sea es CONTEXTUAL de esta pantalla. Va a la izquierda, porque el
+    // "Volver" ocupa la derecha (y lo tapaba: Fredy no lo veía, oct-2026).
+    b.style.left = "18px";
+    b.style.right = "auto";
   }else{
     b.textContent = "🛒";
     b.href = "Tienda/";
     b.setAttribute("aria-label", "Centro de Adquisiciones");
+    b.style.left = "";
+    b.style.right = "";
   }
 }
 function mostrarMenu(nombre){
@@ -934,11 +943,15 @@ function abrirRetos(){
   document.getElementById("vistaMenu").style.display = "none";
   document.getElementById("vistaRetos").style.display = "block";
   document.getElementById("gearBtn").style.display = "none";
+  // El carrito tampoco va aquí: en los submenús solo vive el "Volver".
+  // (Y como el "Volver" está arriba a la derecha, lo tapaba.)
+  document.getElementById("menuBtn").style.display = "none";
 }
 function cerrarRetos(){
   document.getElementById("vistaRetos").style.display = "none";
   document.getElementById("vistaMenu").style.display = "block";
   document.getElementById("gearBtn").style.display = "";
+  document.getElementById("menuBtn").style.display = "";
 }
 document.getElementById("btnExp").onclick = abrirExp;
 document.getElementById("btnExpVolver").onclick = cerrarExp;
