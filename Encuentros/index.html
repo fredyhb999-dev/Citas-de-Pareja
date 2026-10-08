@@ -60,16 +60,6 @@
     position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
     background:none; border:none; font-size:1.3rem; cursor:pointer; padding:4px;
   }
-  #btnAtras{
-    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
-    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
-    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
-  }
-  #btnAtrasEd{
-    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
-    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
-    font-family:'Chakra Petch',sans-serif; padding:4px; display:none;
-  }
   /* Editor de acciones (mismo que Citas Guiadas) */
   .nivel{ width:100%; background:var(--card); border:1px solid var(--card-border);
     border-radius:16px; padding:16px; margin-bottom:12px; }
@@ -112,8 +102,6 @@
 
 <a class="back" id="lnkInicio" href="../index.html#experiencias">← Volver</a>
 <button id="btnCfg" aria-label="Configurar">⚙️</button>
-<button id="btnAtras" aria-label="Volver a jugar">← Jugar</button>
-<button id="btnAtrasEd" aria-label="Volver a configurar">← Configurar</button>
 
 <div class="eyebrow">Encuentros Guiados</div>
 
@@ -764,11 +752,9 @@ async function cerrarSesion(){
 function ver(id, guardar){
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
   document.getElementById(id).classList.add("ver");
-  // El engrane (vistaLista) y los "volver" del editor (vistaConfig /
-  // vistaEditar) van arriba a la IZQUIERDA, uno por pantalla.
+  // El engrane va arriba a la IZQUIERDA, solo en la pantalla de elegir
+  // actividad. El "← Volver" (arriba a la derecha) se encarga de regresar.
   try{ document.getElementById("btnCfg").style.display = (id === "vistaLista") ? "block" : "none"; }catch(e){}
-  try{ document.getElementById("btnAtras").style.display = (id === "vistaConfig") ? "block" : "none"; }catch(e){}
-  try{ document.getElementById("btnAtrasEd").style.display = (id === "vistaEditar") ? "block" : "none"; }catch(e){}
   // Nadie sale de la partida: durante el juego se ocultan las dos salidas
   // automaticas (el enlace al inicio y el boton de lista). Quedan solo
   // "Pausar y Salir" y "Terminar Partida". Y el invitado no ve ninguna salida.
@@ -1158,11 +1144,15 @@ document.getElementById("btnCfg").onclick = ()=>{
   pintarListaCfg();
   ver("vistaConfig");
 };
-document.getElementById("btnAtras").onclick = ()=>{ entrar(); };
-document.getElementById("btnAtrasEd").onclick = ()=>{
-  pintarListaCfg();
-  ver("vistaConfig");
-};
+// El "← Volver" (arriba a la derecha) regresa a la pantalla ANTERIOR de
+// Encuentros, no al inicio: del editor a la lista de configurar, y de ahi a
+// la lista de actividades. Solo desde la lista de actividades sale al menú.
+document.getElementById("lnkInicio").addEventListener("click", (e)=>{
+  const v = document.querySelector(".vista.ver");
+  const id = v ? v.id : "";
+  if(id === "vistaEditar"){ e.preventDefault(); pintarListaCfg(); ver("vistaConfig"); return; }
+  if(id === "vistaConfig"){ e.preventDefault(); entrar(); return; }
+});
 document.getElementById("btnJugarEd").onclick = async ()=>{
   const tomas = leerTomasEd();
   const nombre = actividadEd;
@@ -1180,12 +1170,15 @@ function abrirTomas(activities){
   pedidosTomas = activities.slice();
   const g = document.getElementById("tomasGridEncuentros");
   g.innerHTML = "";
+  // Si es UNA actividad, se precargan las tomas guardadas (las del editor ⚙️).
+  // En MultiActividades no hay un numero unico, asi que se usan las de fabrica.
+  const guardadas = (activities.length === 1) ? tomasGuardadasEd(docDe(activities[0])) : null;
   NIVELES.forEach(nv=>{
     const lab = document.createElement("label");
     lab.textContent = nv.nombre;
     const inp = document.createElement("input");
     inp.type = "number"; inp.min = "0"; inp.max = "50";
-    inp.value = TOMAS_DEF[nv.id] || 0;
+    inp.value = (guardadas ? guardadas[nv.id] : TOMAS_DEF[nv.id]) || 0;
     inp.id = "enctoma_" + nv.id;
     lab.appendChild(inp);
     g.appendChild(lab);

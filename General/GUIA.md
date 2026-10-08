@@ -1638,6 +1638,12 @@ definicion del pack poner el emoji en `icono`.
   actividad con esas tomas, respetando "¿Cómo van a Jugar hoy?"). **No** tiene
   "Eliminar actividad". En Guiadas se quitó ese botón: borrar actividades se
   hace en `Citas/actividades.html`.
+- **Navegación del editor de Encuentros:** el **"← Volver"** de arriba a la
+  derecha regresa a la pantalla **anterior** de Encuentros (del editor a la lista
+  de configurar; de ahí a la lista de actividades). Solo desde la lista de
+  actividades sale al menú. En estas pantallas **no** hay botón de regreso arriba
+  a la izquierda. Además, las **tomas del editor se precargan** al elegir la
+  actividad desde la lista (antes salían las de fábrica).
 - **Un resumen de conversacion no lee estos archivos.** Si una sesion se corta
   por limite de tokens, lo que se pierde es el detalle fino. Este archivo es la
   red de seguridad: cualquier sesion nueva debe empezar leyendolo.
