@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Elecciones Peligrosas</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  #btnCfg{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    background:none; border:none; font-size:1.3rem; cursor:pointer; padding:4px;
+  }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; text-align:center; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; width:fit-content; }
+  p.desc{ font-size:.88rem; color:var(--fg-muted); max-width:360px; margin:0 0 18px; text-align:center; }
+  .vista{ display:none; width:100%; max-width:520px; flex-direction:column; align-items:center; }
+  .vista.ver{ display:flex; }
+  .caja{ width:100%; background:var(--card); border:1px solid var(--card-border); border-radius:16px;
+    padding:14px; margin-top:10px; }
+  .cajaTitulo{ font-family:'Chakra Petch',sans-serif; font-weight:700; text-align:center; margin-bottom:6px; }
+  .opModo{ display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--bg-2);
+    border:1px solid var(--card-border); border-radius:12px; margin-top:8px; font-size:.9rem; cursor:pointer; }
+  .opModo input{ width:auto; accent-color:var(--teal); }
+  .btnPri{ width:100%; padding:16px; margin-bottom:10px; border:none; border-radius:14px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btnPri:active{ transform:scale(.97); }
+  .btnSec{ width:100%; padding:12px; background:none; border:none; cursor:pointer;
+    color:var(--fg-muted); font-size:.9rem; text-decoration:underline; }
+  #msg, #licMsg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
+  .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--card); color:var(--fg); padding:13px 14px; font-size:.95rem;
+    font-family:'Inter',sans-serif; margin-bottom:14px; }
+  /* editor */
+  .nivel{ width:100%; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .nivel h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1rem; }
+  .nivel h3 .tag{ font-size:.7rem; color:var(--coral); border:1px solid var(--coral);
+    border-radius:8px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+  .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
+    padding:6px 8px 6px 14px; font-size:.82rem; display:flex; align-items:center; gap:6px; }
+  .chip button{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:.9rem; padding:0 4px; }
+  .filaAdd{ display:flex; gap:8px; }
+  .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:12px; font-size:.9rem; font-family:'Inter',sans-serif; }
+  .filaAdd button{ border:none; border-radius:12px; cursor:pointer; padding:12px 16px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .pegarBox{ margin-top:8px; }
+  .pegarBox textarea{ width:100%; min-height:120px; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:12px; font-size:.85rem; font-family:'Inter',sans-serif; }
+  /* player */
+  #progreso{ color:var(--fg-muted); font-size:.85rem; margin-bottom:6px; }
+  #turnoNombre{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.15rem;
+    text-align:center; margin:6px 0 14px; min-height:1.4em; }
+  .cards{ display:flex; flex-wrap:wrap; justify-content:center; gap:14px; margin:8px 0 6px; width:100%; }
+  .card{ flex:1 1 40%; min-width:130px; font-family:'Chakra Petch',sans-serif; font-weight:600;
+    font-size:1.15rem; padding:22px 16px; border:1px solid var(--card-border); border-radius:16px;
+    background:linear-gradient(135deg, #2b2144, var(--card)); display:flex; align-items:center;
+    justify-content:center; text-align:center; min-height:110px; line-height:1.3; }
+  .pickRow{ display:flex; gap:12px; width:100%; margin-top:8px; }
+  .pickRow button{ flex:1; padding:16px; border:none; border-radius:14px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .pickRow button:active{ transform:scale(.97); }
+  #esperaTurno{ font-family:'Chakra Petch',sans-serif; font-size:1.9rem; font-weight:700;
+    text-align:center; margin:20px 0; color:var(--fg-muted); }
+  #resultados{ width:100%; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin:14px 0; text-align:left; font-size:.95rem; line-height:1.7; }
+  #resultados b{ font-family:'Chakra Petch',sans-serif; }
+  #finMsg{ font-size:1.1rem; text-align:center; margin:20px 0; }
+  .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:60;
+    align-items:center; justify-content:center; padding:20px; }
+  .modal .caja{ max-width:380px; border:1px solid var(--teal); border-radius:18px; padding:22px 20px;
+    text-align:center; margin:0; }
+</style>
+</head>
+<body>
+
+<a class="back" id="lnkInicio" href="../index.html#experiencias">← Volver</a>
+<button id="btnCfg" aria-label="Configurar">⚙️</button>
+
+<div class="eyebrow">Elecciones Peligrosas</div>
+
+<!-- ============ BLOQUEO (sin acceso) ============ -->
+<div class="vista" id="vistaBloqueo">
+  <h1>Acceso 🔒</h1>
+  <p class="desc">Elecciones Peligrosas no está activado en tu menú. Pídelo en Centro de Adquisiciones y al aprobarse aparece solo.</p>
+  <button class="btnPri" id="btnTienda">Ir a Centro de Adquisiciones</button>
+  <button class="btnSec" id="btnRevisar">Ya lo pedí, revisar acceso</button>
+  <button class="btnSec" id="btnTengo">Tengo código</button>
+  <textarea id="licCodigo" style="display:none;width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:12px;font-size:.8rem;min-height:90px;" placeholder="Pega tu código aquí"></textarea>
+  <button class="btnPri" id="btnValidar" style="display:none">Validar y entrar</button>
+  <div id="licMsg"></div>
+</div>
+
+<!-- ============ INICIO (admin prepara) ============ -->
+<div class="vista" id="vistaInicio">
+  <h1>Elige con cuidado</h1>
+  <p class="desc">Prepara la partida.</p>
+  <div class="caja">
+    <div class="cajaTitulo">¿Cómo van a jugar?</div>
+    <label class="opModo"><input type="radio" name="modo" value="solo"> Jugar solo</label>
+    <label class="opModo"><input type="radio" name="modo" value="multi" checked> Multijugador</label>
+  </div>
+  <div class="caja" id="cajaSolo" style="display:none">
+    <div class="cajaTitulo">¿Qué lista?</div>
+    <label class="opModo"><input type="radio" name="ladoSolo" value="A" checked> <span id="nombreSoloA">Lado A</span></label>
+    <label class="opModo"><input type="radio" name="ladoSolo" value="B"> <span id="nombreSoloB">Lado B</span></label>
+  </div>
+  <div class="caja" id="cajaMulti">
+    <div class="cajaTitulo">¿Cómo van a Jugar hoy?</div>
+    <label class="opModo"><input type="radio" name="unCelular" value="local"> Un solo celular</label>
+    <label class="opModo"><input type="radio" name="unCelular" value="compartido" checked> Cada quien en el suyo</label>
+  </div>
+  <button class="btnPri" id="btnComenzar" style="margin-top:12px;">Comenzar ▶</button>
+</div>
+
+<!-- ============ ESPERA (pareja / invitado) ============ -->
+<div class="vista" id="vistaEspera">
+  <h1>Elecciones Peligrosas</h1>
+  <p class="desc" id="esperaDesc">Esperando a que el anfitrión inicie la partida…</p>
+  <button class="btnSec" id="btnEsperaRefrescar">Volver a revisar</button>
+</div>
+
+<!-- ============ PLAYER ============ -->
+<div class="vista" id="vistaPlayer">
+  <h1 id="plTitulo">Elecciones Peligrosas</h1>
+  <div id="progreso"></div>
+  <div id="turnoNombre"></div>
+  <div class="cards">
+    <div class="card" id="opA"></div>
+    <div class="card" id="opB"></div>
+  </div>
+  <div class="pickRow" id="pickRow">
+    <button id="btnPickA">Escoge A</button>
+    <button id="btnPickB">Escoge B</button>
+  </div>
+  <div id="esperaTurno" style="display:none"></div>
+  <div id="resultados" style="display:none"></div>
+  <div id="finMsg" style="display:none">¡Terminaron! 🔥</div>
+  <button class="btnSec" id="btnSaltar" style="display:none">Saltar turno</button>
+  <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
+  <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
+</div>
+
+<!-- ============ CONFIG (editor de las dos listas) ============ -->
+<div class="vista" id="vistaConfig">
+  <h1>Configurar</h1>
+  <p class="desc">Opciones de cada quien. Separa con Enter o pega un arreglo JSON.</p>
+  <div id="cfgA" class="nivel"></div>
+  <div id="cfgB" class="nivel"></div>
+  <div id="msg"></div>
+</div>
+
+<!-- ============ CONTINUAR ============ -->
+<div class="modal" id="vistaSeguir">
+  <div class="caja">
+    <h1 id="sgTitulo" style="font-size:1.3rem;">¿Continuar partida anterior?</h1>
+    <p class="desc" id="sgDesc" style="max-width:none;"></p>
+    <button class="btnPri" id="btnContinuar">Continuar →</button>
+    <button class="btnSec" id="btnNueva">Partida nueva</button>
+  </div>
+</div>
+
+<!-- ============ GRACIA ============ -->
+<div class="modal" id="modalGracia">
+  <div class="caja">
+    <div style="font-size:.95rem;line-height:1.5;">Su acceso venció 🥺 pero hoy no les arruinamos su juego 💛 les obsequiamos este último acceso</div>
+    <div style="font-size:.75rem;color:var(--fg-muted);margin-top:10px;text-align:right;">Solicite su acceso en<br>Centro de Adquisiciones</div>
+    <button class="btnPri" id="btnGraciaOk" style="margin-top:14px;">Aceptar</button>
+  </div>
+</div>
+
+<!-- ============ PAUSA ============ -->
+<div class="modal" id="modalPausa">
+  <div class="caja">
+    <div style="font-size:.95rem;line-height:1.5;">El anfitrión pausó la partida. Cuando la retome, podrás volver a unirte.</div>
+    <button class="btnPri" id="btnPausaOk" style="margin-top:14px;">Aceptar</button>
+  </div>
+</div>
+
+<!-- ============ FIN ============ -->
+<div class="modal" id="modalFin">
+  <div class="caja">
+    <div id="finTxt" style="font-size:.95rem;line-height:1.5;">¡Se acabó la partida! Gracias por jugar.</div>
+    <button class="btnPri" id="btnFinOk" style="margin-top:14px;">Aceptar</button>
+  </div>
+</div>
+
+<!-- ============ UNIRSE ============ -->
+<div class="modal" id="modalUnir">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿Quieres jugar? ¿Unirte?</div>
+    <div id="unirDesc" style="font-size:.9rem;color:var(--fg-muted);margin:10px 0 0;"></div>
+    <button class="btnPri" id="btnUnirme" style="margin-top:16px;">Unirme →</button>
+    <button class="btnSec" id="btnUnirNo">Ahora no</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase, cargarUsuarios } from "../config.js";
+import { verificarCodigo, verificarFirma } from "../taquilla.js";
+import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, escucharItem } from "../acceso.js";
+import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
+
+function mezclar(a){
+  const x = (a || []).slice();
+  for(let i = x.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [x[i], x[j]] = [x[j], x[i]];
+  }
+  return x;
+}
+function sinDuplicados(arr){
+  const vistos = new Set();
+  const out = [];
+  (arr || []).forEach(t=>{
+    const s = String(t == null ? "" : t).trim();
+    if(!s) return;
+    const k = s.toLowerCase();
+    if(vistos.has(k)) return;
+    vistos.add(k);
+    out.push(s);
+  });
+  return out;
+}
+// Acepta un arreglo JSON o texto separado por lineas.
+function parseLista(texto){
+  const t = String(texto || "").trim();
+  if(!t) return [];
+  if(t[0] === "["){
+    try{
+      const d = JSON.parse(t);
+      if(Array.isArray(d)) return sinDuplicados(d.map(x=>String(x)));
+    }catch(e){}
+  }
+  return sinDuplicados(t.split(/\r?\n/));
+}
+
+const firebaseConfig = resolverFirebase(firebaseConfigBase);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const ITEM_ID = "opciones";
+const JUEGO_INV = "opciones";
+
+function opcionesRef(){ return doc(db, "opcionesJuego", "actual"); }
+function sesionRef(){ return doc(db, "sesionOpciones", "actual"); }
+
+function mostrarGracia(){ document.getElementById("modalGracia").style.display = "flex"; }
+document.getElementById("btnGraciaOk").onclick = ()=>{ document.getElementById("modalGracia").style.display = "none"; };
+
+document.getElementById("btnTienda").onclick = ()=>{ location.href = "../Tienda/?sec=experiencias"; };
+document.getElementById("btnRevisar").onclick = async (e)=>{
+  licMsg("");
+  e.target.disabled = true;
+  try{ await entrar(); } finally{ e.target.disabled = false; }
+};
+let stopEscucha = null;
+function escucharAprobacion(){
+  stopEscucha = escucharItem(ITEM_ID, {
+    revocado(){ ver("vistaBloqueo", false); licMsg("Acceso revocado por el desarrollador."); },
+    aprobado(){ entrar(); }
+  });
+}
+document.getElementById("btnTengo").onclick = ()=>{
+  document.getElementById("licCodigo").style.display = "block";
+  document.getElementById("btnValidar").style.display = "block";
+};
+document.getElementById("btnValidar").onclick = async ()=>{
+  licMsg("");
+  const cod = document.getElementById("licCodigo").value;
+  const pay = await verificarCodigo(cod);
+  if(pay && pay.item === ITEM_ID && pay.para === miProyecto()){ guardarLicencia(ITEM_ID, cod); entrar(); return; }
+  const pf = await verificarFirma(cod);
+  if(pf && pf.item === ITEM_ID && pf.para === miProyecto()){ guardarLicencia(ITEM_ID, cod); entrar(); return; }
+  licMsg("Código inválido o vencido.");
+};
+function licMsg(t){ document.getElementById("licMsg").textContent = t || ""; }
+
+// ---------- identidad ----------
+let miUsuario = null;
+let usuariosLista = [];
+let miId = "anon";
+let esAdminFlag = false;
+let esInvitadoFlag = false;
+function leerQuienSoy(){
+  try{ return JSON.parse(localStorage.getItem("appPareja_quienSoy") || "null"); }catch(e){ return null; }
+}
+async function cargarIdentidad(){
+  try{ usuariosLista = await cargarUsuarios(db, getDoc, doc, []); }catch(e){ usuariosLista = []; }
+  if(!Array.isArray(usuariosLista)) usuariosLista = [];
+  const yo = leerQuienSoy();
+  miUsuario = (yo && usuariosLista.find(u=>u.id === yo.id)) || yo || null;
+  miId = (miUsuario && miUsuario.id) || "anon";
+  esAdminFlag = !!(miUsuario && miUsuario.admin);
+  esInvitadoFlag = !!(miUsuario && miUsuario.invitado);
+  pintarSalidas();
+}
+function pintarSalidas(){
+  try{
+    const v = document.querySelector(".vista.ver");
+    const enJuego = !!(v && v.id === "vistaPlayer");
+    document.getElementById("lnkInicio").style.display = (enJuego || esInvitadoFlag) ? "none" : "";
+  }catch(e){}
+}
+function nombreAdmin(){
+  const a = usuariosLista.find(u=>u.admin);
+  return (a && a.nombre) || "el anfitrión";
+}
+// A = administrador, B = pareja (el primer usuario que no es admin ni invitado).
+function nombreLado(lado){
+  try{
+    const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
+    if(u && u.nombre) return u.nombre;
+  }catch(e){}
+  return "Lado " + lado;
+}
+function nombreCabeza(id){
+  const c = (estado && estado.cabezas || []).find(x=>x.id === id) || (sesionActual && (sesionActual.cabezas || []).find(x=>x.id === id));
+  return (c && c.nombre) || "alguien";
+}
+function construirCabezas(){
+  const adm = usuariosLista.find(u=>u.admin);
+  const out = [];
+  usuariosLista.forEach(u=>{
+    if(u.invitado){
+      const lado = (adm && u.conQuien === adm.id) ? "A" : "B";
+      out.push({ id: u.id, nombre: u.nombre || "Invitado", lado, admin: false, invitado: true, conQuien: u.conQuien || null });
+    }else{
+      out.push({ id: u.id, nombre: u.nombre || "", lado: u.admin ? "A" : "B", admin: !!u.admin, invitado: false });
+    }
+  });
+  return out;
+}
+
+// ---------- opciones (Firebase, no JSON) ----------
+let opciones = { A: [], B: [] };
+async function cargarOpciones(){
+  try{
+    const sd = await getDoc(opcionesRef());
+    if(sd.exists()){
+      const d = sd.data();
+      opciones = {
+        A: Array.isArray(d.A) ? d.A.slice() : [],
+        B: Array.isArray(d.B) ? d.B.slice() : []
+      };
+    }
+  }catch(e){}
+}
+async function guardarOpciones(){
+  try{ await setDoc(opcionesRef(), { A: opciones.A, B: opciones.B, actualizadoEn: serverTimestamp() }, { merge: true }); }catch(e){}
+}
+
+// ---------- estado del juego ----------
+let estado = null;   // { cabezas, listas, pares, eliminadas, orden, turno, terminada }
+let jugando = false;
+let jugandoCompartido = false;
+let modoLocal = false;
+let modoJuego = "multi";
+let unCelular = false;
+let ladoSolo = "A";
+let sesionActual = null;
+let sesionUnsub = null;
+let sesionIniciada = false;
+let sidMostrado = null;
+let finMostrado = false;
+let terminoLaPartida = false;
+const entrarDirecto = (()=>{
+  try{ return new URLSearchParams(location.search).get("entrar") === "1"; }catch(e){ return false; }
+})();
+
+function soyCabeza(d){ return !!(d && Array.isArray(d.cabezas) && d.cabezas.some(c=>c.id === miId)); }
+
+function parDe(lista){
+  if(!Array.isArray(lista) || lista.length < 2) return null;
+  const i = Math.floor(Math.random() * lista.length);
+  let j = Math.floor(Math.random() * (lista.length - 1));
+  if(j >= i) j++;
+  return { a: lista[i], b: lista[j] };
+}
+function iniciarEstado(cabezasIn, fuente){
+  const listas = {}, pares = {}, eliminadas = {};
+  cabezasIn.forEach(c=>{
+    const base = (c.lado === "A") ? fuente.A : fuente.B;
+    listas[c.id] = mezclar(base || []);
+    pares[c.id] = null;
+    eliminadas[c.id] = [];
+  });
+  const orden = mezclar(cabezasIn.map(c=>c.id));
+  const d = { cabezas: cabezasIn, listas, pares, eliminadas, orden, turno: 0, terminada: false };
+  if(orden.length && !pares[orden[0]]) pares[orden[0]] = parDe(listas[orden[0]]);
+  return d;
+}
+// Elige el siguiente turno entre los que aun tienen mas de 1 opcion.
+// Al dar la vuelta se revuelve el orden (turnos aleatorios, no fijos).
+function siguienteTurno(d){
+  const alive = id => (d.listas[id] || []).length > 1;
+  const vivos = d.cabezas.map(c=>c.id).filter(alive);
+  if(!vivos.length) return { fin: true };
+  let o = Array.isArray(d.orden) ? d.orden.slice() : [];
+  let t = d.turno || 0;
+  for(let step = 1; step <= o.length; step++){
+    const nt = (t + step) % o.length;
+    if(nt <= t){ return { orden: mezclar(vivos), turno: 0, fin: false }; }
+    if(o[nt] && alive(o[nt])) return { orden: o, turno: nt, fin: false };
+  }
+  return { orden: mezclar(vivos), turno: 0, fin: false };
+}
+// Aplica la eleccion: el elegido se elimina y el otro sigue. Avanza el turno.
+function aplicarPick(d, headId, choice){
+  const par = d.pares[headId];
+  if(!par) return;
+  const quitar = (choice === "a") ? par.a : par.b;
+  d.listas[headId] = (d.listas[headId] || []).filter(x => x !== quitar);
+  if(!Array.isArray(d.eliminadas[headId])) d.eliminadas[headId] = [];
+  d.eliminadas[headId].push(quitar);
+  d.pares[headId] = null;
+  const alive = id => (d.listas[id] || []).length > 1;
+  if(!d.cabezas.some(c => alive(c.id))){ d.terminada = true; return; }
+  const sig = siguienteTurno(d);
+  d.orden = sig.orden;
+  d.turno = sig.turno;
+  const cur = d.orden[d.turno];
+  if(cur && !d.pares[cur]) d.pares[cur] = parDe(d.listas[cur]);
+}
+
+// ---------- licencia / arranque de pantalla ----------
+async function entrar(){
+  let ok = false;
+  try{ ok = await tengoAcceso(ITEM_ID); }catch(e){ ok = false; }
+  if(!ok && esInvitadoFlag) ok = true; // invitado juega con el acceso del anfitrión
+  if(ok){
+    modoLocal = (typeof navigator !== "undefined" && navigator.onLine === false);
+    if(esAdminFlag){
+      if(modoLocal){ try{ alert("Sin conexión. Se jugará en este celular."); }catch(e){} }
+      await cargarOpciones();
+      pintarInicio();
+      ver("vistaInicio", false);
+      chequearPendienteInicio();
+    }else{
+      ver("vistaEspera", false);
+    }
+    try{ escucharSesion(); }catch(e){}
+    return;
+  }
+  // cortesía única si venció
+  try{
+    const lic = leerLicencias()[ITEM_ID];
+    if(lic){
+      const pay = await verificarFirma(lic);
+      if(pay && pay.item === ITEM_ID && pay.para === miProyecto() && pay.vence && Date.now() > pay.vence){
+        const tdb = getFirestore(appTaq());
+        const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto())));
+        let docGracia = null;
+        snap.forEach(dd=>{
+          const s = dd.data();
+          if(s.item !== ITEM_ID) return;
+          if(String(s.email || "").trim().toLowerCase() !== String(pay.email || "").trim().toLowerCase()) return;
+          if(s.estado !== "aprobado" || s.graciaUsada !== false) return;
+          docGracia = { id: dd.id };
+        });
+        if(docGracia){
+          try{ await setDoc(doc(tdb, "solicitudes", docGracia.id), { graciaUsada: true, graciaFecha: serverTimestamp() }, { merge: true }); }catch(e){}
+          if(esAdminFlag){ await cargarOpciones(); pintarInicio(); ver("vistaInicio", false); } else { ver("vistaEspera", false); }
+          mostrarGracia();
+          return;
+        }
+      }
+    }
+  }catch(e){}
+  ver("vistaBloqueo", false);
+  escucharAprobacion();
+}
+
+function pintarInicio(){
+  try{
+    document.getElementById("nombreSoloA").textContent = nombreLado("A");
+    document.getElementById("nombreSoloB").textContent = nombreLado("B");
+  }catch(e){}
+  actualizarCajasModo();
+}
+function actualizarCajasModo(){
+  const m = (document.querySelector('input[name="modo"]:checked') || {}).value || "multi";
+  document.getElementById("cajaSolo").style.display = (m === "solo") ? "block" : "none";
+  document.getElementById("cajaMulti").style.display = (m === "multi") ? "block" : "none";
+}
+document.querySelectorAll('input[name="modo"]').forEach(r=>{
+  r.addEventListener("change", ()=>{ if(r.checked) actualizarCajasModo(); });
+});
+
+// ---------- sesión compartida ----------
+function cargarEstado(d){
+  estado = {
+    cabezas: Array.isArray(d.cabezas) ? d.cabezas : [],
+    listas: d.listas || {},
+    pares: d.pares || {},
+    eliminadas: d.eliminadas || {},
+    orden: Array.isArray(d.orden) ? d.orden.slice() : [],
+    turno: d.turno || 0,
+    terminada: !!d.terminada
+  };
+}
+function sanearSesion(d){
+  if(!d || !Array.isArray(d.cabezas) || !Array.isArray(d.orden) || !d.orden.length) return d;
+  const validos = new Set(usuariosLista.map(u=>u && u.id).filter(Boolean));
+  const fuera = d.cabezas.filter(c=>!validos.has(c.id));
+  if(!fuera.length) return d;
+  const ordenNuevo = d.orden.filter(id=>validos.has(id));
+  if(!ordenNuevo.length) return d;
+  const alive = id => ((d.listas && d.listas[id]) || []).length > 1;
+  let turnoViejo = d.turno || 0;
+  let siguiente = null;
+  for(let i = turnoViejo; i < d.orden.length; i++){
+    if(validos.has(d.orden[i]) && alive(d.orden[i])){ siguiente = d.orden[i]; break; }
+  }
+  if(!siguiente) siguiente = ordenNuevo.find(alive) || ordenNuevo[0];
+  const turnoNuevo = Math.max(0, ordenNuevo.indexOf(siguiente));
+  d.cabezas = d.cabezas.filter(c=>validos.has(c.id));
+  d.orden = ordenNuevo;
+  d.turno = turnoNuevo;
+  const borrar = {};
+  fuera.forEach(c=>{ borrar[c.id] = null; });
+  try{
+    setDoc(sesionRef(), {
+      cabezas: d.cabezas, orden: d.orden, turno: turnoNuevo,
+      listas: borrar, pares: borrar, eliminadas: borrar, actualizadaEn: serverTimestamp()
+    }, { merge: true });
+  }catch(e){}
+  return d;
+}
+function escucharSesion(){
+  if(sesionIniciada) return;
+  sesionIniciada = true;
+  try{
+    sesionUnsub = onSnapshot(sesionRef(), (snap)=>{
+      try{
+        const d = snap.exists() ? snap.data() : null;
+        if(d && d.activa && soyCabeza(d)){
+          sanearSesion(d);
+          sesionActual = d;
+          finMostrado = false;
+          if(jugando && !jugandoCompartido) return;
+          if(d.pausada && d.hostUid !== miId){
+            if(jugando){ jugando = false; abrirModal("modalPausa"); }
+            return;
+          }
+          if(jugando){ cargarEstado(d); pintarPaso(); return; }
+          if(d.sid === sidMostrado) return;
+          sidMostrado = d.sid;
+          if(d.hostUid !== miId){
+            if(entrarDirecto && soyCabeza(d)){ entrarAlJuego(d); return; }
+            document.getElementById("unirDesc").textContent = d.reanudada
+              ? ((d.hostNombre || "El anfitrión") + " retomó la partida. Puedes continuar donde van.")
+              : ((d.hostNombre || "El anfitrión") + " inició Elecciones Peligrosas.");
+            abrirModal("modalUnir");
+          }
+        }else{
+          if(jugando && !jugandoCompartido) return;
+          if(d && d.terminada && jugando && soyCabeza(d) && !finMostrado){
+            finMostrado = true;
+            cargarEstado(d);
+            pintarPaso();   // el anfitrion ve los resultados aqui
+            if(d.hostUid !== miId){
+              jugando = false;
+              try{
+                document.getElementById("finTxt").textContent = d.porAdmin
+                  ? "La partida fue terminada por el anfitrión."
+                  : "¡Se acabó la partida! Gracias por jugar.";
+              }catch(e){}
+              abrirModal("modalFin");
+            }
+            return;
+          }
+          if(jugando){ jugando = false; entrar(); }
+        }
+      }catch(e){}
+    }, ()=>{});
+  }catch(e){}
+}
+async function pickSesion(choice){
+  let termino = false;
+  try{
+    await runTransaction(db, async (tx)=>{
+      const ref = sesionRef();
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const d = snap.data();
+      if(!d.activa) return;
+      if(!d.orden || d.orden[d.turno || 0] !== miId) return;
+      aplicarPick(d, miId, choice);
+      if(d.terminada) termino = true;
+      tx.update(ref, {
+        listas: d.listas, pares: d.pares, eliminadas: d.eliminadas,
+        orden: d.orden, turno: d.turno,
+        activa: !d.terminada, terminada: !!d.terminada,
+        actualizadaEn: serverTimestamp()
+      });
+    });
+  }catch(e){}
+  if(termino){ terminoLaPartida = true; }
+  if(terminoLaPartida){ terminoLaPartida = false; try{ await retirarInvitacion(JUEGO_INV); }catch(e){} }
+}
+async function saltarTurno(){
+  const d = sesionActual;
+  if(!d || !d.activa || d.hostUid !== miId){ alert("Solo el anfitrión puede saltar un turno."); return; }
+  const deQuien = nombreCabeza((d.orden || [])[d.turno || 0]);
+  if(d.orden[d.turno || 0] === miId){ pintarPaso(); return; }
+  if(!confirm("¿Saltar el turno de " + deQuien + "?\n\nEsa persona pierde su turno y el juego sigue con el siguiente.")) return;
+  let termino = false;
+  try{
+    await runTransaction(db, async (tx)=>{
+      const ref = sesionRef();
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const s = snap.data();
+      if(!s.activa || s.hostUid !== miId) return;
+      if(!s.orden || !s.orden.length) return;
+      if(s.orden[s.turno || 0] === miId) return;
+      const sig = siguienteTurno(s);
+      if(sig.fin){
+        termino = true;
+        tx.update(ref, { activa: false, terminada: true, turno: 0, actualizadaEn: serverTimestamp() });
+        return;
+      }
+      const cur = sig.orden[sig.turno];
+      const pares = Object.assign({}, s.pares || {});
+      if(cur && !pares[cur]) pares[cur] = parDe((s.listas || {})[cur] || []);
+      tx.update(ref, { orden: sig.orden, turno: sig.turno, pares, actualizadaEn: serverTimestamp() });
+    });
+  }catch(e){}
+  if(termino){ try{ await retirarInvitacion(JUEGO_INV); }catch(e){} }
+}
+const JUEGO_TITULO = "Elecciones Peligrosas";
+function anunciarInvitacion(sid, cabezasIn, hostNombre){
+  try{
+    publicarInvitacion({
+      juego: JUEGO_INV,
+      titulo: JUEGO_TITULO,
+      icono: "🎲",
+      ruta: "Opciones",
+      hostUid: miId,
+      hostNombre: hostNombre || "",
+      participantes: (cabezasIn || []).map(c=>c && c.id).filter(Boolean),
+      sesion: "sesionOpciones/actual",
+      sid: sid || ""
+    });
+  }catch(e){}
+}
+async function cerrarSesion(){
+  try{ await setDoc(sesionRef(), { activa: false, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+  await retirarInvitacion(JUEGO_INV);
+}
+
+// ---------- player ----------
+function mostrarBotonesAdmin(){
+  const dsp = esAdminFlag ? "" : "none";
+  try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
+  try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
+  if(!esAdminFlag){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
+}
+function pintarPaso(){
+  const d = estado;
+  const opA = document.getElementById("opA");
+  const opB = document.getElementById("opB");
+  const pickRow = document.getElementById("pickRow");
+  const espera = document.getElementById("esperaTurno");
+  const turnoNombre = document.getElementById("turnoNombre");
+  const res = document.getElementById("resultados");
+  const fin = document.getElementById("finMsg");
+  const prog = document.getElementById("progreso");
+  const btnSaltar = document.getElementById("btnSaltar");
+  if(!jugando || !d){ return; }
+  if(d.terminada){
+    opA.textContent = ""; opB.textContent = "";
+    pickRow.style.display = "none";
+    espera.style.display = "none";
+    turnoNombre.textContent = "";
+    prog.textContent = "";
+    fin.style.display = "block";
+    res.style.display = "block";
+    res.innerHTML = "";
+    d.cabezas.forEach(c=>{
+      const queda = (d.listas[c.id] || []);
+      const div = document.createElement("div");
+      const b = document.createElement("b");
+      b.textContent = c.nombre + ": ";
+      div.appendChild(b);
+      div.appendChild(document.createTextNode(queda[0] || "—"));
+      res.appendChild(div);
+    });
+    mostrarBotonesAdmin();
+    try{ btnSaltar.style.display = "none"; }catch(e){}
+    return;
+  }
+  fin.style.display = "none";
+  res.style.display = "none";
+  const cur = d.orden[d.turno] || "";
+  const par = d.pares[cur] || { a: "", b: "" };
+  const soy = !jugandoCompartido || cur === miId;
+  const nombre = nombreCabeza(cur);
+  prog.textContent = "Turno " + ((d.turno || 0) + 1) + " de " + (d.orden || []).length;
+  if(soy){
+    opA.textContent = "🅰️ " + (par.a || "");
+    opB.textContent = "🅱️ " + (par.b || "");
+    pickRow.style.display = "flex";
+    espera.style.display = "none";
+    turnoNombre.textContent = (jugandoCompartido ? "Tu turno" : "Turno de " + nombre);
+    try{ btnSaltar.style.display = "none"; }catch(e){}
+  }else{
+    opA.textContent = ""; opB.textContent = "";
+    pickRow.style.display = "none";
+    espera.style.display = "block";
+    espera.textContent = "Turno de " + nombre + "…";
+    turnoNombre.textContent = "";
+    try{
+      btnSaltar.style.display = esAdminFlag ? "" : "none";
+      btnSaltar.textContent = "Saltar turno de " + nombre;
+    }catch(e){}
+  }
+}
+async function pick(choice){
+  if(!estado || estado.terminada || !jugando) return;
+  const cur = estado.orden[estado.turno];
+  if(jugandoCompartido){
+    if(cur !== miId) return;
+    await pickSesion(choice);
+  }else{
+    aplicarPick(estado, cur, choice);
+    pintarPaso();
+  }
+}
+document.getElementById("btnPickA").onclick = ()=>pick("a");
+document.getElementById("btnPickB").onclick = ()=>pick("b");
+document.getElementById("btnSaltar").onclick = ()=>{ saltarTurno(); };
+
+// ---------- comenzar ----------
+async function generarYIniciar(){
+  await cargarOpciones();
+  modoJuego = (document.querySelector('input[name="modo"]:checked') || {}).value || "multi";
+  unCelular = ((document.querySelector('input[name="unCelular"]:checked') || {}).value === "local");
+  ladoSolo = (document.querySelector('input[name="ladoSolo"]:checked') || {}).value || "A";
+  const cabezasIn = (modoJuego === "solo")
+    ? [{ id: miId, nombre: (miUsuario && miUsuario.nombre) || "", lado: ladoSolo, admin: true, invitado: false }]
+    : construirCabezas();
+  const faltan = cabezasIn.filter(c=>{
+    const f = (c.lado === "A") ? opciones.A : opciones.B;
+    return !Array.isArray(f) || f.length < 2;
+  });
+  if(faltan.length){
+    alert("Cada lista necesita al menos 2 opciones. Configúralas en el engrane ⚙️.");
+    return;
+  }
+  const quiereCompartido = (modoJuego === "multi") && !unCelular;
+  const compartido = quiereCompartido && !modoLocal;
+  if(quiereCompartido && modoLocal){ try{ alert("Sin conexión. Se jugará en este celular."); }catch(e){} }
+  jugandoCompartido = compartido;
+  const d = iniciarEstado(cabezasIn, opciones);
+  const sid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
+  const nueva = Object.assign({}, d, {
+    activa: true, pausada: false, terminada: false, porAdmin: false, sid,
+    hostUid: miId, hostNombre: (miUsuario && miUsuario.nombre) || nombreAdmin(),
+    modo: modoJuego, unCelular: !!unCelular, ladoSolo,
+    empezadaEn: serverTimestamp(), actualizadaEn: serverTimestamp()
+  });
+  cargarEstado(nueva);
+  jugando = true;
+  sidMostrado = sid;
+  if(compartido){
+    try{ await setDoc(sesionRef(), nueva); }
+    catch(e){ try{ alert("No se pudo iniciar. Revisa conexión."); }catch(x){} }
+    anunciarInvitacion(sid, cabezasIn, nueva.hostNombre);
+  }else{
+    try{ await cerrarSesion(); }catch(e){}
+  }
+  document.getElementById("plTitulo").textContent = JUEGO_TITULO;
+  mostrarBotonesAdmin();
+  ver("vistaPlayer");
+  pintarPaso();
+}
+document.getElementById("btnComenzar").onclick = ()=>{ generarYIniciar(); };
+
+// ---------- pausar / terminar ----------
+document.getElementById("btnTerminar").onclick = async ()=>{
+  if(!esAdminFlag){ alert("Pausar la partida es cosa del anfitrión."); return; }
+  jugando = false;
+  if(jugandoCompartido){
+    try{ await setDoc(sesionRef(), { pausada: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+    await pausarInvitacion(JUEGO_INV, true);
+  }
+  pintarPaso();
+  entrar();
+};
+document.getElementById("btnTerminarPartida").onclick = async ()=>{
+  if(!esAdminFlag){ alert("Terminar la partida es cosa del anfitrión."); return; }
+  jugando = false;
+  if(jugandoCompartido){
+    try{ await setDoc(sesionRef(), { activa: false, terminada: true, porAdmin: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+    await retirarInvitacion(JUEGO_INV);
+  }
+  pintarPaso();
+  entrar();
+};
+
+// ---------- continuar / unir ----------
+function seguirEncima(titulo, desc){
+  document.getElementById("sgTitulo").textContent = titulo;
+  document.getElementById("sgDesc").textContent = desc;
+  abrirModal("vistaSeguir");
+}
+function seguirFuera(){ cerrarModal("vistaSeguir"); }
+async function chequearPendienteInicio(){
+  try{
+    const sd = await getDoc(sesionRef());
+    if(sd.exists()){
+      const d = sd.data();
+      if(d && d.activa && !d.terminada && d.hostUid === miId){
+        seguirEncima("¿Continuar partida anterior?", "Había una partida a medias. ¿La retomas?");
+      }
+    }
+  }catch(e){}
+}
+document.getElementById("btnContinuar").onclick = async ()=>{
+  seguirFuera();
+  let d = sesionActual;
+  if(!d){ try{ const sd = await getDoc(sesionRef()); d = sd.exists() ? sd.data() : null; }catch(e){} }
+  if(!d || !Array.isArray(d.cabezas)) return;
+  jugando = true;
+  modoLocal = false;
+  jugandoCompartido = true;
+  try{
+    const nsid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
+    sidMostrado = nsid;
+    await setDoc(sesionRef(), { sid: nsid, reanudada: true, activa: true, pausada: false, actualizadaEn: serverTimestamp() }, { merge: true });
+    anunciarInvitacion(nsid, (d && d.cabezas) || [], d && d.hostNombre);
+  }catch(e){}
+  cargarEstado(sanearSesion(d));
+  ver("vistaPlayer");
+  pintarPaso();
+};
+document.getElementById("btnNueva").onclick = async ()=>{
+  seguirFuera();
+  if(!esAdminFlag){ alert("Quien inicia o renueva la partida es " + nombreAdmin() + " (anfitrión)."); return; }
+  try{ await cerrarSesion(); }catch(e){}
+  jugando = false;
+  await cargarOpciones();
+  pintarInicio();
+  ver("vistaInicio");
+};
+function entrarAlJuego(d){
+  if(!d || !d.activa || !soyCabeza(d)) return;
+  jugando = true;
+  modoLocal = false;
+  jugandoCompartido = true;
+  cargarEstado(sanearSesion(d));
+  ver("vistaPlayer");
+  pintarPaso();
+}
+document.getElementById("btnUnirme").onclick = ()=>{
+  const d = sesionActual;
+  cerrarModal("modalUnir");
+  entrarAlJuego(d);
+};
+document.getElementById("btnUnirNo").onclick = ()=>{ cerrarModal("modalUnir"); };
+
+// ---------- pausa / fin (avisos) ----------
+document.getElementById("btnPausaOk").onclick = ()=>{
+  cerrarModal("modalPausa");
+  if(esInvitadoFlag){ location.replace("../Diablitos/"); return; }
+  entrar();
+};
+document.getElementById("btnFinOk").onclick = async ()=>{
+  if(esInvitadoFlag){ await salirModoInvitado(); return; }
+  cerrarModal("modalFin");
+  entrar();
+};
+async function salirModoInvitado(){
+  try{
+    let yo = null;
+    try{ yo = JSON.parse(localStorage.getItem("appPareja_quienSoy") || "null"); }catch(e){}
+    if(yo && yo.invitado){
+      const ref = doc(db, "config", "ajustes");
+      const snap = await getDoc(ref);
+      const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+      await setDoc(ref, { usuarios: arr.filter(v=>v.id !== yo.id), actualizadoEn: serverTimestamp() }, { merge: true });
+    }
+  }catch(e){}
+  try{
+    const resp = JSON.parse(localStorage.getItem("invitado_respaldo") || "null");
+    if(resp){
+      const priv = localStorage.getItem("taquilla_priv");
+      localStorage.clear();
+      if(priv) localStorage.setItem("taquilla_priv", priv);
+      Object.keys(resp).forEach(k=>{ try{ localStorage.setItem(k, resp[k]); }catch(e){} });
+      localStorage.removeItem("invitado_respaldo");
+    }
+  }catch(e){}
+  location.replace("../");
+}
+
+// ---------- editor (engrane) ----------
+function abrirModal(id){ document.getElementById(id).style.display = "flex"; }
+function cerrarModal(id){ document.getElementById(id).style.display = "none"; }
+
+function chipDe(lado, txt, i){
+  const c = document.createElement("span");
+  c.className = "chip";
+  c.textContent = txt;
+  const x = document.createElement("button");
+  x.textContent = "✕";
+  x.onclick = async ()=>{
+    opciones[lado].splice(i, 1);
+    await guardarOpciones();
+    pintarCfg();
+  };
+  c.appendChild(x);
+  return c;
+}
+function pintarListaCfg(cont, lado){
+  cont.innerHTML = "";
+  const h = document.createElement("h3");
+  h.textContent = nombreLado(lado);
+  const tag = document.createElement("span");
+  tag.className = "tag";
+  const n = (opciones[lado] || []).length;
+  tag.textContent = n + (n === 1 ? " opción" : " opciones");
+  h.appendChild(tag);
+  cont.appendChild(h);
+
+  const chips = document.createElement("div");
+  chips.className = "chips";
+  (opciones[lado] || []).forEach((txt, i)=>{ chips.appendChild(chipDe(lado, txt, i)); });
+  cont.appendChild(chips);
+
+  const fila = document.createElement("div");
+  fila.className = "filaAdd";
+  const inp = document.createElement("input");
+  inp.placeholder = "Nueva opción";
+  inp.maxLength = 120;
+  const btn = document.createElement("button");
+  btn.textContent = "+";
+  const agregar = async ()=>{
+    const s = (inp.value || "").trim();
+    if(!s) return;
+    if(!opciones[lado].some(t=>t.toLowerCase() === s.toLowerCase())) opciones[lado].push(s);
+    inp.value = "";
+    await guardarOpciones();
+    pintarCfg();
+  };
+  btn.onclick = agregar;
+  inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregar(); });
+  fila.appendChild(inp); fila.appendChild(btn);
+  cont.appendChild(fila);
+
+  const btnPegar = document.createElement("button");
+  btnPegar.className = "btnSec";
+  btnPegar.textContent = "Pegar lista completa";
+  const box = document.createElement("div");
+  box.className = "pegarBox";
+  box.style.display = "none";
+  const ta = document.createElement("textarea");
+  ta.placeholder = "Una opción por línea, o pega un arreglo JSON.";
+  const ok = document.createElement("button");
+  ok.className = "btnPri";
+  ok.style.marginTop = "8px";
+  ok.textContent = "Agregar a la lista";
+  ok.onclick = async ()=>{
+    const arr = parseLista(ta.value);
+    arr.forEach(s=>{ if(!opciones[lado].some(t=>t.toLowerCase() === s.toLowerCase())) opciones[lado].push(s); });
+    ta.value = "";
+    await guardarOpciones();
+    pintarCfg();
+  };
+  btnPegar.onclick = ()=>{ box.style.display = (box.style.display === "none") ? "block" : "none"; };
+  box.appendChild(ta); box.appendChild(ok);
+  cont.appendChild(btnPegar);
+  cont.appendChild(box);
+}
+function pintarCfg(){
+  pintarListaCfg(document.getElementById("cfgA"), "A");
+  pintarListaCfg(document.getElementById("cfgB"), "B");
+  document.getElementById("msg").textContent = "";
+}
+async function abrirCfg(){
+  await cargarOpciones();
+  pintarCfg();
+  ver("vistaConfig");
+}
+document.getElementById("btnCfg").onclick = ()=>{ abrirCfg(); };
+
+// ---------- navegación ----------
+function ver(id, guardar){
+  document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
+  document.getElementById(id).classList.add("ver");
+  try{ document.getElementById("btnCfg").style.display = (id === "vistaInicio") ? "block" : "none"; }catch(e){}
+  pintarSalidas();
+  if(guardar !== false){ try{ history.pushState({ v: id }, ""); }catch(e){} }
+  window.scrollTo(0, 0);
+}
+let reponiendo = false;
+window.addEventListener("popstate", ()=>{
+  if(reponiendo){ reponiendo = false; return; }
+  const enJuego = jugando && document.getElementById("vistaPlayer").classList.contains("ver");
+  if(enJuego){ reponiendo = true; try{ history.go(1); }catch(e){ reponiendo = false; } return; }
+  entrar();
+});
+try{ history.replaceState({ v: "vistaInicio" }, ""); }catch(e){}
+document.getElementById("lnkInicio").addEventListener("click", (e)=>{
+  const v = document.querySelector(".vista.ver");
+  const id = v ? v.id : "";
+  if(id === "vistaConfig"){ e.preventDefault(); entrar(); return; }
+});
+document.getElementById("btnEsperaRefrescar").onclick = ()=>{ entrar(); };
+
+// ---------- arranque ----------
+(async ()=>{
+  try{ await cargarIdentidad(); }catch(e){}
+  try{ mostrarBotonesAdmin(); }catch(e){}
+  try{ await entrar(); }
+  catch(e){
+    try{ console.error("Opciones arranque:", e); }catch(x){}
+    try{ if(esAdminFlag){ await cargarOpciones(); pintarInicio(); ver("vistaInicio", false); } else { ver("vistaEspera", false); } }catch(x){}
+    try{ escucharSesion(); }catch(x){}
+  }
+})();
+</script>
+
+</body>
+</html>

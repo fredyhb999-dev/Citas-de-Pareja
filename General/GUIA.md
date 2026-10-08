@@ -1644,10 +1644,22 @@ definicion del pack poner el emoji en `icono`.
   lista sale al menú. En estas pantallas **no** hay botón de regreso arriba a la
   izquierda (se quitaron los "← Jugar"/"← Configurar"). En Encuentros, además,
   las **tomas del editor se precargan** al elegir la actividad desde la lista.
+- **Juego nuevo "Elecciones Peligrosas" (`Opciones/`, oct-2026):** traído de
+  "Juego Opciones". Es el "esto o aquello": se muestran 2 opciones y al elegir
+  una se elimina (la otra sigue), hasta que a cada quien le queda 1. Los datos
+  viven en **Firebase** (`opcionesJuego/actual` = `{A:[...], B:[...]}`), **nunca**
+  en un JSON del repo (contenido íntimo + repo público). Listas por lado: A =
+  administrador, B = pareja; los invitados heredan la lista de quien los invitó
+  (`conQuien`). Modos: "Jugar solo" (eliges lista, un celular) y "Multijugador"
+  con "Un solo celular" / "Cada quien en el suyo" (sesión `sesionOpciones/actual`
+  + invitaciones, igual que Encuentros). Engrane ⚙️ arriba-izquierda (solo admin)
+  para editar las dos listas (chips + **pegar lista completa**). Turnos
+  aleatorios. Pausar/continuar/terminar/saltar turno/sacar invitados como
+  Encuentros. Licencia: item **`opciones`**. En el catálogo (`packs`): ruta
+  **`Opciones`**, sección **`experiencias`**.
 - **Un resumen de conversacion no lee estos archivos.** Si una sesion se corta
   por limite de tokens, lo que se pierde es el detalle fino. Este archivo es la
   red de seguridad: cualquier sesion nueva debe empezar leyendolo.
-
 ### Documentos que se archivaron (contenido volcado aqui)
 
 Los documentos de abajo se movieron a
