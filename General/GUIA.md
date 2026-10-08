@@ -1040,6 +1040,33 @@ Se usó `alert()` y no el `#msg` de la página, porque ese mensaje vive dentro
 de la caja de la llave privada, y esa caja se oculta cuando la llave ya está
 guardada.
 
+##### La llave del autorizador (y por qué NO está en el repo)
+
+El `Panel/` y el `Autorizar/` piden una **llave privada** en formato JWK
+(`{"kty":"EC","crv":"P-256","x":...,"y":...,"d":...}`). **No es una API key de
+Firebase**: es la mitad privada de un par **ECDSA P-256** que sirve para
+**firmar las licencias** de la tienda.
+
+| Mitad | Dónde | Para qué |
+|---|---|---|
+| **Pública** | `taquilla.js` (`TAQUILLA_PUBLICA`) | **Verificar** los códigos. Viaja en el repo a propósito |
+| **Privada** | **Solo en el aparato del desarrollador** | **Firmar**. Se pega en `Panel/` y `Autorizar/` |
+
+Nunca se sube al repo: quien tenga la privada puede **fabricar licencias**. Se
+guarda en `localStorage` bajo la clave `taquilla_priv`, así que **queda solo en
+ese navegador y ese dispositivo**.
+
+`Panel/` y `Autorizar/` usan **la misma clave de `localStorage` y el mismo
+origen**, asi que **pegarla una vez abre los dos**.
+
+**Rotacion (oct-2026):** la pareja anterior se habia perdido, asi que se genero
+un par nuevo con el mismo WebCrypto que usa la app (`crypto.subtle`), y se
+cambio `TAQUILLA_PUBLICA` en `taquilla.js`. **Las licencias firmadas con la
+llave anterior dejan de validar** (quedan invalidas, no se pueden "arreglar").
+
+Al rotar hay que: 1) cambiar `TAQUILLA_PUBLICA`, 2) pegar la nueva privada en
+`Panel/` y `Autorizar/`, 3) volver a firmar los codigos que sigan valiendo.
+
 ##### Estado
 
 - Las reglas están **temporalmente regresadas** a `solicitudes: if true`

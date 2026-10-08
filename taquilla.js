@@ -10,7 +10,7 @@ export const TAQUILLA_FIREBASE = {
 };
 
 // Llave PÚBLICA del autorizador: verifica, no firma (no sirve para falsificar).
-export const TAQUILLA_PUBLICA = {"kty": "EC", "crv": "P-256", "x": "zE7aeZa_M1EgTnCN84jpu2F4uPqizYyW9e4Xd5yfLwM", "y": "NJJUiutYY3hVkV3tqlyvCXN7F6Pv8Kymq1qTZTyM47I", "ext": true};
+export const TAQUILLA_PUBLICA = {"kty": "EC", "crv": "P-256", "x": "YF7laayhzKQcJsZvWactwsxdorijSOzo6q1kzlaQ6v8", "y": "kPPT6pTvx0pQo2sz10SXfQOfC7aNNqWR-tOjRxKlPE8", "ext": true};
 
 function b64u(bytes){
   let s = '';

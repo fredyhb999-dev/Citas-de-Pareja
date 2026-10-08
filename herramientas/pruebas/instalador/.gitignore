@@ -1,0 +1,9 @@
+# Esto lo genera correr.py en cada corrida. No se sube.
+# config_fabrica.js  = copia del config.js real con el import del SDK cambiado
+config_fabrica.js
+
+# pantallas/  = las 5 pantallas copiadas con sus escenarios
+pantallas/
+
+# trabajo/    = perfiles de Chrome y volcados
+trabajo/

@@ -128,6 +128,15 @@
   .item:active{ transform: scale(.98); border-color: var(--teal); }
   .item.nube{ border-color: var(--teal); }
   .item .chev{ color:var(--fg-muted); font-size:1.2rem; }
+  /* A la derecha del nombre: la pista de que aqui se abren los accesorios. */
+  .item .pista{
+    display:flex; align-items:center; gap:5px; flex-shrink:0;
+    font-family:'Inter', system-ui, sans-serif; font-weight:600; font-size:.72rem;
+    color:var(--fg-muted); background:rgba(47,217,199,.10);
+    border:1px solid rgba(47,217,199,.30); border-radius:999px; padding:5px 10px;
+    white-space:nowrap;
+  }
+  .item:active .pista{ color:var(--teal); border-color:var(--teal); }
 
   /* ---------- editor de preset (REEMPLAZA la lista, no se encima) ---------- */
   #zonaLista{ width:100%; max-width:520px; }
@@ -159,9 +168,13 @@
   #editorBotones button:active{ transform: scale(.97); }
   #editorBotones button:disabled{ opacity:.4; }
 
-  /* ---------- renombrar y eliminar (dentro del editor) ---------- */
-  #editorExtra{ margin-top:16px; padding-top:16px; border-top:1px solid var(--card-border);
+  /* ---------- renombrar y eliminar (dentro del editor, ARRIBA) ----------
+     Ahora van antes de los accesorios: antes iban al final con un borde
+     ARRIBA, y quedaban escondidos debajo de todos los checkboxes. */
+  #editorExtra{ margin:4px 0 18px; padding:0 0 18px; border-bottom:1px solid var(--card-border);
     display:flex; flex-direction:column; gap:10px; }
+  #editorSub{ font-family:'Chakra Petch',sans-serif; font-size:.95rem; color:var(--fg-muted);
+    margin:0 0 10px; font-weight:600; }
   #btnRenombrar, #btnEliminarAct{
     background:none; border:1px solid var(--card-border); border-radius:12px;
     color:var(--fg-muted); padding:13px; cursor:pointer;
@@ -223,14 +236,9 @@
     <div id="editor">
       <h2 id="editorTitulo"></h2>
       <div id="origenPreset"></div>
-      <div id="checks"></div>
-      <div id="editorMsg"></div>
-      <div id="editorBotones">
-        <button id="btnGuardarPreset">Guardar</button>
-        <button id="btnQuitarPreset">Eliminar Accesorios</button>
-        <button id="btnCerrarEditor">Cerrar</button>
-      </div>
 
+      <!-- Cambiar nombre y Eliminar van PRIMERO. Antes quedaban al FINAL, debajo
+      <!-- de todos los accesorios, y con muchas actividades se perdian de la vista. -->
       <div id="editorExtra">
         <button id="btnRenombrar" type="button">Cambiar nombre</button>
         <div class="filaInline" id="filaRenombrar">
@@ -250,6 +258,15 @@
           <button class="btnChicoOk" id="btnEliminarOk" type="button" style="background:var(--rojo);color:#2b0410;">Eliminar definitivamente</button>
           <button class="btnChicoNo" id="btnEliminarNo" type="button">Cancelar</button>
         </div>
+      </div>
+
+      <h3 id="editorSub">Sus accesorios</h3>
+      <div id="checks"></div>
+      <div id="editorMsg"></div>
+      <div id="editorBotones">
+        <button id="btnGuardarPreset">Guardar</button>
+        <button id="btnQuitarPreset">Eliminar Accesorios</button>
+        <button id="btnCerrarEditor">Cerrar</button>
       </div>
     </div>
   </div>
@@ -307,16 +324,10 @@ let extrasActs = []; // de Firebase: [{id, nombre}] (todo se puede eliminar)
 let catalogoAcc = []; // accesorios del JSON
 let extrasAcc = [];   // accesorios extra de Firebase
 
-let modo = "agregar";
-let docObjetivo = null;
 let actividadEditando = null;
 
 function normalizar(s){
   return (s || "").trim().toLowerCase();
-}
-
-function nombresBase(){
-  return new Set(baseActs.map(normalizar));
 }
 
 function listaActividades(){
@@ -330,10 +341,6 @@ function listaActividades(){
     }
   });
   return salida.sort((a,b)=>a.localeCompare(b,"es"));
-}
-
-function buscarExtraAct(clave){
-  return extrasActs.find(e=>normalizar(e.nombre) === clave) || null;
 }
 
 function listaAccesorios(){
@@ -359,11 +366,16 @@ function pintar(){
     btn.className = "item" + (nombresExtras.has(normalizar(n)) ? " nube" : "");
     const span = document.createElement("span");
     span.textContent = n;
+    // La pista dice que al tocarla se abren los accesorios de esa actividad.
+    const pista = document.createElement("span");
+    pista.className = "pista";
+    pista.textContent = "accesorios";
     const chev = document.createElement("span");
     chev.className = "chev";
     chev.textContent = "›";
+    pista.appendChild(chev);
     btn.appendChild(span);
-    btn.appendChild(chev);
+    btn.appendChild(pista);
     btn.onclick = ()=>abrirEditor(n);
     listaEl.appendChild(btn);
   });
@@ -378,43 +390,30 @@ function avisar(texto, ok){
 function actualizarModo(){
   const clave = normalizar(inputEl.value);
 
+  // Este campo SOLO agrega. Antes, escribir el nombre exacto de una actividad
+  // que ya existia convertia "Agregar" en "Eliminar": un tropiezo, porque uno
+  // escribe para COMPROBAR si existe y de pronto borra algo. Ahora borrar se
+  // hace nomas desde la lista, donde se ven los accesorios y hay que confirmar.
+  btnAgregar.textContent = "Agregar";
+  btnAgregar.classList.remove("eliminar");
+
   if(!clave){
-    modo = "agregar";
-    docObjetivo = null;
-    btnAgregar.textContent = "Agregar";
-    btnAgregar.classList.remove("eliminar");
     btnAgregar.disabled = true;          // vacío: no se puede agregar
     msgEl.textContent = "";
     msgEl.className = "";
     return;
   }
 
-  const extra = buscarExtraAct(clave);
-  if(extra){
-    modo = "eliminar";
-    docObjetivo = extra.id;
-    btnAgregar.textContent = "Eliminar";
-    btnAgregar.classList.add("eliminar");
-    btnAgregar.disabled = false;         // sí existe: se puede eliminar
-    msgEl.textContent = "";
+  if(listaActividades().some(n=>normalizar(n) === clave)){
+    btnAgregar.disabled = true;          // ya existe: no se puede volver a agregar
+    msgEl.textContent = "Esa actividad ya existe. Tócala en la lista para editarla o borrarla.";
     msgEl.className = "";
     return;
   }
 
-  modo = "agregar";
-  docObjetivo = null;
-  btnAgregar.textContent = "Agregar";
-  btnAgregar.classList.remove("eliminar");
-
-  if(nombresBase().has(clave)){
-    msgEl.textContent = "Esa actividad ya existe.";
-    msgEl.className = "";
-    btnAgregar.disabled = true;          // repetida: no se puede agregar
-  }else{
-    msgEl.textContent = "";
-    msgEl.className = "";
-    btnAgregar.disabled = false;         // nombre nuevo: sí
-  }
+  msgEl.textContent = "";
+  msgEl.className = "";
+  btnAgregar.disabled = false;           // nombre nuevo: sí
 }
 
 async function cargar(){
@@ -500,29 +499,6 @@ async function agregar(){
     avisar("Actividad agregada.", true);
   }catch(e){
     avisar("No se pudo guardar. Revisa tu conexión.");
-  }
-  actualizarModo();   // decide si el botón queda activo o apagado
-}
-
-async function eliminar(){
-  if(!docObjetivo) return;
-
-  btnAgregar.disabled = true;
-  try{
-    const extra = extrasActs.find(e=>e.id === docObjetivo);
-    await deleteDoc(doc(db, "actividadesExtra", docObjetivo));
-    // Limpieza: borra también su preset de la nube si existe
-    if(extra){
-      try{ await deleteDoc(doc(db, "presetsActividad", extra.nombre)); }catch(e){}
-    }
-    extrasActs = extrasActs.filter(e=>e.id !== docObjetivo);
-    pintar();
-    inputEl.value = "";
-    inputEl.focus();
-    actualizarModo();
-    avisar("Actividad eliminada.", true);
-  }catch(e){
-    avisar("No se pudo eliminar. Revisa tu conexión.");
   }
   actualizarModo();   // decide si el botón queda activo o apagado
 }
@@ -742,13 +718,9 @@ async function eliminarActividad(){
 }
 
 // ====== EVENTOS ======
-btnAgregar.onclick = ()=>{
-  if(modo === "eliminar"){
-    eliminar();
-  }else{
-    agregar();
-  }
-};
+// El boton de arriba SOLO agrega. Borrar una actividad se hace desde la lista:
+// se toca, se ven sus accesorios y se confirma escribiendo el nombre.
+btnAgregar.onclick = ()=>{ agregar(); };
 inputEl.addEventListener("input", actualizarModo);
 inputEl.addEventListener("keydown", e=>{
   if(e.key === "Enter") btnAgregar.onclick();

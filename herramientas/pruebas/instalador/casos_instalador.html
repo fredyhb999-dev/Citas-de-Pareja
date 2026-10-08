@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Pruebas del instalador de fabrica</title></head>
+<body>
+<!--
+  22 casos del INSTALADOR DE FABRICA (config.js).
+  No se usa Firebase de verdad: window.__api es una base falsa en memoria,
+  y los resultados se leen del div #SALIDA con Chrome headless.
+-->
+<div id="SALIDA">sin ejecutar</div>
+<script type="module">
+window.__errores = [];
+window.addEventListener("error", e => window.__errores.push(String(e.message)));
+
+import { asegurarFabrica, unirConFabrica, VERSION_FABRICA } from "./config_fabrica.js";
+
+const R = [];
+function prueba(nombre, ok, detalle){
+  R.push((ok ? "PASA" : "FALLA") + " | " + nombre + (detalle ? " | " + detalle : ""));
+}
+
+const fabrica = {
+  actividades: ["Cena Romántica", "Baile Bajo las Estrellas", "Paseo a la Luz de la Luna"],
+  accesorios: ["Pétalos de Rosa", "Música Romántica", "Nota de Amor"]
+};
+
+// ---------- una base de datos falsa, en memoria ----------
+function dbFalsa(){
+  const st = { colecciones: {}, docs: {} };
+  const api = {
+    estado: st,
+    doc(db, ...p){ return { path: p.join("/") }; },
+    collection(db, n){ return { name: n }; },
+    async getDoc(ref){
+      const v = st.docs[ref.path];
+      return { exists: () => v !== undefined, data: () => v };
+    },
+    async setDoc(ref, data){ st.docs[ref.path] = data; },
+    async getDocs(col){
+      const items = st.colecciones[col.name] || [];
+      return {
+        docs: items.map((d, i) => ({ id: String(i), data: () => d })),
+        forEach(cb){ items.forEach((d, i) => cb({ id: String(i), data: () => d })); }
+      };
+    },
+    async addDoc(col, data){
+      if(!st.colecciones[col.name]) st.colecciones[col.name] = [];
+      st.colecciones[col.name].push(data);
+    },
+    serverTimestamp(){ return "AHORA"; },
+    romper: false
+  };
+  const guardar = api.setDoc.bind(api);
+  api.setDoc = async (ref, data) => { if(api.romper) throw new Error("sin permiso"); return guardar(ref, data); };
+  return api;
+}
+
+async function usar(api){ window.__api = api; }
+
+// ---------- 1) instalacion limpia ----------
+{
+  const api = dbFalsa(); await usar(api);
+  const db = {};
+  const r = await asegurarFabrica(db, fabrica);
+  prueba("1a primera siembra devuelve true", r === true);
+  prueba("1b se instalaron 3 actividades",
+    (api.estado.colecciones.actividadesExtra || []).length === 3,
+    "n=" + (api.estado.colecciones.actividadesExtra || []).length);
+  prueba("1c se instalaron 3 accesorios",
+    (api.estado.colecciones.accesoriosExtra || []).length === 3,
+    "n=" + (api.estado.colecciones.accesoriosExtra || []).length);
+  prueba("1d quedo la banderita config/fabrica", !!api.estado.docs["config/fabrica"]);
+  prueba("1e la banderita guarda los nombres instalados",
+    (api.estado.docs["config/fabrica"].actividades || []).length === 3);
+
+  // ---------- 2) no repetir ----------
+  const antes = api.estado.colecciones.actividadesExtra.length;
+  await asegurarFabrica(db, fabrica);
+  prueba("2a la segunda llamada no duplica",
+    api.estado.colecciones.actividadesExtra.length === antes,
+    "n=" + api.estado.colecciones.actividadesExtra.length);
+
+  // ---------- 3) lo borrado NO vuelve ----------
+  api.estado.colecciones.actividadesExtra =
+    api.estado.colecciones.actividadesExtra.filter(x => x.nombre !== "Cena Romántica");
+  await asegurarFabrica(db, fabrica);
+  prueba("3a lo que borraste no reaparece",
+    !api.estado.colecciones.actividadesExtra.some(x => x.nombre === "Cena Romántica"),
+    "n=" + api.estado.colecciones.actividadesExtra.length);
+
+  // ---------- 4) una actividad nueva de fabrica si entra ----------
+  const antes4 = api.estado.colecciones.actividadesExtra.length;
+  await asegurarFabrica(db, { actividades: [].concat(fabrica.actividades, ["Nueva De Fabrica"]), accesorios: [] });
+  prueba("4a la actividad nueva del repo si entra",
+    api.estado.colecciones.actividadesExtra.some(x => x.nombre === "Nueva De Fabrica"),
+    "n=" + api.estado.colecciones.actividadesExtra.length + " antes=" + antes4);
+  prueba("4b pero la borrada sigue sin volver",
+    !api.estado.colecciones.actividadesExtra.some(x => x.nombre === "Cena Romántica"));
+}
+
+// ---------- 5) respeta lo que ya tienes (no duplica) ----------
+{
+  const api = dbFalsa(); await usar(api);
+  api.estado.colecciones.actividadesExtra = [{ nombre: "Cena Romántica", origen: "yo" }];
+  const db = {};
+  await asegurarFabrica(db, fabrica);
+  const acts = api.estado.colecciones.actividadesExtra;
+  prueba("5a no duplica lo que ya tenias",
+    acts.filter(x => x.nombre === "Cena Romántica").length === 1,
+    "n=" + acts.filter(x => x.nombre === "Cena Romántica").length);
+  prueba("5b si agrego las que faltaban", acts.length === 3, "n=" + acts.length);
+  prueba("5c no piso tu documento", acts.find(x => x.nombre === "Cena Romántica").origen === "yo");
+}
+
+// ---------- 6) sin permiso: no rompe, avisa false ----------
+{
+  const api = dbFalsa(); await usar(api);
+  api.romper = true;
+  const r = await asegurarFabrica({}, fabrica);
+  prueba("6a sin permiso devuelve false (la pantalla usa el JSON)", r === false);
+}
+
+// ---------- 7) unirConFabrica ----------
+{
+  const u = unirConFabrica(["Mi Actividad"], ["Cena Romántica", "Mi Actividad"]);
+  prueba("7a une sin duplicar", u.length === 2, JSON.stringify(u));
+  prueba("7b con base vacia", unirConFabrica([], ["A", "A", "B"]).length === 2);
+  prueba("7c ignora vacios y espacios", unirConFabrica([], ["", "   ", "X"]).length === 1);
+  prueba("7d no toca la base que le pasan", (() => {
+    const base = ["Mia"];
+    unirConFabrica(base, ["Otra"]);
+    return base.length === 1;
+  })());
+  prueba("7e con base no-array", Array.isArray(unirConFabrica(null, ["X"])));
+}
+
+// ---------- 8) datos raros ----------
+{
+  const api = dbFalsa(); await usar(api);
+  const r = await asegurarFabrica({}, {});
+  prueba("8a fabrica vacia no rompe", r === true);
+  prueba("8b no invento nombres", !api.estado.colecciones.actividadesExtra);
+  prueba("8c unirConFabrica aguanta null", Array.isArray(unirConFabrica(null, null)));
+  prueba("8d version declarada", typeof VERSION_FABRICA === "number");
+}
+
+document.getElementById("SALIDA").textContent =
+  "errores js: " + (window.__errores.length ? window.__errores.join(" || ") : "ninguno") +
+  "\n" + R.join("\n");
+</script>
+</body>
+</html>

@@ -13,6 +13,31 @@ Cada prueba tiene tres pasos: **construir → inyectar → correr**. Si se inyec
 dos veces sin reconstruir, el arnés queda corrupto y salen "fallas" que no son
 del código real. Siempre en este orden.
 
+## Instalador de fábrica (ot-2026) — un solo comando
+
+```powershell
+cd herramientas\pruebas\instalador
+python correr.py
+```
+
+47 comprobaciones: 22 casos de la lógica de `config.js` y 5 escenarios sobre
+**las 5 pantallas reales**. Es el arnés de arriba **no puede** probar esto, porque
+su base simulada no escribe y el instalador justamente escribe.
+
+Ver `instalador\LEEME.md` para el detalle.
+
+## Diagnóstico de la Sala (`nada`)
+
+```powershell
+cd herramientas\pruebas
+python diagnostico_sala.py
+```
+
+El escenario `nada` de la Sala **no funciona desde antes** de los cambios del
+instalador, y **no es un error de la app**: el escenario pica "Regresar", que
+lleva a la página de inicio, y el arnés de Sala no copia esa página. Este script
+lo explica y dice cómo confirmarlo con el código viejo.
+
 ## Encuentros (13 casos)
 
 ```powershell

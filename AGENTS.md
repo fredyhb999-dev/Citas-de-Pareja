@@ -35,6 +35,8 @@ tenia el contexto a la mano.
   python build_raiz.py ; python inject_raiz.py ; python run_raiz.py menu
   # Sala (7 escenarios)
   python build_sala.py ; python inject_sala.py ; python run_sala.py invitado
+  # Instalador de fabrica (47 comprobaciones, un solo comando)
+  cd instalador ; python correr.py ; cd ..
   # Solo sintaxis, sin navegador
   python extract.py ; python jscheck.py <archivo.js>
   ```
@@ -42,6 +44,15 @@ tenia el contexto a la mano.
   Detalle completo en `herramientas/pruebas/LEEME.md`. Ojo: `jscheck.py` marca
   como error las llaves que esten DENTRO de una expresion regular; el navegador
   real es la autoridad.
+
+  **El escenario `nada` de la Sala da 404 desde antes de oct-2026** y **no es un
+  error de la app**: ese escenario pica "Regresar" (que lleva a la pagina de
+  inicio) y el arnes de Sala no copia esa pagina. Ver
+  `herramientas/pruebas/diagnostico_sala.py`. **No lo trates como regresion.**
+
+  `instalador/correr.py` **no debe cerrar el Chrome de la persona.** Solo espera
+  a que termine su propio Chrome headless y, si se cuelga, mata ese PID. Nunca
+  `taskkill chrome.exe`.
 
   **Los scripts existen SOLO en `herramientas/pruebas/`.** Antes habia una copia
   tambien en la carpeta temporal y se paramcheaba la equivocada: las pruebas
@@ -213,6 +224,24 @@ se borra de verdad.
 
 Al agregar o quitar algo del JSON de fabrica hay que subir `VERSION_FABRICA` en
 `config.js`, o las instalaciones nuevas no lo reciben.
+
+## La llave del `Panel/` — NUNCA al repo
+
+`Panel/` y `Autorizar/` piden una **llave privada JWK** (`{"kty":"EC",...}`).
+**No es una API key de Firebase**: es la mitad privada de un par
+**ECDSA P-256** para **firmar licencias**.
+
+- La **pública** vive en `taquilla.js` (`TAQUILLA_PUBLICA`) y **si** va al repo:
+  solo verifica.
+- La **privada** vive **solo en el aparato del desarrollador**, en `localStorage`
+  bajo `taquilla_priv`. **Jamás la subas ni la escribas en ningun archivo del
+  repo ni en la guia.**
+- Ambos usan la **misma** clave de `localStorage` y el **mismo** origen: pegarla
+  una vez abre los dos.
+- Si se pierde, se genera un par nuevo (con `crypto.subtle`, igual que la app),
+  se cambia `TAQUILLA_PUBLICA` y **las licencias viejas dejan de validar**.
+
+Ver `General/GUIA.md`, seccion del autorizador.
 
 ## Riesgo conocido (importante, NO urgente)
 
