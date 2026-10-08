@@ -1120,6 +1120,48 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 
 ## Parte 6 - Pendientes, limites y mantenimiento
 
+### Pantallas de configuracion: Actividades y Accesorios (oct-2026)
+
+Estan en `Citas/actividades.html` y `Citas/accesorios.html`, y se llega por el
+enlace **"Personaliza tus Actividades"** (abajo de la fecha) o por el ⚙️ de
+Experiencias.
+
+**Lo que se arreglo en esta ronda:**
+
+- **Boton "Agregar" apagado** hasta que haya texto y no este repetido. Antes
+  estaba siempre encendido y avisaba despues de tocar.
+- **Cambiar el nombre de una actividad** (dentro del editor), que antes no
+  existia.
+- **Eliminar una actividad**, con confirmacion que pide **escribir el nombre** y
+  avisa que se borra todo para siempre.
+- **El editor ya no se encima**: reemplaza la lista en su lugar. Antes era una
+  capa flotante translucida y se veia la lista detras.
+- **Accesorios**: confirmacion al borrar, y **tocar uno pone su nombre en el
+  campo** para que aparezca el boton de Eliminar.
+- **Texto mas grande** en las dos (1.02rem, como la lista de Guiadas).
+
+**LO IMPORTANTE: el nombre de una actividad es la llave de casi todo.** Al
+**renombrar**, hay que mover las cinco cosas juntas o quedan huerfanas:
+
+| Que | Donde |
+|---|---|
+| La actividad | `actividadesExtra` (campo `nombre`) |
+| Sus accesorios | `presetsActividad/{nombre}` |
+| Sus acciones de Guiadas | `nivelesActividad/{nombre}` |
+| Sus tomas | `guia_tomas_{nombre}` (localStorage, de ese telefono) |
+| **Las citas ya agendadas** | coleccion `citas`, campo `actividad` |
+
+La ultima es la que se escapa facil: si no se actualiza, esas citas quedan
+apuntando a un nombre que ya no existe, y **al editarlas se cambiarian solas**.
+
+**Al ELIMINAR** se borran las cuatro primeras. **Las citas NO se tocan** (decision
+de Fredy, oct-2026): la cita ya agendada sigue existiendo aunque su actividad
+desaparezca de la lista.
+
+**Ojo:** estas dos pantallas **no las cubren las pruebas automaticas** (necesitan
+Firebase). Se revisa sintaxis, ids y `<div>` cuadrados, pero **el
+funcionamiento lo prueba Fredy a mano**.
+
 ### La base de cada PAREJA: reglas ABIERTAS a proposito (no tocar)
 
 Los proyectos de cada pareja se instalan con `allow read, write: if true`
