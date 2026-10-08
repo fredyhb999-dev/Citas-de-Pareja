@@ -120,7 +120,7 @@
   .item{
     background: var(--card); border:1px solid var(--card-border);
     border-radius:12px; padding:14px 16px;
-    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:.95rem;
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:1.02rem;
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     cursor:pointer; width:100%; color:var(--fg); text-align:left;
     transition: transform .15s ease, border-color .2s ease;
@@ -129,18 +129,12 @@
   .item.nube{ border-color: var(--teal); }
   .item .chev{ color:var(--fg-muted); font-size:1.2rem; }
 
-  /* ---------- editor de preset ---------- */
-  #zonaLista{ position:relative; width:100%; max-width:520px; }
-  #editorWrap{
-    display:none; position:absolute; top:0; left:0; right:0; z-index:50;
-    background: rgba(9,7,15,.85);
-    border-radius:16px; justify-content:center;
-    backdrop-filter: blur(2px);
-  }
+  /* ---------- editor de preset (REEMPLAZA la lista, no se encima) ---------- */
+  #zonaLista{ width:100%; max-width:520px; }
+  #editorWrap{ display:none; width:100%; max-width:520px; }
   #editor{
-    background: var(--bg); border:1px solid var(--card-border);
+    background: var(--card); border:1px solid var(--card-border);
     border-radius:16px; padding:20px; width:100%; max-width:520px;
-    max-height:80dvh; overflow-y:auto;
   }
   #editor h2{ font-family:'Chakra Petch', sans-serif; font-size:1.25rem; margin:0 0 4px; }
   #origenPreset{
@@ -164,6 +158,28 @@
   #btnCerrarEditor{ background: var(--bg-2); color: var(--fg); border:1px solid var(--card-border); }
   #editorBotones button:active{ transform: scale(.97); }
   #editorBotones button:disabled{ opacity:.4; }
+
+  /* ---------- renombrar y eliminar (dentro del editor) ---------- */
+  #editorExtra{ margin-top:16px; padding-top:16px; border-top:1px solid var(--card-border);
+    display:flex; flex-direction:column; gap:10px; }
+  #btnRenombrar, #btnEliminarAct{
+    background:none; border:1px solid var(--card-border); border-radius:12px;
+    color:var(--fg-muted); padding:13px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:600; font-size:.92rem;
+  }
+  #btnRenombrar:active, #btnEliminarAct:active{ transform:scale(.98); }
+  #btnEliminarAct{ color:var(--rojo); border-color:var(--rojo); }
+  .filaInline{ display:none; gap:8px; flex-wrap:wrap; }
+  .filaInline.ver{ display:flex; }
+  .filaInline input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg-2); color:var(--fg); padding:12px; font-size:.95rem; font-family:'Inter',sans-serif; }
+  .filaInline button{ border:none; border-radius:12px; padding:12px 16px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; }
+  .btnChicoOk{ color:var(--bg); background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btnChicoNo{ background:var(--bg-2); color:var(--fg); border:1px solid var(--card-border) !important; }
+  .avisoFuerte{ font-size:.85rem; color:var(--fg-muted); background:var(--bg-2);
+    border:1px solid var(--rojo); border-radius:12px; padding:12px; line-height:1.5; text-align:left; }
+  .avisoFuerte b{ color:var(--rojo); }
   .seccionCfg{ width:100%; max-width:520px; margin:30px 0 6px; text-align:center; }
   .seccionCfg h2{ font-family:'Chakra Petch',sans-serif; font-size:1.1rem; margin:0 0 6px; }
   .seccionCfg .mini{ font-size:.82rem; color:var(--fg-muted); margin:0 0 12px; }
@@ -214,6 +230,27 @@
         <button id="btnQuitarPreset">Eliminar Accesorios</button>
         <button id="btnCerrarEditor">Cerrar</button>
       </div>
+
+      <div id="editorExtra">
+        <button id="btnRenombrar" type="button">Cambiar nombre</button>
+        <div class="filaInline" id="filaRenombrar">
+          <input id="inputRenombrar" type="text" maxlength="60" autocomplete="off" placeholder="Nuevo nombre">
+          <button class="btnChicoOk" id="btnRenombrarOk" type="button">Guardar nombre</button>
+          <button class="btnChicoNo" id="btnRenombrarNo" type="button">Cancelar</button>
+        </div>
+
+        <button id="btnEliminarAct" type="button">Eliminar actividad</button>
+        <div class="filaInline" id="filaEliminar" style="flex-direction:column;align-items:stretch;">
+          <div class="avisoFuerte">
+            Vas a eliminar <b id="borrarNombre"></b> <b>PARA SIEMPRE</b>.
+            Se borran sus <b>accesorios</b>, sus <b>tomas</b> y sus <b>acciones de Guiadas</b>.
+            Esto <b>no se puede deshacer</b>.
+          </div>
+          <input id="inputConfirmar" type="text" autocomplete="off" placeholder="Escribe el nombre para confirmar">
+          <button class="btnChicoOk" id="btnEliminarOk" type="button" style="background:var(--rojo);color:#2b0410;">Eliminar definitivamente</button>
+          <button class="btnChicoNo" id="btnEliminarNo" type="button">Cancelar</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -222,7 +259,8 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, setDoc, serverTimestamp
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, setDoc, serverTimestamp,
+  query, where
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 import firebaseConfigBase from "../firebase-config.js";
@@ -250,6 +288,18 @@ const editorMsg = document.getElementById("editorMsg");
 const btnGuardarPreset = document.getElementById("btnGuardarPreset");
 const btnQuitarPreset = document.getElementById("btnQuitarPreset");
 const btnCerrarEditor = document.getElementById("btnCerrarEditor");
+
+const btnRenombrar = document.getElementById("btnRenombrar");
+const filaRenombrar = document.getElementById("filaRenombrar");
+const inputRenombrar = document.getElementById("inputRenombrar");
+const btnRenombrarOk = document.getElementById("btnRenombrarOk");
+const btnRenombrarNo = document.getElementById("btnRenombrarNo");
+const btnEliminarAct = document.getElementById("btnEliminarAct");
+const filaEliminar = document.getElementById("filaEliminar");
+const inputConfirmar = document.getElementById("inputConfirmar");
+const btnEliminarOk = document.getElementById("btnEliminarOk");
+const btnEliminarNo = document.getElementById("btnEliminarNo");
+const borrarNombre = document.getElementById("borrarNombre");
 
 // ====== ESTADO ======
 let baseActs = [];   // del JSON (no se eliminan desde la app)
@@ -333,6 +383,7 @@ function actualizarModo(){
     docObjetivo = null;
     btnAgregar.textContent = "Agregar";
     btnAgregar.classList.remove("eliminar");
+    btnAgregar.disabled = true;          // vacío: no se puede agregar
     msgEl.textContent = "";
     msgEl.className = "";
     return;
@@ -344,6 +395,7 @@ function actualizarModo(){
     docObjetivo = extra.id;
     btnAgregar.textContent = "Eliminar";
     btnAgregar.classList.add("eliminar");
+    btnAgregar.disabled = false;         // sí existe: se puede eliminar
     msgEl.textContent = "";
     msgEl.className = "";
     return;
@@ -357,9 +409,11 @@ function actualizarModo(){
   if(nombresBase().has(clave)){
     msgEl.textContent = "Esa actividad ya existe.";
     msgEl.className = "";
+    btnAgregar.disabled = true;          // repetida: no se puede agregar
   }else{
     msgEl.textContent = "";
     msgEl.className = "";
+    btnAgregar.disabled = false;         // nombre nuevo: sí
   }
 }
 
@@ -436,7 +490,7 @@ async function agregar(){
   }catch(e){
     avisar("No se pudo guardar. Revisa tu conexión.");
   }
-  btnAgregar.disabled = false;
+  actualizarModo();   // decide si el botón queda activo o apagado
 }
 
 async function eliminar(){
@@ -459,7 +513,7 @@ async function eliminar(){
   }catch(e){
     avisar("No se pudo eliminar. Revisa tu conexión.");
   }
-  btnAgregar.disabled = false;
+  actualizarModo();   // decide si el botón queda activo o apagado
 }
 
 // ====== EDITOR DE PRESET ======
@@ -519,13 +573,29 @@ async function abrirEditor(nombre){
 
   btnQuitarPreset.style.display = nube ? "" : "none";
 
-  editorWrap.style.display = "flex";
+  // Renombrar y eliminar: solo para las actividades creadas aquí (las de
+  // fábrica son del catálogo y no se tocan).
+  const esPropia = extrasActs.some(e=>e.nombre === nombre);
+  btnRenombrar.style.display = esPropia ? "" : "none";
+  btnEliminarAct.style.display = esPropia ? "" : "none";
+  filaRenombrar.classList.remove("ver");
+  filaEliminar.classList.remove("ver");
+  inputRenombrar.value = "";
+  inputConfirmar.value = "";
+  borrarNombre.textContent = "«" + nombre + "»";
+
+  // El editor REEMPLAZA la lista: así no se ve nada encimado.
+  listaEl.hidden = true;
+  editorWrap.style.display = "block";
   try{ window.scrollTo(0, 0); }catch(e){}
 }
 
 function cerrarEditor(){
   editorWrap.style.display = "none";
+  listaEl.hidden = false;
   actividadEditando = null;
+  filaRenombrar.classList.remove("ver");
+  filaEliminar.classList.remove("ver");
 }
 
 async function guardarPreset(){
@@ -561,6 +631,105 @@ async function quitarPreset(){
   btnQuitarPreset.disabled = false;
 }
 
+// ====== RENOMBRAR UNA ACTIVIDAD ======
+// El nombre es la llave de los accesorios y de las acciones de Guiadas, asi
+// que al cambiarlo hay que mover las tres cosas juntas. Si no, quedan huerfanas.
+async function renombrarActividad(){
+  if(!actividadEditando) return;
+  const viejo = actividadEditando;
+  const nuevo = inputRenombrar.value.trim();
+
+  if(!nuevo){ editorAvisar("Escribe el nombre nuevo."); return; }
+  if(nuevo.includes("/")){ editorAvisar("El nombre no puede contener /."); return; }
+  if(normalizar(nuevo) === normalizar(viejo)){ editorAvisar("Es el mismo nombre."); return; }
+  if(listaActividades().some(n=>normalizar(n) === normalizar(nuevo))){
+    editorAvisar("Ya existe una actividad con ese nombre."); return;
+  }
+  const extra = extrasActs.find(e=>e.nombre === viejo);
+  if(!extra){ editorAvisar("Esta actividad es de fabrica; no se puede renombrar."); return; }
+
+  btnRenombrarOk.disabled = true;
+  try{
+    await setDoc(doc(db, "actividadesExtra", extra.id), { nombre: nuevo }, { merge: true });
+
+    try{
+      const ps = await getDoc(doc(db, "presetsActividad", viejo));
+      if(ps.exists()){
+        await setDoc(doc(db, "presetsActividad", nuevo), ps.data());
+        await deleteDoc(doc(db, "presetsActividad", viejo));
+      }
+    }catch(e){}
+
+    try{
+      const nv = await getDoc(doc(db, "nivelesActividad", viejo));
+      if(nv.exists()){
+        await setDoc(doc(db, "nivelesActividad", nuevo), nv.data());
+        await deleteDoc(doc(db, "nivelesActividad", viejo));
+      }
+    }catch(e){}
+
+    try{
+      const t = localStorage.getItem("guia_tomas_" + viejo);
+      if(t !== null){
+        localStorage.setItem("guia_tomas_" + nuevo, t);
+        localStorage.removeItem("guia_tomas_" + viejo);
+      }
+    }catch(e){}
+
+    // 4) Las citas ya agendadas guardan el nombre de la actividad en el campo
+    // "actividad". Si no se actualizan, quedarian apuntando a un nombre que ya
+    // no existe y al editarlas se cambiarian solas.
+    try{
+      const cs = await getDocs(query(collection(db, "citas"), where("actividad", "==", viejo)));
+      const tareas = [];
+      cs.forEach(d=>{ tareas.push(setDoc(doc(db, "citas", d.id), { actividad: nuevo }, { merge: true })); });
+      await Promise.all(tareas);
+    }catch(e){}
+
+    extra.nombre = nuevo;
+    actividadEditando = nuevo;
+    editorTitulo.textContent = nuevo;
+    borrarNombre.textContent = "«" + nuevo + "»";
+    filaRenombrar.classList.remove("ver");
+    inputRenombrar.value = "";
+    pintar();
+    editorAvisar("Nombre cambiado.", true);
+  }catch(e){
+    editorAvisar("No se pudo cambiar el nombre. Revisa tu conexion.");
+  }
+  btnRenombrarOk.disabled = false;
+}
+
+// ====== ELIMINAR UNA ACTIVIDAD (con todo y sus datos) ======
+async function eliminarActividad(){
+  if(!actividadEditando) return;
+  const nombre = actividadEditando;
+
+  if(normalizar(inputConfirmar.value) !== normalizar(nombre)){
+    editorAvisar("Escribe el nombre para confirmar.");
+    return;
+  }
+  const extra = extrasActs.find(e=>e.nombre === nombre);
+  if(!extra){ editorAvisar("Esta actividad es de fabrica; no se puede eliminar."); return; }
+
+  btnEliminarOk.disabled = true;
+  try{
+    await deleteDoc(doc(db, "actividadesExtra", extra.id));                       // la actividad
+    try{ await deleteDoc(doc(db, "presetsActividad", nombre)); }catch(e){}        // sus accesorios
+    try{ await deleteDoc(doc(db, "nivelesActividad", nombre)); }catch(e){}        // sus acciones de Guiadas
+    try{ localStorage.removeItem("guia_tomas_" + nombre); }catch(e){}             // sus tomas (este telefono)
+    extrasActs = extrasActs.filter(e=>e.id !== extra.id);
+    cerrarEditor();
+    pintar();
+    inputEl.value = "";
+    actualizarModo();
+    avisar("Actividad eliminada con todo y sus datos.", true);
+  }catch(e){
+    editorAvisar("No se pudo eliminar. Revisa tu conexion.");
+  }
+  btnEliminarOk.disabled = false;
+}
+
 // ====== EVENTOS ======
 btnAgregar.onclick = ()=>{
   if(modo === "eliminar"){
@@ -577,6 +746,24 @@ inputEl.addEventListener("keydown", e=>{
 btnGuardarPreset.onclick = guardarPreset;
 btnQuitarPreset.onclick = quitarPreset;
 btnCerrarEditor.onclick = cerrarEditor;
+
+btnRenombrar.onclick = ()=>{
+  filaEliminar.classList.remove("ver");
+  filaRenombrar.classList.toggle("ver");
+  if(filaRenombrar.classList.contains("ver")) inputRenombrar.focus();
+};
+btnRenombrarNo.onclick = ()=>{ filaRenombrar.classList.remove("ver"); inputRenombrar.value = ""; };
+btnRenombrarOk.onclick = renombrarActividad;
+inputRenombrar.addEventListener("keydown", e=>{ if(e.key === "Enter") renombrarActividad(); });
+
+btnEliminarAct.onclick = ()=>{
+  filaRenombrar.classList.remove("ver");
+  filaEliminar.classList.toggle("ver");
+  if(filaEliminar.classList.contains("ver")) inputConfirmar.focus();
+};
+btnEliminarNo.onclick = ()=>{ filaEliminar.classList.remove("ver"); inputConfirmar.value = ""; };
+btnEliminarOk.onclick = eliminarActividad;
+inputConfirmar.addEventListener("keydown", e=>{ if(e.key === "Enter") eliminarActividad(); });
 editorWrap.addEventListener("click", e=>{
   if(e.target === editorWrap) cerrarEditor();
 });

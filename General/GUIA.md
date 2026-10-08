@@ -1120,6 +1120,36 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 
 ## Parte 6 - Pendientes, limites y mantenimiento
 
+### La base de cada PAREJA: reglas ABIERTAS a proposito (no tocar)
+
+Los proyectos de cada pareja se instalan con `allow read, write: if true`
+(`README.md`, paso 2). **Es una decision, no un descuido, y no se cambia.**
+
+**Por que:** la app de la pareja **no inicia sesion** contra su propia base.
+Ninguna pagina se autentica (el import de auth en `Guiadas/` esta de adorno y no
+se usa). Sin login, las reglas **no pueden** distinguir a nadie: cerrarlas rompe
+la app entera.
+
+**La proteccion real (login + reglas por correo) llega con el rediseno de
+arquitectura, DESPUES** de terminar y probar la app. Es un proyecto aparte, no un
+cambio de reglas.
+
+**Consecuencia que hay que saber:** quien tenga la configuracion de una pareja
+(por ejemplo un invitado, o quien escanee su QR) puede leer y escribir toda su
+base, incluidas las actividades y el contenido personalizado. Lo unico que la
+protege hoy es que la configuracion se comparta con gente de confianza.
+
+**Lo que SI seria seguro, pero tampoco se hace sin preguntar:** limitar las
+reglas a las 13 rutas que la app usa
+(`config/ajustes`, `nivelesActividad`, `actividadesExtra`, `accesoriosExtra`,
+`presetsActividad`, `citas`, `retos`, `puntosUsuarios`, `chat`, `presencia`,
+`invitaciones`, `sesionEncuentros`, `sesionGuiada`). Hoy esta abierto "cualquier
+ruta". Eso **no** protege el contenido, solo cierra lo que no se usa.
+
+**Esto ya se propuso una vez sin estar escrito** (oct-2026), y Fredy tuvo que
+recordar el acuerdo. Si alguien -persona o modelo- propone cerrar estas reglas o
+ponerle candado a `Citas/actividades.html`, **que avise primero.**
+
 ### Reglas de `solicitudes`: cerrado (resuelto 6-oct-2026)
 
 **Lo que se cerro:**

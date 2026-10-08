@@ -199,3 +199,27 @@ login subido. Sin login, cerrar las reglas rompe Aprobar/Revocar **en silencio**
 (el boton parece funcionar y no cambia nada).
 
 Ver `General/GUIA.md`, Parte 4.
+
+## La base de cada PAREJA: reglas ABIERTAS a proposito
+
+Los proyectos de cada pareja se instalan con `allow read, write: if true` (asi lo
+dice `README.md`, paso 2). **Eso es una decision, no un descuido**, y **no se
+cambia**.
+
+**Por que:** la app de la pareja **no inicia sesion** contra su propia base. Lo
+verifico Fredy y se confirmo en el codigo: ninguna pagina se autentica (el import
+de auth en `Guiadas/` esta de adorno, no se usa). Sin login, las reglas **no
+pueden** distinguir a nadie: cerrarlas rompe la app entera.
+
+**La proteccion real (login + reglas por correo) llega con el rediseno de
+arquitectura, DESPUES** de terminar y probar la app. Es un proyecto aparte, no un
+cambio de reglas.
+
+**Si alguien -persona o modelo- propone "cerrar las reglas de la pareja" o
+"ponerle candado a `Citas/actividades.html`": que avise antes.** Ya paso una vez
+(oct-2026): sin estar escrito, se propuso cerrarlas y Fredy tuvo que recordar el
+acuerdo.
+
+Unico cambio que SI es seguro y no afecta la app: limitar las reglas a las rutas
+que la app usa (hoy esta abierto "cualquier ruta"). Eso no protege el contenido,
+solo cierra lo que no se usa. **Aun asi, no se hace sin preguntarle a Fredy.**
