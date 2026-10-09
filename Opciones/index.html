@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
@@ -100,6 +101,7 @@
     font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem; color:var(--bg);
     background:linear-gradient(90deg, var(--coral), var(--teal)); }
   .pickRow button:active{ transform:scale(.97); }
+  .filaBotones{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
   #esperaTurno{ font-family:'Chakra Petch',sans-serif; font-size:1.9rem; font-weight:700;
     text-align:center; margin:20px 0; color:var(--fg-muted); }
   #resultados{ width:100%; background:var(--card); border:1px solid var(--card-border);
@@ -145,7 +147,6 @@
     <button class="btnPri" id="btnPareja">Jugar con Pareja</button>
     <button class="btnPri" id="btnMulti" style="margin-bottom:0;">Multijugador</button>
   </div>
-  <button class="btnSec" id="btnSeguirInicio" style="display:none">↩ Continuar partida anterior</button>
 </div>
 
 <!-- ============ ESPERA (pareja / invitado) ============ -->
@@ -171,9 +172,12 @@
   <div id="esperaTurno" style="display:none"></div>
   <div id="finMsg" style="display:none">La partida terminó.</div>
   <button class="btnSec" id="btnSaltar" style="display:none">Saltar turno</button>
-  <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
-  <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
-  <button class="btnSec" id="btnAgregarInv" style="display:none">➕ Agregar invitado</button>
+  <div class="filaBotones">
+    <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
+    <button class="btnSec" id="btnQR">Mostrar código QR</button>
+    <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
+    <button class="btnSec" id="btnAgregarInv" style="display:none">➕ Agregar invitado</button>
+  </div>
 </div>
 
 <!-- ============ CONFIG (editor de las dos listas) ============ -->
@@ -273,11 +277,22 @@
   </div>
 </div>
 
+<!-- ============ CÓDIGO QR (para registrar invitados sin salir) ============ -->
+<div class="modal" id="modalQR">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.2rem;">Código QR</div>
+    <div style="font-size:.82rem;color:var(--fg-muted);margin:8px 0 12px;">Que lo escanee quien quiera entrar como invitado.</div>
+    <div id="qrCajaJuego" style="background:#fff;padding:12px;border-radius:14px;display:none;justify-content:center;margin:0 auto 12px;width:fit-content;"></div>
+    <div id="qrMsg" style="font-size:.82rem;color:var(--rojo);min-height:18px;"></div>
+    <button class="btnSec" id="btnQRNo">Cerrar</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios } from "../config.js";
+import { resolverFirebase, cargarUsuarios, leerConfigGuardada } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, escucharItem } from "../acceso.js";
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
@@ -517,7 +532,6 @@ async function entrar(){
       await cargarOpciones();
       pintarInicio();
       ver("vistaInicio", false);
-      chequearPendienteInicio();
     }else{
       ver("vistaEspera", false);
     }
@@ -561,9 +575,9 @@ function pintarInicio(){
 }
 // Botones de modo: cada uno abre su ventana y de ahi arranca la partida.
 let modoPendiente = "multi";
-document.getElementById("btnSolo").onclick = ()=>{ abrirModal("modalSolo"); };
-document.getElementById("btnPareja").onclick = ()=>{ modoPendiente = "pareja"; abrirModal("modalModo"); };
-document.getElementById("btnMulti").onclick = ()=>{ modoPendiente = "multi"; abrirModal("modalModo"); };
+document.getElementById("btnSolo").onclick = ()=>{ conPendiente(()=>{ abrirModal("modalSolo"); }); };
+document.getElementById("btnPareja").onclick = ()=>{ modoPendiente = "pareja"; conPendiente(()=>{ abrirModal("modalModo"); }); };
+document.getElementById("btnMulti").onclick = ()=>{ modoPendiente = "multi"; conPendiente(()=>{ abrirModal("modalModo"); }); };
 document.getElementById("btnSoloA").onclick = ()=>{ cerrarModal("modalSolo"); iniciar("solo", "A", false); };
 document.getElementById("btnSoloB").onclick = ()=>{ cerrarModal("modalSolo"); iniciar("solo", "B", false); };
 document.getElementById("btnSoloNo").onclick = ()=>{ cerrarModal("modalSolo"); };
@@ -743,6 +757,7 @@ function mostrarBotonesAdmin(){
   const dsp = esAdminFlag ? "" : "none";
   try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
   try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
+  try{ document.getElementById("btnQR").style.display = dsp; }catch(e){}
   if(!esAdminFlag){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
   // "Agregar invitado": solo el anfitrion y en juego. Se muestra siempre (aunque
   // no haya invitados disponibles: la ventana avisa si no hay).
@@ -795,7 +810,7 @@ function pintarPaso(){
     }else{
       opB.style.display = "none";
       btnB.style.display = "none";
-      btnA.textContent = "Quitar →";
+      btnA.textContent = "Te quedaste sin opciones";
     }
     pickRow.style.display = "flex";
     espera.style.display = "none";
@@ -902,6 +917,29 @@ async function agregarInvitado(id){
 }
 document.getElementById("btnAgregarInv").onclick = ()=>{ abrirAgregar(); };
 document.getElementById("btnAgregarNo").onclick = ()=>{ cerrarModal("modalAgregar"); };
+// Mostrar el QR del anfitrion para registrar invitados sin salir del juego.
+document.getElementById("btnQR").onclick = ()=>{
+  const g = leerConfigGuardada();
+  const caja = document.getElementById("qrCajaJuego");
+  const msg = document.getElementById("qrMsg");
+  msg.textContent = "";
+  caja.innerHTML = "";
+  if(!g || !g.firebase){
+    caja.style.display = "none";
+    msg.textContent = "No se encontró la configuración.";
+    abrirModal("modalQR");
+    return;
+  }
+  caja.style.display = "flex";
+  try{
+    new QRCode(caja, {
+      text: JSON.stringify({ firebase: g.firebase, telegram: g.telegram || null }),
+      width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M
+    });
+  }catch(e){ caja.style.display = "none"; msg.textContent = "No se pudo generar."; }
+  abrirModal("modalQR");
+};
+document.getElementById("btnQRNo").onclick = ()=>{ cerrarModal("modalQR"); };
 
 // ---------- comenzar ----------
 function construirCabezasModo(modo, ladoSoloElegido){
@@ -1010,16 +1048,25 @@ function seguirEncima(titulo, desc){
   abrirModal("vistaSeguir");
 }
 function seguirFuera(){ cerrarModal("vistaSeguir"); }
-async function chequearPendienteInicio(){
-  const btn = document.getElementById("btnSeguirInicio");
-  if(btn) btn.style.display = "none";
+let accionPendiente = null;
+// Si hay una partida a medias del anfitrion, ofrece continuarla antes de la
+// accion elegida (abrir la ventana de modo). Si elige "Partida nueva", corre la
+// accion guardada.
+async function conPendiente(accion){
+  let pend = false;
   try{
     const sd = await getDoc(sesionRef());
     if(sd.exists()){
       const d = sd.data();
-      if(d && d.activa && !d.terminada && d.hostUid === miId && btn) btn.style.display = "";
+      if(d && d.activa && !d.terminada && d.hostUid === miId) pend = true;
     }
   }catch(e){}
+  if(pend){
+    accionPendiente = accion;
+    seguirEncima("¿Continuar partida anterior?", "Había una partida a medias. ¿La retomas?");
+  }else{
+    accion();
+  }
 }
 async function continuarPartida(){
   seguirFuera();
@@ -1040,12 +1087,12 @@ async function continuarPartida(){
   pintarPaso();
 }
 document.getElementById("btnContinuar").onclick = ()=>{ continuarPartida(); };
-document.getElementById("btnSeguirInicio").onclick = ()=>{ continuarPartida(); };
 document.getElementById("btnNueva").onclick = async ()=>{
   seguirFuera();
   if(!esAdminFlag){ alert("Quien inicia o renueva la partida es " + nombreAdmin() + " (anfitrión)."); return; }
   try{ await cerrarSesion(); }catch(e){}
   jugando = false;
+  if(accionPendiente){ const f = accionPendiente; accionPendiente = null; f(); return; }
   await cargarOpciones();
   pintarInicio();
   ver("vistaInicio");

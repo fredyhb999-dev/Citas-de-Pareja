@@ -69,6 +69,22 @@ Con eso, todo se calcula solo:
   anfitrión) para poder agregarlos. Este mecanismo es para meterlos con la
   partida andando, no para registrarlos.
 
+## Atajo: mostrar el QR desde el juego
+
+Para no tener que salir a registrar al invitado, el juego puede mostrar el **QR
+del anfitrión** con `qrcodejs` (el mismo que usa el inicio):
+
+```js
+new QRCode(caja, {
+  text: JSON.stringify({ firebase: g.firebase, telegram: g.telegram || null }),
+  width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M
+});
+```
+
+donde `g = leerConfigGuardada()` (de `config.js`). El invitado escanea, se
+registra, y el anfitrión lo agrega con el botón — todo sin navegar. En Opciones
+es el botón **"Mostrar código QR"**.
+
 ## Dónde está en el código de referencia
 
 - `Opciones/index.html`:
