@@ -145,6 +145,7 @@
     <button class="btnPri" id="btnPareja">Jugar con Pareja</button>
     <button class="btnPri" id="btnMulti" style="margin-bottom:0;">Multijugador</button>
   </div>
+  <button class="btnSec" id="btnSeguirInicio" style="display:none">↩ Continuar partida anterior</button>
 </div>
 
 <!-- ============ ESPERA (pareja / invitado) ============ -->
@@ -743,9 +744,10 @@ function mostrarBotonesAdmin(){
   try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
   try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
   if(!esAdminFlag){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
-  // "Agregar invitado": solo el anfitrion, en juego, y si hay invitados sin entrar.
+  // "Agregar invitado": solo el anfitrion y en juego. Se muestra siempre (aunque
+  // no haya invitados disponibles: la ventana avisa si no hay).
   try{
-    const dis = esAdminFlag && jugando && estado && !estado.terminada && disponiblesInvitados().length;
+    const dis = esAdminFlag && jugando && estado && !estado.terminada;
     document.getElementById("btnAgregarInv").style.display = dis ? "" : "none";
   }catch(e){}
 }
@@ -1009,17 +1011,17 @@ function seguirEncima(titulo, desc){
 }
 function seguirFuera(){ cerrarModal("vistaSeguir"); }
 async function chequearPendienteInicio(){
+  const btn = document.getElementById("btnSeguirInicio");
+  if(btn) btn.style.display = "none";
   try{
     const sd = await getDoc(sesionRef());
     if(sd.exists()){
       const d = sd.data();
-      if(d && d.activa && !d.terminada && d.hostUid === miId){
-        seguirEncima("¿Continuar partida anterior?", "Había una partida a medias. ¿La retomas?");
-      }
+      if(d && d.activa && !d.terminada && d.hostUid === miId && btn) btn.style.display = "";
     }
   }catch(e){}
 }
-document.getElementById("btnContinuar").onclick = async ()=>{
+async function continuarPartida(){
   seguirFuera();
   let d = sesionActual;
   if(!d){ try{ const sd = await getDoc(sesionRef()); d = sd.exists() ? sd.data() : null; }catch(e){} }
@@ -1036,7 +1038,9 @@ document.getElementById("btnContinuar").onclick = async ()=>{
   cargarEstado(sanearSesion(d));
   ver("vistaPlayer");
   pintarPaso();
-};
+}
+document.getElementById("btnContinuar").onclick = ()=>{ continuarPartida(); };
+document.getElementById("btnSeguirInicio").onclick = ()=>{ continuarPartida(); };
 document.getElementById("btnNueva").onclick = async ()=>{
   seguirFuera();
   if(!esAdminFlag){ alert("Quien inicia o renueva la partida es " + nombreAdmin() + " (anfitrión)."); return; }

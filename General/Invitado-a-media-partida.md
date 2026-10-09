@@ -43,8 +43,8 @@ Con eso, todo se calcula solo:
    vuelta (se revuelve), subir `ronda` en 1. En Opciones, `siguienteTurno()`
    devuelve `nuevaRonda:true` en ese momento.
 3. **Botón "Agregar invitado"** en la pantalla del anfitrión: visible solo para
-   el administrador, **en juego**, y **si hay invitados registrados que aún no
-   están en la partida**.
+   el administrador y **en juego** (siempre; la ventana avisa si no hay invitados
+   registrados por agregar).
 4. **Agregar al invitado** (en una transacción sobre el documento de la sesión,
    para no chocar con una jugada que esté pasando en ese instante):
    - meterlo en `cabezas` con su `lado` (según `conQuien`);
