@@ -1668,6 +1668,17 @@ definicion del pack poner el emoji en `icono`.
   **`experiencias`**. El mecanismo de **agregar invitado a media partida**
   (reutilizable para otros juegos) está documentado aparte en
   **`General/Invitado-a-media-partida.md`**.
+- **Quién puede iniciar partida (Encuentros y Elecciones Peligrosas, oct-2026):**
+  la pantalla de inicio la ve **cualquier usuario que no sea invitado** (el
+  administrador **y** la pareja), cada quien con su **propia identidad**. Antes
+  solo el administrador la veía y a la pareja se la mandaba directo a la pantalla
+  de espera (por eso "no podía entrar sola" en ninguno de los dos juegos). Los
+  invitados siguen esperando la invitación. El **anfitrión** de cada partida es
+  quien la inició (en compartida, `hostUid`): los botones de Pausar/Terminar/QR/
+  Agregar invitado y "saltar turno" son de ese anfitrión (`esAnfitrion()`).
+  El engrane de configuración (⚙️) lo tienen **los dos** (es su app en cada
+  teléfono, aunque compartan datos); el "solo administrador" era para el control
+  de invitados, no para la pareja.
 - **Un resumen de conversacion no lee estos archivos.** Si una sesion se corta
   por limite de tokens, lo que se pierde es el detalle fino. Este archivo es la
   red de seguridad: cualquier sesion nueva debe empezar leyendolo.

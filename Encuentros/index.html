@@ -541,8 +541,10 @@ async function entrar(){
   if(!ok && esInvitadoFlag) ok = true; // invitado juega con el acceso del anfitrión
   if(ok){
     modoLocal = (typeof navigator !== "undefined" && navigator.onLine === false);
-    if(esAdminFlag){
-      if(modoLocal){ try{ alert("Sin conexión. Se jugará en este celular."); }catch(e){} }
+    // La pareja (no invitado) tambien tiene su pantalla de inicio y puede jugar
+    // por su cuenta, como el administrador. El invitado sigue esperando.
+    if(!esInvitadoFlag){
+      if(esAdminFlag && modoLocal){ try{ alert("Sin conexión. Se jugará en este celular."); }catch(e){} }
       pintarLista("listaActs");
       ver("vistaLista", false);
     }else{
@@ -570,7 +572,7 @@ async function entrar(){
         });
         if(docGracia){
           try{ await setDoc(doc(tdb, "solicitudes", docGracia.id), { graciaUsada: true, graciaFecha: serverTimestamp() }, { merge: true }); }catch(e){}
-          if(esAdminFlag){ pintarLista("listaActs"); ver("vistaLista", false); } else { ver("vistaEspera", false); }
+          if(!esInvitadoFlag){ pintarLista("listaActs"); ver("vistaLista", false); } else { ver("vistaEspera", false); }
           mostrarGracia();
           return;
         }
@@ -1369,12 +1371,20 @@ async function generarYIniciar(activities, tomas){
 }
 
 // ---------- player ----------
-// Pausar y Terminar Partida son solo del anfitrion (esAdminFlag).
+// Pausar y Terminar Partida son solo del anfitrion (quien inicio la partida).
+// ¿Mando en la partida en curso? En una compartida, quien la inició (hostUid);
+// en una local (un celular), quien la empezó en este teléfono.
+function esAnfitrion(){
+  if(!jugando) return false;
+  if(jugandoCompartido) return !!(sesionActual && sesionActual.hostUid === miId);
+  return true;
+}
 function mostrarBotonesAdmin(){
-  const dsp = esAdminFlag ? "" : "none";
+  const host = esAnfitrion();
+  const dsp = host ? "" : "none";
   try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
   try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
-  if(!esAdminFlag){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
+  if(!host){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
 }
 function pintarPaso(){
   const total = largo;
@@ -1426,7 +1436,7 @@ function pintarPaso(){
     btnSig.textContent = "Espera tu turno";
     // Brincar al que no esta es decision del anfitrion.
     try{
-      btnSaltar.style.display = esAdminFlag ? "" : "none";
+      btnSaltar.style.display = esAnfitrion() ? "" : "none";
       btnSaltar.textContent = "Saltar turno de " + nombreCabeza(actualId);
     }catch(e){}
   }
@@ -1441,7 +1451,7 @@ document.getElementById("btnSig").onclick = async ()=>{
 };
 document.getElementById("btnTerminar").onclick = async ()=>{
   // PAUSA la partida (se puede retomar). Solo el anfitrion.
-  if(!esAdminFlag){ alert("Pausar la partida es cosa del anfitrión."); return; }
+  if(!esAnfitrion()){ alert("Pausar la partida es cosa del anfitrión."); return; }
   jugando = false;
   if(jugandoCompartido){
     try{ await setDoc(sesionRef(), { pausada: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
@@ -1456,7 +1466,7 @@ document.getElementById("btnTerminar").onclick = async ()=>{
 document.getElementById("btnTerminarPartida").onclick = async ()=>{
   // TERMINA la partida de forma definitiva (no se retoma). Solo el anfitrion.
   // A los invitados les llega el aviso y, al aceptar, salen del modo invitado.
-  if(!esAdminFlag){ alert("Terminar la partida es cosa del anfitrión."); return; }
+  if(!esAnfitrion()){ alert("Terminar la partida es cosa del anfitrión."); return; }
   jugando = false;
   if(jugandoCompartido){
     try{ await setDoc(sesionRef(), { activa: false, terminada: true, porAdmin: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
@@ -1497,7 +1507,7 @@ document.getElementById("btnContinuar").onclick = async ()=>{
 };
 document.getElementById("btnNueva").onclick = async ()=>{
   seguirFuera();
-  if(!esAdminFlag){ alert("Quien inicia o renueva el encuentro es " + nombreAdmin() + " (anfitrión)."); return; }
+  if(!esAnfitrion()){ alert("Quien inicia o renueva el encuentro es el anfitrión."); return; }
   try{ await cerrarSesion(); }catch(e){}
   jugando = false;
   if(pendienteEsMulti){
@@ -1582,7 +1592,7 @@ setInterval(()=>{
   try{ await entrar(); }
   catch(e){
     try{ console.error("Encuentros arranque:", e); }catch(x){}
-    try{ if(esAdminFlag){ await pintarLista("listaActs"); ver("vistaLista", false); } else { ver("vistaEspera", false); } }catch(x){}
+    try{ if(!esInvitadoFlag){ await pintarLista("listaActs"); ver("vistaLista", false); } else { ver("vistaEspera", false); } }catch(x){}
     try{ escucharSesion(); }catch(x){}
   }
 })();
