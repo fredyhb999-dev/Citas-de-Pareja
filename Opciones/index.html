@@ -172,6 +172,7 @@
   <button class="btnSec" id="btnSaltar" style="display:none">Saltar turno</button>
   <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
   <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
+  <button class="btnSec" id="btnAgregarInv" style="display:none">➕ Agregar invitado</button>
 </div>
 
 <!-- ============ CONFIG (editor de las dos listas) ============ -->
@@ -258,6 +259,16 @@
     <button class="btnPri" id="btnModoLocal" style="margin-top:14px;">Un solo Celular</button>
     <button class="btnPri" id="btnModoComp">Cada quien en el suyo</button>
     <button class="btnSec" id="btnModoNo">Cancelar</button>
+  </div>
+</div>
+
+<!-- ============ AGREGAR INVITADO (a media partida) ============ -->
+<div class="modal" id="modalAgregar">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.3rem;">Agregar invitado</div>
+    <div style="font-size:.82rem;color:var(--fg-muted);margin:8px 0 0;">Entrará a partir de la siguiente ronda.</div>
+    <div id="listaAgregar" style="margin-top:14px;"></div>
+    <button class="btnSec" id="btnAgregarNo">Cancelar</button>
   </div>
 </div>
 
@@ -455,7 +466,7 @@ function iniciarEstado(cabezasIn, pools){
     eliminadas[c.id] = [];
   });
   const orden = mezclar(cabezasIn.map(c=>c.id));
-  const d = { cabezas: cabezasIn, listas, pares, eliminadas, orden, turno: 0, terminada: false };
+  const d = { cabezas: cabezasIn, listas, pares, eliminadas, orden, turno: 0, ronda: 1, terminada: false };
   if(orden.length && !pares[orden[0]]) pares[orden[0]] = parDe(listas[orden[0]]);
   return d;
 }
@@ -464,15 +475,15 @@ function iniciarEstado(cabezasIn, pools){
 function siguienteTurno(d){
   const alive = id => (d.listas[id] || []).length > 0;
   const vivos = d.cabezas.map(c=>c.id).filter(alive);
-  if(!vivos.length) return { fin: true };
+  if(!vivos.length) return { fin: true, nuevaRonda: false };
   let o = Array.isArray(d.orden) ? d.orden.slice() : [];
   let t = d.turno || 0;
   for(let step = 1; step <= o.length; step++){
     const nt = (t + step) % o.length;
-    if(nt <= t){ return { orden: mezclar(vivos), turno: 0, fin: false }; }
-    if(o[nt] && alive(o[nt])) return { orden: o, turno: nt, fin: false };
+    if(nt <= t){ return { orden: mezclar(vivos), turno: 0, fin: false, nuevaRonda: true }; }
+    if(o[nt] && alive(o[nt])) return { orden: o, turno: nt, fin: false, nuevaRonda: false };
   }
-  return { orden: mezclar(vivos), turno: 0, fin: false };
+  return { orden: mezclar(vivos), turno: 0, fin: false, nuevaRonda: true };
 }
 // Aplica la eleccion: el elegido se elimina y el otro sigue. Avanza el turno.
 function aplicarPick(d, headId, choice){
@@ -488,6 +499,7 @@ function aplicarPick(d, headId, choice){
   const sig = siguienteTurno(d);
   d.orden = sig.orden;
   d.turno = sig.turno;
+  if(sig.nuevaRonda) d.ronda = (d.ronda || 1) + 1;
   const cur = d.orden[d.turno];
   if(cur && !d.pares[cur]) d.pares[cur] = parDe(d.listas[cur]);
 }
@@ -568,6 +580,7 @@ function cargarEstado(d){
     orden: Array.isArray(d.orden) ? d.orden.slice() : [],
     turno: d.turno || 0,
     rondas: d.rondas || 0,
+    ronda: d.ronda || 1,
     terminada: !!d.terminada
   };
 }
@@ -697,7 +710,8 @@ async function saltarTurno(){
       const cur = sig.orden[sig.turno];
       const pares = Object.assign({}, s.pares || {});
       if(cur && !pares[cur]) pares[cur] = parDe((s.listas || {})[cur] || []);
-      tx.update(ref, { orden: sig.orden, turno: sig.turno, pares, actualizadaEn: serverTimestamp() });
+      const ronda = sig.nuevaRonda ? ((s.ronda || 1) + 1) : (s.ronda || 1);
+      tx.update(ref, { orden: sig.orden, turno: sig.turno, pares, ronda, actualizadaEn: serverTimestamp() });
     });
   }catch(e){}
   if(termino){ try{ await retirarInvitacion(JUEGO_INV); }catch(e){} }
@@ -729,6 +743,11 @@ function mostrarBotonesAdmin(){
   try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
   try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
   if(!esAdminFlag){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
+  // "Agregar invitado": solo el anfitrion, en juego, y si hay invitados sin entrar.
+  try{
+    const dis = esAdminFlag && jugando && estado && !estado.terminada && disponiblesInvitados().length;
+    document.getElementById("btnAgregarInv").style.display = dis ? "" : "none";
+  }catch(e){}
 }
 function pintarPaso(){
   const d = estado;
@@ -811,6 +830,76 @@ async function pick(choice){
 document.getElementById("btnPickA").onclick = ()=>pick("a");
 document.getElementById("btnPickB").onclick = ()=>pick("b");
 document.getElementById("btnSaltar").onclick = ()=>{ saltarTurno(); };
+
+// ---------- agregar invitado a media partida ----------
+// El que entra NO juega la ronda en curso: se agrega a las cabezas y a las
+// listas, pero NO al orden actual. Cuando la ronda da la vuelta, el orden se
+// revuelve con todos los que siguen vivos y ahi entra. Su lista trae tantas
+// opciones como rondas le falten (R - ronda), asi termina junto con los demas.
+function disponiblesInvitados(){
+  const ids = new Set(((estado && estado.cabezas) || []).map(c=>c.id));
+  return (usuariosLista || []).filter(u=> u && u.invitado && !ids.has(u.id));
+}
+function abrirAgregar(){
+  const box = document.getElementById("listaAgregar");
+  box.innerHTML = "";
+  const dis = disponiblesInvitados();
+  if(!dis.length){
+    const p = document.createElement("div");
+    p.style.cssText = "font-size:.85rem;color:var(--fg-muted);";
+    p.textContent = "No hay invitados por agregar.";
+    box.appendChild(p);
+  }
+  dis.forEach(u=>{
+    const b = document.createElement("button");
+    b.className = "btnPri";
+    b.textContent = u.nombre || "Invitado";
+    b.onclick = ()=>{ cerrarModal("modalAgregar"); agregarInvitado(u.id); };
+    box.appendChild(b);
+  });
+  abrirModal("modalAgregar");
+}
+async function agregarInvitado(id){
+  const cab = construirCabezas().find(c=>c.id === id);
+  if(!cab) return;
+  const R = (estado && estado.rondas) || 0;
+  const ronda = (estado && estado.ronda) || 1;
+  const restantes = R - ronda;   // empieza la ronda siguiente
+  if(restantes < 1){ alert("Ya no quedan rondas para que entre."); return; }
+  const fuente = ((cab.lado === "A") ? opciones.A : opciones.B) || [];
+  if(!fuente.length){ alert("La lista de ese lado está vacía."); return; }
+  const deck = mezclar(fuente);
+  const pool = [];
+  for(let i = 0; i < restantes; i++) pool.push(deck[i % deck.length]);
+  const nuevo = { id: cab.id, nombre: cab.nombre || "Invitado", lado: cab.lado, admin: false, invitado: true, conQuien: cab.conQuien || null };
+  if(jugandoCompartido){
+    await runTransaction(db, async (tx)=>{
+      const ref = sesionRef();
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const d = snap.data();
+      if(!d.activa || d.terminada) return;
+      if((d.cabezas || []).some(c=>c.id === nuevo.id)) return;
+      const cabezas = (d.cabezas || []).concat([nuevo]);
+      const listas = Object.assign({}, d.listas || {}); listas[nuevo.id] = pool;
+      const pares = Object.assign({}, d.pares || {}); pares[nuevo.id] = null;
+      const eliminadas = Object.assign({}, d.eliminadas || {}); eliminadas[nuevo.id] = [];
+      tx.update(ref, { cabezas, listas, pares, eliminadas, actualizadaEn: serverTimestamp() });
+    });
+    // Volver a publicar la invitacion para que su sala le muestre "Entrar".
+    const cabs = ((estado && estado.cabezas) || []);
+    const part = cabs.some(c=>c.id === nuevo.id) ? cabs : cabs.concat([nuevo]);
+    anunciarInvitacion(sidMostrado, part, (miUsuario && miUsuario.nombre) || nombreAdmin());
+  }else{
+    estado.cabezas = (estado.cabezas || []).concat([nuevo]);
+    estado.listas[nuevo.id] = pool;
+    estado.pares[nuevo.id] = null;
+    estado.eliminadas[nuevo.id] = [];
+    pintarPaso();
+  }
+}
+document.getElementById("btnAgregarInv").onclick = ()=>{ abrirAgregar(); };
+document.getElementById("btnAgregarNo").onclick = ()=>{ cerrarModal("modalAgregar"); };
 
 // ---------- comenzar ----------
 function construirCabezasModo(modo, ladoSoloElegido){

@@ -1665,7 +1665,9 @@ definicion del pack poner el emoji en `icono`.
   terminar, aviso a todos y regreso; invitados expulsados. Pausar/continuar/
   terminar/saltar turno/sacar invitados como Encuentros. Licencia: item
   **`opciones`**. En el catálogo (`packs`): ruta **`Opciones`**, sección
-  **`experiencias`**.
+  **`experiencias`**. El mecanismo de **agregar invitado a media partida**
+  (reutilizable para otros juegos) está documentado aparte en
+  **`General/Invitado-a-media-partida.md`**.
 - **Un resumen de conversacion no lee estos archivos.** Si una sesion se corta
   por limite de tokens, lo que se pierde es el detalle fino. Este archivo es la
   red de seguridad: cualquier sesion nueva debe empezar leyendolo.
