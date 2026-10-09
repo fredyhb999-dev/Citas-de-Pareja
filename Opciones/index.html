@@ -174,7 +174,7 @@
   <button class="btnSec" id="btnSaltar" style="display:none">Saltar turno</button>
   <div class="filaBotones">
     <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
-    <button class="btnSec" id="btnQR">Mostrar código QR</button>
+    <button class="btnSec" id="btnQR">QR Invita a Alguien</button>
     <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
     <button class="btnSec" id="btnAgregarInv" style="display:none">➕ Agregar invitado</button>
   </div>
@@ -534,6 +534,7 @@ async function entrar(){
       ver("vistaInicio", false);
     }else{
       ver("vistaEspera", false);
+      chequearPartidaEspera();
     }
     try{ escucharSesion(); }catch(e){}
     return;
@@ -629,6 +630,27 @@ function sanearSesion(d){
     }, { merge: true });
   }catch(e){}
   return d;
+}
+// Respaldo: si la escucha en vivo no llega (o se pierde), al entrar o con
+// "Volver a revisar" se mira la partida directamente y se ofrece unirse.
+async function chequearPartidaEspera(){
+  try{
+    const sd = await getDoc(sesionRef());
+    if(!sd.exists()) return;
+    const d = sd.data();
+    if(!d || !d.activa || d.terminada) return;
+    sesionActual = d;
+    if(d.hostUid === miId) return;
+    if(soyCabeza(d)){
+      document.getElementById("unirDesc").textContent = d.reanudada
+        ? ((d.hostNombre || "El anfitrión") + " retomó la partida. Puedes continuar donde van.")
+        : ((d.hostNombre || "El anfitrión") + " inició Elecciones Peligrosas.");
+      abrirModal("modalUnir");
+    }else{
+      const el = document.getElementById("esperaDesc");
+      if(el) el.textContent = "Hay una partida activa, pero no estás en la lista de participantes.";
+    }
+  }catch(e){}
 }
 function escucharSesion(){
   if(sesionIniciada) return;
@@ -1286,6 +1308,16 @@ function escucharGrupo(){
 }
 
 // ---------- arranque ----------
+// Respaldo: mientras el acompañante/invitado espera, se revisa la partida cada
+// pocos segundos (por si la escucha en vivo se cayo y no aviso).
+setInterval(()=>{
+  try{
+    const v = document.querySelector(".vista.ver");
+    if(!v || v.id !== "vistaEspera" || jugando) return;
+    if(document.getElementById("modalUnir").style.display === "flex") return;
+    chequearPartidaEspera();
+  }catch(e){}
+}, 4000);
 (async ()=>{
   try{ await cargarIdentidad(); }catch(e){}
   try{ mostrarBotonesAdmin(); }catch(e){}
