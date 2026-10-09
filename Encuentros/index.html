@@ -584,11 +584,14 @@ async function entrar(){
 // Respaldo: si la escucha en vivo no llega (o se pierde), al entrar o con
 // "Volver a revisar" se mira la partida directamente y se ofrece unirse.
 async function chequearPartidaEspera(){
+  const el = document.getElementById("esperaDesc");
+  const yo = (miUsuario && miUsuario.nombre) || miId || "?";
+  const pon = (t)=>{ try{ if(el) el.textContent = t; }catch(e){} };
   try{
     const sd = await getDoc(sesionRef());
-    if(!sd.exists()) return;
+    if(!sd.exists()){ pon("Sin partida en curso. (Tú: " + yo + ")"); return; }
     const d = sd.data();
-    if(!d || !d.activa || d.terminada) return;
+    if(!d || !d.activa || d.terminada){ pon("Sin partida en curso. (Tú: " + yo + ")"); return; }
     sesionActual = d;
     if(d.hostUid === miId) return;
     if(soyCabeza(d)){
@@ -597,10 +600,12 @@ async function chequearPartidaEspera(){
         : ((d.hostNombre || "El anfitrión") + " inició un Encuentro Guiado.");
       abrirModal("modalUnir");
     }else{
-      const el = document.getElementById("esperaDesc");
-      if(el) el.textContent = "Hay una partida activa, pero no estás en la lista de participantes.";
+      const nombres = (d.cabezas || []).map(c=>c.nombre).join(", ");
+      pon("Hay partida de " + (d.hostNombre || "el anfitrión") + ", pero no estás en la lista. Participantes: " + nombres + ". Tú: " + yo + ".");
     }
-  }catch(e){}
+  }catch(e){
+    pon("No se pudo revisar la partida. (" + (e && e.message ? e.message : "error") + ")");
+  }
 }
 function escucharSesion(){
   if(sesionIniciada) return;
