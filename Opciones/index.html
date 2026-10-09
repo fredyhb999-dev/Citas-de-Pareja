@@ -573,6 +573,9 @@ function cargarEstado(d){
 }
 function sanearSesion(d){
   if(!d || !Array.isArray(d.cabezas) || !Array.isArray(d.orden) || !d.orden.length) return d;
+  // Solo el anfitrion es autoritativo: los demas NO reescriben las cabezas del
+  // documento. Asi un invitado con la lista desactualizada no borra a otro.
+  if(d.hostUid !== miId) return d;
   const validos = new Set(usuariosLista.map(u=>u && u.id).filter(Boolean));
   const fuera = d.cabezas.filter(c=>!validos.has(c.id));
   if(!fuera.length) return d;
@@ -842,6 +845,11 @@ function repartirOpciones(cabezasIn, fuente, R){
 }
 async function iniciar(modo, ladoSoloElegido, unCelularFlag){
   await cargarOpciones();
+  // Lista de usuarios fresca, para no arrancar sin un invitado recien agregado.
+  try{
+    const arr = await cargarUsuarios(db, getDoc, doc, usuariosLista);
+    if(Array.isArray(arr) && arr.length) usuariosLista = arr;
+  }catch(e){}
   const R = Math.max(2, Math.min(50, parseInt(document.getElementById("rondas").value, 10) || 2));
   const cabezasIn = construirCabezasModo(modo, ladoSoloElegido);
   const faltan = cabezasIn.filter(c=>{
@@ -1114,10 +1122,34 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
 });
 document.getElementById("btnEsperaRefrescar").onclick = ()=>{ entrar(); };
 
+// ---------- grupo (mantiene la lista de usuarios al día) ----------
+// Igual que Encuentros: si alguien se agrega o se va mientras hay partida, la
+// lista se actualiza en vivo. Sin esto, un telefono con la lista vieja podia
+// borrar del documento a un invitado valido (no debe haber limite de invitados).
+function escucharGrupo(){
+  try{
+    onSnapshot(doc(db, "config", "ajustes"), (snap)=>{
+      try{
+        const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+        if(!Array.isArray(arr) || !arr.length) return;
+        const antes = usuariosLista.map(u=>u && u.id).join(",");
+        usuariosLista = arr;
+        if(antes === arr.map(u=>u && u.id).join(",")) return;
+        if(jugandoCompartido && sesionActual && sesionActual.activa && jugando){
+          sanearSesion(sesionActual);
+          cargarEstado(sesionActual);
+          pintarPaso();
+        }
+      }catch(e){}
+    }, ()=>{});
+  }catch(e){}
+}
+
 // ---------- arranque ----------
 (async ()=>{
   try{ await cargarIdentidad(); }catch(e){}
   try{ mostrarBotonesAdmin(); }catch(e){}
+  try{ escucharGrupo(); }catch(e){}
   try{ await entrar(); }
   catch(e){
     try{ console.error("Opciones arranque:", e); }catch(x){}
