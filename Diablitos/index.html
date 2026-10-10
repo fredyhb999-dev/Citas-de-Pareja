@@ -161,7 +161,7 @@ h1{
 .engrane{
   position:absolute;
   top:8px;
-  right:10px;
+  left:10px;
   width:40px;
   height:40px;
   border-radius:12px;
@@ -1096,10 +1096,13 @@ h1{
   }
 
   function abrirCfg(){
-    cambiarPestana(SEC_ACTIVA);
-    elCfg.style.display = 'block';
-    pausaCfg = corriendo;
-    parar();
+cambiarPestana(SEC_ACTIVA);
+      elCfg.style.display = 'block';
+      // El engrane ahora vive arriba a la izquierda, donde esta el "Volver" de
+      // esta pantalla: se esconde para que no se encimen.
+      elEngrane.style.display = 'none';
+      pausaCfg = corriendo;
+      parar();
     SEC.msg.nuevo.value = '';
     SEC.aviso.nuevo.value = '';
     window.scrollTo(0, 0);
@@ -1107,8 +1110,9 @@ h1{
   }
 
   function cerrarCfg(){
-    elCfg.style.display = 'none';
-    FRASES = leerLista(CLAVE_MSG) || FRASES_FABRICA.slice();
+elCfg.style.display = 'none';
+      if(!esInvitado && hayAlmacen) elEngrane.style.display = 'block';
+      FRASES = leerLista(CLAVE_MSG) || FRASES_FABRICA.slice();
     AVISOS = leerLista(CLAVE_AVISO) || AVISOS_FABRICA.slice();
     if(pausaCfg) correr();
     pausaCfg = false;

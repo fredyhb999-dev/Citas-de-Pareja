@@ -139,6 +139,16 @@
   .filaCfg{ display:flex; gap:8px; margin-top:12px; }
   .filaCfg input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg); color:var(--fg); padding:12px; font-size:.95rem; font-family:'Inter',sans-serif; }
+  /* Regreso al editor de la actividad: solo sale si se entro desde ahi. */
+  #volverAct{
+    display:none; width:100%; max-width:520px; margin:0 0 18px; padding:14px 16px;
+    background: var(--card); border:1px solid var(--teal); border-radius:14px;
+    color:var(--fg); text-decoration:none; text-align:left;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:.95rem;
+  }
+  #volverAct.ver{ display:block; }
+  #volverAct:active{ transform: scale(.98); }
+  #volverAct b{ color: var(--teal); }
 </style>
 </head>
 <body>
@@ -153,6 +163,8 @@
   <a href="actividades.html">Actividades</a>
   <button id="tabLista" type="button">Accesorios</button>
 </div>
+
+<a id="volverAct" href="actividades.html">‹ Volver a la actividad <b id="volverActNombre"></b></a>
 
 <div id="alta">
   <div class="fila">
@@ -413,6 +425,18 @@ tabLista.onclick = ()=>{
     conteoEl.hidden = false;
   }
 };
+
+// Si se entro desde el editor de una actividad, se ofrece el regreso a esa misma
+// ventana para seguir asignando accesorios. La nota la guarda actividades.html y
+// se borra alla cuando se vuelve, asi que no se queda pegada para siempre.
+(function(){
+  let vuelta = null;
+  try{ vuelta = JSON.parse(sessionStorage.getItem("citasIrAccesorios") || "null"); }catch(e){}
+  if(!vuelta || !vuelta.n) return;
+  if(Date.now() - (vuelta.t || 0) > 21600000) return;   // mas de 6 h: ya no aplica
+  document.getElementById("volverActNombre").textContent = "«" + vuelta.n + "»";
+  document.getElementById("volverAct").classList.add("ver");
+})();
 
 cargar();
 tabLista.onclick();

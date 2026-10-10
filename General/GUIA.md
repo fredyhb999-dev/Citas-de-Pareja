@@ -1199,6 +1199,21 @@ Experiencias.
   campo** para que aparezca el boton de Eliminar.
 - **Texto mas grande** en las dos (1.02rem, como la lista de Guiadas).
 
+**Se quito el boton "Eliminar Accesorios"** que estaba en medio de Guardar y
+Cerrar. Era una trampa: escribia encima de los accesorios ya guardados y no se
+podia deshacer. Ahora, para dar de alta o modificar un accesorio se usa el boton
+**"Administrar accesorios"**, que esta en el mismo editor (debajo de la lista de
+accesorios de la actividad).
+
+**Ese botón va y vuelve sin perder el hilo:** `actividades.html` guarda en
+`sessionStorage` la clave `citasIrAccesorios` con `{ n: actividad, t: hora }` y
+salta a `accesorios.html`; alla aparece arriba el enlace **"‹ Volver a la
+actividad «X»"**. Al regresar, `actividades.html` borra la nota y reabre el
+**mismo editor** con los accesorios frescos (por si se agregaron nuevos). La nota
+se descarta si pasaron mas de 6 horas, para que no salga en una visita normal.
+Antes de irse se guarda **solo lo que haya cambiado** (`hayCambiosSinGuardar()`),
+así que no se pierde nada marcado ni se "personaliza" una actividad que no se toco.
+
 **LO IMPORTANTE: el nombre de una actividad es la llave de casi todo.** Al
 **renombrar**, hay que mover las cinco cosas juntas o quedan huerfanas:
 

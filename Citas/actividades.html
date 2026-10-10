@@ -163,8 +163,16 @@
   #editorBotones button{ flex:1; min-width:120px; padding:15px; border:none; border-radius:14px;
     font-family:'Chakra Petch', sans-serif; font-weight:700; letter-spacing:.04em; cursor:pointer; }
   #btnGuardarPreset{ color: var(--bg); background: linear-gradient(90deg, var(--coral), var(--teal)); }
-  #btnQuitarPreset{ background: var(--card); color: var(--fg); border:1px solid var(--card-border); }
   #btnCerrarEditor{ background: var(--bg-2); color: var(--fg); border:1px solid var(--card-border); }
+  /* Ir a la pantalla de Accesorios desde aqui, y volver a esta misma ventana. */
+  #btnIrAccesorios{
+    width:100%; margin:12px 0 2px; padding:14px; cursor:pointer;
+    background: var(--card); color: var(--fg); border:1px solid var(--card-border);
+    border-radius:14px; font-family:'Chakra Petch',sans-serif;
+    font-weight:700; font-size:.95rem;
+  }
+  #btnIrAccesorios:active{ transform: scale(.98); border-color: var(--teal); }
+  #btnIrAccesorios:disabled{ opacity:.5; }
   #editorBotones button:active{ transform: scale(.97); }
   #editorBotones button:disabled{ opacity:.4; }
 
@@ -262,10 +270,10 @@
 
       <h3 id="editorSub">Sus accesorios</h3>
       <div id="checks"></div>
+      <button id="btnIrAccesorios" type="button">Administrar accesorios</button>
       <div id="editorMsg"></div>
       <div id="editorBotones">
         <button id="btnGuardarPreset">Guardar</button>
-        <button id="btnQuitarPreset">Eliminar Accesorios</button>
         <button id="btnCerrarEditor">Cerrar</button>
       </div>
     </div>
@@ -303,7 +311,7 @@ const origenPreset = document.getElementById("origenPreset");
 const checksEl = document.getElementById("checks");
 const editorMsg = document.getElementById("editorMsg");
 const btnGuardarPreset = document.getElementById("btnGuardarPreset");
-const btnQuitarPreset = document.getElementById("btnQuitarPreset");
+const btnIrAccesorios = document.getElementById("btnIrAccesorios");
 const btnCerrarEditor = document.getElementById("btnCerrarEditor");
 
 const btnRenombrar = document.getElementById("btnRenombrar");
@@ -325,6 +333,9 @@ let catalogoAcc = []; // accesorios del JSON
 let extrasAcc = [];   // accesorios extra de Firebase
 
 let actividadEditando = null;
+// Lo que hay guardado en Firebase para la actividad que se está editando.
+// Sirve para saber si marcaste algo sin guardar antes de irte a otra pantalla.
+let accsGuardados = [];
 
 function normalizar(s){
   return (s || "").trim().toLowerCase();
@@ -541,6 +552,7 @@ async function abrirEditor(nombre){
   }catch(e){ archivo = null; }
 
   const activos = new Set((nube || archivo || []).map(normalizar));
+  accsGuardados = Array.from(activos);
   origenPreset.innerHTML = fuentePreset(nombre, !!nube, !!archivo);
 
   checksEl.innerHTML = "";
@@ -558,7 +570,8 @@ async function abrirEditor(nombre){
     checksEl.appendChild(label);
   });
 
-  btnQuitarPreset.style.display = nube ? "" : "none";
+  // El boton para ir a la pantalla de Accesorios siempre esta disponible.
+  btnIrAccesorios.style.display = "";
 
   // Renombrar y eliminar: solo para las actividades creadas aquí (las de
   // fábrica son del catálogo y no se tocan).
@@ -581,6 +594,7 @@ function cerrarEditor(){
   editorWrap.style.display = "none";
   listaEl.hidden = false;
   actividadEditando = null;
+  accsGuardados = [];
   filaRenombrar.classList.remove("ver");
   filaEliminar.classList.remove("ver");
 }
@@ -596,7 +610,7 @@ async function guardarPreset(){
       actualizadoEn: serverTimestamp()
     });
     editorAvisar("Accesorios Guardados.", true);
-    btnQuitarPreset.style.display = "";
+    accsGuardados = marcados.slice();
     origenPreset.innerHTML = fuentePreset(actividadEditando, true, true);
   }catch(e){
     editorAvisar("No se pudo guardar. Revisa tu conexión.");
@@ -604,18 +618,48 @@ async function guardarPreset(){
   btnGuardarPreset.disabled = false;
 }
 
-async function quitarPreset(){
-  if(!actividadEditando) return;
+// ¿Hay accesorios marcados que todavia NO estan guardados?
+function hayCambiosSinGuardar(){
+  const marcados = Array.from(checksEl.querySelectorAll("input:checked")).map(i=>i.value).sort();
+  const guardados = accsGuardados.slice().sort();
+  return marcados.length !== guardados.length || marcados.some((v,i)=> v !== guardados[i]);
+}
 
-  btnQuitarPreset.disabled = true;
+// Ir a la pantalla de Accesorios sin perder lo marcado. Se guarda solo lo que
+// haya cambiado, y se apunta de que actividad venimos para que al salir de
+// alla se regrese a ESTE MISMO editor y se siga asignando.
+async function irAAccesorios(){
+  if(!actividadEditando) return;
+  btnIrAccesorios.disabled = true;
+  if(hayCambiosSinGuardar()) await guardarPreset();
   try{
-    await deleteDoc(doc(db, "presetsActividad", actividadEditando));
-    editorAvisar("Accesorios Eliminados.", true);
-    btnQuitarPreset.style.display = "none";
-  }catch(e){
-    editorAvisar("No se pudo quitar. Revisa tu conexión.");
+    sessionStorage.setItem("citasIrAccesorios", JSON.stringify({ n: actividadEditando, t: Date.now() }));
+  }catch(e){}
+  location.href = "accesorios.html";
+}
+
+// Volver desde la pantalla de Accesorios: se reabre el editor de la misma
+// actividad, ya con los accesorios frescos por si agregaste alguno nuevo.
+async function volverDesdeAccesorios(){
+  let vuelta = null;
+  try{
+    vuelta = JSON.parse(sessionStorage.getItem("citasIrAccesorios") || "null");
+    sessionStorage.removeItem("citasIrAccesorios");
+  }catch(e){}
+  if(!vuelta || !vuelta.n) return;
+  if(Date.now() - (vuelta.t || 0) > 21600000) return;   // mas de 6 h: ya no aplica
+
+  tabLista.classList.add("activo");
+  listaEl.hidden = false;
+  conteoEl.hidden = false;
+  document.getElementById("alta").style.display = "";
+
+  if(!listaActividades().some(n=> n === vuelta.n)){
+    avisar("Esa actividad ya no existe.");
+    return;
   }
-  btnQuitarPreset.disabled = false;
+  await abrirEditor(vuelta.n);
+  avisar("De vuelta en «" + vuelta.n + "».", true);
 }
 
 // ====== RENOMBRAR UNA ACTIVIDAD ======
@@ -727,7 +771,7 @@ inputEl.addEventListener("keydown", e=>{
 });
 
 btnGuardarPreset.onclick = guardarPreset;
-btnQuitarPreset.onclick = quitarPreset;
+btnIrAccesorios.onclick = irAAccesorios;
 btnCerrarEditor.onclick = cerrarEditor;
 
 btnRenombrar.onclick = ()=>{
@@ -776,7 +820,7 @@ tabLista.onclick = ()=>{
   }
 };
 
-cargar();
+cargar().then(volverDesdeAccesorios);
 tabLista.onclick();
 inputEl.focus();
 
