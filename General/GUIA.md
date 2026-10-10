@@ -1270,10 +1270,20 @@ así que no se pierde nada marcado ni se "personaliza" una actividad que no se t
 oprimir y la lista de actividades aparecia ARRIBA con el editor de accesorios
 PEGADO ABAJO, y se podia guardar sobre la actividad equivocada. Ahora
 `abrirEditor()` hace `tabLista.disabled = true` y `cerrarEditor()` lo vuelve a
-encender; ademas `tabLista.onclick` tiene un guardia por si se dispara igual.
-La pestaña "Accesorios" de arriba, con el editor abierto, pasa por
-`irAAccesorios()` (guarda lo marcado y deja la nota de regreso) en vez de irse
-sin guardar.
+  encender; ademas `tabLista.onclick` tiene un guardia por si se dispara igual.
+  La pestaña "Accesorios" de arriba, con el editor abierto, pasa por
+  `irAAccesorios()` (guarda lo marcado y deja la nota de regreso) en vez de irse
+  sin guardar.
+
+  **OJO con ese guardia (bug oct-2026, ya corregido):** preguntaba
+  `editorWrap.style.display !== "none"`. Al abrir la pagina ese **estilo de linea
+  esta vacio** (el `display:none` lo pone el CSS), asi que `"" !== "none"` daba
+  verdadero y el guardia cortaba **desde el arranque**: la lista de actividades
+  NUNCA se mostraba (se daban de alta y se validaban, pero no se veian).
+  Ahora hay una bandera de verdad, `editorAbierto`, que ponen `abrirEditor()` y
+  `cerrarEditor()`. **Regla: nunca preguntar por `element.style.algo` cuando el
+  valor real lo pone una hoja de estilos; usar una variable o `getComputedStyle`.**
+
 
 **LO IMPORTANTE: el nombre de una actividad es la llave de casi todo.** Al
 **renombrar**, hay que mover las cinco cosas juntas o quedan huerfanas:
