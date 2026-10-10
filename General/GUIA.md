@@ -1140,6 +1140,7 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | Al terminar, el invitado sale solo | Este o "Terminar Partida": mensaje, acepta, `salirModoInvitado()` |
 | En toda la interfaz se dice **anfitrion** | No "administrador" |
 | Aviso de fin solo en la transicion real | Exige `&& jugando`, para que un documento viejo no lo displays otra vez |
+| **Al acabar una partida se prenden fuegos** | Modulo `fuegos.js` en la **raiz**. Sale en todos los modos (solo, pareja, multi, un celular o compartido) y tmbn si el anfitrion la termina. El aviso de fin **no** dice "La partida termino": dice "Gracias por jugar" y la pantalla se celebra con fuegos |
 | El selector de invitado solo muestra perfiles base | Nunca a otros invitados, para que no haya invitado-de-invitado |
 | Sin caducidad por tiempo para el invitado | Si cierra la app, el chequeo no corre: el vencimiento nunca se aplicaria |
 | La sala es **solo para invitados** | La pareja no la ve ni entra por su cuenta |
@@ -1178,6 +1179,38 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 ---
 
 ## Parte 6 - Pendientes, limites y mantenimiento
+
+### Fuegos artificiales al final de la partida (`fuegos.js`, oct-2026)
+
+`fuegos.js` esta en la **raiz** y es un modulo ES reutilizable. Venia de
+`Default Project/fuegos-artificiales/index.html`, que se deja como esta: es la
+copia de trabajo.
+
+```js
+import { encenderFuegos, apagarFuegos, fuegosEncendidos } from "../fuegos.js";
+encenderFuegos();   // aparece y se dispara solo
+apagarFuegos();     // se quita y se detiene (no gasta bateria)
+```
+
+Decisiones que hay que respetar si se vuelve a tocar:
+
+- El lienzo se crea solo, se pega al `body` y va con **`pointer-events:none`**
+  y `z-index:70`. **Nunca** puede tapa un boton de la pagina.
+- Los toques se escuchan en el `document`, y **se ignoran los que caen sobre
+  `button`, `a`, `input`, `label`**: por eso "Aceptar" sigue sirviendo y el resto
+  de la pantalla lanza mas fuegos.
+- `#modalFin` tiene `z-index:80` y **`background:transparent`**, para que los
+  fuegos (70) se vean completos y solo la caja opaquita tape el centro.
+- El sonido usa WebAudio y **solo arranca con el primer toque** (los
+  navegadores no dejan sonar nada sin que el usuario toque algo). Se respeta
+  `localStorage["fuegos_mute"]`.
+- Todos los caminos de fin pasan por `abrirFin(texto)` en `Opciones/`, que
+  enciende los fuegos y abre el aviso. Se llama desde `finPartida()` (se acabo
+  sola) y desde el listener de la sesion (la termino el anfitrion). El boton
+  "Aceptar" (`btnFinOk`) apaga los fuegos antes de salir.
+- Si se quiere en otro juego: importar el modulo y llamar `encenderFuegos()`
+  en su aviso de fin. **Recordar subir el `z-index` de su modal** para que el
+  aviso quede por encima de los fuegos.
 
 ### Pantallas de configuracion: Actividades y Accesorios (oct-2026)
 
