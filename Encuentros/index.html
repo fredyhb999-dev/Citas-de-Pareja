@@ -199,14 +199,15 @@
   <div id="finMsg" style="display:none">¡Encuentro completo! 🔥</div>
   <button class="btnPri" id="btnSig">Siguiente →</button>
   <button class="btnSec" id="btnSaltar">Saltar turno</button>
-  <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
-  <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
 
-  <!-- Solo del anfitrión y solo en partida compartida ("Cada quien en el suyo").
-       mostrarBotonesAdmin() es la que los enciende y apaga. -->
-  <div class="filaBotones" id="filaInvitar" style="display:none">
-    <button class="btnSec" id="btnQR">QR Invita a Alguien</button>
-    <button class="btnSec" id="btnAgregarInv">➕ Agregar invitado</button>
+  <!-- Misma cuadricula 2x2 que Elecciones Peligrosas: QR junto a "Pausar y
+       Salir" y "Agregar invitado" junto a "Terminar Partida". Los dos de invitar
+       los enciende y apaga mostrarBotonesAdmin(). -->
+  <div class="filaBotones">
+    <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
+    <button class="btnSec" id="btnQR" style="display:none">QR Invita a Alguien</button>
+    <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
+    <button class="btnSec" id="btnAgregarInv" style="display:none">➕ Agregar invitado</button>
   </div>
 
   <!-- Quién sigue esperando afuera y quién ya está jugando. -->
@@ -1447,22 +1448,23 @@ function mostrarBotonesAdmin(){
   const dsp = host ? "" : "none";
   try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
   try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
-  // Invitar a alguien solo tiene sentido en la partida compartida: en un solo
-  // celular no hay a quien esperar, y el QR no aplica.
-  const invita = host && jugandoCompartido;
-  try{ document.getElementById("filaInvitar").style.display = invita ? "" : "none"; }catch(e){}
+  // QR y "Agregar invitado" salen para el anfitrion en los DOS modos. En
+  // "Acciones en un Celular" el invitado se registra con el QR y el anfitrion lo
+  // mete a mano desde la lista: en ese modo no se publica invitacion (no hay
+  // sesion en Firebase a la que entrar).
+  try{ document.getElementById("btnQR").style.display = host ? "" : "none"; }catch(e){}
+  try{ document.getElementById("btnAgregarInv").style.display = (host && jugando) ? "" : "none"; }catch(e){}
   if(!host){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
 }
 
 // ---------- sala: quien espera y quien esta jugando ----------
-// "En el juego" son las cabezas de la sesion (los que ya tienen turno).
-// "En la espera" son los usuarios del grupo que todavia NO entran en la partida:
-// los invitados que todavia no han sido agregados, y los que se registraron
-// despues de que empezo el encuentro.
+// "En el juego" son las cabezas de la partida (los que ya tienen turno).
+// "En la espera" son los usuarios del grupo que todavia NO entran: los que se
+// registraron despues de que empezo el encuentro.
 function pintarSala(){
   const panel = document.getElementById("salaPanel");
   if(!panel) return;
-  const activa = !!(jugando && jugandoCompartido && sesionActual && sesionActual.activa);
+  const activa = !!jugando;
   panel.classList.toggle("ver", activa);
   if(!activa) return;
 
@@ -1571,10 +1573,11 @@ document.getElementById("btnSig").onclick = async ()=>{
   await avanzarSesion();
 };
 // ---------- invitar: QR y agregar invitado a media partida ----------
-// Quien todavia NO esta en las cabezas del encuentro y SI es invitado.
+// Quien todavia NO esta en las cabezas del encuentro. Al arrancar entran todos
+// los del grupo, asi que lo que sale aqui es gente que se registro despues.
 function disponiblesInvitados(){
   const ids = new Set((cabezas || []).map(c=> c && c.id));
-  return (usuariosLista || []).filter(u=> u && u.invitado && !ids.has(u.id));
+  return (usuariosLista || []).filter(u=> u && u.id && !ids.has(u.id));
 }
 function abrirAgregar(){
   const box = document.getElementById("listaAgregar");
@@ -1583,7 +1586,7 @@ function abrirAgregar(){
   if(!dis.length){
     const p = document.createElement("div");
     p.style.cssText = "font-size:.85rem;color:var(--fg-muted);";
-    p.textContent = "No hay invitados por agregar. Pide el QR para registrar uno.";
+    p.textContent = "No hay nadie por agregar. Pide el QR para registrar a alguien.";
     box.appendChild(p);
   }
   dis.forEach(u=>{
@@ -1602,7 +1605,22 @@ function abrirAgregar(){
 async function agregarInvitado(id){
   const cab = construirCabezas().find(c=> c.id === id);
   if(!cab) return;
-  const nuevo = { id: cab.id, nombre: cab.nombre || "Invitado", lado: cab.lado, admin: false, invitado: true, conQuien: cab.conQuien || null };
+  const nuevo = { id: cab.id, nombre: cab.nombre || "Invitado", lado: cab.lado, admin: false, invitado: !!cab.invitado, conQuien: cab.conQuien || null };
+  // El recien llegado se cuela al FINAL de la rotacion. Ojo: `orden` y `cabezas`
+  // tienen que quedar del mismo largo, porque `avanzarSesion()` (y
+  // `avanzarLocal()`) avanzan con `turno + 1 < cabezas.length`: si se agrega a
+  // uno y no al otro, `orden[turno]` sale undefined y el juego se traba.
+  if(!jugandoCompartido){
+    // Acciones en un Celular: no hay sesion en Firebase, se suma en memoria.
+    if((cabezas || []).some(c=> c.id === nuevo.id)) return;
+    const companero = (cabezas || []).find(c=> c.lado === nuevo.lado) || (cabezas || [])[0];
+    listas[nuevo.id] = (listas[companero && companero.id]) ? listas[companero.id].slice() : [];
+    cabezas = cabezas.concat([nuevo]);
+    orden = (orden || []).slice();
+    orden.push(nuevo.id);
+    pintarPaso();
+    return;
+  }
   try{
     await runTransaction(db, async (tx)=>{
       const ref = sesionRef();
