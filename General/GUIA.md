@@ -1141,6 +1141,7 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | En toda la interfaz se dice **anfitrion** | No "administrador" |
 | Aviso de fin solo en la transicion real | Exige `&& jugando`, para que un documento viejo no lo displays otra vez |
 | **Al acabar una partida se prenden fuegos** | Modulo `fuegos.js` en la **raiz**. Sale en todos los modos (solo, pareja, multi, un celular o compartido) y tmbn si el anfitrion la termina. El aviso de fin **no** dice "La partida termino": dice "Gracias por jugar" y la pantalla se celebra con fuegos |
+| El turno ajeno va en **recuadro** | Igual que en `Encuentros/` (`#actividadAhora`): fondo con degradado, borde, sombras y `border-radius:24px`. Por eso `#esperaTurno` se enciende con `display:"flex"` y **no** con `"block"**: si no, el estilo de linea manda y no se centra |
 | El selector de invitado solo muestra perfiles base | Nunca a otros invitados, para que no haya invitado-de-invitado |
 | Sin caducidad por tiempo para el invitado | Si cierra la app, el chequeo no corre: el vencimiento nunca se aplicaria |
 | La sala es **solo para invitados** | La pareja no la ve ni entra por su cuenta |
@@ -1204,6 +1205,13 @@ Decisiones que hay que respetar si se vuelve a tocar:
 - El sonido usa WebAudio y **solo arranca con el primer toque** (los
   navegadores no dejan sonar nada sin que el usuario toque algo). Se respeta
   `localStorage["fuegos_mute"]`.
+- El **boton de silencio** (`#fuegosSonido`, esquina inferior derecha, `z-index:71`)
+  se crea y se borra junto con los fuegos: sale al prenderlos y se oculta al
+  apagarlos. Muestra el iconito de Bocina con ondas (con sonido) o tachado (sin
+  sonido). **El primer toque en el boton solo PRENDE el sonido** (no lo apaga):
+  asi de verdad se oye la celebracion; despues de ahi, cada toque alterna.
+  Mientras el sonido no ha arrancado, el boton **late** como pista. Ojo: es un
+  `<button>`, asi que el handler global de toques lo salta y no lanza fuegos.
 - Todos los caminos de fin pasan por `abrirFin(texto)` en `Opciones/`, que
   enciende los fuegos y abre el aviso. Se llama desde `finPartida()` (se acabo
   sola) y desde el listener de la sesion (la termino el anfitrion). El boton

@@ -21,6 +21,7 @@ let lienzo = null;
 let ctx = null;
 let fx = null;
 let fctx = null;
+let btnSonido = null;
 let activo = false;
 
 let W = 0, H = 0, dpr = 1;
@@ -765,6 +766,94 @@ function crearLienzo() {
   fctx = fx.getContext("2d");
   document.body.appendChild(lienzo);
   window.addEventListener("resize", ()=>{ if(activo) redimensionar(); });
+  crearBotonSonido();
+}
+
+// ---------- boton de silencio ----------
+const SVG_ON =
+  '<svg class="ico-on" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" ' +
+  'stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M11 5 6.5 8.8H3v6.4h3.5L11 19z"/>' +
+  '<path d="M15.4 9.2a4 4 0 0 1 0 5.6"/>' +
+  '<path d="M18.2 6.4a8 8 0 0 1 0 11.2"/></svg>';
+const SVG_OFF =
+  '<svg class="ico-off" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" ' +
+  'stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M11 5 6.5 8.8H3v6.4h3.5L11 19z"/>' +
+  '<line x1="16" y1="9.5" x2="21" y2="14.5"/>' +
+  '<line x1="21" y1="9.5" x2="16" y2="14.5"/></svg>';
+
+function crearBotonSonido() {
+  if (btnSonido) return;
+
+  // Un solo <style>: el latido que avisa que el sonido todavia no arranca
+  // porque falta un toque del usuario.
+  if (!document.getElementById("fuegosCss")) {
+    const st = document.createElement("style");
+    st.id = "fuegosCss";
+    st.textContent =
+      "@keyframes fuegosLatir{0%,100%{opacity:.45}50%{opacity:1}}" +
+      "#fuegosSonido.pidiendo{animation:fuegosLatir 1.2s ease-in-out infinite}" +
+      "@media (prefers-reduced-motion: reduce){#fuegosSonido.pidiendo{animation:none}}" +
+      "@media (max-width:520px){#fuegosSonido{right:14px !important;bottom:14px !important;" +
+      "width:44px !important;height:44px !important}}" +
+      "#fuegosSonido:active{transform:scale(.94)}";
+    document.head.appendChild(st);
+  }
+
+  btnSonido = document.createElement("button");
+  btnSonido.id = "fuegosSonido";
+  btnSonido.type = "button";
+  btnSonido.title = "Sonido";
+  btnSonido.innerHTML = SVG_ON + SVG_OFF;
+  // Va arriba del lienzo (Z+1) y en una esquina que no tapa el boton Aceptar.
+  btnSonido.style.cssText =
+    "position:fixed;right:18px;bottom:18px;width:48px;height:48px;border-radius:50%;padding:0;" +
+    "border:1px solid #322a4a;background:rgba(32,25,51,.75);color:#f4f1fb;cursor:pointer;" +
+    "backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:" + (Z + 1) + ";" +
+    "display:none;place-items:center;transition:transform .18s ease,color .2s ease;";
+  btnSonido.addEventListener("click", e=>{ e.stopPropagation(); alternarSonido(); });
+  document.body.appendChild(btnSonido);
+  pintarBoton();
+}
+
+function pintarBoton() {
+  if (!btnSonido) return;
+  const on = btnSonido.querySelector(".ico-on");
+  const off = btnSonido.querySelector(".ico-off");
+  if (sonido.mudo) {
+    btnSonido.style.color = "#a599c7";
+    on.style.display = "none";
+    off.style.display = "block";
+    btnSonido.title = "Activar sonido";
+    btnSonido.setAttribute("aria-label", "Activar sonido");
+  } else {
+    btnSonido.style.color = "#f4f1fb";
+    on.style.display = "block";
+    off.style.display = "none";
+    btnSonido.title = "Silenciar sonido";
+    btnSonido.setAttribute("aria-label", "Silenciar sonido");
+  }
+  // Si aun no hay contexto corriendo, el boton late: es la unica pista de que
+  // hace falta tocar algo para que se oiga.
+  const corriendo = !!sonido.ctx && sonido.ctx.state === "running";
+  btnSonido.classList.toggle("pidiendo", !sonido.mudo && !corriendo);
+}
+
+function alternarSonido() {
+  const sinArrancar = !sonido.ctx;          // todavia no se toco nada
+  sonido.iniciar();
+  if (sinArrancar && !sonido.mudo) {
+    // El primer toque solo prende el sonido (no lo apaga): asi de verdad se
+    // oye la Celebration. Despues de esto, cada toque ya alterna.
+    pintarBoton();
+    sonido.boom(0.65, 0);
+    return;
+  }
+  sonido.cambiar(!sonido.mudo);
+  try { localStorage.setItem("fuegos_mute", sonido.mudo ? "1" : "0"); } catch (e) {}
+  pintarBoton();
+  if (!sonido.mudo) sonido.boom(0.65, 0);
 }
 
 // Un toque en la pantalla lanza mas fuegos. Los toques que caen sobre un boton o
@@ -774,6 +863,7 @@ function alTocar(e) {
   const destino = e.target;
   if (destino && destino.closest && destino.closest("button, a, input, select, textarea, label")) return;
   sonido.iniciar();
+  pintarBoton();
   const objetivo = Math.max(H * 0.05, Math.min(e.clientY, H * 0.72));
   lanzar(
     Math.max(10, Math.min(W - 10, e.clientX)),
@@ -795,7 +885,9 @@ export function encenderFuegos() {
   crearLienzo();
   activo = true;
   lienzo.style.display = "block";
+  if (btnSonido) btnSonido.style.display = "grid";
   redimensionar();
+  pintarBoton();
 
   anterior = performance.now();
   acum = 0; cuadros = 0;
@@ -817,6 +909,7 @@ export function encenderFuegos() {
 export function apagarFuegos() {
   if (!activo) {
     if (lienzo) lienzo.style.display = "none";
+    if (btnSonido) btnSonido.style.display = "none";
     return;
   }
   activo = false;
@@ -827,6 +920,7 @@ export function apagarFuegos() {
   humos.length = 0;
   destellos.length = 0;
   if (lienzo) lienzo.style.display = "none";
+  if (btnSonido) btnSonido.style.display = "none";
 }
 
 /** ¿Están encendidos ahora mismo? */

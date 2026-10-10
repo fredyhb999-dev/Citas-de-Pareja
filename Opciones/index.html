@@ -102,8 +102,16 @@
     background:linear-gradient(90deg, var(--coral), var(--teal)); }
   .pickRow button:active{ transform:scale(.97); }
   .filaBotones{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
+  /* Igual que en Encuentros: el aviso de turno ajeno va en un RECUADRO, no
+     suelto. Al ponerlo con display:flex hay que apagar/encender con "flex"
+     (y no con "block"), porque si no manda el estilo de linea y no se centra. */
   #esperaTurno{ font-family:'Chakra Petch',sans-serif; font-size:1.9rem; font-weight:700;
-    text-align:center; margin:20px 0; color:var(--fg-muted); }
+    text-align:center; line-height:1.45; color:var(--fg-muted);
+    margin:22px 0; padding:38px 24px; width:100%;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, #2b2144, var(--card));
+    border:1px solid var(--card-border); border-radius:24px;
+    box-shadow:0 14px 44px rgba(0,0,0,.45), 0 0 34px rgba(47,217,199,.12); }
   #resultados{ width:100%; background:var(--card); border:1px solid var(--card-border);
     border-radius:16px; padding:16px; margin:14px 0; text-align:left; font-size:.95rem; line-height:1.7; }
   #resultados b{ font-family:'Chakra Petch',sans-serif; }
@@ -858,7 +866,7 @@ function pintarPaso(){
   }else{
     cardsRow.style.display = "none";
     pickRow.style.display = "none";
-    espera.style.display = "block";
+    espera.style.display = "flex";
     espera.textContent = "Turno de " + nombre + "…";
     turnoNombre.textContent = "";
     try{
