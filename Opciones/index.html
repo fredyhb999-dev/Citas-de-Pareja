@@ -831,29 +831,37 @@ async function cerrarSesion(){
 // ---------- player ----------
 // ¿Mando en la partida en curso? (pausar/terminar/saltar/agregar invitado)
 function esAnfitrion(){ return soyHost; }
+// ¿Se puede invitar a alguien en la partida que se está jugando?
+// SOLO en Multijugador. En Pareja el encuentro es de los dos, y en Solo juega
+// una sola persona: en los dos casos no hay a quien meter, asi que el QR,
+// "Agregar invitado" y el panel de la sala no se muestran. Da igual si se
+// juega en un solo celular o cada quien en el suyo.
+function modoAdmiteInvitados(){ return modoJuego === "multi"; }
 function mostrarBotonesAdmin(){
   const host = esAnfitrion();
   const dsp = host ? "" : "none";
   try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
   try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
-  try{ document.getElementById("btnQR").style.display = dsp; }catch(e){}
+  const invita = host && modoAdmiteInvitados();
+  try{ document.getElementById("btnQR").style.display = invita ? "" : "none"; }catch(e){}
   if(!host){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
-  // "Agregar invitado": solo el anfitrion y en juego. Se muestra siempre (aunque
-  // no haya invitados disponibles: la ventana avisa si no hay).
+  // "Agregar invitado": solo el anfitrion, solo en multijugador y con juego vivo.
+  // Se muestra siempre (aunque no haya invitados disponibles: la ventana avisa).
   try{
-    const dis = host && jugando && estado && !estado.terminada;
+    const dis = invita && jugando && estado && !estado.terminada;
     document.getElementById("btnAgregarInv").style.display = dis ? "" : "none";
   }catch(e){}
 }
 // ---------- sala: quien espera y quien esta jugando ----------
-// "En el juego" son las cabezas de la sesion (los que ya tienen turno).
-// "En la espera" son los usuarios del grupo que todavia NO entran en la partida:
-// en Pareja son los invitados (a proposito no juegan solos), y en Multijugador
-// son los que se registraron despues de que empezo el juego.
+// "En el juego" son las cabezas de la partida (los que ya tienen turno).
+// "En la espera" son los usuarios del grupo que todavia NO entran: los que se
+// registraron despues de que empezo el juego. Solo tiene sentido en Multijugador.
 function pintarSala(){
   const panel = document.getElementById("salaPanel");
   if(!panel) return;
-  const activa = !!(jugando && jugandoCompartido && sesionActual && sesionActual.activa);
+  // Se lee de `estado`, que es el espejo en memoria de la partida: funciona
+  // igual en un solo celular (que no escribe sesion en Firebase) y en compartido.
+  const activa = !!(jugando && modoAdmiteInvitados());
   panel.classList.toggle("ver", activa);
   if(!activa) return;
 
@@ -992,9 +1000,11 @@ document.getElementById("btnSaltar").onclick = ()=>{ saltarTurno(); };
 // listas, pero NO al orden actual. Cuando la ronda da la vuelta, el orden se
 // revuelve con todos los que siguen vivos y ahi entra. Su lista trae tantas
 // opciones como rondas le falten (R - ronda), asi termina junto con los demas.
+// Quién todavía NO está en la partida. En Multijugador todas las cabezas entran
+// desde el arranque, así que lo que sale aquí es gente que se registró después.
 function disponiblesInvitados(){
-  const ids = new Set(((estado && estado.cabezas) || []).map(c=>c.id));
-  return (usuariosLista || []).filter(u=> u && u.invitado && !ids.has(u.id));
+  const ids = new Set(((estado && estado.cabezas) || []).map(c=>c && c.id));
+  return (usuariosLista || []).filter(u=> u && u.id && !ids.has(u.id));
 }
 function abrirAgregar(){
   const box = document.getElementById("listaAgregar");
@@ -1003,7 +1013,7 @@ function abrirAgregar(){
   if(!dis.length){
     const p = document.createElement("div");
     p.style.cssText = "font-size:.85rem;color:var(--fg-muted);";
-    p.textContent = "No hay invitados por agregar.";
+    p.textContent = "No hay nadie por agregar. Pide el QR para registrar a alguien.";
     box.appendChild(p);
   }
   dis.forEach(u=>{
@@ -1027,7 +1037,7 @@ async function agregarInvitado(id){
   const deck = mezclar(fuente);
   const pool = [];
   for(let i = 0; i < restantes; i++) pool.push(deck[i % deck.length]);
-  const nuevo = { id: cab.id, nombre: cab.nombre || "Invitado", lado: cab.lado, admin: false, invitado: true, conQuien: cab.conQuien || null };
+  const nuevo = { id: cab.id, nombre: cab.nombre || "Invitado", lado: cab.lado, admin: false, invitado: !!cab.invitado, conQuien: cab.conQuien || null };
   if(jugandoCompartido){
     await runTransaction(db, async (tx)=>{
       const ref = sesionRef();
@@ -1112,6 +1122,10 @@ function repartirOpciones(cabezasIn, fuente, R){
   return pools;
 }
 async function iniciar(modo, ladoSoloElegido, unCelularFlag){
+  // Se guarda el modo y el "un solo celular": de eso depende que se muestren el
+  // QR, "Agregar invitado" y el panel de la sala (solo en Multijugador).
+  modoJuego = modo;
+  unCelular = !!unCelularFlag;
   await cargarOpciones();
   // Lista de usuarios fresca, para no arrancar sin un invitado recien agregado.
   try{
