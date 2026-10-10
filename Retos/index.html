@@ -427,12 +427,18 @@ async function avisarTelegram(texto, url){
   try{
     const cuerpo = { chat_id: TELEGRAM_CHAT_ID, text: texto };
     if(url) cuerpo.reply_markup = { inline_keyboard: [[{ text: "Abrir 👀", url: url }]] };
-    await fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
+    const r = await fetch("https://api.telegram.org/bot" + TELEGRAM_BOT_TOKEN + "/sendMessage", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(cuerpo)
-    });
-  }catch(e){}
+    }).then(x=>x.json());
+    // Un token/chat ID malo responde 200 con ok:false: hay que leerlo, o el
+    // aviso se pierde sin que nadie sepa por que. Se deja la pista en el
+    // celular para que ⚙️ → Telegram la pueda mostrar.
+    if(r && r.ok === false) throw new Error(r.description || "Telegram rechazo el aviso");
+  }catch(e){
+    try{ localStorage.setItem("pareja_tg_error", String((e && e.message) || e)); }catch(x){}
+  }
 }
 // Acciones propias recientes: no alertar de lo que yo mismo hice
 const suprimidos = {};

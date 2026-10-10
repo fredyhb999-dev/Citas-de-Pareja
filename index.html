@@ -199,6 +199,7 @@
   <div class="paso" id="paso2">
     <h1>Avisos 📲</h1>
     <p class="sub">Opcional: Telegram avisa cada cita y reto. Si lo omites, la app funciona igual.</p>
+    <p class="sub" style="font-size:.8rem;">Te faltan? Después lo arreglas en ⚙️ → Telegram, sin repetir nada.</p>
     <ol>
       <li>Habla con <b>BotFather</b> → <b>/newbot</b> → te da un <b>token</b>.</li>
       <li>Crea tu grupo, invita al bot y consigue el <b>chat ID</b>.</li>
@@ -244,6 +245,12 @@
     <div class="subtitle">Cambiar, agregar o dar de baja</div></span>
     <span class="chevron">›</span>
   </button>
+  <button class="card" id="invCardTg" type="button" style="width:100%;text-align:left;cursor:pointer;font-family:inherit;margin:0;">
+    <span class="icon">📲</span>
+    <span class="label"><div class="title">Telegram</div>
+    <div class="subtitle" id="invTgSub">Avisos al grupo</div></span>
+    <span class="chevron">›</span>
+  </button>
   </div>
   <div id="invVistaInv" style="display:none;width:100%;flex-direction:column;align-items:center;">
     <button id="invBackDeInv" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Invitados</button>
@@ -279,6 +286,22 @@
       <input type="text" id="invNuevo" placeholder="Nuevo invitado" maxlength="30" autocomplete="off" style="margin-bottom:0;">
       <button class="btnPri" id="invAgregar" style="width:auto;margin-bottom:0;padding:14px 18px;">＋</button>
     </div>
+  </div>
+  <div id="invVistaTg" style="display:none;width:100%;text-align:left;">
+    <button id="invBackTg" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Atrás</button>
+    <h1 style="font-size:1.4rem;text-align:center;">Telegram 📲</h1>
+    <p style="font-size:.82rem;color:var(--fg-muted);text-align:center;margin:0 0 16px;">Cada cita y reto avisa al grupo. Sin esto la app funciona igual.</p>
+    <label for="tgToken" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:0 0 6px;">Token del bot</label>
+    <input type="text" id="tgToken" placeholder="123456:ABC-DEF..." autocomplete="off" style="margin-bottom:8px;">
+    <div style="display:flex;gap:8px;">
+      <button class="btnPri" id="tgBuscar" style="width:auto;flex:1;">Buscar mis grupos</button>
+      <button class="btnPri" id="tgProbar" style="width:auto;flex:1;">Probar</button>
+    </div>
+    <div id="tgChats" style="display:flex;flex-direction:column;gap:8px;margin:10px 0 0;"></div>
+    <label for="tgChat" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:14px 0 6px;">Chat ID del grupo</label>
+    <input type="text" id="tgChat" placeholder="-1001234567890" autocomplete="off" style="margin-bottom:8px;">
+    <p id="tgEstado" style="font-size:.85rem;color:var(--fg-muted);min-height:20px;margin:0 0 10px;"></p>
+    <button class="btnPri" id="tgGuardar">Guardar</button>
   </div>
 </div>
 
@@ -994,6 +1017,7 @@ function invRefrescar(){
           ? "Solicitando Acceso"
           : "Entra a otra base como invitado o vuelve a la tuya.");
   }catch(e){}
+  tgTarjeta();
 }
 async function pintarInvUsuarios(){
   const box = document.getElementById("invUsuarios");
@@ -1087,6 +1111,7 @@ function invVer(cual){
     est.style.display = "";
     document.getElementById("invVistaInv").style.display = "none";
     document.getElementById("invVistaUsu").style.display = "none";
+    document.getElementById("invVistaTg").style.display = "none";
     invModoScan(false);
     return;
   }
@@ -1095,6 +1120,8 @@ function invVer(cual){
   est.style.display = "none";
   document.getElementById("invVistaInv").style.display = cual === "inv" ? "flex" : "none";
   document.getElementById("invVistaUsu").style.display = cual === "usu" ? "block" : "none";
+  document.getElementById("invVistaTg").style.display = cual === "tg" ? "block" : "none";
+  if(cual === "tg") pintarTelegram();
   try{ window.scrollTo(0, 0); }catch(e){}
 }
 function invModoScan(on){
@@ -1125,6 +1152,135 @@ document.getElementById("invBackDeUsu").onclick = async ()=>{
   if(await salirSinHaberEntrado()) return;
   invVer(null);
   invRefrescar();
+};
+document.getElementById("invBackTg").onclick = ()=>{ invVer(null); };
+// ---------- Telegram ----------
+// El token y el chat ID viven SOLO en este celular (localStorage), igual que
+// el resto de lo que arma el asistente. Antes no habia forma de corregirlos:
+// si el paso de Telegram se saltaba o el chat ID quedaba mal, tocaba borrar
+// los datos del sitio y repetir el asistente completo. Aqui se arregla en el
+// momento, y ademas el error de Telegram se ve en vez de perderse en silencio.
+const CLAVE_TG_ERROR = "pareja_tg_error";
+function tgGuardado(){
+  try{
+    const g = leerConfigGuardada();
+    const t = g && g.telegram;
+    return (t && t.token && t.chat) ? t : null;
+  }catch(e){ return null; }
+}
+function tgTarjeta(){
+  try{
+    document.getElementById("invTgSub").textContent = tgGuardado()
+      ? "Avisos activos al grupo"
+      : "Apagados · toca para activarlos";
+  }catch(e){}
+}
+function tgEstado(txt, malo){
+  const el = document.getElementById("tgEstado");
+  el.textContent = txt || "";
+  el.style.color = malo ? "var(--rojo)" : "var(--fg-muted)";
+}
+function pintarTelegram(){
+  const t = tgGuardado();
+  const tok = document.getElementById("tgToken");
+  const cha = document.getElementById("tgChat");
+  // Solo rellena lo vacio: asi no se pisa lo que se esta escribiendo.
+  if(!tok.value && t) tok.value = t.token;
+  if(!cha.value && t) cha.value = t.chat;
+  tgTarjeta();
+  document.getElementById("tgChats").innerHTML = "";
+  if(t){ tgEstado("Ya esta configurado. Cambia lo que quieras y dale Guardar."); return; }
+  let err = "";
+  try{ err = localStorage.getItem(CLAVE_TG_ERROR) || ""; }catch(e){}
+  tgEstado(err ? ("El ultimo aviso no pudo enviarse: " + err) : "Sin configurar: no llega ningun aviso.", !!err);
+}
+// Se devuelve el JSON de Telegram TAL CUAL, tambien cuando contesta ok:false.
+// Ese texto es justo lo que hace falta para saber que esta mal, y antes se
+// perdia porque todo el envio vivia dentro de un catch vacio.
+async function tgApi(token, metodo, cuerpo){
+  const r = await fetch("https://api.telegram.org/bot" + token + "/" + metodo, {
+    method: cuerpo ? "POST" : "GET",
+    headers: { "Content-Type": "application/json" },
+    body: cuerpo ? JSON.stringify(cuerpo) : undefined
+  });
+  return await r.json();
+}
+// El chat ID se busca solo: el bot le dice que chats ve, y el usuario elige
+// el suyo de una lista. Era el paso que mas atorado a la gente (el grupo
+// tiene id -100..., nunca el numero del bot ni el del creador).
+document.getElementById("tgBuscar").onclick = async ()=>{
+  const token = document.getElementById("tgToken").value.trim();
+  const caja = document.getElementById("tgChats");
+  caja.innerHTML = "";
+  if(!token){ tgEstado("Primero pega el token del bot.", true); return; }
+  tgEstado("Buscando...");
+  try{
+    const r = await conTiempo(tgApi(token, "getUpdates"), 15000);
+    if(!r || r.ok === false){
+      tgEstado("Telegram rechazo el token: " + ((r && r.description) || "respuesta vacia"), true);
+      return;
+    }
+    // El mismo chat aparece repetido en cada mensaje: se deja solo uno.
+    const vistos = [];
+    (r.result || []).forEach(u=>{
+      const ch = (u.message || u.channel_post || u.edited_message || u.my_chat_member || {}).chat;
+      if(!ch || !ch.id) return;
+      if(vistos.some(v=>v.id === ch.id)) return;
+      const nombre = ch.title || (ch.type === "private" ? (ch.first_name || "chat privado") : ch.type);
+      vistos.push({ id: ch.id, nombre });
+    });
+    if(!vistos.length){
+      tgEstado("El bot todavia no ve ningun chat. Agregalo al grupo, escribe /start@TuBot DENTRO del grupo y dale Buscar otra vez.", true);
+      return;
+    }
+    tgEstado("Toca el grupo correcto:");
+    vistos.forEach(v=>{
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = v.nombre + " · " + v.id;
+      b.style.cssText = "width:100%;text-align:left;background:var(--card);border:1px solid var(--card-border);border-radius:12px;color:var(--fg);padding:12px;font-size:.85rem;font-family:'Chakra Petch',sans-serif;cursor:pointer;";
+      b.onclick = ()=>{
+        document.getElementById("tgChat").value = String(v.id);
+        tgEstado("Chat ID puesto. Ahora dale Probar.");
+      };
+      caja.appendChild(b);
+    });
+  }catch(e){
+    tgEstado("No se pudo consultar. Revisa tu internet.", true);
+  }
+};
+document.getElementById("tgProbar").onclick = async ()=>{
+  const token = document.getElementById("tgToken").value.trim();
+  const chat = document.getElementById("tgChat").value.trim();
+  if(!token || !chat){ tgEstado("Necesitas el token y el chat ID.", true); return; }
+  tgEstado("Enviando...");
+  try{
+    const r = await conTiempo(tgApi(token, "sendMessage", {
+      chat_id: chat,
+      text: "✅ Avisos activados. Cada cita y reto va a llegar aqui."
+    }), 15000);
+    if(r && r.ok){
+      try{ localStorage.removeItem(CLAVE_TG_ERROR); }catch(e){}
+      tgEstado("¡Llego! Ya puedes Guardar.");
+    }else{
+      tgEstado("Telegram lo rechazo: " + ((r && r.description) || "respuesta vacia"), true);
+    }
+  }catch(e){
+    tgEstado("No se pudo enviar. Revisa tu internet.", true);
+  }
+};
+document.getElementById("tgGuardar").onclick = ()=>{
+  const token = document.getElementById("tgToken").value.trim();
+  const chat = document.getElementById("tgChat").value.trim();
+  let g = null;
+  try{ g = leerConfigGuardada(); }catch(e){}
+  if(!g || !g.firebase){ tgEstado("Primero termina el asistente del inicio.", true); return; }
+  // Con token y chat se guarda; con los dos vacios se apaga el bloque entero.
+  if(token && chat) g.telegram = { token, chat };
+  else delete g.telegram;
+  try{ guardarConfig(g); }
+  catch(e){ tgEstado("No se pudo guardar en este celular.", true); return; }
+  pintarTelegram();
 };
 // ---------- cambiar usuario ----------
 // Antes borraba la identidad y recargaba, y eso no dejaba salir: habia que
@@ -1167,6 +1323,7 @@ document.getElementById("gearBtn").onclick = ()=>{
 };
 document.getElementById("invCardInv").onclick = ()=>{ invVer("inv"); };
 document.getElementById("invCardUsu").onclick = ()=>{ invVer("usu"); pintarInvUsuarios(); };
+document.getElementById("invCardTg").onclick = ()=>{ invVer("tg"); };
 document.getElementById("invVolverTop").onclick = async ()=>{
   if(await salirSinHaberEntrado()) return;
   await detenerScanInv();

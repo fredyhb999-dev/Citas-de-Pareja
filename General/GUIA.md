@@ -1676,6 +1676,9 @@ definicion del pack poner el emoji en `icono`.
   invitados siguen esperando la invitación. El **anfitrión** de cada partida es
   quien la inició (en compartida, `hostUid`): los botones de Pausar/Terminar/QR/
   Agregar invitado y "saltar turno" son de ese anfitrión (`esAnfitrion()`).
+  `esAnfitrion()` es la bandera **`soyHost`** (se pone al iniciar o reanudar la
+  partida, o al entrar a una que yo inicié) y **no** depende de `jugando`: si
+  dependiera, al pausar se ocultarían los botones y no volverían al reanudar.
   El engrane de configuración (⚙️) lo tienen **los dos** (es su app en cada
   teléfono, aunque compartan datos); el "solo administrador" era para el control
   de invitados, no para la pareja.

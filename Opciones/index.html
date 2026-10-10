@@ -450,6 +450,9 @@ async function guardarOpciones(){
 let estado = null;   // { cabezas, listas, pares, eliminadas, orden, turno, terminada }
 let jugando = false;
 let jugandoCompartido = false;
+// soyHost: mando en la partida EN CURSO (puedo pausar/terminar/saltar/agregar).
+// Se pone al iniciar, al reanudar como anfitrión, o al entrar a una partida mía.
+let soyHost = false;
 let modoLocal = false;
 let modoJuego = "multi";
 let unCelular = false;
@@ -782,13 +785,8 @@ async function cerrarSesion(){
 }
 
 // ---------- player ----------
-// ¿Mando en la partida en curso? En una compartida, quien la inició (hostUid);
-// en una local (un celular / solo), quien la empezó en este teléfono.
-function esAnfitrion(){
-  if(!jugando) return false;
-  if(jugandoCompartido) return !!(sesionActual && sesionActual.hostUid === miId);
-  return true;
-}
+// ¿Mando en la partida en curso? (pausar/terminar/saltar/agregar invitado)
+function esAnfitrion(){ return soyHost; }
 function mostrarBotonesAdmin(){
   const host = esAnfitrion();
   const dsp = host ? "" : "none";
@@ -1051,6 +1049,7 @@ async function iniciar(modo, ladoSoloElegido, unCelularFlag){
     try{ await cerrarSesion(); }catch(e){}
   }
   document.getElementById("plTitulo").textContent = JUEGO_TITULO;
+  soyHost = true;
   mostrarBotonesAdmin();
   ver("vistaPlayer");
   pintarPaso();
@@ -1113,6 +1112,7 @@ async function continuarPartida(){
   jugando = true;
   modoLocal = false;
   jugandoCompartido = true;
+  soyHost = true;
   try{
     const nsid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
     sidMostrado = nsid;
@@ -1121,6 +1121,7 @@ async function continuarPartida(){
   }catch(e){}
   cargarEstado(sanearSesion(d));
   ver("vistaPlayer");
+  mostrarBotonesAdmin();
   pintarPaso();
 }
 document.getElementById("btnContinuar").onclick = ()=>{ continuarPartida(); };
@@ -1139,8 +1140,10 @@ function entrarAlJuego(d){
   jugando = true;
   modoLocal = false;
   jugandoCompartido = true;
+  soyHost = !!(d && d.hostUid === miId);
   cargarEstado(sanearSesion(d));
   ver("vistaPlayer");
+  mostrarBotonesAdmin();
   pintarPaso();
 }
 document.getElementById("btnUnirme").onclick = ()=>{

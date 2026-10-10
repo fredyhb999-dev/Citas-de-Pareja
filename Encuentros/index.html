@@ -435,6 +435,9 @@ let modoJuego = "compartido";
 // jugandoCompartido: si la partida EN CURSO usa la sesión compartida. En local
 // no se escribe sesión ni se invita: todo se ve en el celular del anfitrión.
 let jugandoCompartido = false;
+// soyHost: mando en la partida EN CURSO (puedo pausar/terminar/saltar). Se pone
+// al iniciar, al reanudar como anfitrión, o al entrar a una partida que yo inicié.
+let soyHost = false;
 let sesionActual = null;
 let sesionUnsub = null;
 let sesionIniciada = false;
@@ -1365,20 +1368,15 @@ async function generarYIniciar(activities, tomas){
   }
   document.getElementById("plTitulo").textContent = "Encuentros Guiados";
   document.getElementById("btnSig").style.display = "";
+  soyHost = true;
   mostrarBotonesAdmin();
   ver("vistaPlayer");
   pintarPaso();
 }
 
 // ---------- player ----------
-// Pausar y Terminar Partida son solo del anfitrion (quien inicio la partida).
-// ¿Mando en la partida en curso? En una compartida, quien la inició (hostUid);
-// en una local (un celular), quien la empezó en este teléfono.
-function esAnfitrion(){
-  if(!jugando) return false;
-  if(jugandoCompartido) return !!(sesionActual && sesionActual.hostUid === miId);
-  return true;
-}
+// Pausar y Terminar Partida son del anfitrion: quien inicio la partida.
+function esAnfitrion(){ return soyHost; }
 function mostrarBotonesAdmin(){
   const host = esAnfitrion();
   const dsp = host ? "" : "none";
@@ -1495,6 +1493,7 @@ document.getElementById("btnContinuar").onclick = async ()=>{
   jugando = true;
   modoLocal = false;
   jugandoCompartido = true;
+  soyHost = true;
   try{
     const nsid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
     sidMostrado = nsid;
@@ -1503,6 +1502,7 @@ document.getElementById("btnContinuar").onclick = async ()=>{
   }catch(e){}
   cargarEnMemoria(sanearSesion(d));
   ver("vistaPlayer");
+  mostrarBotonesAdmin();
   pintarPaso();
 };
 document.getElementById("btnNueva").onclick = async ()=>{
@@ -1535,8 +1535,10 @@ function entrarAlJuego(d){
   jugando = true;
   modoLocal = false;
   jugandoCompartido = true;
+  soyHost = !!(d && d.hostUid === miId);
   cargarEnMemoria(sanearSesion(d));
   ver("vistaPlayer");
+  mostrarBotonesAdmin();
   pintarPaso();
 }
 document.getElementById("btnUnirme").onclick = ()=>{
