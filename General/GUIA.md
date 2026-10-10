@@ -1214,6 +1214,15 @@ se descarta si pasaron mas de 6 horas, para que no salga en una visita normal.
 Antes de irse se guarda **solo lo que haya cambiado** (`hayCambiosSinGuardar()`),
 así que no se pierde nada marcado ni se "personaliza" una actividad que no se toco.
 
+**La pestaña "Actividades" se apaga con el editor abierto.** Antes se podia
+oprimir y la lista de actividades aparecia ARRIBA con el editor de accesorios
+PEGADO ABAJO, y se podia guardar sobre la actividad equivocada. Ahora
+`abrirEditor()` hace `tabLista.disabled = true` y `cerrarEditor()` lo vuelve a
+encender; ademas `tabLista.onclick` tiene un guardia por si se dispara igual.
+La pestaña "Accesorios" de arriba, con el editor abierto, pasa por
+`irAAccesorios()` (guarda lo marcado y deja la nota de regreso) en vez de irse
+sin guardar.
+
 **LO IMPORTANTE: el nombre de una actividad es la llave de casi todo.** Al
 **renombrar**, hay que mover las cinco cosas juntas o quedan huerfanas:
 

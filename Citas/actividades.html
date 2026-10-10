@@ -76,6 +76,9 @@
     color: var(--fg-muted); padding:10px 18px; border-radius:12px; cursor:pointer;
     border:1px solid var(--card-border); background: var(--card);
   }
+  /* Con el editor de una actividad abierto la pestana no se puede oprimir:
+     antes se mezclaba la lista de actividades ARRIBA y el editor ABAJO. */
+  .tabs button:disabled{ opacity:.4; cursor:default; }
   .panel{ display:none; width:100%; max-width:520px; margin:0 0 16px;
     background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:18px; }
   .panel.ver{ display:block; }
@@ -587,6 +590,9 @@ async function abrirEditor(nombre){
   // El editor REEMPLAZA la lista: así no se ve nada encimado.
   listaEl.hidden = true;
   editorWrap.style.display = "block";
+  // Con el editor abierto la pestana se apaga: si se oprime, la lista y el
+  // editor quedaban mezclados y se podia guardar sobre la actividad equivocada.
+  tabLista.disabled = true;
   try{ window.scrollTo(0, 0); }catch(e){}
 }
 
@@ -595,6 +601,7 @@ function cerrarEditor(){
   listaEl.hidden = false;
   actividadEditando = null;
   accsGuardados = [];
+  tabLista.disabled = false;
   filaRenombrar.classList.remove("ver");
   filaEliminar.classList.remove("ver");
 }
@@ -810,6 +817,8 @@ function ponerTitulo(t, d){
   document.getElementById("descCfg").textContent = d;
 }
 tabLista.onclick = ()=>{
+  // Cinturon: con el editor abierto la pestana no hace nada.
+  if(editorWrap.style.display !== "none") return;
   const abierto = tabLista.classList.contains("activo");
   todosApagados();
   if(!abierto){
@@ -819,6 +828,15 @@ tabLista.onclick = ()=>{
     conteoEl.hidden = false;
   }
 };
+
+// La pestana "Accesorios" de arriba: si el editor esta abierto, pasa por el
+// mismo camino que el boton (guarda lo marcado y deja la nota de regreso).
+const tabAccesorios = document.querySelector('.tabs a[href="accesorios.html"]');
+if(tabAccesorios){
+  tabAccesorios.onclick = e=>{
+    if(editorWrap.style.display !== "none" && actividadEditando){ e.preventDefault(); irAAccesorios(); }
+  };
+}
 
 cargar().then(volverDesdeAccesorios);
 tabLista.onclick();
