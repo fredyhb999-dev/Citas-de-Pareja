@@ -1142,6 +1142,7 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | Aviso de fin solo en la transicion real | Exige `&& jugando`, para que un documento viejo no lo displays otra vez |
 | **Al acabar una partida se prenden fuegos** | Modulo `fuegos.js` en la **raiz**. Sale en todos los modos (solo, pareja, multi, un celular o compartido) y tmbn si el anfitrion la termina. El aviso de fin **no** dice "La partida termino": dice "Gracias por jugar" y la pantalla se celebra con fuegos |
 | El turno ajeno va en **recuadro** | Igual que en `Encuentros/` (`#actividadAhora`): fondo con degradado, borde, sombras y `border-radius:24px`. Por eso `#esperaTurno` se enciende con `display:"flex"` y **no** con `"block"**: si no, el estilo de linea manda y no se centra |
+| **Panel de la sala** (`#salaPanel`) | Abajo de los botones, solo en partida compartida. Izquierda **En la espera** = usuarios del grupo que NO estan en `cabezas` (en Pareja son los invitados; en Multijugador los que se registraron despues de empezar). Derecha **En el juego** = las cabezas de la sesion. Se repinta en cada `pintarPaso()` y se apaga solo cuando ya no se esta jugando |
 | El selector de invitado solo muestra perfiles base | Nunca a otros invitados, para que no haya invitado-de-invitado |
 | Sin caducidad por tiempo para el invitado | Si cierra la app, el chequeo no corre: el vencimiento nunca se aplicaria |
 | La sala es **solo para invitados** | La pareja no la ve ni entra por su cuenta |
