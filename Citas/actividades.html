@@ -336,6 +336,11 @@ let catalogoAcc = []; // accesorios del JSON
 let extrasAcc = [];   // accesorios extra de Firebase
 
 let actividadEditando = null;
+// ¿Esta abierto el editor de una actividad? Es una bandera de verdad y NO se
+// pregunta por editorWrap.style.display: al abrir la pagina ese estilo de linea
+// esta vacio (el display:none lo pone el CSS), asi que la comparacion daba
+// "abierto" desde el arranque y la lista de actividades NUNCA se mostraba.
+let editorAbierto = false;
 // Lo que hay guardado en Firebase para la actividad que se está editando.
 // Sirve para saber si marcaste algo sin guardar antes de irte a otra pantalla.
 let accsGuardados = [];
@@ -590,6 +595,7 @@ async function abrirEditor(nombre){
   // El editor REEMPLAZA la lista: así no se ve nada encimado.
   listaEl.hidden = true;
   editorWrap.style.display = "block";
+  editorAbierto = true;
   // Con el editor abierto la pestana se apaga: si se oprime, la lista y el
   // editor quedaban mezclados y se podia guardar sobre la actividad equivocada.
   tabLista.disabled = true;
@@ -601,6 +607,7 @@ function cerrarEditor(){
   listaEl.hidden = false;
   actividadEditando = null;
   accsGuardados = [];
+  editorAbierto = false;
   tabLista.disabled = false;
   filaRenombrar.classList.remove("ver");
   filaEliminar.classList.remove("ver");
@@ -818,7 +825,7 @@ function ponerTitulo(t, d){
 }
 tabLista.onclick = ()=>{
   // Cinturon: con el editor abierto la pestana no hace nada.
-  if(editorWrap.style.display !== "none") return;
+  if(editorAbierto) return;
   const abierto = tabLista.classList.contains("activo");
   todosApagados();
   if(!abierto){
@@ -834,7 +841,7 @@ tabLista.onclick = ()=>{
 const tabAccesorios = document.querySelector('.tabs a[href="accesorios.html"]');
 if(tabAccesorios){
   tabAccesorios.onclick = e=>{
-    if(editorWrap.style.display !== "none" && actividadEditando){ e.preventDefault(); irAAccesorios(); }
+    if(editorAbierto && actividadEditando){ e.preventDefault(); irAAccesorios(); }
   };
 }
 
