@@ -116,6 +116,25 @@
     border-radius:16px; padding:16px; margin:14px 0; text-align:left; font-size:.95rem; line-height:1.7; }
   #resultados b{ font-family:'Chakra Petch',sans-serif; }
   #finMsg{ font-size:1.1rem; text-align:center; margin:20px 0; }
+  /* ---------- sala: quien espera / quien juega ---------- */
+  #salaPanel{ display:none; grid-template-columns:1fr 1fr; gap:10px; width:100%; margin-top:10px; }
+  #salaPanel.ver{ display:grid; }
+  .salaCaja{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:14px;
+    padding:12px 13px; text-align:left; min-width:0; }
+  .salaCaja h4{ font-family:'Chakra Petch',sans-serif; font-size:.72rem; font-weight:700;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--fg-muted); margin:0 0 9px;
+    display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .salaCaja h4 b{ color:var(--teal); font-size:.95rem; letter-spacing:0; }
+  /* El que espera va en coral (es a quien hay que entrar), el que juega en turquesa. */
+  #salaPanel .salaCaja:first-child h4 b{ color: var(--coral); }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{ font-family:'Chakra Petch',sans-serif; font-size:.82rem; font-weight:600;
+    border:1px solid var(--card-border); border-radius:999px; padding:4px 10px;
+    color:var(--fg); background:var(--card); word-break:break-word; }
+  .chip.yo{ border-color:var(--teal); color:var(--teal); }
+  .chip.inv{ border-style:dashed; color:var(--fg-muted); }
+  .chip.vacio{ border:none; background:none; color:var(--fg-muted); font-weight:500; padding-left:0; }
+  @media (max-width:420px){ #salaPanel{ grid-template-columns:1fr; } }
   .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:60;
     align-items:center; justify-content:center; padding:20px; }
   .modal .caja{ max-width:380px; border:1px solid var(--teal); border-radius:18px; padding:22px 20px;
@@ -188,6 +207,19 @@
     <button class="btnSec" id="btnQR">QR Invita a Alguien</button>
     <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
     <button class="btnSec" id="btnAgregarInv" style="display:none">➕ Agregar invitado</button>
+  </div>
+
+  <!-- Quién sigue esperando afuera y quién ya está jugando. Solo aparece en
+       partida compartida: en un solo celular no hay a quién esperar. -->
+  <div id="salaPanel">
+    <div class="salaCaja">
+      <h4>En la espera <b id="esperaCount">0</b></h4>
+      <div class="chips" id="esperaLista"></div>
+    </div>
+    <div class="salaCaja">
+      <h4>En el juego <b id="juegoCount">0</b></h4>
+      <div class="chips" id="juegoLista"></div>
+    </div>
   </div>
 </div>
 
@@ -813,6 +845,56 @@ function mostrarBotonesAdmin(){
     document.getElementById("btnAgregarInv").style.display = dis ? "" : "none";
   }catch(e){}
 }
+// ---------- sala: quien espera y quien esta jugando ----------
+// "En el juego" son las cabezas de la sesion (los que ya tienen turno).
+// "En la espera" son los usuarios del grupo que todavia NO entran en la partida:
+// en Pareja son los invitados (a proposito no juegan solos), y en Multijugador
+// son los que se registraron despues de que empezo el juego.
+function pintarSala(){
+  const panel = document.getElementById("salaPanel");
+  if(!panel) return;
+  const activa = !!(jugando && jugandoCompartido && sesionActual && sesionActual.activa);
+  panel.classList.toggle("ver", activa);
+  if(!activa) return;
+
+  const cabezas = (estado && Array.isArray(estado.cabezas) && estado.cabezas.length)
+    ? estado.cabezas
+    : ((sesionActual && Array.isArray(sesionActual.cabezas)) ? sesionActual.cabezas : []);
+
+  const dentro = new Set(cabezas.map(c=> c && c.id).filter(Boolean));
+  const armando = (u)=>({
+    nombre: (u && u.nombre) || "Invitado",
+    yo: !!(u && u.id === miId),
+    inv: !!(u && u.invitado)
+  });
+
+  const enJuego = cabezas.map(armando);
+  const enEspera = (Array.isArray(usuariosLista) ? usuariosLista : []).filter(u=> u && u.id && !dentro.has(u.id)).map(armando);
+
+  document.getElementById("juegoCount").textContent = enJuego.length;
+  document.getElementById("esperaCount").textContent = enEspera.length;
+
+  const llenar = (destinoId, arr)=>{
+    const destino = document.getElementById(destinoId);
+    if(!destino) return;
+    destino.innerHTML = "";
+    if(!arr.length){
+      const v = document.createElement("span");
+      v.className = "chip vacio";
+      v.textContent = "Nadie";
+      destino.appendChild(v);
+      return;
+    }
+    arr.forEach(it=>{
+      const s = document.createElement("span");
+      s.className = "chip" + (it.yo ? " yo" : "") + (it.inv ? " inv" : "");
+      s.textContent = it.nombre + (it.yo ? " (tú)" : "") + (it.inv ? " · invitado" : "");
+      destino.appendChild(s);
+    });
+  };
+  llenar("juegoLista", enJuego);
+  llenar("esperaLista", enEspera);
+}
 function pintarPaso(){
   const d = estado;
   const opA = document.getElementById("opA");
@@ -826,6 +908,9 @@ function pintarPaso(){
   const fin = document.getElementById("finMsg");
   const prog = document.getElementById("progreso");
   const btnSaltar = document.getElementById("btnSaltar");
+  // La sala se repinta en cada pasada, antes de los cortes: asi se apaga sola
+  // cuando ya no se esta jugando.
+  try{ pintarSala(); }catch(e){}
   if(!jugando || !d){ return; }
   if(d.terminada){
     cardsRow.style.display = "none";
