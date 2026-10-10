@@ -98,6 +98,10 @@
     border:1px solid var(--card-border); border-radius:24px; width:100%;
     box-shadow:0 14px 44px rgba(0,0,0,.45), 0 0 34px rgba(47,217,199,.12); }
   #finMsg{ font-size:1.1rem; text-align:center; margin:20px 0; }
+  /* El aviso de fin va SIN fondo: los fuegos de fondo.js (z-index 70) se ven
+     completos, y la caja, que es opaca, queda encima para que se lea bien. */
+  #modalFin{ z-index:80; background:transparent; }
+  #finTxt{ white-space:pre-line; font-size:1.1rem; }
   /* ---------- invitingos: QR + agregar + panel de la sala ----------
      Las dos ultimas reglas usan "ficha" y NO "chip": aqui ya existe un .chip
      distinto (el del editor de actividades). */
@@ -196,7 +200,7 @@
   <div id="progreso"></div>
   <div id="nivelTag" hidden></div>
   <div id="actividadAhora"></div>
-  <div id="finMsg" style="display:none">¡Encuentro completo! 🔥</div>
+  <div id="finMsg" style="display:none">¡Gracias por jugar!</div>
   <button class="btnPri" id="btnSig">Siguiente →</button>
   <button class="btnSec" id="btnSaltar">Saltar turno</button>
 
@@ -253,7 +257,8 @@
 <!-- ============ FIN (aviso a los invitados) ============ -->
 <div class="modal" id="modalFin">
   <div class="caja">
-    <div id="finTxt" style="font-size:.95rem;line-height:1.5;">¡Se acabó la partida! Gracias por jugar.</div>
+    <div id="finTxt">¡Gracias por jugar!</div>
+    <p style="font-size:.8rem;color:var(--fg-muted);margin:10px 0 0;">Toca la pantalla para más fuegos.</p>
     <button class="btnPri" id="btnFinOk" style="margin-top:14px;">Aceptar</button>
   </div>
 </div>
@@ -320,6 +325,8 @@ import { verificarCodigo, verificarFirma } from "../taquilla.js";
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
 // Invitados: este juego solo publica y retira su invitación. No sabe nada de la sala.
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
+// Fuegos de celebracion al acabar el encuentro (igual que Elecciones Peligrosas).
+import { encenderFuegos, apagarFuegos } from "../fuegos.js";
 
 const NIVELES = [
   { id: "basico", nombre: "Básico" },
@@ -374,6 +381,7 @@ document.getElementById("btnPausaOk").onclick = ()=>{
 // "Salir modo invitado" del inicio); al anfitrion y a la pareja solo los
 // regresa a la lista, sin tocar nada de su almacenamiento.
 document.getElementById("btnFinOk").onclick = async ()=>{
+  try{ apagarFuegos(); }catch(e){}
   if(esInvitadoFlag){ await salirModoInvitado(); return; }
   cerrarModal("modalFin");
   entrar();
@@ -727,11 +735,10 @@ function escucharSesion(){
             jugando = false;
             try{
               document.getElementById("finTxt").textContent = d.porAdmin
-                ? "La partida fue terminada por el anfitrión."
-                : "¡Se acabó la partida! Gracias por jugar.";
+                ? "El anfitrión acabó la partida."
+                : "¡Gracias por jugar!";
             }catch(e){}
-            abrirModal("modalFin");
-            return;
+            mostrarFin();
           }
           if(jugando){ jugando = false; entrar(); }
         }
@@ -746,7 +753,15 @@ function avanzarLocal(){
     turno++;
   }else{
     ronda++;
-    if(ronda >= largo){ jugando = false; pintarPaso(); return; }
+    if(ronda >= largo){
+      jugando = false;
+      pintarPaso();
+      // Acciones en un Celular tambien se celebra: mismo aviso y mismos fuegos
+      // que cuando la partida es compartida.
+      try{ document.getElementById("finTxt").textContent = "¡Gracias por jugar!"; }catch(e){}
+      mostrarFin();
+      return;
+    }
     turno = 0;
     orden = mezclar(cabezas.map(c=>c.id));
   }
@@ -845,6 +860,13 @@ async function cerrarSesion(){
   try{ await setDoc(sesionRef(), { activa: false, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
   // La partida ya no existe, asi que tampoco hay nada que invitar.
   await retirarInvitacion(JUEGO_INV);
+}
+
+// Fin de encuentro, igual que en Elecciones Peligrosas: fuegos de fondo,
+// texto de agradecimiento y el boton "Aceptar" (que los apaga).
+function mostrarFin(){
+  try{ encenderFuegos(); }catch(e){}
+  try{ abrirModal("modalFin"); }catch(e){}
 }
 
 function ver(id, guardar){
