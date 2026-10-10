@@ -806,11 +806,14 @@ function crearBotonSonido() {
   btnSonido.type = "button";
   btnSonido.title = "Sonido";
   btnSonido.innerHTML = SVG_ON + SVG_OFF;
-  // Va arriba del lienzo (Z+1) y en una esquina que no tapa el boton Aceptar.
+  // Va por encima del lienzo (Z) y de los avisos de fin: el modal de "se acabó
+  // la partida" es de z-index 80 y ocupa TODA la pantalla, asi que con el boton
+  // en 71 quedaba debajo y no se podia oprimir. Va en Z+20 y los avisos se
+  // atraviesan con pointer-events (ver la nota del final del archivo).
   btnSonido.style.cssText =
     "position:fixed;right:18px;bottom:18px;width:48px;height:48px;border-radius:50%;padding:0;" +
     "border:1px solid #322a4a;background:rgba(32,25,51,.75);color:#f4f1fb;cursor:pointer;" +
-    "backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:" + (Z + 1) + ";" +
+    "backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:" + (Z + 20) + ";" +
     "display:none;place-items:center;transition:transform .18s ease,color .2s ease;";
   btnSonido.addEventListener("click", e=>{ e.stopPropagation(); alternarSonido(); });
   document.body.appendChild(btnSonido);
@@ -925,3 +928,17 @@ export function apagarFuegos() {
 
 /** ¿Están encendidos ahora mismo? */
 export function fuegosEncendidos() { return activo; }
+
+// ---------------------------------------------------------------------------
+//  NOTA PARA LOS JUEGOS
+//  El aviso de "se acabó la partida" (#modalFin) va en z-index 80 y ocupa toda
+//  la pantalla. Si su fondo no se atraviesa, se come los toques y no habria
+//  forma de lanzar mas fuegos, ni de oprimir el boton de silencio. Por eso en
+//  cada juego el modal queda asi:
+//
+//    #modalFin{ z-index:80; background:transparent; pointer-events:none; }
+//    #modalFin .caja{ pointer-events:auto; }
+//
+//  Asi la caja y sus botones siguen siendo oprimibles y todo lo demas cae en el
+//  listener de document, que lanza los fuegos.
+// ---------------------------------------------------------------------------

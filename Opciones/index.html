@@ -139,9 +139,11 @@
     align-items:center; justify-content:center; padding:20px; }
   .modal .caja{ max-width:380px; border:1px solid var(--teal); border-radius:18px; padding:22px 20px;
     text-align:center; margin:0; }
-  /* El aviso de fin va SIN fondo: los fuegos de fondo.js (z-index 70) se ven
-     completos, y la caja, que es opaca, queda encima para que se lea bien. */
-  #modalFin{ z-index:80; background:transparent; }
+  /* El aviso de fin va SIN fondo y SINCRONIZANDO los toques: los fuegos de
+     fondo.js (z-index 70) se ven completos, la caja opaca queda encima para que
+     se lea, y el resto de la pantalla deja pasar el toque que lanza mas fuegos. */
+  #modalFin{ z-index:80; background:transparent; pointer-events:none; }
+  #modalFin .caja{ pointer-events:auto; }
 </style>
 </head>
 <body>
@@ -280,7 +282,6 @@
 <div class="modal" id="modalFin">
   <div class="caja">
     <div id="finTxt">¡Gracias por jugar!</div>
-    <p style="font-size:.8rem;color:var(--fg-muted);margin:10px 0 0;">Toca la pantalla para más fuegos.</p>
     <button class="btnPri" id="btnFinOk" style="margin-top:14px;">Aceptar</button>
   </div>
 </div>

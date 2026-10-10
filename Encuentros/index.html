@@ -98,15 +98,21 @@
     border:1px solid var(--card-border); border-radius:24px; width:100%;
     box-shadow:0 14px 44px rgba(0,0,0,.45), 0 0 34px rgba(47,217,199,.12); }
   #finMsg{ font-size:1.1rem; text-align:center; margin:20px 0; }
-  /* El aviso de fin va SIN fondo: los fuegos de fondo.js (z-index 70) se ven
-     completos, y la caja, que es opaca, queda encima para que se lea bien. */
-  #modalFin{ z-index:80; background:transparent; }
+  /* El aviso de fin va SIN fondo y SINCRONIZANDO los toques: los fuegos de
+     fondo.js (z-index 70) se ven completos, la caja opaca queda encima para que
+     se lea, y el resto de la pantalla deja pasar el toque que lanza mas fuegos. */
+  #modalFin{ z-index:80; background:transparent; pointer-events:none; }
+  #modalFin .caja{ pointer-events:auto; }
   #finTxt{ white-space:pre-line; font-size:1.1rem; }
   /* ---------- invitingos: QR + agregar + panel de la sala ----------
      Las dos ultimas reglas usan "ficha" y NO "chip": aqui ya existe un .chip
      distinto (el del editor de actividades). */
   .filaBotones{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; margin-bottom:10px; }
   .filaBotones .btnSec{ margin-bottom:0; }
+  /* Hueco SIEMPRE reservado para "Saltar turno". Ese boton solo sale cuando no
+     es tu turno, y sin este espacioreserved al aparecer empujaba hacia abajo la
+     fila de Pausar/Terminar y el panel de la sala: todo se encimaba y saltaba. */
+  .filaSaltar{ min-height:44px; }
   #salaPanel{ display:none; grid-template-columns:1fr 1fr; gap:10px; width:100%; margin-top:4px; }
   #salaPanel.ver{ display:grid; }
   .salaCaja{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:14px;
@@ -202,7 +208,11 @@
   <div id="actividadAhora"></div>
   <div id="finMsg" style="display:none">¡Gracias por jugar!</div>
   <button class="btnPri" id="btnSig">Siguiente →</button>
-  <button class="btnSec" id="btnSaltar">Saltar turno</button>
+
+  <!-- El hueco de arriba esta reservado aunque el boton no se vea. -->
+  <div class="filaSaltar">
+    <button class="btnSec" id="btnSaltar">Saltar turno</button>
+  </div>
 
   <!-- Misma cuadricula 2x2 que Elecciones Peligrosas: QR junto a "Pausar y
        Salir" y "Agregar invitado" junto a "Terminar Partida". Los dos de invitar
@@ -258,7 +268,6 @@
 <div class="modal" id="modalFin">
   <div class="caja">
     <div id="finTxt">¡Gracias por jugar!</div>
-    <p style="font-size:.8rem;color:var(--fg-muted);margin:10px 0 0;">Toca la pantalla para más fuegos.</p>
     <button class="btnPri" id="btnFinOk" style="margin-top:14px;">Aceptar</button>
   </div>
 </div>

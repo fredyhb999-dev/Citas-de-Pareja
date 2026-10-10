@@ -212,12 +212,12 @@
 </div>
 
 <!-- ============ FIN DE LA CITA (igual que Elecciones Peligrosas) ============
-     Sin fondo para que los fuegos de fondo.js (z-index 70) se vean completos;
-     la caja es opaca y queda encima (z-index 80) para que se lea el texto. -->
-<div id="modalFin" style="display:none;position:fixed;inset:0;background:transparent;z-index:80;align-items:center;justify-content:center;padding:20px;">
-  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:22px 20px;text-align:center;">
+     Sin fondo y sin cronizar los toques: los fuegos de fondo.js (z-index 70) se
+     ven completos, la caja es opaca y queda encima (z-index 80) para que se lea,
+     y el resto de la pantalla deja pasar el toque que lanza mas fuegos. -->
+<div id="modalFin" style="display:none;position:fixed;inset:0;background:transparent;z-index:80;align-items:center;justify-content:center;padding:20px;pointer-events:none;">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:22px 20px;text-align:center;pointer-events:auto;">
     <div id="finTxt" style="font-size:1.1rem;">¡Gracias por jugar!</div>
-    <p style="font-size:.8rem;color:var(--fg-muted);margin:10px 0 0;">Toca la pantalla para más fuegos.</p>
     <button class="btnPri" id="btnFinOk" style="margin-top:14px;">Aceptar</button>
   </div>
 </div>
