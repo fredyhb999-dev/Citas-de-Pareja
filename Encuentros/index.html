@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- El QR del anfitrión para registrar invitados sin salir del juego. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
@@ -96,6 +98,29 @@
     border:1px solid var(--card-border); border-radius:24px; width:100%;
     box-shadow:0 14px 44px rgba(0,0,0,.45), 0 0 34px rgba(47,217,199,.12); }
   #finMsg{ font-size:1.1rem; text-align:center; margin:20px 0; }
+  /* ---------- invitingos: QR + agregar + panel de la sala ----------
+     Las dos ultimas reglas usan "ficha" y NO "chip": aqui ya existe un .chip
+     distinto (el del editor de actividades). */
+  .filaBotones{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; margin-bottom:10px; }
+  .filaBotones .btnSec{ margin-bottom:0; }
+  #salaPanel{ display:none; grid-template-columns:1fr 1fr; gap:10px; width:100%; margin-top:4px; }
+  #salaPanel.ver{ display:grid; }
+  .salaCaja{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:14px;
+    padding:12px 13px; text-align:left; min-width:0; }
+  .salaCaja h4{ font-family:'Chakra Petch',sans-serif; font-size:.72rem; font-weight:700;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--fg-muted); margin:0 0 9px;
+    display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .salaCaja h4 b{ color:var(--teal); font-size:.95rem; letter-spacing:0; }
+  /* El que espera va en coral (es a quien hay que entrar), el que juega en turquesa. */
+  #salaPanel .salaCaja:first-child h4 b{ color: var(--coral); }
+  .fichas{ display:flex; flex-wrap:wrap; gap:6px; }
+  .ficha{ font-family:'Chakra Petch',sans-serif; font-size:.82rem; font-weight:600;
+    border:1px solid var(--card-border); border-radius:999px; padding:4px 10px;
+    color:var(--fg); background:var(--card); word-break:break-word; }
+  .ficha.yo{ border-color:var(--teal); color:var(--teal); }
+  .ficha.inv{ border-style:dashed; color:var(--fg-muted); }
+  .ficha.vacia{ border:none; background:none; color:var(--fg-muted); font-weight:500; padding-left:0; }
+  @media (max-width:420px){ #salaPanel{ grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -176,6 +201,25 @@
   <button class="btnSec" id="btnSaltar">Saltar turno</button>
   <button class="btnSec" id="btnTerminar">Pausar y Salir</button>
   <button class="btnSec" id="btnTerminarPartida">Terminar Partida</button>
+
+  <!-- Solo del anfitrión y solo en partida compartida ("Cada quien en el suyo").
+       mostrarBotonesAdmin() es la que los enciende y apaga. -->
+  <div class="filaBotones" id="filaInvitar" style="display:none">
+    <button class="btnSec" id="btnQR">QR Invita a Alguien</button>
+    <button class="btnSec" id="btnAgregarInv">➕ Agregar invitado</button>
+  </div>
+
+  <!-- Quién sigue esperando afuera y quién ya está jugando. -->
+  <div id="salaPanel">
+    <div class="salaCaja">
+      <h4>En la espera <b id="esperaCount">0</b></h4>
+      <div class="fichas" id="esperaLista"></div>
+    </div>
+    <div class="salaCaja">
+      <h4>En el juego <b id="juegoCount">0</b></h4>
+      <div class="fichas" id="juegoLista"></div>
+    </div>
+  </div>
 </div>
 
 <!-- ============ CONTINUAR ============ -->
@@ -240,7 +284,28 @@
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿Quieres jugar? ¿Unirte?</div>
     <div id="unirDesc" style="font-size:.9rem;color:var(--fg-muted);margin:10px 0 0;"></div>
     <button class="btnPri" id="btnUnirme" style="margin-top:16px;">Unirme →</button>
-    <button class="btnSec" id="btnUnirNo">Ahora no</button>
+  <button class="btnSec" id="btnUnirNo">Ahora no</button>
+  </div>
+</div>
+
+<!-- ============ AGREGAR INVITADO (a media partida) ============ -->
+<div class="modal" id="modalAgregar">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.3rem;">Agregar invitado</div>
+    <div style="font-size:.82rem;color:var(--fg-muted);margin:8px 0 0;">Entrará cuando le toque en la rotación.</div>
+    <div id="listaAgregar" style="margin-top:14px;"></div>
+    <button class="btnSec" id="btnAgregarNo">Cancelar</button>
+  </div>
+</div>
+
+<!-- ============ CÓDIGO QR (para registrar invitados sin salir) ============ -->
+<div class="modal" id="modalQR">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.2rem;">Código QR</div>
+    <div style="font-size:.82rem;color:var(--fg-muted);margin:8px 0 12px;">Que lo escanee quien quiera entrar como invitado.</div>
+    <div id="qrCajaJuego" style="background:#fff;padding:12px;border-radius:14px;display:none;justify-content:center;margin:0 auto 12px;width:fit-content;"></div>
+    <div id="qrMsg" style="font-size:.82rem;color:var(--rojo);min-height:18px;"></div>
+    <button class="btnSec" id="btnQRNo">Cerrar</button>
   </div>
 </div>
 
@@ -248,7 +313,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica } from "../config.js";
+import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, leerConfigGuardada } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
@@ -1382,7 +1447,62 @@ function mostrarBotonesAdmin(){
   const dsp = host ? "" : "none";
   try{ document.getElementById("btnTerminar").style.display = dsp; }catch(e){}
   try{ document.getElementById("btnTerminarPartida").style.display = dsp; }catch(e){}
+  // Invitar a alguien solo tiene sentido en la partida compartida: en un solo
+  // celular no hay a quien esperar, y el QR no aplica.
+  const invita = host && jugandoCompartido;
+  try{ document.getElementById("filaInvitar").style.display = invita ? "" : "none"; }catch(e){}
   if(!host){ try{ document.getElementById("btnSaltar").style.display = "none"; }catch(e){} }
+}
+
+// ---------- sala: quien espera y quien esta jugando ----------
+// "En el juego" son las cabezas de la sesion (los que ya tienen turno).
+// "En la espera" son los usuarios del grupo que todavia NO entran en la partida:
+// los invitados que todavia no han sido agregados, y los que se registraron
+// despues de que empezo el encuentro.
+function pintarSala(){
+  const panel = document.getElementById("salaPanel");
+  if(!panel) return;
+  const activa = !!(jugando && jugandoCompartido && sesionActual && sesionActual.activa);
+  panel.classList.toggle("ver", activa);
+  if(!activa) return;
+
+  const armando = (u)=>({
+    nombre: (u && u.nombre) || "Invitado",
+    yo: !!(u && u.id === miId),
+    inv: !!(u && u.invitado)
+  });
+
+  // La lista de la sesion manda; la variable en memoria es su espejo.
+  const cabs = (Array.isArray(cabezas) && cabezas.length)
+    ? cabezas
+    : ((sesionActual && Array.isArray(sesionActual.cabezas)) ? sesionActual.cabezas : []);
+  const enJuego = cabs.filter(Boolean).map(armando);
+  const dentro = new Set(cabs.map(c=>c && c.id).filter(Boolean));
+  const enEspera = (Array.isArray(usuariosLista) ? usuariosLista : []).filter(u=> u && u.id && !dentro.has(u.id)).map(armando);
+
+  document.getElementById("juegoCount").textContent = enJuego.length;
+  document.getElementById("esperaCount").textContent = enEspera.length;
+
+  const llenar = (destinoId, arr)=>{
+    const destino = document.getElementById(destinoId);
+    if(!destino) return;
+    destino.innerHTML = "";
+    if(!arr.length){
+      const v = document.createElement("span");
+      v.className = "ficha vacia";
+      v.textContent = "Nadie";
+      destino.appendChild(v);
+      return;
+    }
+    arr.forEach(it=>{
+      const s = document.createElement("span");
+      s.className = "ficha" + (it.yo ? " yo" : "") + (it.inv ? " inv" : "");
+      s.textContent = it.nombre + (it.yo ? " (tú)" : "") + (it.inv ? " · invitado" : "");
+      destino.appendChild(s);
+    });
+  };
+  llenar("juegoLista", enJuego);
+  llenar("esperaLista", enEspera);
 }
 function pintarPaso(){
   const total = largo;
@@ -1392,6 +1512,9 @@ function pintarPaso(){
   const btnSaltar = document.getElementById("btnSaltar");
   const fin = document.getElementById("finMsg");
   const prog = document.getElementById("progreso");
+  // La sala se repinta en cada pasada, antes de los cortes: asi se apaga sola
+  // cuando ya no se esta jugando.
+  try{ pintarSala(); }catch(e){}
   if(!jugando || ronda >= total || !orden.length){
     elAct.textContent = "";
     tag.style.display = "none";
@@ -1447,6 +1570,93 @@ document.getElementById("btnSig").onclick = async ()=>{
   if(orden[turno] !== miId) return;
   await avanzarSesion();
 };
+// ---------- invitar: QR y agregar invitado a media partida ----------
+// Quien todavia NO esta en las cabezas del encuentro y SI es invitado.
+function disponiblesInvitados(){
+  const ids = new Set((cabezas || []).map(c=> c && c.id));
+  return (usuariosLista || []).filter(u=> u && u.invitado && !ids.has(u.id));
+}
+function abrirAgregar(){
+  const box = document.getElementById("listaAgregar");
+  box.innerHTML = "";
+  const dis = disponiblesInvitados();
+  if(!dis.length){
+    const p = document.createElement("div");
+    p.style.cssText = "font-size:.85rem;color:var(--fg-muted);";
+    p.textContent = "No hay invitados por agregar. Pide el QR para registrar uno.";
+    box.appendChild(p);
+  }
+  dis.forEach(u=>{
+    const b = document.createElement("button");
+    b.className = "btnPri";
+    b.textContent = u.nombre || "Invitado";
+    b.onclick = ()=>{ cerrarModal("modalAgregar"); agregarInvitado(u.id); };
+    box.appendChild(b);
+  });
+  abrirModal("modalAgregar");
+}
+// El que entra NO juega la ronda en curso: se cuela al final de la rotacion y
+// de ahi en adelante le tocan rondas completas, hasta el final que ya traia la
+// partida. Se le copia la lista del de su mismo lado (las acciones son las del
+// encuentro, no hay de donde volver asortear sin romper el ritmo).
+async function agregarInvitado(id){
+  const cab = construirCabezas().find(c=> c.id === id);
+  if(!cab) return;
+  const nuevo = { id: cab.id, nombre: cab.nombre || "Invitado", lado: cab.lado, admin: false, invitado: true, conQuien: cab.conQuien || null };
+  try{
+    await runTransaction(db, async (tx)=>{
+      const ref = sesionRef();
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const d = snap.data();
+      if(!d.activa || d.terminada) return;
+      if((d.cabezas || []).some(c=> c.id === nuevo.id)) return;
+      // Misma lista que alguien de su lado (para que no le toque un texto vacio).
+      const companero = (d.cabezas || []).find(c=> c.lado === nuevo.lado) || (d.cabezas || [])[0];
+      const listaNueva = Array.isArray((d.listas || {})[companero && companero.id])
+        ? d.listas[companero.id].slice()
+        : [];
+      const cabezas = (d.cabezas || []).concat([nuevo]);
+      const orden = (Array.isArray(d.orden) ? d.orden : []).slice();
+      orden.push(nuevo.id);
+      const listas = Object.assign({}, d.listas || {});
+      listas[nuevo.id] = listaNueva;
+      tx.update(ref, { cabezas, orden, listas, actualizadaEn: serverTimestamp() });
+    });
+    // Volver a publicar la invitacion para que su sala le muestre "Entrar".
+    const cabs = (cabezas || []).some(c=> c.id === nuevo.id) ? cabezas : (cabezas || []).concat([nuevo]);
+    anunciarInvitacion(sidMostrado, cabs, nombreAdmin());
+  }catch(e){
+    try{ alert("No se pudo agregar. Revisa tu conexión."); }catch(x){}
+  }
+}
+document.getElementById("btnAgregarInv").onclick = ()=>{ abrirAgregar(); };
+document.getElementById("btnAgregarNo").onclick = ()=>{ cerrarModal("modalAgregar"); };
+
+// QR del anfitrión: quien lo escanea se registra como invitado SIN salir del juego.
+document.getElementById("btnQR").onclick = ()=>{
+  const g = leerConfigGuardada();
+  const caja = document.getElementById("qrCajaJuego");
+  const msg = document.getElementById("qrMsg");
+  msg.textContent = "";
+  caja.innerHTML = "";
+  if(!g || !g.firebase){
+    caja.style.display = "none";
+    msg.textContent = "No se encontró la configuración.";
+    abrirModal("modalQR");
+    return;
+  }
+  caja.style.display = "flex";
+  try{
+    new QRCode(caja, {
+      text: JSON.stringify({ firebase: g.firebase, telegram: g.telegram || null }),
+      width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M
+    });
+  }catch(e){ caja.style.display = "none"; msg.textContent = "No se pudo generar."; }
+  abrirModal("modalQR");
+};
+document.getElementById("btnQRNo").onclick = ()=>{ cerrarModal("modalQR"); };
+
 document.getElementById("btnTerminar").onclick = async ()=>{
   // PAUSA la partida (se puede retomar). Solo el anfitrion.
   if(!esAnfitrion()){ alert("Pausar la partida es cosa del anfitrión."); return; }
