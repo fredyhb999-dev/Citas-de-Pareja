@@ -248,7 +248,7 @@
     display:flex; flex-direction:column; gap:6px; align-items:center; justify-content:center;
     color:var(--fg-muted); }
   .foto span{ font-size:2.2rem; opacity:.5; } .foto small{ font-size:.72rem; }
-  .foto img{ width:100%; height:100%; object-fit:cover; border-radius:16px; display:block; }
+  .foto img{ width:100%; height:100%; object-fit:contain; border-radius:16px; display:block; }
 
   .nombre{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.45rem; text-align:center;
     background:linear-gradient(90deg,var(--coral),var(--teal)); -webkit-background-clip:text;
@@ -1728,11 +1728,19 @@ function resetCarta(nueva){
 function pintarFotoEn(el, p){
   if(!el) return;
   const url = (p && p.imagen) ? String(p.imagen).trim() : "";
+  // No se vuelve a crear si ya está puesta la MISMA foto. La tarjeta se repinta
+  // varias veces mientras la imagen carga; antes cada repintado la borraba, la
+  // carga se cancelaba y el `onerror` dejaba el marcador 🖼️. En la PC cargaba
+  // tan rápido que no pasaba; en el celular sí.
+  if(el.dataset.foto === url && el.firstChild) return;
+  el.dataset.foto = url;
   if(url){
     el.innerHTML = "";
     const img = document.createElement("img");
     img.alt = "Imagen del personaje";
-    img.onerror = ()=>{ pintarFotoEn(el, {}); };   // si el enlace falla, el marcador
+    // Solo cae al marcador si ESTA imagen sigue siendo la de la caja: una carga
+    // vieja ya cancelada no puede tapar la foto nueva.
+    img.onerror = ()=>{ if(el.dataset.foto === url) pintarFotoEn(el, {}); };
     img.src = url;
     el.appendChild(img);
     return;

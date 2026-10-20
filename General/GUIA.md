@@ -1786,6 +1786,11 @@ ver con el nombre de los modos.
     va solo en el reverso**; y el **emoji del remate va FUERA** del degradado,
     porque con `background-clip:text` el emoji también sale transparente. El bloque
     de la variante que va dentro de la carta se rotula **"Variante picante"**.
+  - **La foto del personaje NO se vuelve a crear si la URL no cambió**
+    (`pintarFotoEn()` la guarda en `data-foto`). Si se recreara en cada repintado,
+    en el celular la carga se cancela y el `onerror` deja el marcador 🖼️ (en la PC
+    carga tan rápido que no se nota). La foto va con **`object-fit:contain`**: se ve
+    completa dentro del recuadro.
 - **Trampa de la dirección de un juego (oct-2026) — costó dos rondas de
   diagnóstico:** los juegos importan los módulos de la raíz con `../acceso.js` y
   compañía. Eso **solo funciona si la dirección es la CARPETA** (`/Roles/`). Si se
