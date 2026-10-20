@@ -2663,16 +2663,19 @@ async function entrar(){
   }
   ver("vistaInicio");
 }
-try{
-  cargarTodo().then(()=>{
-    chequearConexion();
-    pintarCastigos();
-    actualizarInicio();
-    ver("vistaInicio");
-  });
-}catch(e){
-  aviso("Error al iniciar.");
-}
+// 1) Pintar el inicio DE INMEDIATO: si Firebase tarda o falla, la pantalla no
+//    queda en blanco (antes solo se veían el engrane y "Volver").
+try{ ver("vistaInicio"); }catch(e){}
+// 2) Cargar datos y, al final, decidir la pantalla real (licencia, sesión o
+//    espera de invitado). Si algo falla, se queda el inicio.
+cargarTodo().then(async ()=>{
+  try{ chequearConexion(); }catch(e){}
+  try{ pintarCastigos(); }catch(e){}
+  try{ actualizarInicio(); }catch(e){}
+  try{ await entrar(); }catch(e){ try{ ver("vistaInicio"); }catch(x){} }
+}).catch(()=>{
+  try{ ver("vistaInicio"); }catch(e){}
+});
 </script>
 </body>
 </html>
