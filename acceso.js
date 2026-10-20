@@ -164,7 +164,10 @@ export async function nuevosSinPedir(packs){
     });
     (packs || []).forEach(p=>{
       if(!p || !p.id) return;
-      if(p.libre || p.oficial) return;          // los fijos no son del catálogo
+      // Solo se brincan los FIJOS (Diablitos, Retos, Centro). Las actividades
+      // OFICIALES sí avisan: salen como tarjeta en el Centro y se pueden pedir,
+      // así que también cuentan mientras no se hayan pedido (oct-2026).
+      if(p.libre) return;
       if(pedidos[p.id]) return;                  // ya se pidió
       const t = p.nuevoHasta && p.nuevoHasta.toDate ? p.nuevoHasta.toDate().getTime() : 0;
       if(t && Date.now() < t) out[p.id] = true;  // sigue siendo nuevo por fecha

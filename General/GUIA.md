@@ -1317,6 +1317,16 @@ fecha (aunque no lo hayas pedido) o si ya lo pediste (aunque siga la fecha).
 Una solicitud **revocada o negada NO cuenta**: eso se puede volver a pedir, así
 que el aviso puede reaparecer.
 
+**Las actividades OFICIALES sí avisan (corregido oct-2026).** Salen como tarjeta
+en el Centro y se pueden pedir, así que también prenden el punto rojo y la
+pastilla mientras no se hayan pedido. Antes se brincaban junto con los fijos
+(`if(p.libre || p.oficial) return`), y por eso una oficial recién publicada se
+veía `NUEVO` en su tarjeta pero no avisaba en el carrito. **Lo único que se
+brinca es `libre`** (Diablitos, Retos, Centro), que no es del catálogo.
+Ojo: el `NUEVO` de la **tarjeta** del Centro usa **solo la fecha**
+(`nuevoHasta`), así que puede seguir viéndose aunque el aviso ya esté apagado
+porque ya se pidió. Son dos criterios distintos a propósito.
+
 **Lo que NO se hace, a propósito:** no se meten fichas de lo que no tienes dentro
 de los submenús del menú (Experiencias / Juegos / Retos). Se probó y se descartó:
 llenaría los submenús de cosas ajenas. **Los submenús siguen mostrando solo lo
