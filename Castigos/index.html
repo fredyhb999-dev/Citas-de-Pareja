@@ -156,7 +156,7 @@
 <a class="back" id="lnkInicio" href="../index.html#juegos">← Volver</a>
 <button id="btnCfg" aria-label="Configurar">⚙️</button>
 
-<div class="eyebrow">El Precio del Placer</div>
+<div class="eyebrow">Atrévete a Jugar ...</div>
 
 <!-- ============ VISTA INICIO ============ -->
 <div class="vista" id="vistaInicio">
@@ -164,7 +164,7 @@
   <p class="desc">Ganar cumple tus deseos; perder despierta la pasión.</p>
 
   <div style="width:100%;">
-    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin-bottom:8px;">Modo</div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin-bottom:8px;">¿Quién juega hoy?</div>
     <div class="tabs">
       <button class="tab activo" id="modSolo">Solo</button>
       <button class="tab" id="modPareja">Pareja</button>
@@ -183,26 +183,28 @@
   <div id="bloqueQuienCastiga" style="width:100%;">
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">¿Quién castiga primero?</div>
     <div class="tabs">
-      <button class="tab activo" id="quienA">A</button>
-      <button class="tab" id="quienB">B</button>
+      <button class="tab activo" id="quienA">Usuario 1</button>
+      <button class="tab" id="quienB">Usuario 2</button>
     </div>
   </div>
 
   <div style="width:100%;">
-    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">Tipo</div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">Modalidad</div>
     <div class="tabs">
       <button class="tab activo" id="tipoNormal">Normal</button>
       <button class="tab" id="tipoMulti">Multi</button>
     </div>
   </div>
 
-  <!-- Selector de 3 castigos (solo Multi) -->
-  <div id="bloqueMultiSel" style="width:100%;display:none;margin-top:10px;">
-    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin-bottom:8px;">Elige 3 castigos para combinar</div>
-    <div id="listaMultiSel" style="max-height:220px;overflow-y:auto;border:1px solid var(--card-border);border-radius:12px;background:var(--bg-2);padding:8px;width:100%;"></div>
-    <div style="margin-top:8px;text-align:center;">
-      <button class="btnPri" id="btnCombinarMulti" style="width:auto;padding:14px 24px;" disabled>Combinar (0/3)</button>
-    </div>
+  <!-- Lista de castigos (igual que la lista de Encuentros) -->
+  <p class="desc" style="margin:14px 0 8px;">Elige castigo</p>
+  <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar castigo..." autocomplete="off">
+  <div id="cajaActs" style="width:100%;max-height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
+    <div id="listaActs" style="width:100%"></div>
+  </div>
+  <div id="filaMultiSel" style="display:none;width:100%;gap:8px;margin-top:12px;">
+    <button class="btnPri" id="btnCombinarMulti" disabled style="flex:1;opacity:.4;margin-bottom:0;">Combinar (0/3)</button>
+    <button class="btnSec" id="btnMultiCancel" style="width:auto;padding:12px 16px;text-decoration:none;">Cancelar</button>
   </div>
 
   <div id="bloqueSorprendeme" style="width:100%;display:none;">
@@ -214,12 +216,7 @@
     <label class="sw"><input type="checkbox" id="swPlacer"><span class="swSlider"></span></label>
   </div>
 
-  <button class="btnPri" id="btnJugarInicio">Jugar ▶</button>
   <button class="btnSec" id="btnQRInicio" style="margin-top:10px;">QR Invita a Alguien</button>
-
-  <div style="width:100%;margin-top:10px;color:var(--fg-muted);font-size:.8rem;text-align:center;">
-    Escanea el QR para registrar invitados. Al iniciar en Invitados se les manda la invitación.
-  </div>
 </div>
 
 <!-- ============ SIN ACCESO (licencia del juego) ============ -->
@@ -408,7 +405,7 @@
   <div id="nivelesBox" style="width:100%"></div>
 
   <div class="tomas">
-    <h3>Tomas por nivel (compartidas A/B)</h3>
+    <h3 id="tomasTitulo">Tomas por nivel</h3>
     <div class="tomasGrid" id="tomasGrid"></div>
   </div>
 
@@ -530,7 +527,7 @@ async function cargarIdentidad(){
 }
 function nombreDeLado(lado){
   const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
-  return (u && u.nombre) || (lado === "A" ? "el anfitrión" : "tu pareja");
+  return (u && u.nombre) || (lado === "A" ? "Usuario 1" : "Usuario 2");
 }
 
 // ---------- carga ----------
@@ -649,6 +646,9 @@ function ver(id){
   document.getElementById("lnkInicio").style.display = (id==="vistaEditar"||id==="vistaPartida"||esInvitadoFlag)?"none":"";
   try{ history.pushState({ v:id }, ""); }catch(e){}
   window.scrollTo(0,0);
+  // Refrescar la lista que corresponde (la del inicio o la de configuración).
+  try{ if(id==="vistaInicio") pintarListaInicio(); }catch(e){}
+  try{ if(id==="vistaConfig") pintarCastigos(); }catch(e){}
 }
 document.getElementById("btnCfg").onclick = ()=>{
   pintarCastigos();
@@ -687,30 +687,34 @@ async function pintarCastigos(){
   const box = document.getElementById("listaCastigos");
   const filtro = document.getElementById("buscarCastigos").value.toLowerCase();
   box.innerHTML = "";
+  const conteos = await contarAccionesCastigos();
   const lista = castigos.filter(c=>c.nombre.toLowerCase().includes(filtro));
   if(!lista.length){ box.innerHTML = '<p class="desc" style="text-align:center;">Sin castigos aún.</p>'; return; }
   lista.forEach(c=>{
+    const count = conteos[c.id] || 0;
     const b = document.createElement("button");
     b.className = "btnAct";
     b.style.width="100%";
     b.style.justifyContent="space-between";
     const t = document.createElement("span"); t.textContent = c.nombre; b.appendChild(t);
-    const acc = document.createElement("span"); acc.style.cssText="display:flex;align-items:center;gap:6px;";
+    if(c.oficial){
+      const tag = document.createElement("small");
+      tag.textContent = "🏅";
+      tag.style.cssText = "font-family:'Inter',sans-serif;font-weight:400;font-size:.8rem;";
+      b.appendChild(tag);
+    }
+    const acc = document.createElement("span"); acc.style.cssText="display:flex;align-items:center;gap:6px;flex:0 0 auto;";
+    const cnt = document.createElement("small");
+    cnt.textContent = count ? (count + (count === 1 ? " acción" : " acciones")) : "sin acciones";
+    acc.appendChild(cnt);
     const ed = document.createElement("button"); ed.className="btnIcon"; ed.textContent="✏️";
     ed.title="Editar"; ed.onclick = (ev)=>{ ev.stopPropagation(); abrirEditor(c); };
     const br = document.createElement("button"); br.className="btnIcon"; br.textContent="🗑️";
     br.title="Borrar"; br.onclick = (ev)=>{ ev.stopPropagation(); borrarCastigo(c); };
     acc.appendChild(ed); acc.appendChild(br);
     b.appendChild(acc);
-    b.onclick = async ()=>{
-      const sel = await elegirCastigoParaJugar();
-      if(!sel) return;
-      castigoPartida = sel;
-      await cargarDatosCastigo(sel);
-      tomasPartida = { ...tomas };
-      pintarTomasJugar();
-      ver("vistaTomas");
-    };
+    // Al seleccionar el castigo se abre el EDITOR (lo mismo que hace el lápiz).
+    b.onclick = ()=>abrirEditor(c);
     box.appendChild(b);
   });
 }
@@ -806,7 +810,7 @@ function pintarEditor(){
     sec.appendChild(h);
     LADOS.forEach(lado=>{
       const ld = document.createElement("div"); ld.className="lado";
-      const h4 = document.createElement("h4"); h4.textContent = (lado==="A"?"Administrador":"Pareja")+" ("+lado+")";
+      const h4 = document.createElement("h4"); h4.textContent = nombreDeLado(lado);
       ld.appendChild(h4);
       const chips = document.createElement("div"); chips.className="chips";
       (datos[nv][lado]||[]).forEach((acc,idx)=>{
@@ -828,7 +832,7 @@ function pintarEditor(){
       });
       ld.appendChild(chips);
       const fa = document.createElement("div"); fa.className="filaAdd";
-      const inp = document.createElement("input"); inp.type="text"; inp.placeholder="Nueva acción ("+nombre+" "+lado+")"; inp.maxLength=MAX_TEXTO;
+      const inp = document.createElement("input"); inp.type="text"; inp.placeholder="Nueva acción ("+nombre+" "+nombreDeLado(lado)+")"; inp.maxLength=MAX_TEXTO;
       const bt = document.createElement("button"); bt.textContent="+";
       bt.onclick = ()=>{
         const texto = inp.value.trim();
@@ -852,6 +856,8 @@ function pintarEditor(){
 function pintarTomas(){
   const g = document.getElementById("tomasGrid");
   g.innerHTML = "";
+  const tt = document.getElementById("tomasTitulo");
+  if(tt) tt.textContent = "Tomas por nivel (compartidas " + nombreDeLado("A") + " y " + nombreDeLado("B") + ")";
   NIVELES.forEach(nv=>{
     const lab = document.createElement("label");
     lab.textContent = nv.charAt(0).toUpperCase()+nv.slice(1);
@@ -872,7 +878,7 @@ function abrirDetalle(nv,lado,idx){
   detNivel=nv; detLado=lado; detIdx=idx;
   const acc = (datos[nv][lado]||[])[idx];
   document.getElementById("detTitulo").textContent = "Detalle: "+acc.texto;
-  document.getElementById("detContexto").textContent = nv.charAt(0).toUpperCase()+nv.slice(1)+" · "+(lado==="A"?"Administrador":"Pareja");
+  document.getElementById("detContexto").textContent = nv.charAt(0).toUpperCase()+nv.slice(1)+" · "+nombreDeLado(lado);
   const sel = document.getElementById("selAcc");
   sel.innerHTML = '<option value="">Ninguno</option>';
   accesorios.forEach(a=>{
@@ -1219,18 +1225,117 @@ function promptTexto(titulo, defecto, valor){
 // ETAPA 2 y 3 — Pantalla de inicio, tomas, generación, partida local
 // ========================================================================
 
+// Cuenta las acciones de cada castigo (para la lista, como Encuentros).
+async function contarAccionesCastigos(){
+  const out = {};
+  try{
+    const snap = await getDocs(collection(db, "nivelesCastigo"));
+    snap.forEach(d=>{
+      const n = d.data().n || {};
+      out[d.id] = NIVELES.reduce((t,nv)=>{
+        const nd = n[nv] || {};
+        return t + ((nd.A||[]).length + (nd.B||[]).length);
+      },0);
+    });
+  }catch(e){}
+  return out;
+}
+
+// Lista de castigos del INICIO, igual que la lista de Encuentros.
+// Normal: al tocar uno se juega. Multi: casillas + Combinar.
+async function pintarListaInicio(){
+  const box = document.getElementById("listaActs");
+  if(!box) return;
+  const input = document.getElementById("buscarLista");
+  const filtro = (input ? input.value : "").toLowerCase();
+  const conteos = await contarAccionesCastigos();
+  box.innerHTML = "";
+  const lista = castigos.filter(c=>c.nombre.toLowerCase().includes(filtro));
+  if(!lista.length){
+    box.innerHTML = '<p class="desc" style="text-align:center;">Sin castigos. Créalos en ⚙️.</p>';
+    return;
+  }
+  lista.forEach(c=>{
+    const count = conteos[c.id] || 0;
+    const esOf = !!c.oficial;
+    if(tipoJuego === "multi"){
+      const lab = document.createElement("label");
+      lab.className = "btnAct";
+      lab.style.cursor = count ? "pointer" : "default";
+      if(!count) lab.style.opacity = ".45";
+      const chk = document.createElement("input");
+      chk.type = "checkbox"; chk.disabled = !count;
+      chk.checked = multiSel.indexOf(c.id) >= 0; chk.value = c.id;
+      chk.style.cssText = "width:20px;height:20px;accent-color:var(--teal);";
+      chk.onchange = ()=>toggleMulti(c);
+      const t = document.createElement("span");
+      t.textContent = c.nombre + (count ? "" : " (sin acciones)");
+      t.style.flex = "1";
+      lab.appendChild(t);
+      if(esOf){
+        const tag = document.createElement("small");
+        tag.textContent = "🏅";
+        tag.style.cssText = "font-family:'Inter',sans-serif;font-weight:400;font-size:.8rem;";
+        lab.appendChild(tag);
+      }
+      lab.appendChild(chk);
+      lab.onclick = (e)=>{
+        if(e.target !== chk && count){
+          e.preventDefault();
+          chk.checked = !chk.checked;
+          toggleMulti(c);
+        }
+      };
+      box.appendChild(lab);
+      return;
+    }
+    const b = document.createElement("button");
+    b.className = "btnAct";
+    const t = document.createElement("span");
+    t.textContent = c.nombre;
+    b.appendChild(t);
+    if(esOf){
+      const tag = document.createElement("small");
+      tag.textContent = "🏅";
+      b.appendChild(tag);
+    }
+    if(!count){
+      b.disabled = true;
+      const s = document.createElement("small");
+      s.textContent = "⚙️ configurar acciones";
+      b.appendChild(s);
+    }else{
+      b.onclick = ()=>seleccionarCastigo(c);
+    }
+    box.appendChild(b);
+  });
+}
+
+async function seleccionarCastigo(c){
+  castigoPartida = c;
+  esMultiPartida = false;
+  await cargarDatosCastigo(c);
+  if(placerExtremo){
+    tomasPartida = { ...DEF_TOMA };
+    tomasPartida.basico = 0;
+    tomasPartida.medio = 0;
+    iniciarPartida();
+    return;
+  }
+  tomasPartida = { ...tomas };
+  pintarTomasJugar();
+  ver("vistaTomas");
+}
+
 function actualizarInicio(){
-  const esSolo = modoJuego === "solo";
   const esPareja = modoJuego === "pareja";
   const esInvitados = modoJuego === "invitados";
-  const esNormal = tipoJuego === "normal";
   const esMulti = tipoJuego === "multi";
 
   document.getElementById("bloqueQuienCastiga").style.display = (esPareja || esInvitados) ? "block" : "none";
-  document.getElementById("bloqueMultiSel").style.display = (esMulti && !esSolo) ? "block" : "none";
-  document.getElementById("bloqueSorprendeme").style.display = (esNormal && esMulti && !esSolo) ? "block" : "none";
+  document.getElementById("filaMultiSel").style.display = esMulti ? "flex" : "none";
+  document.getElementById("bloqueSorprendeme").style.display = esMulti ? "block" : "none";
   document.getElementById("swPlacer").checked = placerExtremo;
-  document.getElementById("btnJugarInicio").disabled = false;
 
   const btnA = document.getElementById("quienA");
   const btnB = document.getElementById("quienB");
@@ -1239,11 +1344,15 @@ function actualizarInicio(){
 
   document.getElementById("howCadaQuien").style.display = "block";
 
-  // pintar selector multi si corresponde
-  if(esMulti && !esSolo){
-    pintarMultiSel();
+  const btnComb = document.getElementById("btnCombinarMulti");
+  if(btnComb){
+    btnComb.disabled = multiSel.length !== 3;
+    btnComb.textContent = "Combinar (" + multiSel.length + "/3)";
+    btnComb.style.opacity = multiSel.length !== 3 ? ".4" : "1";
   }
+  pintarListaInicio();
 }
+document.getElementById("buscarLista").addEventListener("input", ()=>{ pintarListaInicio(); });
 
 document.getElementById("modSolo").onclick = ()=>{ modoJuego="solo"; setModTabs(); actualizarInicio(); };
 document.getElementById("modPareja").onclick = ()=>{ modoJuego="pareja"; setModTabs(); actualizarInicio(); };
@@ -1269,27 +1378,6 @@ function setTipoTabs(){
 }
 
 // ---------- Multi: selección de 3 castigos ----------
-function pintarMultiSel(){
-  const box = document.getElementById("listaMultiSel");
-  box.innerHTML = "";
-  const btn = document.getElementById("btnCombinarMulti");
-  btn.disabled = multiSel.length !== 3;
-  btn.textContent = "Combinar (" + multiSel.length + "/3)";
-  castigos.forEach(c=>{
-    const ya = multiSel.indexOf(c.id) >= 0;
-    const b = document.createElement("button");
-    b.style.cssText="width:100%;padding:12px;border-radius:12px;border:1px solid var(--card-border);background:"+ (ya?"var(--teal)":"var(--card)") +";color:var(--fg);margin-bottom:6px;text-align:left;font-size:1rem;cursor:"+(ya?"pointer":"not-allowed")+";opacity:"+(ya?"1":"0.5")+";";
-    b.textContent = c.nombre + (ya ? "  ✓" : "");
-    b.title = ya ? "Seleccionado (toca para quitar)" : "Seleccionar (máximo 3)";
-    if(ya){
-      b.onclick = ()=>toggleMulti(c);
-    }else if(multiSel.length < 3){
-      b.onclick = ()=>toggleMulti(c);
-    }
-    box.appendChild(b);
-  });
-}
-
 function toggleMulti(c){
   const i = multiSel.indexOf(c.id);
   if(i>=0){
@@ -1317,9 +1405,22 @@ document.getElementById("btnMultiConfOk").onclick = async ()=>{
   tomasMulti = { ...DEF_TOMA };
   esMultiPartida = true;
   castigoPartida = null; // multi usa varios
+  if(placerExtremo){
+    tomasMulti.basico = 0;
+    tomasMulti.medio = 0;
+    iniciarPartidaMulti();
+    return;
+  }
   // ir al paso de tomas (precargado, editable)
   pintarTomasJugarMulti();
   ver("vistaTomas");
+};
+document.getElementById("btnMultiCancel").onclick = ()=>{
+  multiSel = [];
+  multiCastigos = [];
+  tipoJuego = "normal";
+  setTipoTabs();
+  actualizarInicio();
 };
 
 // Sorpréndeme: solo Multi, elige 3 al azar sin repetir
@@ -1371,48 +1472,7 @@ function elegirCastigoParaJugar(){
   });
 }
 
-document.getElementById("btnJugarInicio").onclick = async ()=>{
-  if(tipoJuego==="multi"){
-    if(multiSel.length !== 3){ aviso("Selecciona exactamente 3 castigos."); return; }
-    if(placerExtremo){
-      // Placer extremo en Multi: reparto en rueda, salta tomas
-      esMultiPartida = true;
-      castigoPartida = null;
-      tomasMulti = { ...DEF_TOMA };
-      // basico y medio en 0
-      tomasMulti.basico = 0; tomasMulti.medio = 0;
-      iniciarPartidaMulti();
-      return;
-    }
-    // Multi normal: confirma y va al paso de tomas (de la partida)
-    document.getElementById("multiResumen").textContent = multiCastigos.map(c=>c.nombre).join(" + ");
-    document.getElementById("modalMultiConf").style.display = "flex";
-    return;
-  }
 
-  if(placerExtremo){
-    // Placer extremo normal: salta tomas, usa niveles altos
-    const sel = await elegirCastigoParaJugar();
-    if(!sel) return;
-    castigoPartida = sel;
-    esMultiPartida = false;
-    await cargarDatosCastigo(sel);
-    tomasPartida = { ...DEF_TOMA };
-    tomasPartida.basico = 0; tomasPartida.medio = 0;
-    iniciarPartida();
-    return;
-  }
-
-  const sel = await elegirCastigoParaJugar();
-  if(!sel) return;
-  castigoPartida = sel;
-  esMultiPartida = false;
-  await cargarDatosCastigo(sel);
-  tomasPartida = { ...tomas };
-
-  pintarTomasJugar();
-  ver("vistaTomas");
-};
 
 function pintarTomasJugar(){
   const g = document.getElementById("tomasGridJugar");
@@ -1490,14 +1550,14 @@ function generarJugadores(){
     cabezas.push({ id: yo.id || "anon", nombre: yo.nombre || "Tú", lado, admin:!!yo.admin, invitado:false, conQuien:null });
     ladoInicial = lado;
   }else{
-    if(admin) cabezas.push({ id: admin.id, nombre: admin.nombre || "A", lado:"A", admin:true, invitado:false, conQuien:null });
-    if(pareja) cabezas.push({ id: pareja.id, nombre: pareja.nombre || "B", lado:"B", admin:false, invitado:false, conQuien:null });
+    if(admin) cabezas.push({ id: admin.id, nombre: admin.nombre || "Usuario 1", lado:"A", admin:true, invitado:false, conQuien:null });
+    if(pareja) cabezas.push({ id: pareja.id, nombre: pareja.nombre || "Usuario 2", lado:"B", admin:false, invitado:false, conQuien:null });
     if(modoJuego==="invitados"){
       usuariosLista.filter(u=>u && u.invitado).forEach(u=>{
         cabezas.push({ id:u.id, nombre:u.nombre || "Invitado", lado:ladoDeInvitador(u.conQuien), admin:false, invitado:true, conQuien:u.conQuien || null });
       });
     }
-    if(!cabezas.length) cabezas.push({ id:"u1", nombre:"A", lado:"A", admin:true, invitado:false, conQuien:null });
+    if(!cabezas.length) cabezas.push({ id:"u1", nombre:"Usuario 1", lado:"A", admin:true, invitado:false, conQuien:null });
   }
   orden = mezclar(cabezas.map(c=>c.id));
 }
