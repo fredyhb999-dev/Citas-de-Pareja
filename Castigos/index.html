@@ -650,9 +650,14 @@ function ver(id){
   try{ history.pushState({ v:id }, ""); }catch(e){}
   window.scrollTo(0,0);
 }
+document.getElementById("btnCfg").onclick = ()=>{
+  pintarCastigos();
+  ver("vistaConfig");
+};
 document.getElementById("lnkInicio").addEventListener("click",(e)=>{
   const v = document.querySelector(".vista.ver");
   if(v && v.id==="vistaEditar"){ e.preventDefault(); ver("vistaConfig"); }
+  if(v && v.id==="vistaConfig"){ e.preventDefault(); ver("vistaInicio"); }
   if(v && v.id==="vistaPartida"){ e.preventDefault(); }
 });
 
