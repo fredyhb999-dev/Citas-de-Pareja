@@ -259,7 +259,7 @@
   </button>
   </div>
   <div id="invVistaInv" style="display:none;width:100%;flex-direction:column;align-items:center;">
-    <button id="invBackDeInv" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Invitados</button>
+    <button id="invBackDeInv" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Volver</button>
     <h1 style="font-size:1.4rem;">Modo invitado 📷</h1>
     <div id="lectorInv" style="display:none;width:100%;max-width:340px;"></div>
     <div id="invMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:4px 0 12px;"></div>
@@ -283,7 +283,7 @@
     </div>
   </div>
   <div id="invVistaUsu" style="display:none;width:100%;text-align:left;">
-    <button id="invBackDeUsu" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Invitados</button>
+    <button id="invBackDeUsu" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Volver</button>
     <button id="invCambiarUsu" type="button" style="display:none;position:absolute;top:max(20px, env(safe-area-inset-top));left:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">Cambiar usuario</button>
     <h1 style="font-size:1.4rem;text-align:center;">Usuarios 👥</h1>
     <p id="invQuien" style="font-size:.82rem;color:var(--fg-muted);text-align:center;margin:0 0 10px;"></p>
@@ -359,7 +359,7 @@
     </div>
   </div>
   <div id="invVistaTg" style="display:none;width:100%;text-align:left;">
-    <button id="invBackTg" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Atrás</button>
+    <button id="invBackTg" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Volver</button>
     <h1 style="font-size:1.4rem;text-align:center;">Telegram 📲</h1>
     <p style="font-size:.82rem;color:var(--fg-muted);text-align:center;margin:0 0 16px;">Cada cita y reto avisa al grupo. Sin esto la app funciona igual.</p>
     <label for="tgToken" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:0 0 6px;">Token del bot</label>
@@ -607,7 +607,9 @@ function mostrarMenu(nombre){
 // saltaba el submenú y luego lo reabría solo (oct-2026).
 window.addEventListener("popstate", (e)=>{
   if(e.state && e.state.sub) abrirSegunHash(e.state.sub);
-  else verMenu();
+  else if(e.state && e.state.gear === "cambiar") abrirCambiarUsu();
+  else if(e.state && e.state.gear) mostrarGear(e.state.gear);
+  else { cerrarGear(); verMenu(); }
   renderPacks();
 });
 window.addEventListener("hashchange", ()=>{
@@ -1578,6 +1580,36 @@ function invVer(cual){
   if(cual === "tg") pintarTelegram();
   try{ window.scrollTo(0, 0); }catch(e){}
 }
+// El engrane como pasos del historial, igual que los submenus del menu: el boton
+// atras del celular y el "‹ Volver" hacen lo mismo.
+//   { gear:"root" }            -> las 3 tarjetas (Invitados / Usuarios / Telegram)
+//   { gear:"inv"|"usu"|"tg" }  -> una de las tres
+//   { gear:"cambiar" }         -> "Cambiar usuario" (dentro de Usuarios)
+function mostrarGear(cual){
+  asistenteEl.style.display = "none";
+  pantallaEl.style.display = "none";
+  menuEl.style.display = "none";
+  document.getElementById("menuBtn").style.display = "none";
+  document.getElementById("gearBtn").style.display = "none";
+  invEl.style.display = "flex";
+  invVer(cual === "root" ? null : cual);
+  invRefrescar();
+  if(cual === "root" || cual === "usu") pintarInvUsuarios();
+}
+function cerrarGear(){
+  pantallaEl.style.display = "none";
+  invEl.style.display = "none";
+  menuEl.style.display = "flex";
+  document.getElementById("menuBtn").style.display = "";
+  document.getElementById("gearBtn").style.display = "";
+}
+async function abrirCambiarUsu(){
+  const db = dbActual();
+  const us = db ? await usuariosEfectivos(db) : (leerUsuariosLocal() || []);
+  if(!us || !us.length) return;
+  modoCambiar = true;
+  mostrarIdentidad(us);
+}
 function invModoScan(on){
   document.getElementById("invEntrar").style.display = on ? "none" : "";
   document.getElementById("invSalir").style.display = on ? "none" : (soyInvitado() ? "" : "none");
@@ -1599,15 +1631,20 @@ async function salirSinHaberEntrado(){
 document.getElementById("invBackDeInv").onclick = async ()=>{
   if(await salirSinHaberEntrado()) return;
   invModoScan(false);
+  if(history.state && history.state.gear && history.state.gear !== "root"){ try{ history.back(); return; }catch(e){} }
   invVer(null);
   invRefrescar();
 };
 document.getElementById("invBackDeUsu").onclick = async ()=>{
   if(await salirSinHaberEntrado()) return;
+  if(history.state && history.state.gear && history.state.gear !== "root"){ try{ history.back(); return; }catch(e){} }
   invVer(null);
   invRefrescar();
 };
-document.getElementById("invBackTg").onclick = ()=>{ invVer(null); };
+document.getElementById("invBackTg").onclick = ()=>{
+  if(history.state && history.state.gear && history.state.gear !== "root"){ try{ history.back(); return; }catch(e){} }
+  invVer(null);
+};
 // ---------- Telegram ----------
 // El token y el chat ID viven SOLO en este celular (localStorage), igual que
 // el resto de lo que arma el asistente. Antes no habia forma de corregirlos:
@@ -1756,35 +1793,35 @@ function abrirPanelUsuarios(){
 }
 document.getElementById("idVolverCambiar").onclick = ()=>{
   modoCambiar = false;
+  if(history.state && history.state.gear === "cambiar"){ try{ history.back(); return; }catch(e){} }
   abrirPanelUsuarios();
 };
 document.getElementById("invCambiarUsu").onclick = async ()=>{
   if(await salirSinHaberEntrado()) return;
-  const db = dbActual();
-  const us = db ? await usuariosEfectivos(db) : (leerUsuariosLocal() || []);
-  if(!us || !us.length){ return; }
-  modoCambiar = true;
-  mostrarIdentidad(us);
+  try{ history.pushState({ gear: "cambiar" }, "", location.pathname + location.search); }catch(e){}
+  abrirCambiarUsu();
 };
 document.getElementById("gearBtn").onclick = ()=>{
-  menuEl.style.display = "none";
-  document.getElementById("menuBtn").style.display = "none";
-  document.getElementById("gearBtn").style.display = "none";
-  invEl.style.display = "flex";
-  invVer(null);
-  invRefrescar();
-  pintarInvUsuarios();
+  try{ history.pushState({ gear: "root" }, "", location.pathname + location.search); }catch(e){}
+  mostrarGear("root");
 };
-document.getElementById("invCardInv").onclick = ()=>{ invVer("inv"); };
-document.getElementById("invCardUsu").onclick = ()=>{ invVer("usu"); pintarInvUsuarios(); };
-document.getElementById("invCardTg").onclick = ()=>{ invVer("tg"); };
+document.getElementById("invCardInv").onclick = ()=>{
+  try{ history.pushState({ gear: "inv" }, "", location.pathname + location.search); }catch(e){}
+  mostrarGear("inv");
+};
+document.getElementById("invCardUsu").onclick = ()=>{
+  try{ history.pushState({ gear: "usu" }, "", location.pathname + location.search); }catch(e){}
+  mostrarGear("usu");
+};
+document.getElementById("invCardTg").onclick = ()=>{
+  try{ history.pushState({ gear: "tg" }, "", location.pathname + location.search); }catch(e){}
+  mostrarGear("tg");
+};
 document.getElementById("invVolverTop").onclick = async ()=>{
   if(await salirSinHaberEntrado()) return;
   await detenerScanInv();
-  invEl.style.display = "none";
-  menuEl.style.display = "flex";
-  document.getElementById("menuBtn").style.display = "";
-  document.getElementById("gearBtn").style.display = "";
+  if(history.state && history.state.gear === "root"){ try{ history.back(); return; }catch(e){} }
+  cerrarGear();
 };
 document.getElementById("invSalir").onclick = async ()=>{
   if(!soyInvitado()) return;

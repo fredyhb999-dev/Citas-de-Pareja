@@ -111,15 +111,24 @@ const SEC_NOMBRES = { experiencias: "💑 Experiencias en Pareja", juegos: "🎮
 const SEC_DESC = { experiencias: "Material de Apoyo para tu cita", juegos: "Diviértete en esa cita especial", extras: "Retos que te llevarán a otro nivel" };
 let secActual = null;
 try{ secActual = new URLSearchParams(location.search).get("sec"); }catch(e){}
+// "Volver" hace el MISMO paso que el boton atras del celular cuando se llego
+// desde otra pantalla del sitio; si se entro directo (sin referrer), cae a la
+// ruta fija. Asi el boton y el atras del telefono no se desincronizan.
+function volverAtras(fallbackUrl){
+  let mismoSitio = false;
+  try{ mismoSitio = !!document.referrer && document.referrer.indexOf(location.origin) === 0; }catch(e){}
+  if(mismoSitio){ try{ history.back(); return; }catch(e){} }
+  location.href = fallbackUrl;
+}
 const btnCasa = document.getElementById("btnCasa");
-btnCasa.onclick = ()=>{ location.href = "../index.html"; };
+btnCasa.textContent = "‹ Volver";
+btnCasa.onclick = ()=> volverAtras("../index.html");
 if(SEC_NOMBRES[secActual]){
   document.getElementById("botonesSec").style.display = "none";
   document.getElementById("vistaSec").style.display = "flex";
   // El boton de la esquina superior derecha es contextual (como en toda la app):
   // desde una seccion regresa al Centro de Adquisiciones; desde el Centro, al menu.
-  btnCasa.textContent = "‹ Volver";
-  btnCasa.onclick = ()=>{ location.href = location.pathname; };
+  btnCasa.onclick = ()=> volverAtras(location.pathname);
   const tp = document.getElementById("tituloPag");
   tp.textContent = SEC_NOMBRES[secActual];
   document.getElementById("descPag").textContent = SEC_DESC[secActual];

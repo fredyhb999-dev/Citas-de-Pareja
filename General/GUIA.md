@@ -986,6 +986,18 @@ patrón que ya usaban `Encuentros/`, `Guiadas/` y el propio `centro.html`. Así 
 botón atrás del celular y el "‹ Volver" hacen **lo mismo**, y el botón "adelante"
 también sirve.
 
+**El engrane del menú (⚙️) se corrigió igual (oct-2026).** Invitados, Usuarios,
+Telegram y "Cambiar usuario" también son **pasos del historial**:
+`{gear:"root"}`, `{gear:"inv"|"usu"|"tg"}` y `{gear:"cambiar"}`. Así el botón
+atrás del celular y el "‹ Volver" regresan al mismo lugar: de una subpantalla a
+las 3 tarjetas, y de ahí al menú (`mostrarGear()` / `cerrarGear()`). Sus tres
+botones dicen **"‹ Volver"** (antes decían "Invitados" / "Atrás").
+
+**La Tienda (`Tienda/index.html`) también (oct-2026):** su `‹ Volver` usa
+`history.back()` cuando se llegó desde otra pantalla del sitio, y cae a la ruta
+fija si se entró directo (`volverAtras()`), para que el botón y el atrás del
+celular no se desincronicen.
+
 | Pieza | Qué hace |
 |---|---|
 | `verMenu()` | El menú principal + sus dos botones de la esquina. **Nueva**: la necesitaban tres caminos (`mostrarMenu`, el "‹ Volver" y el `popstate`) y por eso el 4 se rompía |
