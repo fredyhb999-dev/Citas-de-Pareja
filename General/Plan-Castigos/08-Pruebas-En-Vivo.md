@@ -37,6 +37,49 @@
 
 ---
 
+## 1b. Inicio y configuración (UI)
+
+1. La pantalla de inicio debe mostrar **primero el recuadro de castigos**
+   (“Elige castigo” + buscador + lista con scroll) y **debajo** los ajustes:
+   **¿Quién juega hoy?**, **¿Cómo juegan?**, **¿Quién castiga primero?**,
+   **Modalidad** y **Placer extremo por deseo**.
+2. El texto debe decir **Atrévete a Jugar ...** (tres puntos literales) y **no**
+   debe verse la nota del QR.
+3. Los botones deben decir **¿Quién juega hoy?** (no “Modo”) y **Modalidad**
+   (no “Tipo”); donde antes decía A/B/Administrador/Pareja deben verse los
+   **nombres** asignados (o **Usuario 1 / Usuario 2** si no hay nombres).
+4. Tocar un castigo de la lista inicia la partida **con las condiciones que estén
+   seleccionadas en ese momento**.
+5. **Engrane (⚙️):** abre la configuración con el **mismo recuadro de castigos**
+   arriba; tocar una fila abre el **editor** de ese castigo.
+6. Pestaña **Accesorios:** el **catálogo de accesorios** debe verse en el **mismo
+   recuadro con scroll** del inicio; no repite la lista de castigos.
+7. Pestaña **Imposiciones:** las dos pestañas deben mostrar los **nombres** de los
+   jugadores (o Usuario 1 / Usuario 2), no “A” y “B”.
+8. **Multi:** al elegir Multi, el recuadro de castigos permite marcar hasta 3 y el
+   botón **Combinar** se activa con 3.
+9. **Editor de castigo:** al abrirlo deben verse las acciones **ya guardadas**;
+   **💾 Guardar** guarda sin jugar; al **Volver a lista** también se guarda; el
+   botón **Jugar** se activa cuando hay al menos una acción.
+10. **Enter:** escribir una acción y dar **Enter** la agrega y deja el cursor en
+    el **mismo campo**, listo para capturar la siguiente.
+
+---
+
+## 1c. Volver y botón atrás
+
+- Los textos de **Volver** están **arriba a la derecha**, no dentro de la
+  pantalla. En el **editor** guardan y regresan a Configuración; en
+  **Configuración** y **Tomas** regresan al inicio.
+- **Botón atrás del celular/navegador:** en Configuración/Editor/Tomas regresa
+  al inicio; en la **partida activa no sale** (se queda en el juego).
+- **Invitado:** entra directo a la **sala de espera** (no ve el inicio del
+  anfitrión), no tiene “Volver” ni puede salir con el botón atrás mientras está
+  en el juego o esperando. Al terminar, usa **Volver a lista**, que cierra el
+  modo invitado y restaura su cuenta.
+
+---
+
 ## 2. Solo
 
 1. Crear un castigo con acciones en los 5 niveles, tomas por defecto
@@ -185,8 +228,9 @@
 - El **invitado no tiene salida** por diseño.
 - El **pack `castigos` y las licencias** son datos que se crean en el Panel; si
   no existen, el juego no aparece o muestra “Sin acceso”.
-- La pantalla de **inicio solo tiene el QR**; los cuadros de sala y “Agregar
-  invitado” viven dentro de la partida (a propósito).
+- La pantalla de **inicio** muestra la lista de castigos, los ajustes y el QR;
+  los cuadros de sala y “Agregar invitado” viven dentro de la partida (a
+  propósito).
 - Si no hay internet, el juego avisa y cae a local; no es un fallo.
 
 ---

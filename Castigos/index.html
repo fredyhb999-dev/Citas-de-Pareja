@@ -23,10 +23,11 @@
       radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
   body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
     padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
-  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
-    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  .back{ position:fixed; top:max(16px, env(safe-area-inset-top)); right:20px; z-index:50;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none;
+    background:var(--bg-2); border:1px solid var(--card-border); border-radius:10px; padding:6px 10px; }
   #btnCfg{
-    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    position:fixed; top:max(16px, env(safe-area-inset-top)); left:20px; z-index:50;
     background:none; border:none; font-size:1.3rem; cursor:pointer; padding:4px;
   }
   .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
@@ -163,8 +164,23 @@
   <h1>El Precio del Placer</h1>
   <p class="desc">Ganar cumple tus deseos; perder despierta la pasión.</p>
 
+  <!-- Lista de castigos (igual que la lista de Encuentros) -->
+  <p class="desc" style="margin:14px 0 8px;">Elige castigo</p>
+  <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar castigo..." autocomplete="off">
+  <div id="cajaActs" style="width:100%;max-height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
+    <div id="listaActs" style="width:100%"></div>
+  </div>
+  <div id="filaMultiSel" style="display:none;width:100%;gap:8px;margin-top:12px;">
+    <button class="btnPri" id="btnCombinarMulti" disabled style="flex:1;opacity:.4;margin-bottom:0;">Combinar (0/3)</button>
+    <button class="btnSec" id="btnMultiCancel" style="width:auto;padding:12px 16px;text-decoration:none;">Cancelar</button>
+  </div>
+
+  <div id="bloqueSorprendeme" style="width:100%;display:none;">
+    <button class="btnSec" id="btnSorprendeme" style="width:auto;padding:12px 20px;">Sorpréndeme</button>
+  </div>
+
   <div style="width:100%;">
-    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin-bottom:8px;">¿Quién juega hoy?</div>
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">¿Quién juega hoy?</div>
     <div class="tabs">
       <button class="tab activo" id="modSolo">Solo</button>
       <button class="tab" id="modPareja">Pareja</button>
@@ -196,21 +212,6 @@
     </div>
   </div>
 
-  <!-- Lista de castigos (igual que la lista de Encuentros) -->
-  <p class="desc" style="margin:14px 0 8px;">Elige castigo</p>
-  <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar castigo..." autocomplete="off">
-  <div id="cajaActs" style="width:100%;max-height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
-    <div id="listaActs" style="width:100%"></div>
-  </div>
-  <div id="filaMultiSel" style="display:none;width:100%;gap:8px;margin-top:12px;">
-    <button class="btnPri" id="btnCombinarMulti" disabled style="flex:1;opacity:.4;margin-bottom:0;">Combinar (0/3)</button>
-    <button class="btnSec" id="btnMultiCancel" style="width:auto;padding:12px 16px;text-decoration:none;">Cancelar</button>
-  </div>
-
-  <div id="bloqueSorprendeme" style="width:100%;display:none;">
-    <button class="btnSec" id="btnSorprendeme" style="width:auto;padding:12px 20px;">Sorpréndeme</button>
-  </div>
-
   <div class="swGroup">
     <div style="flex:1;">Placer extremo por deseo</div>
     <label class="sw"><input type="checkbox" id="swPlacer"><span class="swSlider"></span></label>
@@ -233,10 +234,7 @@
   <div class="tomas">
     <div class="tomasGrid" id="tomasGridJugar"></div>
   </div>
-  <div class="filaBotones">
-    <button class="btnSec" id="btnTomasVolver">← Volver</button>
-    <button class="btnPri" id="btnTomasAceptar">Aceptar y jugar ▶</button>
-  </div>
+  <button class="btnPri" id="btnTomasAceptar">Aceptar y jugar ▶</button>
   <div id="msgTomas" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:6px 0;text-align:center;"></div>
 </div>
 
@@ -309,7 +307,7 @@
 
   <div class="finBox" id="finBox">
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.2rem;color:var(--teal);margin-bottom:8px;">¡Gracias por jugar!</div>
-    <button class="btnPri" id="btnFinVolver">Volver a lista</button>
+    <button class="btnPri" id="btnFinVolver" style="display:none;">Volver a lista</button>
   </div>
 
   <div id="overlayPausa">
@@ -373,26 +371,32 @@
   <div id="panelCastigos">
     <input class="buscar" id="buscarCastigos" type="text" placeholder="🔍 Buscar castigo..." autocomplete="off">
     <button class="btnPri" id="btnCrearCastigo">+ Crear castigo</button>
-    <div id="listaCastigos" style="width:100%"></div>
+    <div id="cajaCastigosCfg" style="width:100%;max-height:48dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:8px;background:var(--bg-2);">
+      <div id="listaCastigos" style="width:100%"></div>
+    </div>
   </div>
 
   <div id="panelAccesorios" style="display:none;">
     <input class="buscar" id="buscarAccesorios" type="text" placeholder="🔍 Buscar accesorio..." autocomplete="off">
     <button class="btnPri" id="btnCrearAcc">+ Crear accesorio</button>
-    <div id="listaAccesorios" style="width:100%"></div>
+    <div id="cajaAccesoriosCfg" style="width:100%;max-height:40dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:8px;background:var(--bg-2);">
+      <div id="listaAccesorios" style="width:100%"></div>
+    </div>
   </div>
 
   <div id="panelImposiciones" style="display:none;">
     <div class="tabs" style="margin-bottom:8px;">
-      <button class="tab activo" id="tabImpA">A</button>
-      <button class="tab" id="tabImpB">B</button>
+      <button class="tab activo" id="tabImpA">Usuario 1</button>
+      <button class="tab" id="tabImpB">Usuario 2</button>
     </div>
     <input class="buscar" id="buscarImp" type="text" placeholder="🔍 Buscar imposición..." autocomplete="off">
     <div class="filaAdd" style="width:100%;">
       <input type="text" id="inpNuevaImp" placeholder="Nueva imposición..." maxlength="60">
       <button class="btnPri" id="btnAddImp" style="padding:12px 16px;">+</button>
     </div>
-    <div id="listaImposiciones" style="width:100%"></div>
+    <div id="cajaImpCfg" style="width:100%;max-height:40dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:8px;background:var(--bg-2);">
+      <div id="listaImposiciones" style="width:100%"></div>
+    </div>
   </div>
 </div>
 
@@ -400,7 +404,6 @@
 <div class="vista" id="vistaEditar">
   <h1 id="edTitulo">Castigo</h1>
   <p class="desc">Agrega acciones por nivel y lado.</p>
-  <button class="btnSec" id="btnVolverLista">← Volver a lista</button>
 
   <div id="nivelesBox" style="width:100%"></div>
 
@@ -419,7 +422,10 @@
     <button class="btnSec" id="btnPegarCancelar" style="margin-top:6px;">Cancelar</button>
   </div>
   <div id="msg"></div>
-  <button class="btnPri" id="btnJugar" disabled>Jugar ▶</button>
+  <div class="filaBotones" style="margin-top:6px;">
+    <button class="btnSec" id="btnGuardarCastigo">💾 Guardar</button>
+    <button class="btnPri" id="btnJugar" disabled style="margin-bottom:0;">Jugar ▶</button>
+  </div>
 </div>
 
 <!-- ============ MODAL: DETALLE DE ACCIÓN (lápiz) ============ -->
@@ -475,6 +481,9 @@ let imposiciones = { A: [], B: [] };
 let castigoActivo = null;
 let datos = {};
 let tomas = { ...DEF_TOMA };
+let editorCargado = false;
+let editorToken = 0;
+let cargaCastigoToken = 0;
 
 // ---------- oficiales (etapa 6) ----------
 let oficiales = []; // {id, titulo, icono, desc, orden, activo, niveles, tomasSugeridas, nuevoHasta}
@@ -516,6 +525,7 @@ let esInvitadoFlag = false;
 function leerQuienSoy(){
   try{ return JSON.parse(localStorage.getItem("appPareja_quienSoy") || "null"); }catch(e){ return null; }
 }
+try{ const _yoInvitado = leerQuienSoy(); if(_yoInvitado && _yoInvitado.invitado) esInvitadoFlag = true; }catch(e){}
 async function cargarIdentidad(){
   try{ usuariosLista = await cargarUsuarios(db, getDoc, doc, []); }catch(e){ usuariosLista = []; }
   if(!Array.isArray(usuariosLista)) usuariosLista = [];
@@ -639,26 +649,79 @@ async function sincronizarOficialesCastigos(){
 }
 
 // ---------- navegación ----------
-function ver(id){
+function vistaActual(){
+  const v = document.querySelector(".vista.ver");
+  return v ? v.id : "";
+}
+function finVisible(){
+  const fb = document.getElementById("finBox");
+  return !!(fb && fb.classList.contains("ver"));
+}
+function pintarSalidas(){
+  const id = vistaActual();
+  const enJuego = (id === "vistaPartida") && !finVisible();
+  try{
+    document.getElementById("btnCfg").style.display = (!esInvitadoFlag && (id==="vistaConfig"||id==="vistaInicio"))?"block":"none";
+    const lnk = document.getElementById("lnkInicio");
+    lnk.style.display = (enJuego || esInvitadoFlag) ? "none" : "";
+    lnk.textContent = (id==="vistaPartida" && finVisible()) ? "← Volver a lista" : "← Volver";
+  }catch(e){}
+}
+function ver(id, guardar){
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
   document.getElementById(id).classList.add("ver");
-  document.getElementById("btnCfg").style.display = (id==="vistaConfig"||id==="vistaInicio")?"block":"none";
-  document.getElementById("lnkInicio").style.display = (id==="vistaEditar"||id==="vistaPartida"||esInvitadoFlag)?"none":"";
-  try{ history.pushState({ v:id }, ""); }catch(e){}
+  document.querySelectorAll(".modal").forEach(m=>{ m.style.display = "none"; });
+  pintarSalidas();
+  if(guardar === "replace"){ try{ history.replaceState({ v:id }, ""); }catch(e){} }
+  else if(guardar !== false){ try{ history.pushState({ v:id }, ""); }catch(e){} }
   window.scrollTo(0,0);
   // Refrescar la lista que corresponde (la del inicio o la de configuración).
   try{ if(id==="vistaInicio") pintarListaInicio(); }catch(e){}
-  try{ if(id==="vistaConfig") pintarCastigos(); }catch(e){}
+  try{ if(id==="vistaConfig"){ mostrarPanel("castigos"); pintarCastigos(); } }catch(e){}
 }
+// Mismo patrón que Encuentros/Guiadas: el gesto de atrás del celular no saca de
+// la partida; fuera de la partida regresa a la lista de inicio.
+let reponiendo = false;
+window.addEventListener("popstate", ()=>{
+  if(reponiendo){ reponiendo = false; return; }
+  const enJuego = vistaActual()==="vistaPartida" && !finVisible();
+  // El invitado no sale nunca de su pantalla: podría ver datos del anfitrión.
+  // Con partida activa tampoco se sale con el gesto de atrás.
+  if(enJuego || esInvitadoFlag){
+    reponiendo = true;
+    try{ history.go(1); }catch(e){ reponiendo = false; }
+    return;
+  }
+  if(vistaActual()==="vistaEditar"){
+    if(castigoActivo && editorCargado){ try{ guardarCastigoDatos(); }catch(e){} }
+    editorToken++;
+    castigoActivo = null;
+    editorCargado = false;
+  }
+  ver("vistaInicio", false);
+});
+try{ history.replaceState({ v:"vistaInicio" }, ""); }catch(e){}
 document.getElementById("btnCfg").onclick = ()=>{
   pintarCastigos();
   ver("vistaConfig");
 };
-document.getElementById("lnkInicio").addEventListener("click",(e)=>{
-  const v = document.querySelector(".vista.ver");
-  if(v && v.id==="vistaEditar"){ e.preventDefault(); ver("vistaConfig"); }
-  if(v && v.id==="vistaConfig"){ e.preventDefault(); ver("vistaInicio"); }
-  if(v && v.id==="vistaPartida"){ e.preventDefault(); }
+// El "← Volver" (arriba a la derecha) regresa a la pantalla anterior del juego:
+// del editor a Configuración (guardando), y de Configuración/Tomas al inicio.
+// Solo desde el inicio sale al menú. En la partida no se ve.
+document.getElementById("lnkInicio").addEventListener("click", async (e)=>{
+  const v = vistaActual();
+  if(v==="vistaEditar"){
+    e.preventDefault();
+    if(castigoActivo && editorCargado){ try{ await guardarCastigoDatos(); }catch(err){} }
+    editorToken++;
+    castigoActivo = null;
+    editorCargado = false;
+    ver("vistaConfig");
+    return;
+  }
+  if(v==="vistaConfig"){ e.preventDefault(); ver("vistaInicio", false); return; }
+  if(v==="vistaTomas"){ e.preventDefault(); ver("vistaInicio", false); return; }
+  if(v==="vistaPartida"){ e.preventDefault(); if(finVisible()) await volverDePartida(); return; }
 });
 
 function msg(t){ const el=document.getElementById("msg"); el.textContent = t||""; }
@@ -685,7 +748,9 @@ document.getElementById("tabImpB").onclick = ()=>{ impLado="B"; document.getElem
 // ---------- castigos ----------
 async function pintarCastigos(){
   const box = document.getElementById("listaCastigos");
-  const filtro = document.getElementById("buscarCastigos").value.toLowerCase();
+  if(!box) return;
+  const input = document.getElementById("buscarCastigos");
+  const filtro = ((input && input.value) || "").toLowerCase();
   box.innerHTML = "";
   const conteos = await contarAccionesCastigos();
   const lista = castigos.filter(c=>c.nombre.toLowerCase().includes(filtro));
@@ -768,20 +833,23 @@ async function borrarCastigo(c){
   }catch(e){ aviso("No se pudo borrar."); }
 }
 
-function abrirEditor(c){
+async function abrirEditor(c){
+  const my = ++editorToken;
   castigoActivo = c;
+  editorCargado = false;
   datos = vaciaDatos();
   tomas = { ...DEF_TOMA };
   document.getElementById("edTitulo").textContent = c.nombre;
   document.getElementById("btnJugar").disabled = true;
-  pintarEditor();
   ver("vistaEditar");
+  pintarEditor();
+  const ok = await cargarDatosCastigo(c);
+  if(my !== editorToken) return;
+  if(!castigoActivo || castigoActivo.id !== c.id) return;
+  editorCargado = !!ok;
+  pintarEditor();
+  if(!ok) aviso("No se pudieron cargar las acciones. Revisa tu conexión.");
 }
-
-document.getElementById("btnVolverLista").onclick = ()=>{
-  castigoActivo = null;
-  ver("vistaConfig");
-};
 
 function vaciaDatos(){
   const d = {};
@@ -833,17 +901,19 @@ function pintarEditor(){
       ld.appendChild(chips);
       const fa = document.createElement("div"); fa.className="filaAdd";
       const inp = document.createElement("input"); inp.type="text"; inp.placeholder="Nueva acción ("+nombre+" "+nombreDeLado(lado)+")"; inp.maxLength=MAX_TEXTO;
+      inp.dataset.nv = nv; inp.dataset.lado = lado;
       const bt = document.createElement("button"); bt.textContent="+";
-      bt.onclick = ()=>{
+      const agregar = ()=>{
         const texto = inp.value.trim();
-        if(!texto){ aviso("Escribe la acción."); return; }
-        if(texto.length>MAX_TEXTO){ aviso("Máximo "+MAX_TEXTO+" caracteres."); return; }
-        if((datos[nv][lado]||[]).some(a=>a.texto.toLowerCase()===texto.toLowerCase())){ aviso("Esa acción ya existe en este nivel/lado."); return; }
+        if(!texto){ aviso("Escribe la acción."); inp.focus(); return; }
+        if(texto.length>MAX_TEXTO){ aviso("Máximo "+MAX_TEXTO+" caracteres."); inp.focus(); return; }
+        if((datos[nv][lado]||[]).some(a=>a.texto.toLowerCase()===texto.toLowerCase())){ aviso("Esa acción ya existe en este nivel/lado."); inp.focus(); return; }
         (datos[nv][lado]||[]).push({ texto, accesorio:null, medida:{tipo:"libre",valor:0} });
-        inp.value="";
         pintarEditor();
+        enfocarAccion(nv,lado);
       };
-      inp.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ bt.click(); } });
+      bt.onclick = agregar;
+      inp.addEventListener("keydown",(e)=>{ if(e.key==="Enter" || e.keyCode===13){ e.preventDefault(); agregar(); } });
       fa.appendChild(inp); fa.appendChild(bt);
       ld.appendChild(fa);
       sec.appendChild(ld);
@@ -851,6 +921,27 @@ function pintarEditor(){
     box.appendChild(sec);
   });
   pintarTomas();
+  actualizarBotonJugar();
+}
+
+function enfocarAccion(nv,lado){
+  const inp = document.querySelector('#nivelesBox input[data-nv="'+nv+'"][data-lado="'+lado+'"]');
+  if(inp) inp.focus();
+}
+
+function totalAccionesEditor(){
+  return NIVELES.reduce((s,n)=>{
+    const d = datos[n] || { A:[], B:[] };
+    return s + (d.A||[]).length + (d.B||[]).length;
+  },0);
+}
+
+function actualizarBotonJugar(){
+  const b = document.getElementById("btnJugar");
+  if(!b) return;
+  const total = totalAccionesEditor();
+  b.disabled = !editorCargado || total <= 0;
+  b.title = !editorCargado ? "Cargando acciones..." : (total ? ("Jugar con "+total+" acción(es)") : "Agrega al menos una acción");
 }
 
 function pintarTomas(){
@@ -923,11 +1014,22 @@ async function guardarCastigoDatos(){
   }, { merge:true });
 }
 
-document.getElementById("btnJugar").onclick = async ()=>{
+document.getElementById("btnGuardarCastigo").onclick = async ()=>{
   if(!castigoActivo) return;
+  if(!editorCargado){ aviso("No se cargaron las acciones; no se guardará para no borrarlas."); return; }
+  try{
+    await guardarCastigoDatos();
+    aviso("Cambios guardados.");
+  }catch(e){ aviso("No se pudieron guardar los cambios."); }
+};
+
+document.getElementById("btnJugar").onclick = async ()=>{
+  if(!castigoActivo || !editorCargado) return;
+  try{ await guardarCastigoDatos(); }catch(e){ aviso("No se pudieron guardar los cambios."); return; }
   castigoPartida = castigoActivo;
   esMultiPartida = false;
-  await cargarDatosCastigo(castigoPartida);
+  const ok = await cargarDatosCastigo(castigoPartida);
+  if(!ok){ aviso("No se pudieron cargar las acciones."); return; }
   if(placerExtremo){
     tomasPartida = { ...DEF_TOMA };
     tomasPartida.basico = 0;
@@ -1151,6 +1253,10 @@ async function quitarAccesorioDeTodas(nombre){
   }catch(e){}
 }
 async function pintarImposiciones(){
+  try{
+    document.getElementById("tabImpA").textContent = nombreDeLado("A");
+    document.getElementById("tabImpB").textContent = nombreDeLado("B");
+  }catch(e){}
   const box = document.getElementById("listaImposiciones");
   const filtro = document.getElementById("buscarImp").value.toLowerCase();
   box.innerHTML = "";
@@ -1188,8 +1294,10 @@ async function guardarImposiciones(){
   await setDoc(doc(db, "imposicionesCastigo", "actual"), { A:imposiciones.A||[], B:imposiciones.B||[] }, { merge:true });
 }
 async function cargarDatosCastigo(c){
+  const token = ++cargaCastigoToken;
   try{
     const snap = await getDoc(doc(db, "nivelesCastigo", c.id));
+    if(token !== cargaCastigoToken) return false;
     const data = snap.exists() ? snap.data() : null;
     if(data && data.n){
       datos = vaciaDatos();
@@ -1203,7 +1311,11 @@ async function cargarDatosCastigo(c){
       datos = vaciaDatos();
     }
     tomas = (data && data.tomas && typeof data.tomas==="object") ? { ...data.tomas } : { ...DEF_TOMA };
-  }catch(e){ datos = vaciaDatos(); tomas = { ...DEF_TOMA }; }
+    return true;
+  }catch(e){
+    if(token !== cargaCastigoToken) return false;
+    datos = vaciaDatos(); tomas = { ...DEF_TOMA }; return false;
+  }
 }
 function promptTexto(titulo, defecto, valor){
   return new Promise(resolve=>{
@@ -1314,7 +1426,8 @@ async function pintarListaInicio(){
 async function seleccionarCastigo(c){
   castigoPartida = c;
   esMultiPartida = false;
-  await cargarDatosCastigo(c);
+  const ok = await cargarDatosCastigo(c);
+  if(!ok){ aviso("No se pudieron cargar las acciones."); return; }
   if(placerExtremo){
     tomasPartida = { ...DEF_TOMA };
     tomasPartida.basico = 0;
@@ -1500,7 +1613,7 @@ function pintarTomasJugarMulti(){
     lab.appendChild(inp); g.appendChild(lab);
   });
 }
-document.getElementById("btnTomasVolver").onclick = ()=>{ ver("vistaInicio"); };
+
 document.getElementById("btnTomasAceptar").onclick = async ()=>{
   // Multi: tomas de la partida, no se guardan en el castigo
   if(esMultiPartida){
@@ -2146,6 +2259,9 @@ function mostrarFin(){
   if(fr) fr.classList.remove("ver");
   const ctrl = document.getElementById("controlesAnfitrion");
   if(ctrl) ctrl.style.display = "none";
+  const btnFin = document.getElementById("btnFinVolver");
+  if(btnFin) btnFin.style.display = esInvitadoFlag ? "" : "none";
+  pintarSalidas();
   finMostrado = true;
   if(jugandoCompartido && esAnfitrion){
     try{ retirarInvitacion(JUEGO_INV); }catch(e){}
@@ -2174,6 +2290,7 @@ function pintarTurno(){
   const fin = document.getElementById("finBox");
   fi.classList.remove("ver"); fc.classList.remove("ver"); fr.classList.remove("ver"); fin.classList.remove("ver");
   controlesAnfitrionVisible();
+  pintarSalidas();
   try{ pintarSala(); }catch(e){}
 
   if(turnoIdx >= turnos.length){
@@ -2491,14 +2608,15 @@ document.getElementById("btnTerminarPartidaEt3").onclick = async ()=>{
     await retirarInvitacion(JUEGO_INV);
     try{ apagarFuegos(); }catch(e){}
   }catch(e){}
-  ver("vistaInicio");
+  ver("vistaInicio", "replace");
 };
-document.getElementById("btnFinVolver").onclick = async ()=>{
+async function volverDePartida(){
   pararTemporizador();
   try{ apagarFuegos(); }catch(e){}
   if(esInvitadoFlag){ await salirModoInvitado(); return; }
-  ver("vistaInicio");
-};
+  ver("vistaInicio", "replace");
+}
+document.getElementById("btnFinVolver").onclick = ()=>{ volverDePartida(); };
 
 // Salir del modo invitado: quitarlo de los usuarios del anfitrión y restaurar
 // su respaldo (su propia base e identidad). Mismo patrón de Encuentros.
@@ -2727,20 +2845,21 @@ async function entrar(){
     chequearPartidaEspera();
     return;
   }
-  ver("vistaInicio");
+  ver("vistaInicio", false);
 }
-// 1) Pintar el inicio DE INMEDIATO: si Firebase tarda o falla, la pantalla no
-//    queda en blanco (antes solo se veían el engrane y "Volver").
-try{ ver("vistaInicio"); }catch(e){}
+// 1) Pintar la pantalla inicial DE INMEDIATO: si Firebase tarda o falla, la
+//    pantalla no queda en blanco. Al invitado no se le muestra el inicio del
+//    anfitrión (protege sus datos): se le deja en la sala de espera.
+try{ ver(esInvitadoFlag ? "vistaEspera" : "vistaInicio", false); }catch(e){}
 // 2) Cargar datos y, al final, decidir la pantalla real (licencia, sesión o
 //    espera de invitado). Si algo falla, se queda el inicio.
 cargarTodo().then(async ()=>{
   try{ chequearConexion(); }catch(e){}
   try{ pintarCastigos(); }catch(e){}
   try{ actualizarInicio(); }catch(e){}
-  try{ await entrar(); }catch(e){ try{ ver("vistaInicio"); }catch(x){} }
+  try{ await entrar(); }catch(e){ try{ ver(esInvitadoFlag ? "vistaEspera" : "vistaInicio", false); }catch(x){} }
 }).catch(()=>{
-  try{ ver("vistaInicio"); }catch(e){}
+  try{ ver(esInvitadoFlag ? "vistaEspera" : "vistaInicio", false); }catch(e){}
 });
 </script>
 </body>
