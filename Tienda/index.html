@@ -49,8 +49,6 @@
     border-radius:8px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
   .subTituloSec{ width:100%; max-width:420px; font-family:'Chakra Petch',sans-serif; font-size:.85rem; font-weight:700;
     letter-spacing:.2em; text-transform:uppercase; color:var(--fg); margin:6px 0 12px; text-align:center; }
-  .btnSecTienda{ background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
-    font-family:'Chakra Petch',sans-serif; padding:8px; margin-bottom:6px; text-decoration:underline; }
   .btn{ width:100%; border:none; border-radius:12px; cursor:pointer; padding:13px;
     font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:.92rem; color:var(--bg);
     background:linear-gradient(90deg, var(--coral), var(--teal)); text-decoration:none;
@@ -69,7 +67,7 @@
 </head>
 <body>
 
-<button id="btnCasa" type="button">← Inicio</button>
+<button id="btnCasa" type="button">‹ Volver</button>
 
 <h1 id="tituloPag">Adquisición de Experiencias</h1>
 <p class="desc" id="descPag">Complicidad en Pareja</p>
@@ -92,7 +90,6 @@
   </button>
 </div>
 <div id="vistaSec" style="display:none;width:100%;flex-direction:column;align-items:center;">
-  <button class="btnSecTienda" id="btnVolverSec" type="button">‹ Centro de Adquisiciones</button>
   <div id="listaSec" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
 </div>
 <div id="lista" style="width:100%;display:flex;flex-direction:column;align-items:center;"></div>
@@ -114,11 +111,15 @@ const SEC_NOMBRES = { experiencias: "💑 Experiencias en Pareja", juegos: "🎮
 const SEC_DESC = { experiencias: "Material de Apoyo para tu cita", juegos: "Diviértete en esa cita especial", extras: "Retos que te llevarán a otro nivel" };
 let secActual = null;
 try{ secActual = new URLSearchParams(location.search).get("sec"); }catch(e){}
-document.getElementById("btnCasa").onclick = ()=>{ location.href = "../index.html"; };
+const btnCasa = document.getElementById("btnCasa");
+btnCasa.onclick = ()=>{ location.href = "../index.html"; };
 if(SEC_NOMBRES[secActual]){
   document.getElementById("botonesSec").style.display = "none";
   document.getElementById("vistaSec").style.display = "flex";
-  document.getElementById("btnCasa").style.display = "none";
+  // El boton de la esquina superior derecha es contextual (como en toda la app):
+  // desde una seccion regresa al Centro de Adquisiciones; desde el Centro, al menu.
+  btnCasa.textContent = "‹ Volver";
+  btnCasa.onclick = ()=>{ location.href = location.pathname; };
   const tp = document.getElementById("tituloPag");
   tp.textContent = SEC_NOMBRES[secActual];
   document.getElementById("descPag").textContent = SEC_DESC[secActual];
@@ -128,7 +129,6 @@ if(SEC_NOMBRES[secActual]){
 document.querySelectorAll("#botonesSec button").forEach(b=>{
   b.onclick = ()=>{ location.href = "?sec=" + b.getAttribute("data-sec"); };
 });
-document.getElementById("btnVolverSec").onclick = ()=>{ location.href = location.pathname; };
 const listaEl = document.getElementById("lista");
 const msgEl = document.getElementById("msg");
 function msg(t){ msgEl.textContent = t || ""; }

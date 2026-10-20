@@ -900,6 +900,7 @@ puede depender del catálogo para que su botón aparezca.
 | Guiadas | izquierda | **derecha** |
 | Diablitos | derecha, pero a 8px/10px | **derecha**, a 20px y con `env(safe-area-inset-top)` |
 | Citas, Retos | derecha (en el header) | derecha |
+| **Tienda** (secciones Experiencias/Juegos/Extras) | enlace de **texto** arriba ("‹ Centro de Adquisiciones") y, en el Centro, `← Inicio` | **`‹ Volver` en la esquina superior derecha** (`#btnCasa` contextual), como toda la app. Se quitó el enlace de texto. En una sección vuelve al Centro; en el Centro, al menú |
 
 **Lo que se mueve a la izquierda** es el botón **contextual** de cada pantalla:
 el engrane, "Jugar", "Configurar". En Guiadas funcionan bien porque **nunca
