@@ -15,7 +15,8 @@
 > pedido. No se toca `App Pareja` (la app real): todo esto es en
 > `Citas-de-Pareja`.
 >
-> **Estado:** diseño cerrado (oct-2026). **No hay código escrito todavía.**
+> **Estado:** **implementado (oct-2026).** Falta **solo la prueba en vivo**.
+> Checklist: `General/Plan-Castigos/08-Pruebas-En-Vivo.md`.
 
 ---
 
@@ -356,8 +357,9 @@ De arriba a abajo:
 7. Interruptor **“Placer extremo por deseo”**.
 8. Botón **Jugar**.
 9. **Engrane ⚙️** (arriba a la izquierda, solo en esta pantalla) → configuración.
-10. Abajo: **QR**, **Agregar invitado** y los cuadros de **sala/invitados**
-    (visibles también en Solo).
+10. Abajo: **QR** (para registrar invitados antes de empezar; también está en la
+    partida). **Agregar invitado** y los cuadros de **sala/invitados** viven
+    dentro de la partida (visibles también en Solo).
 
 ### 5.2 Engrane / configuración (vistas)
 - **Castigos:** lista con crear, renombrar y borrar. El ✕ del castigo **no borra

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Castigos Oficiales · Panel</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.6rem; margin:0 0 8px; text-align:center;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.desc{ font-size:.85rem; color:var(--fg-muted); max-width:420px; margin:0 0 16px; text-align:center; }
+  .caja{ width:100%; max-width:520px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .caja h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1rem; }
+  .caja .mini{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; word-break:break-all; }
+  input[type=text], input[type=number], input[type=date]{
+    width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:11px 12px; font-size:.88rem;
+    font-family:'Inter',sans-serif; margin-bottom:8px; }
+  label.chk{ display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--fg-muted); margin:4px 0 10px; }
+  label.chk input{ accent-color:var(--teal); width:18px; height:18px; }
+  .fila{ display:flex; gap:8px; }
+  .fila .btn{ flex:1; }
+  .btn{ border:none; border-radius:12px; cursor:pointer; padding:12px 14px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:.88rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btn:active{ transform:scale(.97); }
+  .btn.ghost{ background:var(--bg-2); color:var(--fg); border:1px solid var(--card-border); }
+  .btn.danger{ background:var(--rojo); color:#2b0410; }
+  .btn:disabled{ opacity:.4; }
+  .nivel{ width:100%; background:var(--bg-2); border:1px solid var(--card-border);
+    border-radius:12px; padding:12px; margin-bottom:10px; }
+  .nivel h4{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:.9rem; }
+  .nivel h4 .tag{ font-size:.68rem; color:var(--teal); border:1px solid var(--teal);
+    border-radius:8px; padding:2px 8px; margin-left:8px; vertical-align:middle; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+  .chip{ background:var(--bg); border:1px solid var(--card-border); border-radius:20px;
+    padding:6px 8px 6px 14px; font-size:.82rem; display:flex; align-items:center; gap:6px; }
+  .chip .medida{ font-size:.65rem; color:var(--teal); margin-left:6px; }
+  .chip button{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:.9rem; padding:0 4px; }
+  .filaAdd{ display:flex; gap:8px; }
+  .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:11px 12px; font-size:.88rem; font-family:'Inter',sans-serif; }
+  .filaAdd button{ border:none; border-radius:12px; cursor:pointer; padding:11px 16px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .medGroup{ display:flex; gap:6px; margin-top:8px; }
+  .medGroup label{ flex:1; padding:9px 8px; border-radius:10px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); cursor:pointer; font-size:.82rem; text-align:center; }
+  .medGroup input{ display:none; }
+  .medGroup input:checked + label{ border-color:var(--teal); background:var(--bg-2); color:var(--teal); }
+  .tomasGrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:4px; }
+  .tomasGrid label{ font-size:.78rem; color:var(--fg-muted); display:flex; flex-direction:column; gap:4px; }
+  .tomasGrid input{ border-radius:10px; border:1px solid var(--card-border); background:var(--bg);
+    color:var(--fg); padding:10px; font-size:1rem; width:100%; font-family:'Inter',sans-serif; }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; max-width:520px; }
+  #msg.ok{ color:var(--teal); }
+  .pegarBox{ margin-top:10px; }
+  .pegarBox textarea{ width:100%; min-height:130px; border-radius:12px;
+    border:1px solid var(--card-border); background:var(--bg); color:var(--fg);
+    padding:12px; font-size:.82rem; font-family:'Inter',sans-serif; margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<a class="back" href="index.html">‹ Panel</a>
+<button id="btnGoogle" type="button" style="position:absolute;top:max(52px, calc(env(safe-area-inset-top) + 32px));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">Entrar con Google</button>
+<p class="desc" id="quienGoogle" style="display:none"></p>
+<div class="eyebrow">Panel · Oficiales</div>
+<h1>Castigos Oficiales 🏅</h1>
+<p class="desc">Los creas tú con acciones y tomas sugeridas. Al aprobarse en el Centro pasan a ser de la pareja para siempre.</p>
+
+<div class="caja">
+  <h3 id="formTitulo">Nuevo Castigo Oficial</h3>
+  <p class="mini">ID con prefijo <b>ofc_</b> (ej. ofc_sensual). Es la licencia y no se cambia después.</p>
+  <input type="text" id="fId" placeholder="ID (ej. ofc_sensual)">
+  <input type="text" id="fTitulo" placeholder="Título (ej. Noche Sensual)">
+  <input type="text" id="fIcono" placeholder="Icono (ej. 🌙)">
+  <div id="iconos" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;"></div>
+  <input type="text" id="fDesc" placeholder="Descripción corta">
+  <input type="number" id="fOrden" placeholder="Orden" min="0" max="999" value="10">
+  <input type="date" id="fNuevo">
+  <label class="chk"><input type="checkbox" id="fActivo" checked> Activo en catálogo</label>
+  <div id="nivelesBox" style="width:100%"></div>
+  <h3 style="margin-top:6px;">Tomas sugeridas</h3>
+  <p class="mini">La pareja las puede cambiar. Solo se aplican la primera vez.</p>
+  <div class="tomasGrid" id="tomasGrid"></div>
+  <div class="fila" style="margin-top:12px;">
+    <button class="btn ghost" id="btnPegarJSON" type="button">Pegar castigo</button>
+    <button class="btn ghost" id="btnExportarJSON" type="button">Exportar castigo</button>
+  </div>
+  <div class="pegarBox" id="pegarBox" style="display:none">
+    <textarea id="pegarTa" placeholder='Pega aquí el JSON. Ejemplo: {"titulo":"Noche Sensual","niveles":{"basico":{"A":[{"texto":"…","medida":{"tipo":"libre","valor":0}}],"B":[]}}}'></textarea>
+    <button class="btn" id="btnPegarOk" type="button" style="width:100%;">Cargar en el formulario</button>
+    <p class="mini" style="margin:8px 0 0;">Si el JSON trae <b>id</b>, el campo del ID queda bloqueado (es la licencia y no se cambia). Usa <b>Limpiar</b> si quieres poner otro.</p>
+  </div>
+  <div class="fila">
+    <button class="btn" id="btnGuardar">Guardar</button>
+    <button class="btn ghost" id="btnLimpiar">Limpiar</button>
+  </div>
+  <div id="msg"></div>
+</div>
+
+<div id="lista" style="width:100%;max-width:520px;"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+import { TAQUILLA_FIREBASE } from "../taquilla.js";
+import { confirmar } from "../confirmar.js";
+
+const CLAVE_PRIV = "taquilla_priv";
+try{
+  const p = JSON.parse(localStorage.getItem(CLAVE_PRIV) || "null");
+  if(!(p && p.kty === "EC" && p.d)) location.href = "index.html";
+}catch(e){ location.href = "index.html"; }
+
+const app = initializeApp(TAQUILLA_FIREBASE);
+const db = getFirestore(app);
+const auth = getAuth(app);
+let yoEmail = "";
+function pintarYo(){
+  const q = document.getElementById("quienGoogle");
+  const b = document.getElementById("btnGoogle");
+  if(yoEmail){ q.style.display = "block"; q.textContent = "✅ " + yoEmail; b.style.display = "none"; }
+  else{ q.style.display = "none"; b.style.display = ""; }
+}
+document.getElementById("btnGoogle").onclick = async ()=>{
+  msg("");
+  try{
+    const res = await signInWithPopup(auth, new GoogleAuthProvider());
+    yoEmail = String(res.user.email || "").trim().toLowerCase();
+    pintarYo();
+  }catch(e){ msg("No se pudo entrar con Google."); }
+};
+onAuthStateChanged(auth, (u)=>{
+  yoEmail = u && u.email ? String(u.email).trim().toLowerCase() : "";
+  pintarYo();
+});
+async function soyPublicador(){
+  if(!yoEmail) return false;
+  try{
+    const snap = await getDoc(doc(db, "config", "permisos"));
+    const arr = snap.exists() && Array.isArray(snap.data().correos) ? snap.data().correos : [];
+    return arr.map(e=>String(e).trim().toLowerCase()).indexOf(yoEmail) >= 0;
+  }catch(e){ return false; }
+}
+function msg(t, ok){
+  const m = document.getElementById("msg");
+  m.textContent = t || "";
+  m.className = ok ? "ok" : "";
+  m.id = "msg";
+}
+
+const NIVELES = [
+  { id: "basico", nombre: "Básico" },
+  { id: "medio", nombre: "Medio" },
+  { id: "avanzado", nombre: "Avanzado" },
+  { id: "experto", nombre: "Experto" },
+  { id: "alucinado", nombre: "Alucinado" },
+];
+const TOMAS_DEF = { basico: 2, medio: 2, avanzado: 1, experto: 1, alucinado: 1 };
+const ICONOS = ["💋","💑","🌙","🕯️","🍷","🍫","💐","💍","🌹","🎶","✨","🔥"];
+let niveles = {};
+function ladosVacios(){
+  const o = {};
+  NIVELES.forEach(nv=>{ o[nv.id] = { A: [], B: [] }; });
+  return o;
+}
+niveles = ladosVacios();
+function normLadosP(v){
+  if(Array.isArray(v)) return { A: v.slice(), B: v.slice() };
+  v = v || {};
+  return { A: (v.A || []).slice(), B: (v.B || []).slice() };
+}
+
+// Acción: { texto, medida: {tipo:"libre"|"tiempo"|"veces", valor:0} }
+function accionVacia(){ return { texto:"", medida:{tipo:"libre",valor:0} }; }
+
+(function armarIconos(){
+  const box = document.getElementById("iconos");
+  ICONOS.forEach(em=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = em;
+    b.style.cssText = "font-size:1.3rem;background:var(--bg-2);border:1px solid var(--card-border);border-radius:10px;padding:6px 10px;cursor:pointer;";
+    b.onclick = ()=>{ document.getElementById("fIcono").value = em; validarForm(); };
+    box.appendChild(b);
+  });
+})();
+
+function pintarNiveles(){
+  const box = document.getElementById("nivelesBox");
+  box.innerHTML = "";
+  NIVELES.forEach(nv=>{
+    const lados = normLadosP(niveles[nv.id]);
+    const div = document.createElement("div");
+    div.className = "nivel";
+    const h = document.createElement("h4");
+    h.textContent = nv.nombre;
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    const total = lados.A.length + lados.B.length;
+    tag.textContent = total + (total === 1 ? " acción" : " acciones");
+    h.appendChild(tag);
+    div.appendChild(h);
+    ["A", "B"].forEach(lado=>{
+      const hl = document.createElement("div");
+      hl.style.cssText = "font-family:'Chakra Petch',sans-serif;font-size:.78rem;color:var(--teal);margin:8px 0 2px;";
+      hl.textContent = "Lado " + lado;
+      div.appendChild(hl);
+      const chips = document.createElement("div");
+      chips.className = "chips";
+      (lados[lado] || []).forEach((acc, i)=>{
+        const c = document.createElement("span");
+        c.className = "chip";
+        c.textContent = acc.texto;
+        const m = document.createElement("span");
+        m.className = "medida";
+        const med = acc.medida || {tipo:"libre",valor:0};
+        if(med.tipo==="tiempo") m.textContent = med.valor + " min";
+        else if(med.tipo==="veces") m.textContent = "×" + med.valor;
+        else m.textContent = "libre";
+        c.appendChild(m);
+        const x = document.createElement("button");
+        x.textContent = "✕";
+        x.onclick = ()=>{ niveles[nv.id][lado].splice(i, 1); pintarNiveles(); };
+        c.appendChild(x);
+        const det = document.createElement("button");
+        det.textContent = "✏️";
+        det.style.cssText = "background:none;border:none;color:var(--fg-muted);cursor:pointer;font-size:1rem;padding:0 4px;margin-left:4px;";
+        det.onclick = ()=>abrirDetalle(nv.id, lado, i);
+        c.appendChild(det);
+        chips.appendChild(c);
+      });
+      div.appendChild(chips);
+      const fila = document.createElement("div");
+      fila.className = "filaAdd";
+      const inp = document.createElement("input");
+      inp.placeholder = "Nueva acción " + lado + " (" + nv.nombre.toLowerCase() + ")";
+      inp.maxLength = 60;
+      const btn = document.createElement("button");
+      btn.textContent = "+";
+      const agregar = ()=>{
+        const t = (inp.value || "").trim();
+        if(!t){ inp.focus(); return; }
+        niveles[nv.id] = normLadosP(niveles[nv.id]);
+        if(niveles[nv.id][lado].some(a=>a.texto.toLowerCase() === t.toLowerCase())){ inp.value = ""; inp.focus(); return; }
+        niveles[nv.id][lado].push(accionVacia());
+        niveles[nv.id][lado][niveles[nv.id][lado].length - 1].texto = t;
+        pintarNiveles();
+        const again = document.querySelectorAll("#nivelesBox .filaAdd input")[NIVELES.indexOf(nv) * 2 + (lado === "B" ? 1 : 0)];
+        if(again) again.focus();
+      };
+      btn.onclick = agregar;
+      inp.addEventListener("keydown", (e)=>{ if(e.key === "Enter") agregar(); });
+      fila.appendChild(inp); fila.appendChild(btn);
+      div.appendChild(fila);
+    });
+    box.appendChild(div);
+  });
+}
+
+let detNivel="", detLado="", detIdx=-1;
+function abrirDetalle(nv, lado, idx){
+  detNivel = nv; detLado = lado; detIdx = idx;
+  const acc = niveles[nv][lado][idx];
+  const modal = document.getElementById("modalDetalle");
+  document.getElementById("detTexto").value = acc.texto;
+  // medida
+  document.querySelectorAll('input[name="detMedida"]').forEach(r=>{
+    r.checked = (r.value === (acc.medida && acc.medida.tipo) || "libre");
+  });
+  const valorBox = document.getElementById("detValorBox");
+  const inpVal = document.getElementById("detValor");
+  inpVal.value = (acc.medida && acc.medida.valor > 0) ? acc.medida.valor : "";
+  inpVal.disabled = (acc.medida && acc.medida.tipo === "libre");
+  document.querySelectorAll('input[name="detMedida"]').forEach(r=>{
+    r.onchange = ()=>{
+      inpVal.disabled = (r.value === "libre");
+      if(r.value === "libre") inpVal.value = "";
+    };
+  });
+  modal.style.display = "flex";
+}
+document.getElementById("btnDetCancelar").onclick = ()=>{
+  document.getElementById("modalDetalle").style.display = "none";
+};
+document.getElementById("btnDetGuardar").onclick = ()=>{
+  const texto = document.getElementById("detTexto").value.trim();
+  if(!texto){ msg("Escribe el texto de la acción."); return; }
+  if(texto.length > 60){ msg("Máximo 60 caracteres."); return; }
+  const tipo = document.querySelector('input[name="detMedida"]:checked').value;
+  const val = parseInt(document.getElementById("detValor").value || "0", 10) || 0;
+  niveles[detNivel][detLado][detIdx] = {
+    texto: texto,
+    medida: { tipo: tipo, valor: (tipo === "libre") ? 0 : val }
+  };
+  document.getElementById("modalDetalle").style.display = "none";
+  pintarNiveles();
+};
+
+function pintarTomas(vals){
+  const g = document.getElementById("tomasGrid");
+  g.innerHTML = "";
+  NIVELES.forEach(nv=>{
+    const lab = document.createElement("label");
+    lab.textContent = nv.nombre + " (A y B)";
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.min = "0"; inp.max = "20";
+    const vv = vals ? vals[nv.id] : null;
+    inp.value = (typeof vv === "number") ? vv : ((vv && (vv.A || vv.B)) || TOMAS_DEF[nv.id] || 0);
+    inp.id = "toma_" + nv.id;
+    lab.appendChild(inp);
+    g.appendChild(lab);
+  });
+}
+function leerTomas(){
+  const t = {};
+  NIVELES.forEach(nv=>{
+    const el = document.getElementById("toma_" + nv.id);
+    t[nv.id] = Math.max(0, Math.min(20, parseInt(el.value, 10) || 0));
+  });
+  return t;
+}
+pintarNiveles();
+pintarTomas(null);
+function formCompleto(){
+  const id = document.getElementById("fId").value.trim();
+  const ti = document.getElementById("fTitulo").value.trim();
+  const de = document.getElementById("fDesc").value.trim();
+  return /^ofc_[a-z0-9_-]{2,28}$/i.test(id) && !!ti && !!de;
+}
+function validarForm(){
+  document.getElementById("btnGuardar").disabled = !formCompleto();
+}
+["fId","fTitulo","fDesc"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", validarForm);
+});
+document.getElementById("fId").addEventListener("blur", ()=>{
+  const el = document.getElementById("fId");
+  let v = el.value.trim().toLowerCase().replace(/\s+/g, "_");
+  if(v && v !== "ofc_" && v.indexOf("ofc_") !== 0) v = "ofc_" + v;
+  el.value = v;
+  validarForm();
+});
+function pintarForm(f){
+  document.getElementById("fId").value = f.id || "";
+  document.getElementById("fId").disabled = !!f.id;
+  document.getElementById("fTitulo").value = f.titulo || "";
+  document.getElementById("fIcono").value = f.icono || "";
+  document.getElementById("fDesc").value = f.desc || "";
+  document.getElementById("fOrden").value = (f.orden ?? 10);
+  document.getElementById("fActivo").checked = f.activo !== false;
+  document.getElementById("fNuevo").value = f.nuevo || "";
+  niveles = ladosVacios();
+  NIVELES.forEach(nv=>{ niveles[nv.id] = normLadosP((f.niveles || {})[nv.id]); });
+  pintarNiveles();
+  pintarTomas(f.tomasSugeridas || null);
+  document.getElementById("formTitulo").textContent = f.id ? ("Editar: " + f.id) : "Nuevo Castigo Oficial";
+  validarForm();
+}
+document.getElementById("btnLimpiar").onclick = ()=>{ pintarForm({}); msg(""); };
+
+// Modal detalle
+const modalDetalleHTML = `
+<div class="modal" id="modalDetalle">
+  <div class="caja">
+    <h3>Detalle de acción</h3>
+    <input type="text" id="detTexto" placeholder="Texto de la acción (máx. 60)">
+    <div style="font-size:.8rem;color:var(--fg-muted);margin:4px 0 4px;">Medida</div>
+    <div class="medGroup">
+      <input type="radio" name="detMedida" id="detLibre" value="libre"><label for="detLibre">Libre</label>
+      <input type="radio" name="detMedida" id="detTiempo" value="tiempo"><label for="detTiempo">Tiempo 1-5 min</label>
+      <input type="radio" name="detMedida" id="detVeces" value="veces"><label for="detVeces">Veces 5-10</label>
+    </div>
+    <div id="detValorBox" style="margin-top:6px;">
+      <label style="display:block;font-size:.8rem;color:var(--fg-muted);margin-bottom:4px;">Valor</label>
+      <input type="number" id="detValor" min="0" placeholder="0">
+    </div>
+    <div class="fila" style="margin-top:12px;">
+      <button class="btn ghost" id="btnDetCancelar" type="button">Cancelar</button>
+      <button class="btn" id="btnDetGuardar" type="button" style="width:auto;padding:12px 24px;">Guardar</button>
+    </div>
+  </div>
+</div>
+`;
+document.body.insertAdjacentHTML("beforeend", modalDetalleHTML);
+
+// Sorteo de medida: Libre default, Tiempo 1-5, Veces 5-10. Presionar el mismo estado vuelve a sortear.
+function sortearMedida(tipo){
+  if(tipo === "tiempo") return { tipo: "tiempo", valor: Math.floor(Math.random() * 5) + 1 };
+  if(tipo === "veces") return { tipo: "veces", valor: Math.floor(Math.random() * 6) + 5 };
+  return { tipo: "libre", valor: 0 };
+}
+
+function limpiarParaArchivo(s){
+  return String(s || "").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "").trim()
+    .replace(/\s+/g, "-").slice(0, 40);
+}
+function aFechaISO(v){
+  if(v === null || v === undefined || v === "") return "";
+  if(typeof v === "object"){
+    if(typeof v.toDate === "function"){ try{ v = v.toDate(); }catch(e){ return ""; } }
+    else if(typeof v.seconds === "number"){ try{ v = new Date(v.seconds * 1000); }catch(e){ return ""; } }
+  }
+  const s = String(v);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[1] + "-" + m[2] + "-" + m[3];
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+}
+function castigoComoObjeto(){
+  const o = {};
+  const id = document.getElementById("fId").value.trim();
+  if(id) o.id = id;
+  o.titulo = document.getElementById("fTitulo").value.trim();
+  o.icono = document.getElementById("fIcono").value.trim() || "🏅";
+  o.desc = document.getElementById("fDesc").value.trim();
+  o.orden = parseInt(document.getElementById("fOrden").value, 10) || 10;
+  o.activo = document.getElementById("fActivo").checked;
+  const fv = document.getElementById("fNuevo").value;
+  if(fv) o.nuevoHasta = fv;
+  o.niveles = {};
+  NIVELES.forEach(nv=>{
+    o.niveles[nv.id] = { A: (niveles[nv.id].A || []).slice(), B: (niveles[nv.id].B || []).slice() };
+  });
+  o.tomasSugeridas = leerTomas();
+  return o;
+}
+function exportarCastigo(){
+  const o = castigoComoObjeto();
+  if(!o.titulo && !o.desc){ msg("No hay nada que exportar: el formulario está vacío."); return; }
+  const nombre = "castigo-" + (limpiarParaArchivo(o.id || o.titulo) || "sin-nombre") + ".json";
+  try{
+    const blob = new Blob([JSON.stringify(o, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); if(a && a.parentNode) a.parentNode.removeChild(a); }, 2000);
+    msg("Se descargó " + nombre, true);
+  }catch(e){
+    msg("No se pudo crear el archivo en este navegador.");
+  }
+}
+function formularioTieneAlgo(){
+  if(niveles && Object.keys(niveles).some(k => (niveles[k].A || []).some(a=>a.texto) || (niveles[k].B || []).some(a=>a.texto))) return true;
+  return ["fId","fTitulo","fIcono","fDesc"].some(id => (document.getElementById(id).value || "").trim() !== "");
+}
+let errorJSON = "";
+function leerJSONPegado(t){
+  errorJSON = "";
+  const probar = (texto)=>{
+    try{ return { v: JSON.parse(texto) }; }
+    catch(e){ if(!errorJSON) errorJSON = String((e && e.message) || e); return null; }
+  };
+  let r = probar(t); if(r) return r.v;
+  const q = t.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
+  if(q !== t){ r = probar(q); if(r) return r.v; }
+  if(q[0] === "{"){ r = probar(q.replace(/,\s*\}\s*$/, "}")); if(r) return r.v; }
+  if(q[0] === "["){ r = probar(q.replace(/,\s*\]\s*$/, "]")); if(r) return r.v; }
+  return null;
+}
+async function pegarCastigo(){
+  const ta = document.getElementById("pegarTa");
+  const t = (ta.value || "").trim();
+  if(!t){ msg("Pega primero el JSON."); return; }
+  const d = leerJSONPegado(t);
+  if(d === null){
+    msg("El JSON está mal escrito y no se cargó nada."
+      + (errorJSON ? "  Pista: " + errorJSON : "")
+      + "  Revisa comas y comillas.");
+    return;
+  }
+  if(!d || typeof d !== "object" || Array.isArray(d)){
+    msg("Eso no es un castigo: se espera un objeto que empiece con { \"titulo\":… }");
+    return;
+  }
+  if(formularioTieneAlgo()){
+    const ok = await confirmar({
+      aviso: true,
+      titulo: "¿Reemplazar lo que está en el formulario?",
+      texto: "Lo que escribiste se borra y queda lo del JSON.",
+      ok: "Reemplazar"
+    });
+    if(!ok) return;
+  }
+  pintarForm({
+    id: String(d.id || "").trim(),
+    titulo: d.titulo || d.nombre || d.title || "",
+    icono: d.icono || "",
+    desc: d.desc || d.descripcion || d.description || "",
+    orden: parseInt(d.orden, 10) || 10,
+    activo: d.activo !== false,
+    nuevo: aFechaISO(d.nuevoHasta || d.nuevo || d.fechaNuevo || ""),
+    niveles: d.niveles || d.acciones || {},
+    tomas: d.tomasSugeridas || d.tomas || null
+  });
+  ta.value = "";
+  document.getElementById("pegarBox").style.display = "none";
+  let n = 0;
+  NIVELES.forEach(nv=>{ n += (niveles[nv.id].A || []).length + (niveles[nv.id].B || []).length; });
+  msg("Cargado: " + n + " acción(es). Revisa y dale Guardar.", true);
+}
+document.getElementById("btnPegarJSON").onclick = ()=>{
+  const b = document.getElementById("pegarBox");
+  b.style.display = (b.style.display === "none") ? "block" : "none";
+};
+document.getElementById("btnPegarOk").onclick = ()=>{ pegarCastigo(); };
+document.getElementById("btnExportarJSON").onclick = ()=>{ exportarCastigo(); };
+document.getElementById("btnGuardar").onclick = async (e)=>{
+  msg("");
+  const id = document.getElementById("fId").value.trim();
+  const titulo = document.getElementById("fTitulo").value.trim();
+  const desc = document.getElementById("fDesc").value.trim();
+  if(!/^ofc_[a-z0-9_-]{2,28}$/i.test(id)){ msg("ID inválido: debe empezar con ofc_ y sin espacios."); return; }
+  if(!titulo || !desc){ msg("Pon título y descripción."); return; }
+  if(!yoEmail){ msg("Entra con Google primero."); return; }
+  if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
+  e.target.disabled = true;
+  try{
+    const data = {
+      titulo, icono: document.getElementById("fIcono").value.trim() || "🏅",
+      desc, seccion: "juegos",
+      orden: parseInt(document.getElementById("fOrden").value, 10) || 10,
+      activo: document.getElementById("fActivo").checked,
+      oficial: true, ruta: "Castigos",
+      niveles, tomasSugeridas: leerTomas(),
+      actualizadoEn: serverTimestamp(),
+    };
+    const fv = document.getElementById("fNuevo").value;
+    data.nuevoHasta = fv ? new Date(fv + "T23:59:59") : null;
+    await setDoc(doc(db, "packs", id), data, { merge: true });
+    msg("Guardado ✅", true);
+    pintarForm({});
+    cargar();
+  }catch(err){
+    msg("No se pudo guardar. Revisa conexión y reglas.");
+  }
+  validarForm();
+};
+async function cargar(){
+  const box = document.getElementById("lista");
+  box.innerHTML = "";
+  let items = [];
+  try{
+    const snap = await getDocs(collection(db, "packs"));
+    snap.forEach(d=>{ const v = Object.assign({ id: d.id }, d.data()); if(v.oficial && v.ruta === "Castigos") items.push(v); });
+  }catch(err){
+    box.innerHTML = '<p class="desc">No se pudo leer packs. Revisa conexión y reglas (lectura).</p>';
+    return;
+  }
+  items.sort((a, b)=>((a.orden ?? 10) - (b.orden ?? 10)) || String(a.titulo || "").localeCompare(String(b.titulo || "")));
+  if(!items.length){
+    box.innerHTML = '<p class="desc">Vacío. Agrega el primero arriba.</p>';
+    return;
+  }
+  items.forEach(p=>{
+    const total = NIVELES.reduce((t, k)=>{ const v = (p.niveles || {})[k]; return t + (((v || {}).A || []).length + ((v || {}).B || []).length); }, 0);
+    const div = document.createElement("div");
+    div.className = "caja";
+    const h3 = document.createElement("h3");
+    h3.textContent = (p.icono || "🏅") + " " + (p.titulo || p.id) + (p.activo === false ? " (inactivo)" : "") + " · " + total + " acciones";
+    const m = document.createElement("p");
+    m.className = "mini";
+    m.textContent = "ID: " + p.id + " · orden " + (p.orden ?? 10) + (p.desc ? " · " + p.desc : "");
+    const fila = document.createElement("div");
+    fila.className = "fila";
+    const ed = document.createElement("button");
+    ed.className = "btn"; ed.textContent = "Editar";
+    ed.onclick = ()=>{
+      let nv = "";
+      try{
+        const t = p.nuevoHasta && p.nuevoHasta.toDate ? p.nuevoHasta.toDate() : null;
+        if(t) nv = t.toISOString().slice(0, 10);
+      }catch(e){}
+      pintarForm({ id: p.id, titulo: p.titulo, icono: p.icono, desc: p.desc, orden: p.orden, activo: p.activo !== false, nuevo: nv, niveles: p.niveles, tomasSugeridas: p.tomasSugeridas });
+      window.scrollTo(0, 0);
+    };
+    const act = document.createElement("button");
+    act.className = "btn"; act.textContent = (p.activo === false) ? "Activar" : "Ocultar";
+    act.onclick = async ()=>{
+      if(!yoEmail){ msg("Entra con Google primero."); return; }
+      if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
+      act.disabled = true;
+      try{ await setDoc(doc(db, "packs", p.id), { activo: !(p.activo !== false), actualizadoEn: serverTimestamp() }, { merge: true }); cargar(); }
+      catch(e){ msg("No se pudo cambiar. Revisa reglas."); }
+      act.disabled = false;
+    };
+    const bor = document.createElement("button");
+    bor.className = "btn danger"; bor.textContent = "Borrar";
+    bor.onclick = async ()=>{
+      const confirmado = await confirmar({
+        aviso: true,
+        titulo: "¿Eliminar «" + p.id + "» del catálogo?",
+        texto: "No se puede deshacer.",
+        ok: "Eliminar"
+      });
+      if(!confirmado) return;
+      if(!yoEmail){ msg("Entra con Google primero."); return; }
+      if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
+      bor.disabled = true;
+      try{ await deleteDoc(doc(db, "packs", p.id)); cargar(); }
+      catch(e){ msg("No se pudo borrar. Revisa reglas."); }
+      bor.disabled = false;
+    };
+    fila.appendChild(ed); fila.appendChild(act); fila.appendChild(bor);
+    div.appendChild(h3); div.appendChild(m); div.appendChild(fila);
+    box.appendChild(div);
+  });
+}
+cargar();
+</script>
+
+</body>
+</html>

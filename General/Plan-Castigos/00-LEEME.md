@@ -12,6 +12,7 @@ para que un modelo, aunque sea gratuito, no tenga que tragarse todo junto.
 5. `05-Etapa-5.md` — Multi, Placer extremo, Sorpréndeme.
 6. `06-Etapa-6.md` — Oficiales y Panel.
 7. `07-Etapa-7.md` — Pendiente: Guiadas/Encuentros (va aparte, al final).
+8. `08-Pruebas-En-Vivo.md` — Checklist para probar en celular (no es una etapa de código).
 
 ## Cómo usarlo
 
@@ -40,4 +41,5 @@ para que un modelo, aunque sea gratuito, no tenga que tragarse todo junto.
 
 ## Estado
 
-Diseño cerrado. El juego **no tiene código escrito todavía**.
+**Implementado (oct-2026).** Falta **solo la prueba en vivo**: ver
+`08-Pruebas-En-Vivo.md`.

@@ -231,6 +231,17 @@
   </div>
 </div>
 
+<!-- ============ MODAL TOMAS (normal, igual que Encuentros) ============ -->
+<div id="modalTomas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:22px 20px;">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin-bottom:4px;">¿Cuántas acciones por nivel?</div>
+    <p class="desc" id="tomasAvisoGuia" style="max-width:none;margin-bottom:12px;"></p>
+    <div class="tomasGrid" id="tomasGridGuia"></div>
+    <button class="btnPri" id="btnTomasOkGuia" style="margin-top:12px;">Aceptar y jugar ▶</button>
+    <button class="btnSec" id="btnTomasBackGuia">Atrás</button>
+  </div>
+</div>
+
 <!-- ============ MODAL UNIRSE (sesión compartida) ============ -->
 <div id="modalUnir" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:70;align-items:center;justify-content:center;padding:20px;">
   <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:22px 20px;text-align:center;">
@@ -877,7 +888,9 @@ async function jugarDirecto(nombre){
       nombre + ": ibas en la " + (pendiente.paso + 1) + " de " + pendiente.lista.length + ".");
     return;
   }
-  empezarNuevo();
+  // Paso de tomas (normal): siempre pregunta, precargado y editable (igual que Encuentros).
+  abrirTomasGuia(nombre);
+  return;
 }
 function seguirEncima(titulo, desc){
   document.getElementById("sgTitulo").textContent = titulo;
@@ -892,6 +905,49 @@ function seguirFuera(){
 function leerProg(){
   try{ return JSON.parse(localStorage.getItem("guia_prog") || "null"); }catch(e){ return null; }
 }
+
+// ---------- paso de tomas normal (Guiadas, igual que Encuentros) ----------
+let tomasActGuia = null;
+function abrirTomasGuia(nombre){
+  tomasActGuia = nombre;
+  const g = document.getElementById("tomasGridGuia");
+  g.innerHTML = "";
+  const guardadas = tomasGuardadas(nombre);
+  document.getElementById("tomasAvisoGuia").textContent = "Precargado con las guardadas. Edita y acepta.";
+  NIVELES.forEach(nv=>{
+    const lab = document.createElement("label");
+    lab.textContent = nv.nombre;
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.min = "0"; inp.max = "50";
+    inp.value = guardadas[nv.id] || 0;
+    inp.id = "guia_toma_" + nv.id;
+    lab.appendChild(inp);
+    g.appendChild(lab);
+  });
+  document.getElementById("modalTomas").style.display = "flex";
+}
+document.getElementById("btnTomasBackGuia").onclick = ()=>{
+  document.getElementById("modalTomas").style.display = "none";
+  tomasActGuia = null;
+  ver("vistaLista");
+};
+document.getElementById("btnTomasOkGuia").onclick = async ()=>{
+  const tomas = {};
+  NIVELES.forEach(nv=>{
+    const el = document.getElementById("guia_toma_" + nv.id);
+    tomas[nv.id] = Math.max(0, Math.min(50, parseInt(el.value, 10) || 0));
+  });
+  const nombre = tomasActGuia;
+  docActual = docDe(nombre);
+  actividad = nombre;
+  multiActs = [];
+  multiModo = false; multiSel = [];
+  try{ multiRefrescar(); }catch(e){}
+  await guardarTomasEnBase(docActual, tomas);
+  document.getElementById("modalTomas").style.display = "none";
+  tomasActGuia = null;
+  empezarNuevo();
+};
 let multiActs = [];
 function guardarProg(){
   try{
@@ -1145,13 +1201,10 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
     const k = Math.max(0, tomas[nv.id] || 0);
     const porLado = {};
     ["A", "B"].forEach(lado=>{
-      const porAct = multiSel.map(nombre=>mezclar(((bolsas[nv.id] && bolsas[nv.id][nombre]) || { A: [], B: [] })[lado] || []));
-      const m = Math.min.apply(null, porAct.map(a=>a.length));
-      let pool = [];
-      porAct.forEach(a=>{ for(let i = 0; i < m; i++) pool.push(a[i]); });
-      pool = mezclar(pool);
-      porLado[lado] = [];
-      for(let i = 0; i < k && pool.length; i++) porLado[lado].push(pool[i % pool.length]);
+      // Reparto en rueda (regla oficial del juego nuevo, plan 6.2):
+      // una acción de cada actividad por vuelta, saltando vacías, hasta `k` o agotar.
+      const bolsasLado = multiSel.map(nombre=>mezclar(((bolsas[nv.id] && bolsas[nv.id][nombre]) || { A: [], B: [] })[lado] || []));
+      porLado[lado] = repartirRuedaGuia(bolsasLado, k);
     });
     const max = Math.max(porLado.A.length, porLado.B.length);
     for(let i = 0; i < max; i++){
@@ -1175,6 +1228,48 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
   guardarProg();
   mostrarPlayer();
 };
+
+// Reparto en rueda: bolsas = arreglo de arreglos (una bolsa por actividad, ya barajada).
+// Toma una de cada bolsa por vuelta, saltando vacías, hasta `necesarias` o agotar.
+// Baraja el pool; si no alcanza, repite rebarajando.
+function repartirRuedaGuia(bolsas, necesarias){
+  if(necesarias <= 0) return [];
+  const bolsasB = bolsas.map(b=>b.slice());
+  const orden = mezclar(bolsasB.map((_,i)=>i));
+  const pool = [];
+  let seguir = true;
+  while(seguir){
+    seguir = false;
+    for(const ci of orden){
+      if(bolsasB[ci].length){
+        pool.push(bolsasB[ci].shift());
+        seguir = true;
+        if(pool.length >= necesarias) break;
+      }
+    }
+    if(pool.length >= necesarias) break;
+    const algo = bolsasB.some(b=>b.length);
+    if(!algo){
+      if(pool.length === 0) break;
+      const bolsas2 = bolsas.map(b=>mezclar(b.slice()));
+      let ciclo = 0;
+      while(pool.length < necesarias && ciclo < 100){
+        ciclo++;
+        let progreso = false;
+        for(const ci of orden){
+          if(bolsas2[ci].length){
+            pool.push(bolsas2[ci].shift());
+            progreso = true;
+            if(pool.length >= necesarias) break;
+          }
+        }
+        if(!progreso) break;
+      }
+      break;
+    }
+  }
+  return mezclar(pool.slice(0, necesarias));
+}
 
 // ---------- editor ----------
 // Las tomas viven en la BASE, en el campo `tomas` de `nivelesActividad` (el mismo

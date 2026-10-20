@@ -1421,22 +1421,6 @@ function construirCabezas(){
   return out;
 }
 function generarListas(cabezasIn, actsData, tomas){
-  const poolNivel = {};
-  const poolAll = { A: [], B: [] };
-  NIVELES.forEach(nv=>{
-    poolNivel[nv.id] = { A: [], B: [] };
-    actsData.forEach(a=>{
-      const lados = normLados(a.n ? a.n[nv.id] : null);
-      lados.A.forEach(t=> poolNivel[nv.id].A.push({ texto: t, lado: "A", nivel: nv.nombre }));
-      lados.B.forEach(t=> poolNivel[nv.id].B.push({ texto: t, lado: "B", nivel: nv.nombre }));
-    });
-    poolNivel[nv.id].A = mezclar(poolNivel[nv.id].A);
-    poolNivel[nv.id].B = mezclar(poolNivel[nv.id].B);
-  });
-  ["A", "B"].forEach(side=>{
-    NIVELES.forEach(nv=>{ poolNivel[nv.id][side].forEach(x=> poolAll[side].push(x)); });
-    poolAll[side] = mezclar(poolAll[side]);
-  });
   const out = {};
   cabezasIn.forEach(c=>{ out[c.id] = []; });
   NIVELES.forEach(nv=>{
@@ -1445,25 +1429,69 @@ function generarListas(cabezasIn, actsData, tomas){
     ["A", "B"].forEach(side=>{
       const hs = cabezasIn.filter(c=>c.lado === side);
       if(!hs.length) return;
-      const pool = poolNivel[nv.id][side];
-      const combo = poolAll[side];
-      // Se reparte por posicion: en cada una TODOS los de este lado sacan del
-      // mismo nivel, para que el primero no se lleve el nivel entero. Cuando
-      // el nivel no alcanza para todos se repite una del mismo nivel antes de
-      // mezclar niveles distintos: asi el nivel que se pidio se respeta.
-      let cur = 0, comboCur = 0;
-      for(let i = 0; i < t; i++){
-        hs.forEach(h=>{
-          let item = null;
-          if(pool.length) item = pool[cur % pool.length];
-          else if(combo.length) item = combo[(comboCur++) % combo.length];
-          cur++;
-          if(item) out[h.id].push({ nivel: item.nivel, lado: side, texto: item.texto });
-        });
-      }
+      const necesarias = t * hs.length;
+      // Bolsas por actividad, barajadas (una por actividad en este nivel/lado).
+      const bolsas = actsData.map(a=>{
+        const lados = normLados(a.n ? a.n[nv.id] : null);
+        return mezclar((lados[side] || []).map(txt=>({ texto: txt, lado: side, nivel: nv.nombre })));
+      });
+      // Reparto en rueda (regla oficial 6.2): una de cada bolsa por vuelta,
+      // saltando vacías, hasta `necesarias` o agotar. Baraja; si no alcanza, repite.
+      let pool = repartirRuedaEnc(bolsas, necesarias);
+      pool = mezclar(pool);
+      // Repartir a los jugadores del lado sin repetir, t a cada uno.
+      let ti = 0;
+      hs.forEach(h=>{
+        for(let i = 0; i < t; i++){
+          const item = pool[ti];
+          ti++;
+          if(item) out[h.id].push(item);
+        }
+      });
     });
   });
   return out;
+}
+
+// Reparto en rueda: bolsas = arreglo de arreglos (una por actividad, ya barajada).
+// Toma una de cada bolsa por vuelta, saltando vacías, hasta `necesarias` o agotar.
+function repartirRuedaEnc(bolsas, necesarias){
+  if(necesarias <= 0) return [];
+  const bolsasB = bolsas.map(b=>b.slice());
+  const orden = mezclar(bolsasB.map((_,i)=>i));
+  const pool = [];
+  let seguir = true;
+  while(seguir){
+    seguir = false;
+    for(const ci of orden){
+      if(bolsasB[ci].length){
+        pool.push(bolsasB[ci].shift());
+        seguir = true;
+        if(pool.length >= necesarias) break;
+      }
+    }
+    if(pool.length >= necesarias) break;
+    const algo = bolsasB.some(b=>b.length);
+    if(!algo){
+      if(pool.length === 0) break;
+      const bolsas2 = bolsas.map(b=>mezclar(b.slice()));
+      let ciclo = 0;
+      while(pool.length < necesarias && ciclo < 100){
+        ciclo++;
+        let progreso = false;
+        for(const ci of orden){
+          if(bolsas2[ci].length){
+            pool.push(bolsas2[ci].shift());
+            progreso = true;
+            if(pool.length >= necesarias) break;
+          }
+        }
+        if(!progreso) break;
+      }
+      break;
+    }
+  }
+  return pool.slice(0, necesarias);
 }
 async function generarYIniciar(activities, tomas){
   const cabezasIn = construirCabezas();

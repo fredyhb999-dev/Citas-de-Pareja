@@ -27,6 +27,7 @@ targets = [
     ("Retos/centro.html", "centro"),
     ("Diablitos/index.html", "diablitos"),
     ("Roles/index.html", "roles"),
+    ("Castigos/index.html", "castigos"),
     # Opciones/ se agrego en oct-2026: no estaba y por eso NUNCA se revisaba de
     # sintaxis (el plan de Roles ya lo tenia anotado como pendiente). Se agrego
     # al tocarlo para meterle el QR y el remate del engrane.
@@ -37,6 +38,7 @@ targets = [
     # tambien quedaron fuera de la lista; se probaron a mano y pasan, asi que se
     # pueden agregar cuando se toquen.
     ("Panel/oficiales.html", "panel_oficiales"),
+    ("Panel/castigos.html", "panel_castigos"),
     # Estas cinco se agregaron el 18-oct-2026. NUNCA estaban en la lista, asi que
     # el chequeo de sintaxis no las habia revisado jamas: se les podia meter un
     # error de tecleo y nadie se enteraba. Se comprobaron a mano ANTES de
