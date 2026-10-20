@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>El Precio del Placer</title>
 <meta name="theme-color" content="#120e1c">
+<link rel="icon" type="image/png" href="../icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -450,8 +451,8 @@
 </div>
 
 <script type="module">
-import { initializeApp, getFirestore } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase, cargarUsuarios, leerConfigGuardada } from "../config.js";
 import { confirmar, aviso } from "../confirmar.js";
@@ -725,7 +726,7 @@ document.getElementById("btnCrearCastigo").onclick = async ()=>{
 };
 
 async function renombrarCastigo(c){
-  const nuevo = await promptTexto("Renombrar castigo","Nuevo nombre para \""+c.nombre+\":", c.nombre);
+  const nuevo = await promptTexto("Renombrar castigo","Nuevo nombre para \""+c.nombre+"\":", c.nombre);
   if(!nuevo || nuevo.trim()===c.nombre) return;
   const nn = nuevo.trim();
   if(castigos.some(x=>x.id!==c.id && x.nombre.toLowerCase()===nn.toLowerCase())){ aviso("Ese nombre ya existe."); return; }
@@ -1049,7 +1050,7 @@ document.getElementById("btnCrearAcc").onclick = async ()=>{
   }catch(e){ aviso("No se pudo crear el accesorio."); }
 };
 async function renombrarAcceso(viejo){
-  const nuevo = await promptTexto("Renombrar accesorio","Nuevo nombre para \""+viejo+\":", viejo);
+  const nuevo = await promptTexto("Renombrar accesorio","Nuevo nombre para \""+viejo+"\":", viejo);
   if(!nuevo || nuevo.trim()===viejo) return;
   const nn = nuevo.trim();
   if(accesorios.some(x=>x!==viejo && x.toLowerCase()===nn.toLowerCase())){ aviso("Ese nombre ya existe."); return; }
