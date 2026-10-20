@@ -772,6 +772,8 @@ la tarjeta y la tienda lo desmarca. Sin que el cliente recargue nada.
 
 ### Otros pendientes
 
+- **Reparto parejo en Multi (PENDIENTE, oct-2026, para cuando se construya el juego de castigos):** el reparto **en rueda** que se definió para el juego nuevo (tomar una acción de cada actividad por turnos hasta juntar las tomas, sin repetir hasta agotar el pool; la actividad con menos acciones aporta todo lo que tiene) debe aplicarse también a **Guiadas** y **Encuentros**, por etapas y probando en vivo. Hoy Guiadas usa el **mínimo** entre las 3 y Encuentros usa el **pool completo proporcional**; con varios jugadores el mínimo se queda corto (repite sin necesidad) y el proporcional infrarrepresenta a la actividad con menos acciones. El juego nuevo nace con el reparto en rueda; después se porta a los otros dos.
+- **Juego “El Precio del Placer” (castigos) — PENDIENTE de construir (oct-2026):** juego independiente, con colecciones propias (`castigosExtra`, `nivelesCastigo`, `accesoriosCastigo`, `imposicionesCastigo` por lado y su sesión). Incluye una **pantalla nueva en `Panel/`** para crear los **castigos oficiales** (`ofc_...`, pack/licencia propio como los `of_...` de actividades): acciones por nivel y lado, tomas sugeridas y medidas sugeridas; **sin accesorios** (los asigna cada pareja). Los oficiales salen como **tarjeta en el Centro**, como las actividades oficiales.
 - ~~Rotar la llave expuesta~~ **REVISADO oct-2026: no hay ninguna llave
   expuesta.** Lo que decía esto era el marcador `PON_AQUI_TU_KEY` de
   `Default Project\General\README.md`: un espacio reservado, no una llave real, así
