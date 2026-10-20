@@ -68,12 +68,18 @@
   .lado{ width:100%; background:var(--bg-2); border:1px solid var(--card-border);
     border-radius:12px; padding:10px; margin-bottom:8px; }
   .lado h4{ font-family:'Chakra Petch',sans-serif; margin:0 0 6px; font-size:.85rem; color:var(--fg-muted); text-transform:uppercase; letter-spacing:.15em; }
-  .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
-  .chip{ background:var(--card); border:1px solid var(--card-border); border-radius:20px;
-    padding:6px 8px 6px 12px; font-size:.82rem; display:flex; align-items:center; gap:6px; max-width:100%; }
-  .chip .texto{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .chip .indicador{ font-size:.7rem; color:var(--teal); margin-left:6px; }
-  .chip button{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:.9rem; padding:0 4px; }
+  .chips{ display:flex; flex-direction:column; gap:8px; margin:8px 0; }
+  .accion{ width:100%; background:var(--card); border:1px solid var(--card-border);
+    border-radius:14px; padding:8px 10px 6px; }
+  .accionTop{ display:flex; align-items:center; gap:8px; }
+  .accionCampo{ flex:1; min-width:0; width:100%; border-radius:10px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:10px 12px; font-size:.85rem; font-family:'Inter',sans-serif; }
+  .accionCampo:focus{ outline:none; border-color:var(--teal); }
+  .accionIcons{ display:flex; align-items:center; gap:2px; flex:0 0 auto; }
+  .accionIcons button{ background:none; border:none; cursor:pointer; padding:4px; font-size:1rem; }
+  .accionIcons .lapiz{ color:var(--fg-muted); }
+  .accionIcons .tache{ color:var(--rojo); }
+  .accionMeta{ font-size:.7rem; color:var(--teal); min-height:14px; margin-top:4px; padding-left:2px; }
   .filaAdd{ display:flex; gap:6px; margin-top:8px; }
   .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg); color:var(--fg); padding:12px; font-size:.9rem; font-family:'Inter',sans-serif; }
@@ -173,7 +179,7 @@
 
   <!-- Lista de castigos (igual que la lista de Encuentros) -->
   <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar castigo..." autocomplete="off">
-  <div id="cajaActs" style="width:100%;max-height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
+  <div id="cajaActs" style="width:100%;height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
     <div id="listaActs" style="width:100%"></div>
   </div>
   <div id="filaMultiSel" style="display:none;width:100%;gap:8px;margin-top:12px;">
@@ -377,7 +383,7 @@
   <div id="panelCastigos">
     <input class="buscar" id="buscarCastigos" type="text" placeholder="🔍 Buscar castigo..." autocomplete="off">
     <button class="btnPri" id="btnCrearCastigo">+ Crear castigo</button>
-    <div id="cajaCastigosCfg" style="width:100%;max-height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
+    <div id="cajaCastigosCfg" style="width:100%;height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
       <div id="listaCastigos" style="width:100%"></div>
     </div>
   </div>
@@ -385,7 +391,7 @@
   <div id="panelAccesorios" style="display:none;">
     <input class="buscar" id="buscarAccesorios" type="text" placeholder="🔍 Buscar accesorio..." autocomplete="off">
     <button class="btnPri" id="btnCrearAcc">+ Crear accesorio</button>
-    <div id="cajaAccesoriosCfg" style="width:100%;max-height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
+    <div id="cajaAccesoriosCfg" style="width:100%;height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
       <div id="listaAccesorios" style="width:100%"></div>
     </div>
   </div>
@@ -400,7 +406,7 @@
       <input type="text" id="inpNuevaImp" placeholder="Nueva imposición..." maxlength="60">
       <button class="btnPri" id="btnAddImp" style="padding:12px 16px;">+</button>
     </div>
-    <div id="cajaImpCfg" style="width:100%;max-height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
+    <div id="cajaImpCfg" style="width:100%;height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
       <div id="listaImposiciones" style="width:100%"></div>
     </div>
   </div>
@@ -423,7 +429,8 @@
     <button class="btnSec" id="btnExportarJSON">Exportar acciones</button>
   </div>
   <div class="pegarBox" id="pegarBox" style="display:none">
-    <textarea id="pegarTa" placeholder='Pega el JSON de las acciones.'></textarea>
+    <textarea id="pegarTa" placeholder='{"niveles":{"basico":{"A":["Acción 1"],"B":["Acción 2"]},"medio":{"A":[],"B":[]},"avanzado":{"A":[],"B":[]},"experto":{"A":[],"B":[]},"alucinado":{"A":[],"B":[]}}}'></textarea>
+    <div class="desc" style="text-align:left;font-size:.75rem;margin:6px 0 0;">Niveles: basico, medio, avanzado, experto, alucinado · Lados: A/B · texto máx. 60 · medida: libre/tiempo/veces.</div>
     <button class="btnPri" id="btnPegarOk" style="margin-top:8px;">Cargar acciones</button>
     <button class="btnSec" id="btnPegarCancelar" style="margin-top:6px;">Cancelar</button>
   </div>
@@ -699,6 +706,7 @@ window.addEventListener("popstate", ()=>{
     return;
   }
   if(vistaActual()==="vistaEditar"){
+    try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
     if(castigoActivo && editorCargado){ try{ guardarCastigoDatos(); }catch(e){} }
     editorToken++;
     castigoActivo = null;
@@ -758,33 +766,27 @@ async function pintarCastigos(){
   const input = document.getElementById("buscarCastigos");
   const filtro = ((input && input.value) || "").toLowerCase();
   box.innerHTML = "";
-  const conteos = await contarAccionesCastigos();
   const lista = castigos.filter(c=>c.nombre.toLowerCase().includes(filtro));
   if(!lista.length){ box.innerHTML = '<p class="desc" style="text-align:center;">Sin castigos aún.</p>'; return; }
   lista.forEach(c=>{
-    const count = conteos[c.id] || 0;
     const b = document.createElement("button");
     b.className = "btnAct";
     b.style.width="100%";
     b.style.justifyContent="space-between";
     const t = document.createElement("span"); t.textContent = c.nombre; b.appendChild(t);
+    const acc = document.createElement("span"); acc.style.cssText="display:flex;align-items:center;gap:6px;flex:0 0 auto;";
     if(c.oficial){
       const tag = document.createElement("small");
       tag.textContent = "🏅";
       tag.style.cssText = "font-family:'Inter',sans-serif;font-weight:400;font-size:.8rem;";
-      b.appendChild(tag);
+      acc.appendChild(tag);
     }
-    const acc = document.createElement("span"); acc.style.cssText="display:flex;align-items:center;gap:6px;flex:0 0 auto;";
-    const cnt = document.createElement("small");
-    cnt.textContent = count ? (count + (count === 1 ? " acción" : " acciones")) : "sin acciones";
-    acc.appendChild(cnt);
-    const ed = document.createElement("button"); ed.className="btnIcon"; ed.textContent="✏️";
-    ed.title="Editar"; ed.onclick = (ev)=>{ ev.stopPropagation(); abrirEditor(c); };
-    const br = document.createElement("button"); br.className="btnIcon"; br.textContent="🗑️";
-    br.title="Borrar"; br.onclick = (ev)=>{ ev.stopPropagation(); borrarCastigo(c); };
-    acc.appendChild(ed); acc.appendChild(br);
+    const br = document.createElement("button"); br.className="btnIcon"; br.textContent="✕";
+    br.title="Borrar"; br.style.color="var(--rojo)";
+    br.onclick = (ev)=>{ ev.stopPropagation(); borrarCastigo(c); };
+    acc.appendChild(br);
     b.appendChild(acc);
-    // Al seleccionar el castigo se abre el EDITOR (lo mismo que hace el lápiz).
+    // Tocar la fila abre el EDITOR; el ✕ rojo borra.
     b.onclick = ()=>abrirEditor(c);
     box.appendChild(b);
   });
@@ -888,21 +890,43 @@ function pintarEditor(){
       ld.appendChild(h4);
       const chips = document.createElement("div"); chips.className="chips";
       (datos[nv][lado]||[]).forEach((acc,idx)=>{
-        const chip = document.createElement("div"); chip.className="chip";
-        const tx = document.createElement("span"); tx.className="texto"; tx.textContent = acc.texto;
-        chip.appendChild(tx);
-        const ind = document.createElement("span"); ind.className="indicador";
+        const fila = document.createElement("div"); fila.className="accion";
+        const top = document.createElement("div"); top.className="accionTop";
+
+        const campo = document.createElement("input");
+        campo.type="text"; campo.className="accionCampo"; campo.maxLength=MAX_TEXTO;
+        campo.value = acc.texto;
+        campo.title = "Acción (máx. "+MAX_TEXTO+" caracteres)";
+        campo.addEventListener("change", ()=>{
+          const nuevo = campo.value.trim();
+          if(!nuevo){ aviso("Escribe la acción."); campo.value = acc.texto; return; }
+          if(nuevo.length>MAX_TEXTO){ aviso("Máximo "+MAX_TEXTO+" caracteres."); campo.value = acc.texto; return; }
+          if((datos[nv][lado]||[]).some((a,i)=>i!==idx && a.texto.toLowerCase()===nuevo.toLowerCase())){
+            aviso("Esa acción ya existe en este nivel/lado."); campo.value = acc.texto; return;
+          }
+          acc.texto = nuevo;
+          campo.value = nuevo;
+        });
+        campo.addEventListener("keydown",(e)=>{ if(e.key==="Enter" || e.keyCode===13){ e.preventDefault(); campo.blur(); } });
+        top.appendChild(campo);
+
+        const iconos = document.createElement("div"); iconos.className="accionIcons";
+        const lp = document.createElement("button"); lp.type="button"; lp.className="lapiz"; lp.textContent="✏️"; lp.title="Detalle (accesorio/medida)";
+        lp.onclick = (ev)=>{ ev.stopPropagation(); abrirDetalle(nv,lado,idx); };
+        const bx = document.createElement("button"); bx.type="button"; bx.className="tache"; bx.textContent="✕"; bx.title="Borrar acción";
+        bx.onclick = (ev)=>{ ev.stopPropagation(); borrarAccion(nv,lado,idx); };
+        iconos.appendChild(lp); iconos.appendChild(bx);
+        top.appendChild(iconos);
+        fila.appendChild(top);
+
+        const meta = document.createElement("div"); meta.className="accionMeta";
         const partes = [];
         if(acc.accesorio) partes.push("∿ "+acc.accesorio);
         if(acc.medida&&acc.medida.tipo!=="libre") partes.push((acc.medida.tipo==="tiempo")?acc.medida.valor+" min":"×"+acc.medida.valor);
-        ind.textContent = partes.length?partes.join("  |  "):"—";
-        chip.appendChild(ind);
-        const bx = document.createElement("button"); bx.textContent="✕"; bx.title="Borrar acción";
-        bx.onclick = (ev)=>{ ev.stopPropagation(); borrarAccion(nv,lado,idx); };
-        const lp = document.createElement("button"); lp.textContent="✏️"; lp.title="Detalle (accesorio/medida)";
-        lp.onclick = (ev)=>{ ev.stopPropagation(); abrirDetalle(nv,lado,idx); };
-        chip.appendChild(bx); chip.appendChild(lp);
-        chips.appendChild(chip);
+        meta.textContent = partes.length?partes.join("  |  "):"—";
+        fila.appendChild(meta);
+
+        chips.appendChild(fila);
       });
       ld.appendChild(chips);
       const fa = document.createElement("div"); fa.className="filaAdd";
@@ -1124,10 +1148,15 @@ document.getElementById("btnPegarOk").onclick = async ()=>{
   NIVELES.forEach(n=>{
     LADOS.forEach(lado=>{
       const arr = (resultado[n][lado]||[]).map(a=>{
-        const t = (a.texto||"").trim();
-        if(t.length>MAX_TEXTO){ cortados++; return t.slice(0,MAX_TEXTO); }
-        return t;
-      }).map(t=>({ texto:t, accesorio:(a.accesorio||null), medida:{tipo:(a.medida&&a.medida.tipo)||"libre",valor:(a.medida&&a.medida.valor)||0} }));
+        let t = (a.texto||"").trim();
+        if(t.length>MAX_TEXTO){ cortados++; t = t.slice(0,MAX_TEXTO); }
+        const tipo = (a.medida && a.medida.tipo) || "libre";
+        return {
+          texto: t,
+          accesorio: (a.accesorio ? String(a.accesorio).trim() : null),
+          medida: { tipo, valor: (tipo==="libre") ? 0 : (Number(a.medida && a.medida.valor)||0) }
+        };
+      }).filter(a=>a.texto);
       datos[n][lado] = arr;
     });
   });
@@ -1149,7 +1178,8 @@ async function pintarAccesorios(){
     const acc = document.createElement("span"); acc.style.cssText="display:flex;align-items:center;gap:6px;";
     const ed = document.createElement("button"); ed.className="btnIcon"; ed.textContent="✏️"; ed.title="Renombrar";
     ed.onclick = (ev)=>{ ev.stopPropagation(); renombrarAcceso(a); };
-    const br = document.createElement("button"); br.className="btnIcon"; br.textContent="🗑️"; br.title="Borrar";
+    const br = document.createElement("button"); br.className="btnIcon"; br.textContent="✕"; br.title="Borrar";
+    br.style.color="var(--rojo)";
     br.onclick = (ev)=>{ ev.stopPropagation(); borrarAcceso(a); };
     acc.appendChild(ed); acc.appendChild(br); b.appendChild(acc);
     box.appendChild(b);
@@ -1271,7 +1301,8 @@ async function pintarImposiciones(){
   lista.forEach((t,idx)=>{
     const b = document.createElement("button"); b.className="btnAct"; b.style.width="100%"; b.style.justifyContent="space-between";
     const tx = document.createElement("span"); tx.textContent = t; b.appendChild(tx);
-    const br = document.createElement("button"); br.className="btnIcon"; br.textContent="🗑️"; br.title="Borrar";
+    const br = document.createElement("button"); br.className="btnIcon"; br.textContent="✕"; br.title="Borrar";
+    br.style.color="var(--rojo)";
     br.onclick = (ev)=>{ ev.stopPropagation(); borrarImp(impLado, idx); };
     b.appendChild(br);
     box.appendChild(b);

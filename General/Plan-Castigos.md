@@ -374,10 +374,13 @@ De arriba a abajo:
 
 ### 5.2 Engrane / configuración (vistas)
 - **Castigos:** el **mismo recuadro de castigos** del inicio (buscador + scroll)
-  + botón **+ Crear castigo**. Tocar una fila (o el lápiz) abre el **editor**;
-  el 🗑️ borra con confirmación.
-- **Editor del castigo:** niveles × lados. Cada fila:
-  - Texto (máx. **60**), **✕** (borra la acción) y **lápiz** (detalle).
+  + botón **+ Crear castigo**. Tocar la fila abre el **editor**; a la derecha
+  solo va el **✕ rojo** para borrar con confirmación (sin lápiz ni conteo de
+  acciones).
+- **Editor del castigo:** niveles × lados. Cada acción va en un **campo de
+  60 posiciones** (todas del mismo tamaño), con **lápiz** (detalle) y **✕ rojo**
+  (borra), en ese orden. El campo se puede corregir y se guarda con 💾 o al
+  volver.
   - El **lápiz** abre la ventana: **accesorio opcional** + **medida exclusiva**
     (Libre/Tiempo/Veces) + valor obligatorio si Tiempo/Veces. Guardar/Cancelar.
   - La fila muestra un indicador cuando la acción ya tiene accesorio o medida
@@ -387,7 +390,8 @@ De arriba a abajo:
     se habilita cuando hay al menos una acción.
   - **Enter** en el campo de acción: la agrega y deja el cursor en el **mismo
     campo**, listo para la siguiente.
-  - **Importar / Exportar acciones** (JSON).
+  - **Importar / Exportar acciones** (JSON). El formato exacto está en
+    `General/Plan-Castigos/08-Pruebas-En-Vivo.md`, sección 12.
 - **Accesorios:** buscador/crear y el **catálogo de accesorios** en el **mismo
   recuadro con scroll** del inicio. Al borrar uno en uso, **avisar** qué
   castigos/acciones se afectan; esas acciones quedan sin accesorio.

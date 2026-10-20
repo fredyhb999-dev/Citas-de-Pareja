@@ -246,3 +246,50 @@ Para cada fallo, mandar:
 5. Si el fallo se repite al recargar.
 
 No hace falta reportar lo que sí funcionó, salvo que algo se vea raro.
+
+---
+
+## 12. JSON para cargar acciones rápido
+
+Se pega en **Castigo → Pegar acciones (JSON)**. **Reemplaza todas** las acciones
+de ese castigo. Forma recomendada, con los 5 niveles y los 2 lados:
+
+```json
+{
+  "niveles": {
+    "basico": {
+      "A": [
+        { "texto": "Decir algo picante al oído", "accesorio": null, "medida": { "tipo": "libre", "valor": 0 } }
+      ],
+      "B": [
+        { "texto": "Quitarse una prenda", "accesorio": "Antifaz", "medida": { "tipo": "tiempo", "valor": 3 } }
+      ]
+    },
+    "medio": { "A": [], "B": [] },
+    "avanzado": { "A": [], "B": [] },
+    "experto": { "A": [], "B": [] },
+    "alucinado": { "A": [], "B": [] }
+  }
+}
+```
+
+- **Niveles:** `basico`, `medio`, `avanzado`, `experto`, `alucinado`.
+- **Lados:** `A` (Usuario 1) y `B` (Usuario 2).
+- **`texto`:** obligatorio, máximo **60** caracteres.
+- **`accesorio`:** nombre exacto de un accesorio ya creado, o `null`.
+- **`medida.tipo`:** `libre` (valor 0), `tiempo` (minutos) o `veces` (cantidad).
+- También se aceptan **textos sueltos**; quedan sin accesorio y en Libre:
+
+```json
+{
+  "basico": { "A": ["Acción 1", "Acción 2"], "B": ["Acción 3"] },
+  "medio": { "A": [], "B": [] },
+  "avanzado": { "A": [], "B": [] },
+  "experto": { "A": [], "B": [] },
+  "alucinado": { "A": [], "B": [] }
+}
+```
+
+- Un arreglo por nivel (`"basico": ["..."]`) se copia a **A y B**.
+- Los niveles/lados que falten quedan vacíos. Evita acciones repetidas: el
+  importador no las valida.
