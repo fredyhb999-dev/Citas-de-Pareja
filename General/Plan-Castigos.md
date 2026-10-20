@@ -348,56 +348,35 @@ Reglas de la sesión:
 ### 5.1 Pantalla de inicio (molde A)
 De arriba a abajo:
 1. `← Volver` arriba a la derecha → `../index.html#juegos`.
-2. Eyebrow **“Atrévete a Jugar ...”** (tres puntos literales), título
-   **“El Precio del Placer”** (degradado, `width:fit-content`) + lema.
-3. **Recuadro de castigos** (el mismo de Encuentros): “Elige castigo” +
-   buscador + lista con scroll. **Tocar un castigo inicia la partida con las
-   condiciones que estén seleccionadas** (no hay botón Jugar aparte). En
-   **Multi** el recuadro permite marcar hasta 3 y el botón **Combinar** aparece
-   debajo; **Sorpréndeme** también queda debajo del recuadro.
-4. **¿Quién juega hoy?** (antes “Modo”): **Solo / Pareja / Invitados**.
-5. **¿Cómo juegan?** **Un celular / Cada quien el suyo** (siempre visible).
-6. **¿Quién castiga primero?** (Pareja e Invitados): dos botones con **los
-   nombres** asignados (o **Usuario 1 / Usuario 2** si no hay). En Solo no se
-   pregunta (es el lado del usuario actual).
-7. **Modalidad** (antes “Tipo”): **Normal / Multi**.
-8. Interruptor **“Placer extremo por deseo”**.
-9. **QR** para invitar.
-10. **Engrane ⚙️** (arriba a la izquierda, solo en esta pantalla) → configuración.
-11. Los cuadros de **sala/invitados** y “Agregar invitado” viven dentro de la
-    partida (visibles también en Solo).
-12. **← Volver** (arriba a la derecha): del editor a Configuración (guardando),
-    de Configuración/Tomas al inicio; desde el inicio sale al menú. En partida
-    activa no se muestra y el gesto de atrás del celular se bloquea. El
-    **invitado no tiene salida** mientras juega o espera (protege los datos del
-    anfitrión); al terminar usa **Volver a lista** para cerrar su modo invitado.
+2. Título **“El Precio del Placer”** (degradado, `width:fit-content`) + lema.
+3. **Modo:** tres botones/tabs: **Solo / Pareja / Invitados**.
+4. **¿Cómo juegan?** **Un celular / Cada quien el suyo** (siempre visible).
+5. **¿Quién castiga primero?** (Pareja e Invitados): dos botones con los nombres o
+   A/B. En Solo no se pregunta (es el lado del usuario actual).
+6. **Normal / Multi.** En Multi, botón de texto **“Sorpréndeme”**.
+7. Interruptor **“Placer extremo por deseo”**.
+8. Botón **Jugar**.
+9. **Engrane ⚙️** (arriba a la izquierda, solo en esta pantalla) → configuración.
+10. Abajo: **QR** (para registrar invitados antes de empezar; también está en la
+    partida). **Agregar invitado** y los cuadros de **sala/invitados** viven
+    dentro de la partida (visibles también en Solo).
 
 ### 5.2 Engrane / configuración (vistas)
-- **Castigos:** el **mismo recuadro de castigos** del inicio (buscador + scroll)
-  + botón **+ Crear castigo**. Tocar la fila abre el **editor**; a la derecha
-  solo va el **✕ rojo** para borrar con confirmación (sin lápiz ni conteo de
-  acciones).
-- **Editor del castigo:** niveles × lados. Cada acción va en un **campo de
-  60 posiciones** (todas del mismo tamaño), con **lápiz** (detalle) y **✕ rojo**
-  (borra), en ese orden. El campo se puede corregir y se guarda con 💾 o al
-  volver.
+- **Castigos:** lista con crear, renombrar y borrar. El ✕ del castigo **no borra
+  de una**: abre el detalle para editar/borrar y ahí se confirma.
+- **Editor del castigo:** niveles × lados. Cada fila:
+  - Texto (máx. **60**), **✕** (borra la acción) y **lápiz** (detalle).
   - El **lápiz** abre la ventana: **accesorio opcional** + **medida exclusiva**
     (Libre/Tiempo/Veces) + valor obligatorio si Tiempo/Veces. Guardar/Cancelar.
   - La fila muestra un indicador cuando la acción ya tiene accesorio o medida
     (ej. “3 min”, “×5”, o un punto en el lápiz).
   - La rejilla de **tomas** (5 números compartidos) va en el editor.
-  - **💾 Guardar** sin jugar; al **Volver a lista** también guarda. **Jugar ▶**
-    se habilita cuando hay al menos una acción.
-  - **Enter** en el campo de acción: la agrega y deja el cursor en el **mismo
-    campo**, listo para la siguiente.
-  - **Importar / Exportar acciones** (JSON). El formato exacto está en
-    `General/Plan-Castigos/08-Pruebas-En-Vivo.md`, sección 12.
-- **Accesorios:** buscador/crear y el **catálogo de accesorios** en el **mismo
-  recuadro con scroll** del inicio. Al borrar uno en uso, **avisar** qué
-  castigos/acciones se afectan; esas acciones quedan sin accesorio.
-  **Importar / Exportar accesorios.**
-- **Imposiciones:** pestaña con **dos listas** con los nombres (o Usuario 1/2),
-  agregar y borrar texto, en un recuadro con scroll.
+  - **Jugar ▶** desde el editor.
+  - **Importar / Exportar acciones** (JSON).
+- **Accesorios:** catálogo con crear, renombrar, borrar. Al borrar uno en uso,
+  **avisar** qué castigos/acciones se afectan; esas acciones quedan sin
+  accesorio. **Importar / Exportar accesorios.**
+- **Imposiciones:** pestaña con **dos listas (A y B)**, agregar y borrar texto.
 
 ### 5.3 Multi
 1. Se elige **Multi**.
