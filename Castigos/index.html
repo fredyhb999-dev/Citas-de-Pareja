@@ -136,6 +136,7 @@
   .faseTitulo{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.2rem; margin-bottom:8px; }
   .faseTexto{ font-size:1.1rem; line-height:1.6; margin-bottom:16px; color:var(--fg); }
   .faseTexto .acce{ color:var(--teal); font-weight:600; }
+  #faseImpTexto, #recibeImp{ color:var(--coral); font-weight:600; }
   .faseMedida{ font-size:1rem; color:var(--fg-muted); margin-bottom:16px; }
   .cronometro{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.5rem;
     color:var(--coral); margin:10px 0; }
@@ -300,7 +301,7 @@
 
 <!-- ============ VISTA PARTIDA ============ -->
 <div class="vista" id="vistaPartida">
-  <h1 id="partidaTitulo">En juego</h1>
+  <h1 id="partidaTitulo">Turno de …</h1>
 
   <div id="controlesAnfitrion" style="width:100%;">
     <div class="swGroup" id="rowRevivir">
@@ -310,13 +311,11 @@
   </div>
 
   <div id="faseImposicion" class="faseBox">
-    <div class="faseTitulo" id="faseImpTitulo">Imposición</div>
     <div class="faseTexto" id="faseImpTexto">…</div>
     <button class="btnPri" id="btnAceptarImp">Aceptar</button>
   </div>
 
   <div id="faseCastigo" class="faseBox">
-    <div class="faseTitulo" id="faseCastTurno">Turno de …</div>
     <div class="faseTexto" id="faseCastTexto">…</div>
     <div class="faseMedida" id="faseCastMedida"></div>
     <div class="cronometro" id="cronometro"></div>
@@ -2409,6 +2408,20 @@ function controlesAnfitrionVisible(){
 }
 
 // ---------- turno ----------
+function fraseAccion(acc){
+  if(!acc) return "(sin acción)";
+  const txt = acc.texto || "";
+  const med = acc.medida || { tipo:"libre", valor:0 };
+  const valor = Number(med.valor) || 0;
+  if(acc.accesorio && med.tipo !== "libre" && valor > 0){
+    const prep = (med.tipo === "tiempo") ? "por" : "con";
+    const unidad = (med.tipo === "tiempo") ? "Minutos" : "Veces";
+    return txt + " " + prep + " " + acc.accesorio + " " + valor + " " + unidad;
+  }
+  if(acc.accesorio) return txt + " con " + acc.accesorio;
+  return txt;
+}
+
 function pintarTurno(){
   const fi = document.getElementById("faseImposicion");
   const fc = document.getElementById("faseCastigo");
@@ -2426,6 +2439,7 @@ function pintarTurno(){
 
   const t = turnos[turnoIdx];
   const c = cabezas.find(x=>x.id===t.jugador) || { nombre:"?", lado:"?" };
+  document.getElementById("partidaTitulo").textContent = "Turno de " + c.nombre;
 
   const esUnCelular = (comoJuegan === "unCelular") || !jugandoCompartido;
   const soyTurno = esUnCelular || (t.jugador === miId);
@@ -2448,21 +2462,24 @@ function pintarTurno(){
   }
 
   // La imposición la toma el ANFITRIÓN (aunque en este turno sea el que recibe),
-  // y se escribe en la sesión para que el que castiga la vea.
-  if(!t.imposicion && esAnfitrion){
+  // y se escribe en la sesión para que el que castiga la vea. Se guarda "" para
+  // dejar constancia de que el turno ya se resolvió y no había imposición.
+  if(t.imposicion == null && esAnfitrion){
     const imp = tomarImposicion(t.lado);
-    t.imposicion = imp;
-    if(jugandoCompartido){ escribirImposicionRemoto(imp); }
+    t.imposicion = imp || "";
+    if(jugandoCompartido){ escribirImposicionRemoto(t.imposicion); }
   }
 
   // El que recibe ve "Te toca recibir" + imposición (contexto) + SOLO la acción.
   // Los demás ven "Turno de X" + imposición (sin acción). Nadie más tiene botones.
   if(soyReceptor || soyOtro){
     document.getElementById("recibeTitulo").textContent = soyReceptor ? "Te toca recibir" : ("Turno de " + c.nombre);
-    document.getElementById("recibeImp").textContent = t.imposicion ? ("Imposición: " + t.imposicion) : "";
+    const impEl = document.getElementById("recibeImp");
+    impEl.textContent = t.imposicion || "";
+    impEl.style.display = t.imposicion ? "" : "none";
     const acEl = document.getElementById("recibeAccion");
     if(soyReceptor && t.accion){
-      acEl.textContent = t.accion.texto + (t.accion.accesorio ? " · " + t.accion.accesorio : "");
+      acEl.textContent = fraseAccion(t.accion);
       acEl.style.display = "block";
     }else{
       acEl.textContent = "";
@@ -2473,28 +2490,35 @@ function pintarTurno(){
   }
 
   if(faseTurno === "imposicion"){
-    document.getElementById("faseImpTitulo").textContent = "Imposición — Turno de " + c.nombre;
-    document.getElementById("faseImpTexto").textContent = t.imposicion || "(sin imposiciones de este lado)";
-    fi.classList.add("ver");
-    return;
+    if(t.imposicion){
+      document.getElementById("faseImpTexto").textContent = t.imposicion;
+      fi.classList.add("ver");
+      return;
+    }
+    if(t.imposicion === "" || !jugandoCompartido){
+      faseTurno = "castigo";
+    }else{
+      return;
+    }
   }
 
   if(faseTurno === "castigo"){
-    document.getElementById("faseCastTurno").textContent = "Turno de " + c.nombre;
     const acc = t.accion;
-    const html = acc ? acc.texto + (acc.accesorio ? ' <span class="acce">· ' + acc.accesorio + '</span>' : '') : "(sin acción)";
-    document.getElementById("faseCastTexto").innerHTML = html;
+    document.getElementById("faseCastTexto").textContent = fraseAccion(acc);
     const medDiv = document.getElementById("faseCastMedida");
     const btnIni = document.getElementById("btnIniciarTiempo");
     const btnListo = document.getElementById("btnListo");
     const crono = document.getElementById("cronometro");
+    const conAccesorioYCantidad = !!(acc && acc.accesorio && acc.medida && acc.medida.tipo!=="libre" && (Number(acc.medida.valor)||0) > 0);
     medDiv.textContent = "";
     btnIni.style.display = "none";
     btnListo.style.display = "none";
     crono.style.display = "none";
     if(acc && acc.medida && acc.medida.tipo!=="libre"){
-      const lbl = acc.medida.tipo==="tiempo" ? (acc.medida.valor + " min") : ("×" + acc.medida.valor);
-      medDiv.textContent = "Medida: " + lbl;
+      if(!conAccesorioYCantidad){
+        const lbl = acc.medida.tipo==="tiempo" ? (acc.medida.valor + " min") : ("×" + acc.medida.valor);
+        medDiv.textContent = "Medida: " + lbl;
+      }
       if(acc.medida.tipo==="tiempo"){
         btnIni.style.display = "inline-block";
         crono.style.display = "block";
@@ -2521,7 +2545,7 @@ async function escribirImposicionRemoto(imp){
       if(!d.activa) return;
       const turnos = Array.isArray(d.turnos) ? d.turnos.slice() : [];
       const idx = d.turno || 0;
-      if(turnos[idx] && !turnos[idx].hecho && turnos[idx].imposicion === null){
+      if(turnos[idx] && !turnos[idx].hecho && turnos[idx].imposicion == null){
         turnos[idx].imposicion = imp;
         tx.update(ref, { turnos, actualizadaEn: serverTimestamp() });
       }
