@@ -30,6 +30,9 @@
   p.desc{ font-size:.85rem; color:var(--fg-muted); max-width:420px; margin:0 0 16px; text-align:center; }
   .caja{ width:100%; max-width:520px; background:var(--card); border:1px solid var(--card-border);
     border-radius:16px; padding:16px; margin-bottom:12px; }
+  .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:60;
+    align-items:center; justify-content:center; padding:20px; }
+  .modal .caja{ max-width:380px; margin-bottom:0; }
   .caja h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1rem; }
   .caja .mini{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; word-break:break-all; }
   input[type=text], input[type=number], input[type=date]{
