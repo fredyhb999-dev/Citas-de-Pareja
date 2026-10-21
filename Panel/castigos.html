@@ -188,10 +188,31 @@ function ladosVacios(){
   return o;
 }
 niveles = ladosVacios();
+function normalizarAccionP(a){
+  if(typeof a === "string") return { texto:a.trim(), medida:{tipo:"libre",valor:0} };
+  if(a && typeof a === "object"){
+    const med = a.medida || a.medicion || {};
+    const tipo = (typeof med === "string") ? med : (med.tipo || "libre");
+    const valor = Number((typeof med === "object" ? med.valor : 0)) || 0;
+    return {
+      texto: String(a.texto || a.accion || a.nombre || "").trim(),
+      medida: { tipo: (tipo === "tiempo" || tipo === "veces") ? tipo : "libre", valor: valor }
+    };
+  }
+  return { texto:"", medida:{tipo:"libre",valor:0} };
+}
 function normLadosP(v){
-  if(Array.isArray(v)) return { A: v.slice(), B: v.slice() };
+  if(Array.isArray(v)) v = { A: v, B: v };
   v = v || {};
-  return { A: (v.A || []).slice(), B: (v.B || []).slice() };
+  const arr = (k)=>{
+    const raw = Array.isArray(v[k]) ? v[k] : [];
+    return raw.map(normalizarAccionP).filter(a=>a.texto);
+  };
+  const A = arr("A"), B = arr("B");
+  if(!A.length && !B.length && (Array.isArray(v.a) || Array.isArray(v.b))){
+    return { A: arr("a"), B: arr("b") };
+  }
+  return { A: A, B: B };
 }
 
 // Acción: { texto, medida: {tipo:"libre"|"tiempo"|"veces", valor:0} }
@@ -303,6 +324,31 @@ function abrirDetalle(nv, lado, idx){
   });
   modal.style.display = "flex";
 }
+// Modal detalle
+const modalDetalleHTML = `
+<div class="modal" id="modalDetalle">
+  <div class="caja">
+    <h3>Detalle de acción</h3>
+    <input type="text" id="detTexto" placeholder="Texto de la acción (máx. 60)">
+    <div style="font-size:.8rem;color:var(--fg-muted);margin:4px 0 4px;">Medida</div>
+    <div class="medGroup">
+      <input type="radio" name="detMedida" id="detLibre" value="libre"><label for="detLibre">Libre</label>
+      <input type="radio" name="detMedida" id="detTiempo" value="tiempo"><label for="detTiempo">Tiempo 1-5 min</label>
+      <input type="radio" name="detMedida" id="detVeces" value="veces"><label for="detVeces">Veces 5-10</label>
+    </div>
+    <div id="detValorBox" style="margin-top:6px;">
+      <label style="display:block;font-size:.8rem;color:var(--fg-muted);margin-bottom:4px;">Valor</label>
+      <input type="number" id="detValor" min="0" placeholder="0">
+    </div>
+    <div class="fila" style="margin-top:12px;">
+      <button class="btn ghost" id="btnDetCancelar" type="button">Cancelar</button>
+      <button class="btn" id="btnDetGuardar" type="button" style="width:auto;padding:12px 24px;">Guardar</button>
+    </div>
+  </div>
+</div>
+`;
+document.body.insertAdjacentHTML("beforeend", modalDetalleHTML);
+
 document.getElementById("btnDetCancelar").onclick = ()=>{
   document.getElementById("modalDetalle").style.display = "none";
 };
@@ -373,39 +419,19 @@ function pintarForm(f){
   document.getElementById("fOrden").value = (f.orden ?? 10);
   document.getElementById("fActivo").checked = f.activo !== false;
   document.getElementById("fNuevo").value = f.nuevo || "";
+  const fuente = f.niveles || {};
+  const normKey = k => String(k || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   niveles = ladosVacios();
-  NIVELES.forEach(nv=>{ niveles[nv.id] = normLadosP((f.niveles || {})[nv.id]); });
+  NIVELES.forEach(nv=>{
+    const k = Object.keys(fuente).find(x=>normKey(x) === normKey(nv.id));
+    niveles[nv.id] = normLadosP(k ? fuente[k] : null);
+  });
   pintarNiveles();
   pintarTomas(f.tomasSugeridas || null);
   document.getElementById("formTitulo").textContent = f.id ? ("Editar: " + f.id) : "Nuevo Castigo Oficial";
   validarForm();
 }
 document.getElementById("btnLimpiar").onclick = ()=>{ pintarForm({}); msg(""); };
-
-// Modal detalle
-const modalDetalleHTML = `
-<div class="modal" id="modalDetalle">
-  <div class="caja">
-    <h3>Detalle de acción</h3>
-    <input type="text" id="detTexto" placeholder="Texto de la acción (máx. 60)">
-    <div style="font-size:.8rem;color:var(--fg-muted);margin:4px 0 4px;">Medida</div>
-    <div class="medGroup">
-      <input type="radio" name="detMedida" id="detLibre" value="libre"><label for="detLibre">Libre</label>
-      <input type="radio" name="detMedida" id="detTiempo" value="tiempo"><label for="detTiempo">Tiempo 1-5 min</label>
-      <input type="radio" name="detMedida" id="detVeces" value="veces"><label for="detVeces">Veces 5-10</label>
-    </div>
-    <div id="detValorBox" style="margin-top:6px;">
-      <label style="display:block;font-size:.8rem;color:var(--fg-muted);margin-bottom:4px;">Valor</label>
-      <input type="number" id="detValor" min="0" placeholder="0">
-    </div>
-    <div class="fila" style="margin-top:12px;">
-      <button class="btn ghost" id="btnDetCancelar" type="button">Cancelar</button>
-      <button class="btn" id="btnDetGuardar" type="button" style="width:auto;padding:12px 24px;">Guardar</button>
-    </div>
-  </div>
-</div>
-`;
-document.body.insertAdjacentHTML("beforeend", modalDetalleHTML);
 
 // Sorteo de medida: Libre default, Tiempo 1-5, Veces 5-10. Presionar el mismo estado vuelve a sortear.
 function sortearMedida(tipo){

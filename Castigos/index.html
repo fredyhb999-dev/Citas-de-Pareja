@@ -717,30 +717,59 @@ async function sincronizarOficialesCastigos(){
       tomasSugeridas: p.tomasSugeridas || {},
       nuevoHasta: p.nuevoHasta || null
     }));
+    const normAcc = (a)=>{
+      if(typeof a === "string") return { texto:a.trim(), accesorio:null, medida:{tipo:"libre",valor:0} };
+      const acc = a || {};
+      return {
+        texto: String(acc.texto || acc.accion || acc.nombre || "").trim(),
+        accesorio: null,
+        medida: acc.medida || { tipo:"libre", valor:0 }
+      };
+    };
+    const construirN = (o)=>{
+      const n = {};
+      NIVELES.forEach(nv=>{
+        const lados = o.niveles && o.niveles[nv.id] ? o.niveles[nv.id] : {A:[],B:[]};
+        const arrA = Array.isArray(lados) ? lados : (lados.A || []);
+        const arrB = Array.isArray(lados) ? lados : (lados.B || []);
+        n[nv.id] = {
+          A: arrA.map(normAcc).filter(a=>a.texto),
+          B: arrB.map(normAcc).filter(a=>a.texto)
+        };
+      });
+      return n;
+    };
     for(const o of oficiales){
       try{
         const ref = doc(db, "nivelesCastigo", o.id);
         const snap = await getDoc(ref);
         if(!snap.exists()){
-          const n = {};
-          NIVELES.forEach(nv=>{
-            const lados = o.niveles && o.niveles[nv.id] ? o.niveles[nv.id] : {A:[],B:[]};
-            n[nv.id] = {
-              A: (lados.A || []).map(a=>({ texto:(a.texto||""), accesorio:null, medida:(a.medida||{tipo:"libre",valor:0}) })),
-              B: (lados.B || []).map(a=>({ texto:(a.texto||""), accesorio:null, medida:(a.medida||{tipo:"libre",valor:0}) }))
-            };
-          });
           await setDoc(ref, {
-            n: n,
+            n: construirN(o),
             titulo: o.titulo,
             oficial: true,
             tomas: o.tomasSugeridas || {},
             actualizadoEn: serverTimestamp()
           });
-        }else if(o.tomasSugeridas){
-          // Solo siembran tomas sugeridas si la pareja no las ha cambiado
+        }else{
+          // Repara una copia que se haya creado vacía (por ejemplo, de un JSON
+          // viejo con acciones en texto). No toca nada si la pareja ya tiene
+          // acciones escritas.
           const data = snap.data();
-          if(!data.tomas || Object.keys(data.tomas).length === 0){
+          const nd = data.n || {};
+          const tieneTexto = NIVELES.some(nv=>{
+            const l = nd[nv.id] || {};
+            return [...(l.A||[]), ...(l.B||[])].some(a=>a && a.texto);
+          });
+          if(!tieneTexto){
+            const n = construirN(o);
+            const tieneOficial = NIVELES.some(nv=> (n[nv.id].A.length + n[nv.id].B.length) > 0);
+            if(tieneOficial){
+              await setDoc(ref, { n: n, titulo: o.titulo, actualizadoEn: serverTimestamp() }, { merge:true });
+            }
+          }
+          // Solo siembran tomas sugeridas si la pareja no las ha cambiado
+          if(o.tomasSugeridas && (!data.tomas || Object.keys(data.tomas).length === 0)){
             await setDoc(ref, { tomas: o.tomasSugeridas, actualizadoEn: serverTimestamp() }, { merge: true });
           }
         }
