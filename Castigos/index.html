@@ -2264,7 +2264,6 @@ function armarPartidaNormal(){
   armarBolsasImposicion();
   if(placerExtremo && !placerAlcanzaNormal()){ abortarPlacer(); return false; }
   generarTurnos();
-  avisarAccionesSinTexto();
   return true;
 }
 
@@ -2429,15 +2428,6 @@ function accionDeNivel(a, nivel, lado){
     medida: (a && a.medida) || { tipo:"libre", valor:0 }
   };
 }
-// TEMPORAL (diagnostico): dice cuantos turnos quedaron con el texto vacio y un
-// ejemplo con jugador/nivel/lado, en vez de que la pantalla salga en blanco.
-function avisarAccionesSinTexto(){
-  const malas = (turnos || []).filter(t=>t && t.accion && !String(t.accion.texto || "").trim());
-  if(!malas.length) return;
-  const t = malas[0];
-  const c = (cabezas || []).find(x=>x && x.id===t.jugador) || {};
-  aviso("ACCIONES SIN TEXTO: " + malas.length + " turno(s). Ejemplo: " + (c.nombre || t.jugador) + " / " + (t.accion.nivel || "?") + " / " + nombreDeLado(t.accion.lado || "?"));
-}
 function generarTurnos(){
   turnos = [];
   const accionesPorJugador = {};
@@ -2573,7 +2563,6 @@ async function iniciarPartidaMulti(){
   armarBolsasImposicion();
   if(placerExtremo && !placerAlcanzaMulti()){ abortarPlacer(); return; }
   generarTurnosMulti();
-  avisarAccionesSinTexto();
   if(comoJuegan==="cadaQuien" && modoJuego!=="solo"){
     await publicarSesion();
     return;
