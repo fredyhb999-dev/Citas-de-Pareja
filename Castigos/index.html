@@ -3144,6 +3144,29 @@ function fraseAccion(acc){
 }
 
 function pintarTurno(){
+  if(turnoIdx >= turnos.length){
+    mostrarFin();
+    return;
+  }
+
+  const t = turnos[turnoIdx];
+
+  // Turno saltado: se avanza sin repintar. Antes se borraba la pantalla y se
+  // volvia a pintar en cada salto, y en "cada quien el suyo" eso hacia que se
+  // vieran pasar los turnos ajenos como un parpadeo (sobre todo con Derechos
+  // apagado). El anfitrion mueve la sesion; los demas esperan el snapshot.
+  if(t && t.saltado){
+    if(jugandoCompartido){
+      if(esAnfitrion) avanzarSaltadoRemoto();
+      return;
+    }
+    t.hecho = true;
+    turnoIdx++;
+    avanzarTurnoNoSaltado();
+    pintarTurno();
+    return;
+  }
+
   const fi = document.getElementById("faseImposicion");
   const fc = document.getElementById("faseCastigo");
   const fr = document.getElementById("faseRecibe");
@@ -3154,12 +3177,6 @@ function pintarTurno(){
   pintarSalidas();
   try{ pintarSala(); }catch(e){}
 
-  if(turnoIdx >= turnos.length){
-    mostrarFin();
-    return;
-  }
-
-  const t = turnos[turnoIdx];
   const c = cabezas.find(x=>x.id===t.jugador) || { nombre:"?", lado:"?" };
   const colorAccion = (turnoIdx % 2 === 0) ? "var(--coral)" : "var(--teal)";
   document.getElementById("partidaTitulo").textContent = "Turno de " + c.nombre;
@@ -3170,19 +3187,6 @@ function pintarTurno(){
   const miLado = miCab ? miCab.lado : null;
   const soyReceptor = jugandoCompartido && !esUnCelular && !soyTurno && miLado && miLado !== t.lado;
   const soyOtro = jugandoCompartido && !esUnCelular && !soyTurno && !soyReceptor;
-
-  if(t.saltado){
-    if(jugandoCompartido){
-      // Solo el anfitrión mueve el turno saltado; los demás esperan.
-      if(esAnfitrion) avanzarSaltadoRemoto();
-      return;
-    }
-    t.hecho = true;
-    turnoIdx++;
-    avanzarTurnoNoSaltado();
-    pintarTurno();
-    return;
-  }
 
   // La imposición la toma el ANFITRIÓN (aunque en este turno sea el que recibe),
   // y se escribe en la sesión para que el que castiga la vea. Se guarda "" para
@@ -3290,7 +3294,14 @@ async function avanzarTurnoRemoto(){
       const t = turnos[idx];
       if(!t || t.hecho || t.jugador !== miId) return;
       t.hecho = true;
-      const next = idx + 1;
+      // Salta de una vez todos los turnos seguidos que no se juegan, para que
+      // no haya un snapshot por cada uno (eso era el parpadeo en cada celular).
+      let next = idx + 1;
+      while(next < turnos.length && turnos[next].saltado){
+        turnos[next].hecho = true;
+        turnos[next].imposicion = null;
+        next++;
+      }
       tx.update(ref, {
         turnos,
         turno: next,
@@ -3316,7 +3327,12 @@ async function avanzarSaltadoRemoto(){
       if(!t || t.hecho) return;
       t.hecho = true;
       t.imposicion = null;
-      const next = idx + 1;
+      let next = idx + 1;
+      while(next < turnos.length && turnos[next].saltado){
+        turnos[next].hecho = true;
+        turnos[next].imposicion = null;
+        next++;
+      }
       tx.update(ref, {
         turnos,
         turno: next,
@@ -3343,7 +3359,12 @@ async function saltarTurnoRemoto(){
       t.hecho = true;
       t.saltado = true;
       t.imposicion = null;
-      const next = idx + 1;
+      let next = idx + 1;
+      while(next < turnos.length && turnos[next].saltado){
+        turnos[next].hecho = true;
+        turnos[next].imposicion = null;
+        next++;
+      }
       tx.update(ref, {
         turnos,
         turno: next,
@@ -3594,8 +3615,167 @@ document.getElementById("btnAgregarNo").onclick = ()=>{
   document.getElementById("modalAgregar").style.display = "none";
 };
 
+// ---------- invitado a media partida: acciones distintas ----------
+function normTxt(s){ return String(s||"").trim().toLowerCase(); }
+
+function bolsasEnMemoria(){
+  if(esMultiPartida){
+    return (multiCastigos||[]).map(c=>(accionesMultiCache[c.id] || {}));
+  }
+  return [datos || {}];
+}
+
+async function leerNivelesCastigo(id){
+  const nn = vaciaDatos();
+  try{
+    const snap = await getDoc(doc(db, "nivelesCastigo", id));
+    const data = snap.exists() ? snap.data() : null;
+    const n = (data && data.n) || {};
+    NIVELES.forEach(nv=>{
+      LADOS.forEach(lado=>{
+        const arr = (n[nv] && n[nv][lado]) || [];
+        if(Array.isArray(arr)){
+          nn[nv][lado] = arr.map(a=>({
+            texto:(a.texto||""),
+            accesorio:(a.accesorio||null),
+            medida:{tipo:(a.medida&&a.medida.tipo)||"libre",valor:(a.medida&&a.medida.valor)||0}
+          }));
+        }
+      });
+    });
+  }catch(e){}
+  return nn;
+}
+
+function tieneAcciones(nn){
+  if(!nn) return false;
+  return NIVELES.some(nv=>LADOS.some(lado=>Array.isArray(nn[nv] && nn[nv][lado]) && nn[nv][lado].length > 0));
+}
+
+async function bolsasParaInvitado(d){
+  try{
+    if(d && d.multi){
+      const ids = Array.isArray(d.multiIds) ? d.multiIds : [];
+      const out = [];
+      for(const id of ids){
+        let nn = accionesMultiCache[id];
+        if(!nn){ nn = await leerNivelesCastigo(id); if(tieneAcciones(nn)) accionesMultiCache[id] = nn; }
+        if(nn && tieneAcciones(nn)) out.push(nn);
+      }
+      return out;
+    }
+    if(d && d.castigoId){
+      if(castigoPartida && castigoPartida.id === d.castigoId && tieneAcciones(datos)) return [datos];
+      const nn = await leerNivelesCastigo(d.castigoId);
+      return tieneAcciones(nn) ? [nn] : [];
+    }
+  }catch(e){}
+  return [];
+}
+
+function poolDeAcciones(bolsas, nivel, lado){
+  const vistas = new Set();
+  const out = [];
+  (bolsas||[]).forEach(nn=>{
+    const arr = (nn && nn[nivel] && nn[nivel][lado]) || [];
+    arr.forEach(a=>{
+      const texto = String((a&&a.texto)||"").trim();
+      if(!texto) return;
+      const k = normTxt(texto);
+      if(vistas.has(k)) return;
+      vistas.add(k);
+      out.push(accionDeNivel(a, nivel, lado));
+    });
+  });
+  return out;
+}
+
+// Elige una accion del mismo nivel y lado. Prioriza la que no se ha usado en
+// la partida; luego la que no esta en la lista del compañero; si no, cualquiera
+// distinta de la de esa ronda. Devuelve null si no hay nada que elegir.
+function elegirAccionInvitado(bolsas, nivel, lado, evitar, usadas, delCompanero, elegidas){
+  const pool = poolDeAcciones(bolsas, nivel, lado);
+  if(!pool.length) return null;
+  const evit = normTxt(evitar);
+  const clave = (a)=> normTxt(a.texto);
+  const vale = (a)=>{
+    const t = normTxt(a.texto);
+    return !!t && t !== evit && !elegidas.has(clave(a));
+  };
+  const libre = pool.filter(a=>vale(a) && !usadas.has(clave(a)));
+  const fueraCompanero = pool.filter(a=>vale(a) && !delCompanero.has(normTxt(a.texto)));
+  const cualquiera = pool.filter(a=>vale(a));
+  const lista = libre.length ? libre : (fueraCompanero.length ? fueraCompanero : cualquiera);
+  if(!lista.length) return null;
+  return lista[Math.floor(Math.random()*lista.length)];
+}
+
+function accionesModeloPorRonda(turnos, cabezasLista, inv, ladoInv, desdeRonda){
+  const out = {};
+  const ladoDe = (id)=>{
+    const c = (cabezasLista||[]).find(x=>x && x.id===id);
+    return c ? c.lado : null;
+  };
+  (turnos||[]).forEach(t=>{
+    if(!t || !t.accion) return;
+    const r = t.ronda || 0;
+    if(r < desdeRonda || r <= 0) return;
+    const ladoT = t.lado || ladoDe(t.jugador);
+    if(ladoT !== ladoInv) return;
+    const previo = out[r];
+    if(!previo || (t.jugador === inv.conQuien && previo.jugador !== inv.conQuien)){
+      out[r] = { accion:t.accion, jugador:t.jugador };
+    }
+  });
+  return out;
+}
+
+function turnosConInvitado(turnosBase, cabezasLista, inv, ladoInv, desdeRonda, totalRondas, ladoInicial, revivirTurno, bolsas){
+  const out = (turnosBase||[]).slice();
+  const modelo = accionesModeloPorRonda(out, cabezasLista, inv, ladoInv, desdeRonda);
+  const usadas = new Set();
+  const delCompanero = new Set();
+  out.forEach(t=>{
+    if(!t || !t.accion) return;
+    const ladoT = t.lado || ((cabezasLista||[]).find(c=>c && c.id===t.jugador)||{}).lado;
+    if(ladoT !== ladoInv) return;
+    const texto = normTxt(t.accion.texto);
+    if(!texto) return;
+    usadas.add(texto);
+    if(t.jugador === inv.conQuien && (t.ronda||0) >= desdeRonda) delCompanero.add(texto);
+  });
+
+  const elegidas = new Set();
+  for(let r=desdeRonda; r<=totalRondas; r++){
+    const modeloT = modelo[r] || null;
+    const modeloAcc = modeloT ? modeloT.accion : null;
+    const nivel = (modeloAcc && modeloAcc.nivel) || "";
+    let acc = null;
+    if(nivel){
+      acc = elegirAccionInvitado(bolsas, nivel, ladoInv, modeloAcc.texto, usadas, delCompanero, elegidas);
+    }
+    if(!acc && modeloAcc) acc = { ...modeloAcc };
+    if(acc){
+      const texto = normTxt(acc.texto);
+      if(texto){ usadas.add(texto); elegidas.add(texto); }
+    }
+    const nt = {
+      jugador: inv.id, lado: ladoInv, ronda: r, accion: acc,
+      imposicion: "",
+      saltado: (acc===null) || (ladoInv !== ladoInicial && !revivirTurno),
+      hecho: false
+    };
+    let last = -1;
+    out.forEach((t,i)=>{ if((t.ronda||0)===r) last = i; });
+    if(last >= 0) out.splice(last+1, 0, nt);
+    else out.push(nt);
+  }
+  return out;
+}
+
 // Agregar invitado a media partida en "Un celular" (sin sesión).
-// Se le copia la lista del compañero de su lado, solo lo que falta.
+// Se le generan acciones DISTINTAS de las que le faltan al compañero de su lado,
+// respetando el nivel que le tocaria en cada ronda.
 function agregarInvitadoLocal(inv){
   if(cabezas.some(c=>c.id===inv.id)) return;
   const invitador = cabezas.find(c=>c.id===inv.conQuien) || usuariosLista.find(u=>u && u.id===inv.conQuien);
@@ -3605,33 +3785,20 @@ function agregarInvitadoLocal(inv){
 
   const totalRondas = turnos.reduce((m,t)=>Math.max(m, t.ronda || 0), 0);
   const desdeRonda = turnos[turnoIdx] ? (turnos[turnoIdx].ronda || 1) : 1;
-  const compañero = cabezas.find(c=>c.lado===ladoInv && c.id!==inv.id && !c.invitado)
-                 || cabezas.find(c=>c.lado===ladoInv && c.id!==inv.id);
-  const accionesCompañero = [];
-  if(compañero){
-    turnos.filter(t=>t.jugador===compañero.id && (t.ronda||0) >= desdeRonda)
-      .sort((a,b)=>(a.ronda||0)-(b.ronda||0))
-      .forEach(t=>{ if(t.accion) accionesCompañero.push({...t.accion}); });
-  }
-  let ai = 0;
-  for(let r=desdeRonda; r<=totalRondas; r++){
-    const acc = accionesCompañero[ai++] || null;
-    const nt = {
-      jugador: inv.id, lado: ladoInv, ronda: r, accion: acc,
-      imposicion: "",
-      saltado: (acc===null) || (ladoInv !== ladoInicial && !revivir),
-      hecho: false
-    };
-    let last = -1;
-    turnos.forEach((t,i)=>{ if((t.ronda||0)===r) last = i; });
-    if(last >= 0) turnos.splice(last+1, 0, nt);
-    else turnos.push(nt);
-  }
+  turnos = turnosConInvitado(turnos, cabezas, inv, ladoInv, desdeRonda, totalRondas, ladoInicial, revivir, bolsasEnMemoria());
   pintarTurno();
 }
 
 async function agregarInvitadoAPartida(inv){
   if(!jugandoCompartido){ agregarInvitadoLocal(inv); return; }
+  // Bolsas de acciones del castigo (o de los 3 en Multi). Se usan solo para
+  // elegir acciones distintas; si no se pueden leer, se copia como antes.
+  let bolsas = [];
+  try{
+    const sd0 = await getDoc(sesionRef());
+    if(sd0.exists()) bolsas = await bolsasParaInvitado(sd0.data());
+  }catch(e){}
+  if(!bolsas.length){ try{ bolsas = await bolsasParaInvitado(sesionActual || {}); }catch(e){} }
   try{
     await runTransaction(db, async (tx)=>{
       const ref = sesionRef();
@@ -3653,32 +3820,13 @@ async function agregarInvitadoAPartida(inv){
       const totalRondas = turnos.reduce((m,t)=>Math.max(m, t.ronda || 0), 0);
       const desdeRonda = d.ronda || 1;
 
-      // Copiar la lista del compañero del mismo lado, desde la ronda actual.
-      const compañero = cabezasD.find(c=>c.lado===ladoInv && c.id!==inv.id && !c.invitado)
-                     || cabezasD.find(c=>c.lado===ladoInv && c.id!==inv.id);
-      const accionesCompañero = [];
-      if(compañero){
-        turnos.filter(t=>t.jugador===compañero.id && (t.ronda||0) >= desdeRonda)
-          .sort((a,b)=>(a.ronda||0)-(b.ronda||0))
-          .forEach(t=>{ if(t.accion) accionesCompañero.push({...t.accion}); });
-      }
-
-      // Insertar un turno del invitado al FINAL de cada ronda restante.
-      let ai = 0;
-      for(let r=desdeRonda; r<=totalRondas; r++){
-        const acc = accionesCompañero[ai++] || null;
-        const nuevoTurno = {
-          jugador: inv.id, lado: ladoInv, ronda: r, accion: acc,
-          imposicion: "",
-          saltado: (acc===null) || (ladoInv !== (d.ladoInicial||"A") && !d.revivir),
-          hecho: false
-        };
-        let last = -1;
-        turnos.forEach((t,i)=>{ if((t.ronda||0)===r) last = i; });
-        if(last >= 0) turnos.splice(last+1, 0, nuevoTurno);
-        else turnos.push(nuevoTurno);
-      }
-      tx.update(ref, { cabezas: cabezasD, orden: ordenD, turnos, actualizadaEn: serverTimestamp() });
+      // Insertar un turno del invitado al FINAL de cada ronda restante, con una
+      // accion distinta de la del compañero en esa misma ronda.
+      const turnosNuevos = turnosConInvitado(
+        turnos, cabezasD, inv, ladoInv, desdeRonda, totalRondas,
+        d.ladoInicial || "A", !!d.revivir, bolsas
+      );
+      tx.update(ref, { cabezas: cabezasD, orden: ordenD, turnos: turnosNuevos, actualizadaEn: serverTimestamp() });
     });
     // Releer y REPUBLICAR la invitación: así la sala del invitado le muestra
     // "Entrar" con la lista de participantes ya actualizada.

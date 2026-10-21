@@ -511,6 +511,7 @@ function nombreAdmin(){
 function sesionRef(){ return doc(db, "sesionEncuentros", "actual"); }
 let cabezas = [];
 let listas = {};
+let actsDataActual = [];
 let largo = 0;
 let ronda = 0;
 let turno = 0;
@@ -1510,6 +1511,7 @@ async function generarYIniciar(activities, tomas){
     }catch(e){}
     actsData.push({ nombre, n });
   }
+  actsDataActual = actsData;
   const listasNuevas = generarListas(cabezasIn, actsData, tomas);
   const realLargo = listasNuevas[cabezasIn[0].id] ? listasNuevas[cabezasIn[0].id].length : 0;
   if(!realLargo){
@@ -1713,6 +1715,105 @@ document.getElementById("btnSig").onclick = async ()=>{
   if(orden[turno] !== miId) return;
   await avanzarSesion();
 };
+// ---------- invitado a media partida: acciones distintas ----------
+function normTxtEnc(s){ return String(s||"").trim().toLowerCase(); }
+
+function nivelPorNombre(nombre){
+  return NIVELES.find(nv=>nv.nombre===nombre || nv.id===nombre) || null;
+}
+
+async function cargarActsParaInvitado(actividades){
+  if(Array.isArray(actsDataActual) && actsDataActual.length) return actsDataActual;
+  const out = [];
+  for(const nombre of (actividades||[])){
+    let n = {};
+    try{
+      const snap = await getDoc(doc(db, "nivelesActividad", docDe(nombre)));
+      if(snap.exists()) n = snap.data().n || {};
+    }catch(e){}
+    out.push({ nombre, n });
+  }
+  actsDataActual = out;
+  return out;
+}
+
+function poolDeAccionesEnc(actsData, nivelNombre, lado){
+  const nv = nivelPorNombre(nivelNombre);
+  if(!nv) return [];
+  const vistas = new Set();
+  const out = [];
+  (actsData||[]).forEach(act=>{
+    const lados = normLados(act && act.n ? act.n[nv.id] : null);
+    (lados[lado] || []).forEach(txt=>{
+      const texto = String(txt||"").trim();
+      if(!texto) return;
+      const k = normTxtEnc(texto);
+      if(vistas.has(k)) return;
+      vistas.add(k);
+      out.push({ texto, lado, nivel: nv.nombre });
+    });
+  });
+  return out;
+}
+
+function elegirAccionEnc(actsData, nivelNombre, lado, evitar, usadas, delCompanero, elegidas){
+  const pool = poolDeAccionesEnc(actsData, nivelNombre, lado);
+  if(!pool.length) return null;
+  const evit = normTxtEnc(evitar);
+  const vale = (a)=>{
+    const t = normTxtEnc(a.texto);
+    return !!t && t !== evit && !elegidas.has(t);
+  };
+  const libre = pool.filter(a=>vale(a) && !usadas.has(normTxtEnc(a.texto)));
+  const fueraCompanero = pool.filter(a=>vale(a) && !delCompanero.has(normTxtEnc(a.texto)));
+  const cualquiera = pool.filter(vale);
+  const lista = libre.length ? libre : (fueraCompanero.length ? fueraCompanero : cualquiera);
+  if(!lista.length) return null;
+  return lista[Math.floor(Math.random()*lista.length)];
+}
+
+function listaConInvitado(listaBase, listasTodas, cabezasLista, ladoInv, desdeRonda, largoTotal, actsData){
+  const base = Array.isArray(listaBase) ? listaBase : [];
+  const total = Math.max(largoTotal || 0, base.length);
+  const out = new Array(total).fill(null);
+  const usadas = new Set();
+  const delCompanero = new Set();
+
+  Object.keys(listasTodas || {}).forEach(id=>{
+    const cab = (cabezasLista||[]).find(c=>c && c.id===id);
+    if(!cab || cab.lado !== ladoInv) return;
+    (listasTodas[id] || []).forEach(a=>{
+      if(a && a.texto) usadas.add(normTxtEnc(a.texto));
+    });
+  });
+  for(let r=desdeRonda; r<total; r++){
+    const a = base[r];
+    if(a && a.texto) delCompanero.add(normTxtEnc(a.texto));
+  }
+
+  const elegidas = new Set();
+  for(let r=0; r<total; r++){
+    // Las rondas ya pasadas no se juegan; se copian solo para dejar la lista
+    // alineada con el indice de ronda.
+    if(r < desdeRonda){ out[r] = base[r] || null; continue; }
+    const modelo = base[r] || null;
+    const nivel = (modelo && modelo.nivel) || "";
+    let acc = null;
+    if(nivel){
+      acc = elegirAccionEnc(actsData, nivel, ladoInv, modelo.texto, usadas, delCompanero, elegidas);
+    }
+    if(!acc && modelo) acc = { texto:modelo.texto, lado:ladoInv, nivel:modelo.nivel };
+    if(acc){
+      const t = normTxtEnc(acc.texto);
+      if(t){ usadas.add(t); elegidas.add(t); }
+      out[r] = acc;
+    }else{
+      out[r] = null;
+    }
+  }
+  return out;
+}
+
 // ---------- invitar: QR y agregar invitado a media partida ----------
 // Quien todavia NO esta en las cabezas del encuentro. Al arrancar entran todos
 // los del grupo, asi que lo que sale aqui es gente que se registro despues.
@@ -1739,10 +1840,9 @@ function abrirAgregar(){
   });
   abrirModal("modalAgregar");
 }
-// El que entra NO juega la ronda en curso: se cuela al final de la rotacion y
-// de ahi en adelante le tocan rondas completas, hasta el final que ya traia la
-// partida. Se le copia la lista del de su mismo lado (las acciones son las del
-// encuentro, no hay de donde volver asortear sin romper el ritmo).
+// El que entra se cuela al final de la rotacion y de ahi en adelante juega las
+// rondas que faltan. Se le arman acciones DISTINTAS de las del compañero de su
+// lado, respetando el nivel de cada ronda (oct-2026).
 async function agregarInvitado(id){
   const cab = construirCabezas().find(c=> c.id === id);
   if(!cab) return;
@@ -1755,13 +1855,27 @@ async function agregarInvitado(id){
     // Acciones en un Celular: no hay sesion en Firebase, se suma en memoria.
     if((cabezas || []).some(c=> c.id === nuevo.id)) return;
     const companero = (cabezas || []).find(c=> c.lado === nuevo.lado) || (cabezas || [])[0];
-    listas[nuevo.id] = (listas[companero && companero.id]) ? listas[companero.id].slice() : [];
+    const base = (listas[companero && companero.id]) ? listas[companero.id].slice() : [];
+    listas[nuevo.id] = listaConInvitado(base, listas, cabezas, nuevo.lado, ronda, largo, actsDataActual);
     cabezas = cabezas.concat([nuevo]);
     orden = (orden || []).slice();
     orden.push(nuevo.id);
     pintarPaso();
     return;
   }
+  // Actividades de la partida, para sacar de ahi las acciones del invitado.
+  let actsData = [];
+  try{
+    let acts = (sesionActual && Array.isArray(sesionActual.actividades)) ? sesionActual.actividades : [];
+    if(!acts.length){
+      const sd = await getDoc(sesionRef());
+      if(sd.exists()){
+        const s = sd.data();
+        acts = Array.isArray(s.actividades) ? s.actividades : [];
+      }
+    }
+    actsData = await cargarActsParaInvitado(acts);
+  }catch(e){}
   try{
     await runTransaction(db, async (tx)=>{
       const ref = sesionRef();
@@ -1770,11 +1884,16 @@ async function agregarInvitado(id){
       const d = snap.data();
       if(!d.activa || d.terminada) return;
       if((d.cabezas || []).some(c=> c.id === nuevo.id)) return;
-      // Misma lista que alguien de su lado (para que no le toque un texto vacio).
+      // Base: la lista del compañero de su lado. Se usa solo como referencia
+      // (que nivel toca en cada ronda); las acciones se eligen distintas.
       const companero = (d.cabezas || []).find(c=> c.lado === nuevo.lado) || (d.cabezas || [])[0];
-      const listaNueva = Array.isArray((d.listas || {})[companero && companero.id])
+      const base = Array.isArray((d.listas || {})[companero && companero.id])
         ? d.listas[companero.id].slice()
         : [];
+      const listaNueva = listaConInvitado(
+        base, d.listas || {}, d.cabezas || [], nuevo.lado,
+        (d.ronda || 0), (d.largo || base.length), actsData
+      );
       const cabezas = (d.cabezas || []).concat([nuevo]);
       const orden = (Array.isArray(d.orden) ? d.orden : []).slice();
       orden.push(nuevo.id);

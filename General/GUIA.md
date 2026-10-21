@@ -648,6 +648,7 @@ pantalla que escribe**, no solo la que se está tocando. `Autorizar/` era la
 | Si quieres... | Busca |
 |---|---|
 | **Los pendientes** (lo que falta) | *Pendientes de licencias* y *Otros pendientes* |
+| **El invitado que entra con la partida empezada** | *Invitado a media partida: acciones distintas* |
 | **Lo que ya se sabe que no se arregla** | *Limites conocidos* |
 | **Las medidas oficiales** de botones, tarjetas y titulos | *Estándares de tamaño de la interfaz* |
 | **A donde regresa cada boton** | *Dónde va cada "Volver"* y *Botones de volver y de esquina* |
@@ -804,6 +805,29 @@ la tarjeta y la tienda lo desmarca. Sin que el cliente recargue nada.
 - Sesion de Encuentros en `sesionEncuentros/actual`: la lista de TODOS los
   participantes (incluidos invitados) vive en un solo documento. Confirmar en la
   consola que ese path no queda abierto a lectura ajena.
+
+### Invitado a media partida: acciones distintas (Castigos y Encuentros)
+
+**Regla vigente:** cuando alguien entra con la partida ya empezada, sus turnos
+restantes **no se copian** del compañero de su lado. Por cada ronda que le falta
+se toma el **nivel** que le tocaría (el de la acción del compañero en esa ronda)
+y se elige **otra acción del mismo nivel y lado**, sacada de la actividad
+elegida o de las actividades de la partida. Se prefieren las que no se han usado;
+si la bolsa se agota se permite repetir, pero **nunca la misma acción del
+compañero en esa ronda**. Si el contenido no se puede leer, se copia como
+respaldo (comportamiento anterior).
+
+- **Castigos** (`Castigos/index.html` → `turnosConInvitado()`): aplica a normal,
+  Multi y Placer extremo, en "cada quien el suyo" y en "un celular". Sus turnos
+  entran al final de cada ronda restante y **no llevan imposiciones nuevas**.
+- **Encuentros** (`Encuentros/index.html` → `listaConInvitado()`): cada jugador
+  tiene una lista por ronda; el invitado recibe la suya con acciones distintas y
+  entra al final de la rotación. Si el contenido no está en memoria, se lee de
+  `nivelesActividad` (`cargarActsParaInvitado()`).
+- **Opciones** no cambia: ya generaba su lista al azar (`R - ronda` opciones del
+  lado) y lo hace entrar desde la ronda siguiente (`agregarInvitado()`).
+
+No se toca el largo de la partida ni la lista de los demás jugadores.
 
 ### Limites conocidos (no bloquean)
 
