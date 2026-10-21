@@ -702,6 +702,35 @@ async function cargarImposiciones(){
 }
 
 // ---------- oficiales (etapa 6) ----------
+function normalizarAccionOficial(a){
+  if(typeof a === "string") return { texto:a.trim(), accesorio:null, medida:{tipo:"libre",valor:0} };
+  const acc = a || {};
+  const med = acc.medida || {};
+  const tipo = (med.tipo === "tiempo" || med.tipo === "veces") ? med.tipo : "libre";
+  return {
+    texto: String(acc.texto || acc.accion || acc.nombre || "").trim(),
+    accesorio: null,
+    medida: { tipo: tipo, valor: Number(med.valor) || 0 }
+  };
+}
+
+function construirNivelesOficial(o){
+  const n = {};
+  const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  NIVELES.forEach(nv=>{
+    const fuente = o && o.niveles ? o.niveles : {};
+    const clave = Object.keys(fuente).find(k=>norm(k) === norm(nv));
+    const lados = clave ? fuente[clave] : {A:[],B:[]};
+    const arrA = Array.isArray(lados) ? lados : (lados.A || []);
+    const arrB = Array.isArray(lados) ? lados : (lados.B || []);
+    n[nv] = {
+      A: arrA.map(normalizarAccionOficial).filter(a=>a.texto),
+      B: arrB.map(normalizarAccionOficial).filter(a=>a.texto)
+    };
+  });
+  return n;
+}
+
 async function sincronizarOficialesCastigos(){
   try{
     const ofs = await oficialesAprobados();
@@ -717,35 +746,13 @@ async function sincronizarOficialesCastigos(){
       tomasSugeridas: p.tomasSugeridas || {},
       nuevoHasta: p.nuevoHasta || null
     }));
-    const normAcc = (a)=>{
-      if(typeof a === "string") return { texto:a.trim(), accesorio:null, medida:{tipo:"libre",valor:0} };
-      const acc = a || {};
-      return {
-        texto: String(acc.texto || acc.accion || acc.nombre || "").trim(),
-        accesorio: null,
-        medida: acc.medida || { tipo:"libre", valor:0 }
-      };
-    };
-    const construirN = (o)=>{
-      const n = {};
-      NIVELES.forEach(nv=>{
-        const lados = o.niveles && o.niveles[nv.id] ? o.niveles[nv.id] : {A:[],B:[]};
-        const arrA = Array.isArray(lados) ? lados : (lados.A || []);
-        const arrB = Array.isArray(lados) ? lados : (lados.B || []);
-        n[nv.id] = {
-          A: arrA.map(normAcc).filter(a=>a.texto),
-          B: arrB.map(normAcc).filter(a=>a.texto)
-        };
-      });
-      return n;
-    };
     for(const o of oficiales){
       try{
         const ref = doc(db, "nivelesCastigo", o.id);
         const snap = await getDoc(ref);
         if(!snap.exists()){
           await setDoc(ref, {
-            n: construirN(o),
+            n: construirNivelesOficial(o),
             titulo: o.titulo,
             oficial: true,
             tomas: o.tomasSugeridas || {},
@@ -758,12 +765,12 @@ async function sincronizarOficialesCastigos(){
           const data = snap.data();
           const nd = data.n || {};
           const tieneTexto = NIVELES.some(nv=>{
-            const l = nd[nv.id] || {};
+            const l = nd[nv] || {};
             return [...(l.A||[]), ...(l.B||[])].some(a=>a && a.texto);
           });
           if(!tieneTexto){
-            const n = construirN(o);
-            const tieneOficial = NIVELES.some(nv=> (n[nv.id].A.length + n[nv.id].B.length) > 0);
+            const n = construirNivelesOficial(o);
+            const tieneOficial = NIVELES.some(nv=> (n[nv].A.length + n[nv].B.length) > 0);
             if(tieneOficial){
               await setDoc(ref, { n: n, titulo: o.titulo, actualizadoEn: serverTimestamp() }, { merge:true });
             }
@@ -778,6 +785,32 @@ async function sincronizarOficialesCastigos(){
   }catch(e){}
   oficiales = oficiales.filter(o=>o.activo !== false);
   cargarCastigos();
+}
+
+function totalAccionesDatos(){
+  return NIVELES.reduce((t,nv)=>t + ((datos[nv]&&datos[nv].A?datos[nv].A.length:0) + (datos[nv]&&datos[nv].B?datos[nv].B.length:0)), 0);
+}
+
+async function repararOficialCastigo(c){
+  try{
+    const ofs = await oficialesAprobados();
+    const p = ofs.find(x=>x.id === c.id && x.ruta === "Castigos");
+    if(!p) return false;
+    const n = construirNivelesOficial(p);
+    const total = NIVELES.reduce((t,nv)=>t + n[nv].A.length + n[nv].B.length, 0);
+    if(!total) return false;
+    await setDoc(doc(db, "nivelesCastigo", c.id), {
+      n: n,
+      titulo: c.nombre || p.titulo || c.id,
+      oficial: true,
+      tomas: p.tomasSugeridas || {},
+      actualizadoEn: serverTimestamp()
+    }, { merge:true });
+    return true;
+  }catch(e){
+    try{ aviso("No se pudieron recuperar las acciones del castigo oficial."); }catch(_){}
+    return false;
+  }
 }
 
 // ---------- navegación ----------
@@ -971,9 +1004,20 @@ async function abrirEditor(c){
   document.getElementById("btnJugar").disabled = true;
   ver("vistaEditar");
   pintarEditor();
-  const ok = await cargarDatosCastigo(c);
+  const ok0 = await cargarDatosCastigo(c);
   if(my !== editorToken) return;
   if(!castigoActivo || castigoActivo.id !== c.id) return;
+  let ok = ok0;
+  if(ok && c.oficial && totalAccionesDatos() === 0){
+    const reparado = await repararOficialCastigo(c);
+    if(my !== editorToken) return;
+    if(reparado){
+      ok = await cargarDatosCastigo(c);
+      if(my !== editorToken) return;
+    }else{
+      aviso("Este castigo oficial no trae acciones en el pack. Revisa el Panel.");
+    }
+  }
   editorCargado = !!ok;
   pintarEditor();
   if(!ok) aviso("No se pudieron cargar las acciones. Revisa tu conexión.");
