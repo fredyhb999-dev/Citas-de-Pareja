@@ -138,12 +138,17 @@
   #rowRevivir .sw input:checked + .swSlider:before{ transform:translateX(16px); }
   .controles{ width:100%; display:flex; gap:6px; margin:10px 0 0; }
   .controles .btnSec{ width:auto; flex:1; min-width:0; padding:10px 6px; font-size:.78rem; line-height:1.2; }
-  .filaSaltar{ width:100%; min-height:44px; display:flex; align-items:center; justify-content:center; margin:6px 0 0; }
-  .filaTerminar{ width:100%; display:flex; justify-content:center; margin:8px 0 0; }
-  .filaTerminar .btnSec{ width:auto; min-width:200px; max-width:85%; padding:14px 24px; margin-bottom:0; font-size:.9rem; }
+  .filaSaltar{ width:100%; min-height:44px; display:flex; align-items:center; justify-content:center; margin:0; }
+  #filaOpciones{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; margin-top:18px; }
+  #filaOpciones .btnSec{ width:100%; padding:12px 8px; font-size:.78rem; line-height:1.2; }
   .faseBox{ width:100%; background:var(--card); border:1px solid var(--card-border);
     border-radius:20px; padding:24px; margin:14px 0; text-align:center; display:none; }
-  .faseBox.ver{ display:block; }
+  .faseBox.ver{ display:flex; flex-direction:column; justify-content:center; }
+  #faseImposicion, #faseCastigo, #faseRecibe{ min-height:190px; }
+  #faseImposicion{ position:relative; padding-top:40px; }
+  .etiquetaImposicion{ position:absolute; top:12px; left:16px;
+    font-family:'Chakra Petch',sans-serif; font-size:.7rem; font-weight:600;
+    letter-spacing:.12em; text-transform:uppercase; color:var(--fg-muted); }
   .faseTitulo{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.2rem; margin-bottom:8px; }
   .faseTexto{ font-size:1.1rem; line-height:1.6; margin-bottom:16px; color:var(--fg); }
   #faseCastTexto{ text-align:center; }
@@ -224,7 +229,7 @@
 <a class="back" id="lnkInicio" href="../index.html#juegos">← Volver</a>
 <button id="btnCfg" aria-label="Configurar">⚙️</button>
 
-<div class="eyebrow">Atrévete a Jugar ...</div>
+<div class="eyebrow">Cumple tus Deseos, Despertando la Pasión</div>
 
 <!-- ============ VISTA INICIO ============ -->
 <div class="vista" id="vistaInicio">
@@ -322,8 +327,6 @@
 
 <!-- ============ VISTA PARTIDA ============ -->
 <div class="vista" id="vistaPartida">
-  <h1 id="partidaTitulo">Turno de …</h1>
-
   <div id="controlesAnfitrion" style="width:100%;">
     <div class="swGroup" id="rowRevivir">
       <div style="flex:0 0 auto;">Derechos: <span id="revTexto">sí</span></div>
@@ -331,18 +334,17 @@
     </div>
   </div>
 
+  <h1 id="partidaTitulo">Turno de …</h1>
+
   <div id="faseImposicion" class="faseBox">
+    <div class="etiquetaImposicion">Imposición</div>
     <div class="faseTexto" id="faseImpTexto">…</div>
-    <button class="btnPri" id="btnAceptarImp">Aceptar</button>
   </div>
 
   <div id="faseCastigo" class="faseBox">
     <div class="faseTexto" id="faseCastTexto">…</div>
     <div class="faseMedida" id="faseCastMedida"></div>
     <div class="cronometro" id="cronometro"></div>
-    <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="btnSec" id="btnIniciarTiempo" style="width:auto;padding:14px 20px;">Iniciar</button>
-    </div>
   </div>
 
   <!-- Vista del que recibe (y de los demás): sin botones. El que recibe ve la
@@ -353,20 +355,20 @@
     <div class="faseTexto" id="recibeAccion" style="font-weight:600;"></div>
   </div>
 
-  <div id="filaListo" style="display:none;width:100%;justify-content:center;margin:0 0 14px;">
-    <button class="btnPri" id="btnListo" style="width:auto;padding:14px 24px;">Listo</button>
+  <div id="filaListo" style="display:none;min-height:48px;width:100%;align-items:center;justify-content:center;margin:0 0 2px;">
+    <button class="btnPri" id="btnAceptarImp" style="display:none;width:auto;padding:14px 24px;">Aceptar</button>
+    <button class="btnPri" id="btnIniciarTiempo" style="display:none;width:auto;padding:14px 24px;">Iniciar</button>
+    <button class="btnPri" id="btnListo" style="display:none;width:auto;padding:14px 24px;">Listo</button>
   </div>
 
   <div id="controlesPartida" style="width:100%;">
     <div class="filaSaltar">
       <button class="btnSec" id="btnSaltarTurno" style="width:auto;padding:12px 16px;">Saltar turno</button>
     </div>
-    <div class="filaTerminar">
-      <button class="btnSec" id="btnTerminarPartidaEt3">Terminar Partida</button>
-    </div>
-    <div class="controles">
+    <div id="filaOpciones">
       <button class="btnSec" id="btnPausar">Pausar y Salir</button>
       <button class="btnSec" id="btnQR">QR Invita a Alguien</button>
+      <button class="btnSec" id="btnTerminarPartidaEt3">Terminar Partida</button>
       <button class="btnSec" id="btnAgregarInv">➕ Agregar invitado</button>
     </div>
 
@@ -2366,15 +2368,18 @@ function pararTemporizador(){
   if(temporizadorId){ clearInterval(temporizadorId); temporizadorId = null; }
 }
 
-function mostrarBotonListo(mostrar){
+function mostrarBotonAccion(cual){
   const fila = document.getElementById("filaListo");
-  if(fila){
-    fila.style.display = "flex";
-    fila.style.visibility = mostrar ? "visible" : "hidden";
-    fila.style.pointerEvents = mostrar ? "auto" : "none";
+  if(fila) fila.style.display = "flex";
+  const ids = { aceptar:"btnAceptarImp", iniciar:"btnIniciarTiempo", listo:"btnListo" };
+  Object.keys(ids).forEach(k=>{
+    const b = document.getElementById(ids[k]);
+    if(b) b.style.display = "none";
+  });
+  if(cual && ids[cual]){
+    const b = document.getElementById(ids[cual]);
+    if(b) b.style.display = "inline-block";
   }
-  const b = document.getElementById("btnListo");
-  if(b) b.style.display = "inline-block";
 }
 
 function pintarCrono(seg){
@@ -2387,8 +2392,7 @@ function iniciarTemporizadorDesde(seg){
   pararTemporizador();
   tiempoRestanteSeg = Math.max(0, parseInt(seg,10)||0);
   if(tiempoRestanteSeg <= 0){ cronoIniciado = false; pintarCrono(0); return; }
-  document.getElementById("btnIniciarTiempo").style.display = "none";
-  mostrarBotonListo(true);
+  mostrarBotonAccion("listo");
   document.getElementById("cronometro").style.display = "block";
   pintarCrono(tiempoRestanteSeg);
   cronoIniciado = true;
@@ -2721,7 +2725,7 @@ function mostrarFin(){
   pararTemporizador();
   enPausa = false;
   document.getElementById("overlayPausa").style.display = "none";
-  mostrarBotonListo(false);
+  mostrarBotonAccion(null);
   try{ document.getElementById("filaListo").style.display = "none"; }catch(e){}
   cronoIniciado = false;
   pausaRemotaActiva = false;
@@ -2786,7 +2790,7 @@ function pintarTurno(){
   const fr = document.getElementById("faseRecibe");
   const fin = document.getElementById("finBox");
   fi.classList.remove("ver"); fc.classList.remove("ver"); fr.classList.remove("ver"); fin.classList.remove("ver");
-  mostrarBotonListo(false);
+  mostrarBotonAccion(null);
   controlesAnfitrionVisible();
   pintarSalidas();
   try{ pintarSala(); }catch(e){}
@@ -2856,6 +2860,7 @@ function pintarTurno(){
       faseTurno = "castigo";
     }else if(t.imposicion){
       document.getElementById("faseImpTexto").textContent = t.imposicion;
+      mostrarBotonAccion("aceptar");
       fi.classList.add("ver");
       return;
     }else if(t.imposicion === "" || !jugandoCompartido){
@@ -2870,11 +2875,9 @@ function pintarTurno(){
     document.getElementById("faseCastTexto").textContent = fraseAccion(acc);
     document.getElementById("faseCastTexto").style.color = colorAccion;
     const medDiv = document.getElementById("faseCastMedida");
-    const btnIni = document.getElementById("btnIniciarTiempo");
     const crono = document.getElementById("cronometro");
     const conAccesorioYCantidad = !!(acc && acc.accesorio && acc.medida && acc.medida.tipo!=="libre" && (Number(acc.medida.valor)||0) > 0);
     medDiv.textContent = "";
-    btnIni.style.display = "none";
     crono.style.display = "none";
     if(acc && acc.medida && acc.medida.tipo!=="libre"){
       if(!conAccesorioYCantidad){
@@ -2882,15 +2885,15 @@ function pintarTurno(){
         medDiv.textContent = "Medida: " + lbl;
       }
       if(acc.medida.tipo==="tiempo"){
-        btnIni.style.display = "inline-block";
+        mostrarBotonAccion("iniciar");
         crono.style.display = "block";
         crono.textContent = acc.medida.valor + ":00";
         tiempoRestanteSeg = acc.medida.valor * 60;
       }else{
-        mostrarBotonListo(true);
+        mostrarBotonAccion("listo");
       }
     }else{
-      mostrarBotonListo(true);
+      mostrarBotonAccion("listo");
     }
     fc.classList.add("ver");
     return;
