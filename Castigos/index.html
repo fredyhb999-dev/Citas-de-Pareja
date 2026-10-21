@@ -62,7 +62,7 @@
     color:var(--fg-muted); font-size:.9rem; text-decoration:underline;
     border-radius:12px; }
   .btnSec:active{ transform:scale(.97); }
-  #btnQRInicio{ align-self:flex-end; width:auto; margin:0 0 12px; padding:8px 12px;
+  #btnQRInicio{ align-self:center; width:auto; margin:0 0 18px; padding:8px 12px;
     font-size:.8rem; text-decoration:none; background:var(--bg-2);
     border:1px solid var(--card-border); border-radius:10px; color:var(--fg-muted); }
   .btnIcon{ background:none; border:none; font-size:1.3rem; cursor:pointer; padding:4px; color:var(--fg-muted); }
@@ -115,6 +115,13 @@
   #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
   .swGroup{ display:flex; align-items:center; gap:10px; padding:12px; background:var(--bg-2);
     border:1px solid var(--card-border); border-radius:12px; margin-top:8px; width:100%; font-size:.9rem; }
+  .filaSwitches{ display:flex; gap:10px; width:100%; margin:14px 0 16px; }
+  .filaSwitches .swGroup{ flex:1; min-width:0; width:auto; margin-top:0; padding:9px; gap:6px; font-size:.78rem; }
+  .filaSwitches .swGroup > div{ flex:1; min-width:0; line-height:1.2; }
+  .filaSwitches .sw{ width:36px; height:20px; flex:0 0 auto; }
+  .filaSwitches .swSlider:before{ height:14px; width:14px; left:3px; bottom:3px; }
+  .filaSwitches .sw input:checked + .swSlider:before{ transform:translateX(16px); }
+  #buscarLista{ scroll-margin-top:96px; }
   .sw{ position:relative; width:44px; height:24px; }
   .sw input{ opacity:0; width:0; height:0; }
   .swSlider{ position:absolute; inset:0; background:var(--card-border); border-radius:24px; cursor:pointer;
@@ -219,8 +226,6 @@
   <h1>El Precio del Placer</h1>
   <p class="desc">Ganar cumple tus deseos; perder despierta la pasión.</p>
 
-  <button class="btnSec" id="btnQRInicio">QR Invita a Alguien</button>
-
   <div style="width:100%;">
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">¿Quién juega hoy?</div>
     <div class="tabs">
@@ -254,10 +259,18 @@
     </div>
   </div>
 
-  <div class="swGroup">
-    <div style="flex:1;">Placer extremo por deseo</div>
-    <label class="sw"><input type="checkbox" id="swPlacer"><span class="swSlider"></span></label>
+  <div class="filaSwitches">
+    <div class="swGroup">
+      <div>Placer extremo por deseo</div>
+      <label class="sw"><input type="checkbox" id="swPlacer"><span class="swSlider"></span></label>
+    </div>
+    <div class="swGroup">
+      <div>Imposiciones</div>
+      <label class="sw"><input type="checkbox" id="swImposiciones"><span class="swSlider"></span></label>
+    </div>
   </div>
+
+  <button class="btnSec" id="btnQRInicio">QR Invita a Alguien</button>
 
   <!-- Lista de castigos (igual que la lista de Encuentros) -->
   <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar castigo..." autocomplete="off">
@@ -561,6 +574,7 @@ let modoJuego = "solo";       // solo | pareja | invitados
 let comoJuegan = "unCelular"; // unCelular | cadaQuien
 let tipoJuego = "normal";     // normal | multi
 let placerExtremo = false;
+let imposicionesActivas = false;
 let ladoInicial = "A";
 let cabezas = [];             // [{id,nombre,lado,admin,invitado,conQuien}]
 let orden = [];
@@ -1581,6 +1595,7 @@ function estadoPartidaLocal(){
     comoJuegan: comoJuegan,
     tipoJuego: tipoJuego,
     placerExtremo: placerExtremo,
+    imposicionesActivas: imposicionesActivas,
     ladoInicial: ladoInicial,
     cabezas: cabezas,
     orden: orden,
@@ -1605,6 +1620,7 @@ function restaurarPartidaLocal(p){
   comoJuegan = p.comoJuegan || "unCelular";
   tipoJuego = p.tipoJuego || "normal";
   placerExtremo = !!p.placerExtremo;
+  imposicionesActivas = (p.imposicionesActivas === undefined) ? false : !!p.imposicionesActivas;
   ladoInicial = p.ladoInicial || "A";
   cabezas = Array.isArray(p.cabezas) ? p.cabezas : [];
   orden = Array.isArray(p.orden) ? p.orden : [];
@@ -1639,7 +1655,7 @@ async function pausarPartida(){
   try{ localStorage.setItem(CLAVE_PAUSA, JSON.stringify(estado)); }catch(e){}
   jugandoCompartido = false;
   if(compartida && esAnfitrion){
-    try{ await setDoc(sesionRef(), { pausada:true, pausadaPor:(miUsuario && miUsuario.nombre)||"", turno:turnoIdx, turnos:turnos, actualizadaEn: serverTimestamp() }, { merge:true }); }catch(e){}
+    try{ await setDoc(sesionRef(), { pausada:true, pausadaPor:(miUsuario && miUsuario.nombre)||"", imposicionesActivas:!!imposicionesActivas, turno:turnoIdx, turnos:turnos, actualizadaEn: serverTimestamp() }, { merge:true }); }catch(e){}
     try{ await pausarInvitacion(JUEGO_INV, true); }catch(e){}
   }
   enPausa = true;
@@ -1784,6 +1800,7 @@ function actualizarInicio(){
   document.getElementById("filaMultiSel").style.display = esMulti ? "flex" : "none";
   document.getElementById("bloqueSorprendeme").style.display = esMulti ? "block" : "none";
   document.getElementById("swPlacer").checked = placerExtremo;
+  document.getElementById("swImposiciones").checked = imposicionesActivas;
 
   const btnA = document.getElementById("quienA");
   const btnB = document.getElementById("quienB");
@@ -1818,7 +1835,12 @@ function setHowTabs(){
   });
 }
 document.getElementById("tipoNormal").onclick = ()=>{ tipoJuego="normal"; setTipoTabs(); actualizarInicio(); };
-document.getElementById("tipoMulti").onclick = ()=>{ tipoJuego="multi"; setTipoTabs(); actualizarInicio(); };
+document.getElementById("tipoMulti").onclick = ()=>{
+  tipoJuego="multi"; setTipoTabs(); actualizarInicio();
+  setTimeout(()=>{
+    try{ document.getElementById("buscarLista").scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){}
+  }, 60);
+};
 function setTipoTabs(){
   ["tipoNormal","tipoMulti"].forEach(id=>{
     document.getElementById(id).classList.toggle("activo", id==="tipo"+(tipoJuego==="normal"?"Normal":"Multi"));
@@ -1893,6 +1915,7 @@ document.getElementById("btnSorprendeme").onclick = ()=>{
 document.getElementById("quienA").onclick = ()=>{ ladoInicial="A"; document.getElementById("quienA").classList.add("activo"); document.getElementById("quienB").classList.remove("activo"); };
 document.getElementById("quienB").onclick = ()=>{ ladoInicial="B"; document.getElementById("quienB").classList.add("activo"); document.getElementById("quienA").classList.remove("activo"); };
 document.getElementById("swPlacer").addEventListener("change",()=>{ placerExtremo = document.getElementById("swPlacer").checked; });
+document.getElementById("swImposiciones").addEventListener("change",()=>{ imposicionesActivas = document.getElementById("swImposiciones").checked; });
 
 function elegirCastigoParaJugar(){
   return new Promise(resolve=>{
@@ -2113,7 +2136,7 @@ function generarTurnos(){
         lado: c.lado,
         ronda: r,
         accion: accion,
-        imposicion: null,
+        imposicion: imposicionesActivas ? null : "",
         saltado: saltado,
         hecho: false
       });
@@ -2301,7 +2324,7 @@ function generarTurnosMulti(){
         lado: c.lado,
         ronda: r,
         accion: accion,
-        imposicion: null,
+        imposicion: imposicionesActivas ? null : "",
         saltado: saltado,
         hecho: false
       });
@@ -2410,7 +2433,7 @@ async function publicarSesion(){
     lado: t.lado,
     ronda: t.ronda,
     accion: t.accion,
-    imposicion: null,
+    imposicion: (t.imposicion == null) ? null : t.imposicion,
     saltado: t.saltado,
     hecho: false
   }));
@@ -2430,6 +2453,7 @@ async function publicarSesion(){
     castigoNombre: esMultiPartida ? multiCastigos.map(c=>c.nombre).join(" + ") : ((castigoPartida && castigoPartida.nombre) || ""),
     multiIds: esMultiPartida ? multiCastigos.map(c=>c.id) : [],
     placerExtremo: !!placerExtremo,
+    imposicionesActivas: !!imposicionesActivas,
     revivir: !!revivir,
     ladoInicial: ladoInicial,
     cabezas: cabezas,
@@ -2576,10 +2600,13 @@ function cargarSesionEnMemoria(d){
   tipoJuego = d.multi ? "multi" : "normal";
   esMultiPartida = !!d.multi;
   placerExtremo = !!d.placerExtremo;
+  imposicionesActivas = (d.imposicionesActivas === undefined) ? false : !!d.imposicionesActivas;
   esAnfitrion = (d.hostUid === miId);
   soyHost = esAnfitrion;
   document.getElementById("swRevivir").checked = revivir;
   document.getElementById("revTexto").textContent = revivir ? "sí" : "no";
+  try{ document.getElementById("swImposiciones").checked = imposicionesActivas; }catch(e){}
+  try{ document.getElementById("swPlacer").checked = placerExtremo; }catch(e){}
 }
 
 function entrarAlJuegoCompartida(d){
@@ -2763,7 +2790,7 @@ function pintarTurno(){
   // La imposición la toma el ANFITRIÓN (aunque en este turno sea el que recibe),
   // y se escribe en la sesión para que el que castiga la vea. Se guarda "" para
   // dejar constancia de que el turno ya se resolvió y no había imposición.
-  if(t.imposicion == null && esAnfitrion){
+  if(t.imposicion == null && esAnfitrion && imposicionesActivas){
     const imp = tomarImposicion(t.lado);
     t.imposicion = imp || "";
     if(jugandoCompartido){ escribirImposicionRemoto(t.imposicion); }
@@ -2774,8 +2801,9 @@ function pintarTurno(){
   if(soyReceptor || soyOtro){
     document.getElementById("recibeTitulo").textContent = soyReceptor ? "Te toca recibir" : ("Turno de " + c.nombre);
     const impEl = document.getElementById("recibeImp");
-    impEl.textContent = t.imposicion || "";
-    impEl.style.display = t.imposicion ? "" : "none";
+    const impTxt = imposicionesActivas ? (t.imposicion || "") : "";
+    impEl.textContent = impTxt;
+    impEl.style.display = impTxt ? "" : "none";
     const acEl = document.getElementById("recibeAccion");
     if(soyReceptor && t.accion){
       acEl.textContent = fraseAccion(t.accion);
@@ -2789,12 +2817,13 @@ function pintarTurno(){
   }
 
   if(faseTurno === "imposicion"){
-    if(t.imposicion){
+    if(!imposicionesActivas){
+      faseTurno = "castigo";
+    }else if(t.imposicion){
       document.getElementById("faseImpTexto").textContent = t.imposicion;
       fi.classList.add("ver");
       return;
-    }
-    if(t.imposicion === "" || !jugandoCompartido){
+    }else if(t.imposicion === "" || !jugandoCompartido){
       faseTurno = "castigo";
     }else{
       return;
@@ -3172,7 +3201,7 @@ function agregarInvitadoLocal(inv){
     const acc = accionesCompañero[ai++] || null;
     const nt = {
       jugador: inv.id, lado: ladoInv, ronda: r, accion: acc,
-      imposicion: null,
+      imposicion: imposicionesActivas ? null : "",
       saltado: (acc===null) || (ladoInv !== ladoInicial && !revivir),
       hecho: false
     };
@@ -3223,7 +3252,7 @@ async function agregarInvitadoAPartida(inv){
         const acc = accionesCompañero[ai++] || null;
         const nuevoTurno = {
           jugador: inv.id, lado: ladoInv, ronda: r, accion: acc,
-          imposicion: null,
+          imposicion: imposicionesActivas ? null : "",
           saltado: (acc===null) || (ladoInv !== (d.ladoInicial||"A") && !d.revivir),
           hecho: false
         };

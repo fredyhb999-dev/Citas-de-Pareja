@@ -82,7 +82,7 @@
    - Revivir, Saltar, Pausar y Terminar solo el anfitrión.
 7. **Avance:** “Listo” del que castiga avanza a todos.
 8. **Rondas:** no debe regresar a la ronda 1 después de la primera vuelta.
-9. **Pausa:** el cronómetro se detiene; **Pausar y Salir** vuelve a la lista y, al elegir la actividad, ofrece **"¿Continuar partida anterior?"**. El invitado no puede reanudar.
+9. **Pausa:** el cronómetro **sigue corriendo**; el invitado no puede reanudar.
 10. **Fin:** “¡Gracias por jugar!” + fuegos; la sesión queda terminada.
 
 ---
