@@ -674,6 +674,31 @@ async function cargarIdentidad(){
   esAdminFlag = !!(miUsuario && miUsuario.admin);
   esInvitadoFlag = !!(miUsuario && miUsuario.invitado);
 }
+// La lista de usuarios tiene que estar al dia: si un invitado se registra
+// DESPUES de abrir el juego, sin esto no entra en cabezas ni en la invitacion
+// (la sala filtra por participantes y no le sale nada). Mismo patron que
+// Encuentros y Opciones.
+async function refrescarUsuarios(){
+  try{
+    const arr = await cargarUsuarios(db, getDoc, doc, usuariosLista);
+    if(Array.isArray(arr) && arr.length) usuariosLista = arr;
+  }catch(e){}
+}
+function escucharGrupo(){
+  try{
+    onSnapshot(doc(db, "config", "ajustes"), (snap)=>{
+      try{
+        const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+        if(!Array.isArray(arr) || !arr.length) return;
+        const antes = usuariosLista.map(u=>u && u.id).join(",");
+        usuariosLista = arr;
+        if(antes === arr.map(u=>u && u.id).join(",")) return;
+        if(vistaActual()==="vistaInicio") actualizarInicio();
+        try{ pintarSala(); }catch(e){}
+      }catch(e){}
+    }, ()=>{});
+  }catch(e){}
+}
 function nombreDeLado(lado){
   const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
   return (u && u.nombre) || (lado === "A" ? "Usuario 1" : "Usuario 2");
@@ -2517,6 +2542,7 @@ async function iniciarPartidaMulti(){
   }
 
   esMultiPartida = true;
+  await refrescarUsuarios();
   generarJugadores();
   armarBolsasImposicion();
   if(placerExtremo && !placerAlcanzaMulti()){ abortarPlacer(); return; }
@@ -2832,6 +2858,7 @@ async function publicarSesion(){
   }
 }
 async function crearSesionCompartida(){
+  await refrescarUsuarios();
   if(!armarPartidaNormal()) return;
   return publicarSesion();
 }
@@ -3698,6 +3725,16 @@ async function entrar(){
   }
   ver("vistaInicio", false);
 }
+// Respaldo: mientras el invitado espera, se revisa la partida cada pocos
+// segundos (por si la escucha en vivo se cayo y no aviso). Mismo patron que
+// Encuentros y Opciones.
+setInterval(()=>{
+  try{
+    if(vistaActual() !== "vistaEspera") return;
+    if(document.getElementById("modalUnir").style.display === "flex") return;
+    chequearPartidaEspera();
+  }catch(e){}
+}, 4000);
 // 1) Pintar la pantalla inicial DE INMEDIATO: si Firebase tarda o falla, la
 //    pantalla no queda en blanco. Al invitado no se le muestra el inicio del
 //    anfitrión (protege sus datos): se le deja en la sala de espera.
@@ -3706,6 +3743,7 @@ try{ ver(esInvitadoFlag ? "vistaEspera" : "vistaInicio", false); }catch(e){}
 //    espera de invitado). Si algo falla, se queda el inicio.
 cargarTodo().then(async ()=>{
   try{ chequearConexion(); }catch(e){}
+  try{ escucharGrupo(); }catch(e){}
   try{ pintarCastigos(); }catch(e){}
   try{ actualizarInicio(); }catch(e){}
   try{ await entrar(); }catch(e){ try{ ver(esInvitadoFlag ? "vistaEspera" : "vistaInicio", false); }catch(x){} }
