@@ -343,7 +343,6 @@
 
   <div id="faseCastigo" class="faseBox">
     <div class="faseTexto" id="faseCastTexto">…</div>
-    <div class="faseMedida" id="faseCastMedida"></div>
     <div class="cronometro" id="cronometro"></div>
   </div>
 
@@ -2775,13 +2774,14 @@ function fraseAccion(acc){
   const txt = acc.texto || "";
   const med = acc.medida || { tipo:"libre", valor:0 };
   const valor = Number(med.valor) || 0;
-  if(acc.accesorio && med.tipo !== "libre" && valor > 0){
-    const prep = (med.tipo === "tiempo") ? "por" : "con";
-    const unidad = (med.tipo === "tiempo") ? "Minutos" : "Veces";
-    return txt + " " + prep + " " + acc.accesorio + " " + valor + " " + unidad;
+  const conAccesorio = acc.accesorio ? (" con " + acc.accesorio) : "";
+  if(med.tipo === "tiempo" && valor > 0){
+    return txt + conAccesorio + " durante " + valor + " minutos";
   }
-  if(acc.accesorio) return txt + " con " + acc.accesorio;
-  return txt;
+  if(med.tipo === "veces" && valor > 0){
+    return txt + conAccesorio + " " + valor + " veces";
+  }
+  return txt + conAccesorio;
 }
 
 function pintarTurno(){
@@ -2874,16 +2874,9 @@ function pintarTurno(){
     const acc = t.accion;
     document.getElementById("faseCastTexto").textContent = fraseAccion(acc);
     document.getElementById("faseCastTexto").style.color = colorAccion;
-    const medDiv = document.getElementById("faseCastMedida");
     const crono = document.getElementById("cronometro");
-    const conAccesorioYCantidad = !!(acc && acc.accesorio && acc.medida && acc.medida.tipo!=="libre" && (Number(acc.medida.valor)||0) > 0);
-    medDiv.textContent = "";
     crono.style.display = "none";
     if(acc && acc.medida && acc.medida.tipo!=="libre"){
-      if(!conAccesorioYCantidad){
-        const lbl = acc.medida.tipo==="tiempo" ? (acc.medida.valor + " min") : ("×" + acc.medida.valor);
-        medDiv.textContent = "Medida: " + lbl;
-      }
       if(acc.medida.tipo==="tiempo"){
         mostrarBotonAccion("iniciar");
         crono.style.display = "block";
