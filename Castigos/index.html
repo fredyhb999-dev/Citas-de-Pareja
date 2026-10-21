@@ -45,7 +45,7 @@
   #listaAccesorios .btnAct > span:first-child{ min-width:0; overflow-wrap:anywhere; }
   #listaAccesorios .desc{ grid-column:1 / -1; }
   .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
-    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; text-align:center; }
   h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px; text-align:center;
     background:linear-gradient(90deg, var(--coral), var(--teal));
     -webkit-background-clip:text; background-clip:text; color:transparent;
@@ -229,7 +229,7 @@
 <a class="back" id="lnkInicio" href="../index.html#juegos">← Volver</a>
 <button id="btnCfg" aria-label="Configurar">⚙️</button>
 
-<div class="eyebrow">Ganar cumple tus deseos; perder despierta la pasión.</div>
+<div class="eyebrow">Ganar cumple tus deseos; perder<br>despierta la pasión.</div>
 
 <!-- ============ VISTA INICIO ============ -->
 <div class="vista" id="vistaInicio">
@@ -249,7 +249,7 @@
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">¿Cómo juegan?</div>
     <div class="tabs">
       <button class="tab activo" id="howUnCelular">Un celular</button>
-      <button class="tab" id="howCadaQuien">Cada quien</button>
+      <button class="tab" id="howCadaQuien">Cada quien el Suyo</button>
     </div>
   </div>
 
@@ -257,7 +257,7 @@
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">Modalidad</div>
     <div class="tabs">
       <button class="tab activo" id="tipoNormal">Normal</button>
-      <button class="tab" id="tipoMulti">Multi</button>
+      <button class="tab" id="tipoMulti">Multiactividad</button>
     </div>
   </div>
 
@@ -479,7 +479,7 @@
     <button class="btnPri" id="btnCrearAcc" style="margin-top:12px;">Agregar Accesorio</button>
   </div>
 
-  <div id="panelImposiciones" style="display:none;">
+  <div id="panelImposiciones" style="display:none;width:100%;">
     <div class="tabs" style="margin-bottom:8px;">
       <button class="tab activo" id="tabImpA">Usuario 1</button>
       <button class="tab" id="tabImpB">Usuario 2</button>
