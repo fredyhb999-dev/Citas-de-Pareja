@@ -40,6 +40,10 @@
   .btnAct:active{ transform:scale(.97); border-color:var(--teal); }
   .btnAct small{ color:var(--fg-muted); font-family:'Inter',sans-serif; font-weight:400; font-size:.8rem; }
   .btnAct:disabled{ opacity:.45; }
+  #listaAccesorios{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
+  #listaAccesorios .btnAct{ margin-bottom:0; }
+  #listaAccesorios .btnAct > span:first-child{ min-width:0; overflow-wrap:anywhere; }
+  #listaAccesorios .desc{ grid-column:1 / -1; }
   .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
     text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
   h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px; text-align:center;
@@ -117,9 +121,15 @@
   .sw input:checked + .swSlider{ background:var(--teal); }
   .sw input:checked + .swSlider:before{ transform:translateX(20px); }
   /* Partida */
-  .controles{ width:100%; display:flex; gap:8px; margin:10px 0; }
-  .controles .btnPri, .controles .btnSec{ width:auto; flex:1; padding:12px; font-size:.9rem; }
-  .filaSaltar{ width:100%; min-height:44px; display:flex; align-items:center; margin:6px 0; }
+  #rowRevivir{ width:fit-content; margin-left:auto; margin-right:0; padding:6px 10px; gap:8px; font-size:.78rem; }
+  #rowRevivir .sw{ width:34px; height:18px; flex:0 0 auto; }
+  #rowRevivir .swSlider:before{ height:12px; width:12px; left:3px; bottom:3px; }
+  #rowRevivir .sw input:checked + .swSlider:before{ transform:translateX(16px); }
+  .controles{ width:100%; display:flex; gap:6px; margin:10px 0 0; }
+  .controles .btnSec{ width:auto; flex:1; min-width:0; padding:10px 6px; font-size:.78rem; line-height:1.2; }
+  .filaSaltar{ width:100%; min-height:44px; display:flex; align-items:center; justify-content:center; margin:6px 0 0; }
+  .filaTerminar{ width:100%; display:flex; justify-content:center; margin:8px 0 0; }
+  .filaTerminar .btnPri{ width:auto; min-width:200px; max-width:85%; padding:14px 24px; margin-bottom:0; }
   .faseBox{ width:100%; background:var(--card); border:1px solid var(--card-border);
     border-radius:20px; padding:24px; margin:14px 0; text-align:center; display:none; }
   .faseBox.ver{ display:block; }
@@ -130,7 +140,8 @@
   .cronometro{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.5rem;
     color:var(--coral); margin:10px 0; }
   .finBox{ width:100%; background:var(--card); border:1px solid var(--teal);
-    border-radius:20px; padding:26px; text-align:center; margin:14px 0; display:none; }
+    border-radius:20px; padding:26px; text-align:center; margin:14px 0; display:none;
+    position:relative; z-index:80; }
   .finBox.ver{ display:block; }
   /* Overlay pausa */
   #overlayPausa{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:85;
@@ -293,29 +304,8 @@
 
   <div id="controlesAnfitrion" style="width:100%;">
     <div class="swGroup" id="rowRevivir">
-      <div style="flex:1;">Revivir: <span id="revTexto">apagado</span></div>
+      <div style="flex:0 0 auto;">Derechos: <span id="revTexto">sí</span></div>
       <label class="sw"><input type="checkbox" id="swRevivir"><span class="swSlider"></span></label>
-    </div>
-    <div class="filaSaltar">
-      <button class="btnSec" id="btnSaltarTurno" style="width:auto;padding:12px 16px;">Saltar turno</button>
-    </div>
-    <div class="controles">
-      <button class="btnSec" id="btnPausar">Pausar y Salir</button>
-      <button class="btnSec" id="btnQR">QR Invita a Alguien</button>
-      <button class="btnSec" id="btnAgregarInv" style="width:auto;padding:12px 16px;">➕ Agregar invitado</button>
-      <button class="btnPri" id="btnTerminarPartidaEt3">Terminar Partida</button>
-    </div>
-
-    <!-- Sala: quién espera y quién está jugando (patrón de Encuentros) -->
-    <div id="salaPanel">
-      <div class="salaCaja">
-        <h4>En la espera <b id="esperaCount">0</b></h4>
-        <div class="fichas" id="esperaLista"></div>
-      </div>
-      <div class="salaCaja">
-        <h4>En el juego <b id="juegoCount">0</b></h4>
-        <div class="fichas" id="juegoLista"></div>
-      </div>
     </div>
   </div>
 
@@ -344,8 +334,34 @@
     <div class="faseTexto" id="recibeAccion" style="font-weight:600;"></div>
   </div>
 
+  <div id="controlesPartida" style="width:100%;">
+    <div class="filaSaltar">
+      <button class="btnSec" id="btnSaltarTurno" style="width:auto;padding:12px 16px;">Saltar turno</button>
+    </div>
+    <div class="filaTerminar">
+      <button class="btnPri" id="btnTerminarPartidaEt3">Terminar Partida</button>
+    </div>
+    <div class="controles">
+      <button class="btnSec" id="btnPausar">Pausar y Salir</button>
+      <button class="btnSec" id="btnQR">QR Invita a Alguien</button>
+      <button class="btnSec" id="btnAgregarInv">➕ Agregar invitado</button>
+    </div>
+
+    <!-- Sala: quién espera y quién está jugando (patrón de Encuentros) -->
+    <div id="salaPanel">
+      <div class="salaCaja">
+        <h4>En la espera <b id="esperaCount">0</b></h4>
+        <div class="fichas" id="esperaLista"></div>
+      </div>
+      <div class="salaCaja">
+        <h4>En el juego <b id="juegoCount">0</b></h4>
+        <div class="fichas" id="juegoLista"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="finBox" id="finBox">
-    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.2rem;color:var(--teal);margin-bottom:8px;">¡Gracias por jugar!</div>
+    <div id="finTxt" style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.2rem;color:var(--teal);margin-bottom:8px;">¡Gracias por jugar!</div>
     <button class="btnPri" id="btnFinVolver" style="display:none;">Volver a lista</button>
   </div>
 
@@ -415,7 +431,7 @@
     <button class="btnPri" id="btnCrearCastigo" style="margin-top:12px;">+ Crear castigo</button>
   </div>
 
-  <div id="panelAccesorios" style="display:none;">
+  <div id="panelAccesorios" style="display:none;width:100%;">
     <input class="buscar" id="buscarAccesorios" type="text" placeholder="🔍 Buscar accesorio..." autocomplete="off">
     <div id="cajaAccesoriosCfg" style="width:100%;height:55dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
       <div id="listaAccesorios" style="width:100%"></div>
@@ -543,7 +559,7 @@ let castigoPartida = null;
 let bolsaImp = { A: [], B: [] };
 let temporizadorId = null;
 let tiempoRestanteSeg = 0;
-let revivir = false;
+let revivir = true;
 let enPausa = false;
 let esAnfitrion = true;
 let faseTurno = "imposicion";
@@ -1888,6 +1904,8 @@ async function iniciarPartidaMulti(){
   enPausa = false;
   document.getElementById("overlayPausa").style.display = "none";
   finMostrado = false;
+  revivir = true;
+  try{ document.getElementById("finTxt").textContent = "¡Gracias por jugar!"; }catch(e){}
 
   accionesMultiCache = {};
   for(const c of multiCastigos){
@@ -2087,6 +2105,8 @@ function iniciarPartida(){
   enPausa = false;
   document.getElementById("overlayPausa").style.display = "none";
   finMostrado = false;
+  revivir = true;
+  try{ document.getElementById("finTxt").textContent = "¡Gracias por jugar!"; }catch(e){}
 
   if(esMultiPartida){
     iniciarPartidaMulti();
@@ -2260,7 +2280,7 @@ function cargarSesionEnMemoria(d){
   tomasPartida = (d.tomas && typeof d.tomas==="object") ? { ...d.tomas } : { ...DEF_TOMA };
   tomasMulti = tomasPartida;
   ladoInicial = d.ladoInicial || "A";
-  revivir = !!d.revivir;
+  revivir = (d.revivir === undefined) ? true : !!d.revivir;
   modoJuego = d.modo || "pareja";
   comoJuegan = d.unCelular ? "unCelular" : "cadaQuien";
   tipoJuego = d.multi ? "multi" : "normal";
@@ -2269,7 +2289,7 @@ function cargarSesionEnMemoria(d){
   esAnfitrion = (d.hostUid === miId);
   soyHost = esAnfitrion;
   document.getElementById("swRevivir").checked = revivir;
-  document.getElementById("revTexto").textContent = revivir ? "encendido" : "apagado";
+  document.getElementById("revTexto").textContent = revivir ? "sí" : "no";
 }
 
 function entrarAlJuegoCompartida(d){
@@ -2361,8 +2381,10 @@ function mostrarFin(){
   if(fr) fr.classList.remove("ver");
   const ctrl = document.getElementById("controlesAnfitrion");
   if(ctrl) ctrl.style.display = "none";
+  const ctrlPartida = document.getElementById("controlesPartida");
+  if(ctrlPartida) ctrlPartida.style.display = "none";
   const btnFin = document.getElementById("btnFinVolver");
-  if(btnFin) btnFin.style.display = esInvitadoFlag ? "" : "none";
+  if(btnFin) btnFin.style.display = "";
   pintarSalidas();
   finMostrado = true;
   if(jugandoCompartido && esAnfitrion){
@@ -2376,10 +2398,12 @@ function controlesAnfitrionVisible(){
   const esSoloPuro = (modoJuego==="solo" && cabezas.length===1);
   const esHost = !jugandoCompartido || esAnfitrion || soyHost;
   document.getElementById("controlesAnfitrion").style.display = esHost ? "block" : "none";
+  const ctrlPartida = document.getElementById("controlesPartida");
+  if(ctrlPartida) ctrlPartida.style.display = esHost ? "block" : "none";
   // En Solo puro no hay otro lado: Revivir se oculta. Saltar/QR/sala SÍ se ven.
   document.getElementById("rowRevivir").style.display = (esHost && !esSoloPuro) ? "flex" : "none";
   document.getElementById("swRevivir").checked = revivir;
-  document.getElementById("revTexto").textContent = revivir ? "encendido" : "apagado";
+  document.getElementById("revTexto").textContent = revivir ? "sí" : "no";
   document.getElementById("btnQR").style.display = esHost ? "inline-block" : "none";
   document.getElementById("btnAgregarInv").style.display = esHost ? "inline-block" : "none";
 }
@@ -2634,7 +2658,7 @@ document.getElementById("swRevivir").addEventListener("change",async ()=>{
     return;
   }
   revivir = document.getElementById("swRevivir").checked;
-  document.getElementById("revTexto").textContent = revivir ? "encendido" : "apagado";
+  document.getElementById("revTexto").textContent = revivir ? "sí" : "no";
   recalcularSaltadoPorRevivir();
   if(jugandoCompartido && esAnfitrion){
     try{
