@@ -370,7 +370,7 @@
   <div id="overlayPausa">
     <div class="caja">
       <h2>En pausa</h2>
-      <p style="font-size:.9rem;color:var(--fg-muted);margin-bottom:16px;">El cronómetro sigue corriendo.</p>
+      <p style="font-size:.9rem;color:var(--fg-muted);margin-bottom:16px;">El cronómetro está en pausa.</p>
       <button class="btnPri" id="btnReanudar">Reanudar</button>
     </div>
   </div>
@@ -411,6 +411,17 @@
     <div id="qrCajaJuego"></div>
     <div id="qrMsg" style="font-size:.82rem;color:var(--rojo);min-height:18px;"></div>
     <button class="btnSec" id="btnQRNo">Cerrar</button>
+  </div>
+</div>
+
+<!-- ============ MODAL: CONTINUAR PARTIDA PAUSADA ============ -->
+<div class="modal" id="modalSeguir">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿Continuar partida anterior?</div>
+    <div id="seguirDesc" style="font-size:.9rem;color:var(--fg-muted);margin:10px 0 16px;"></div>
+    <button class="btnPri" id="btnSeguirContinuar" style="margin-bottom:8px;">Continuar →</button>
+    <button class="btnSec" id="btnSeguirNueva" style="width:auto;margin:0 auto 6px;padding:10px 18px;border:1px solid var(--card-border);border-radius:12px;text-decoration:none;">Nueva partida</button>
+    <button class="btnSec" id="btnSeguirCancelar">Cancelar</button>
   </div>
 </div>
 
@@ -561,6 +572,13 @@ let castigoPartida = null;
 let bolsaImp = { A: [], B: [] };
 let temporizadorId = null;
 let tiempoRestanteSeg = 0;
+let cronoIniciado = false;
+let pausaEnMemoria = null;
+let pausaRemotaActiva = false;
+let reanudarCronoRemoto = false;
+let cronoRestanteRemoto = 0;
+let ignorarSnapshotPausaHasta = 0;
+const CLAVE_PAUSA = "castigos_partida_pausada";
 let revivir = true;
 let enPausa = false;
 let esAnfitrion = true;
@@ -1138,6 +1156,13 @@ document.getElementById("btnGuardarCastigo").onclick = async ()=>{
 
 document.getElementById("btnJugar").onclick = async ()=>{
   if(!castigoActivo || !editorCargado) return;
+  const pausa = await leerPausa();
+  if(pausa){
+    const r = await preguntarPausa(pausa);
+    if(r === "cancelar") return;
+    if(r === "continuar"){ await continuarPausa(pausa); return; }
+    await descartarPausa(pausa);
+  }
   try{ await guardarCastigoDatos(); }catch(e){ aviso("No se pudieron guardar los cambios."); return; }
   castigoPartida = castigoActivo;
   esMultiPartida = false;
@@ -1543,7 +1568,197 @@ async function pintarListaInicio(){
   });
 }
 
+function estadoPartidaLocal(){
+  return {
+    pausada:true,
+    compartida: jugandoCompartido,
+    castigo: castigoPartida,
+    castigoNombre: esMultiPartida ? multiCastigos.map(c=>c.nombre).join(" + ") : ((castigoPartida && castigoPartida.nombre) || ""),
+    multi: esMultiPartida,
+    multiCastigos: multiCastigos,
+    multiSel: multiSel,
+    modoJuego: modoJuego,
+    comoJuegan: comoJuegan,
+    tipoJuego: tipoJuego,
+    placerExtremo: placerExtremo,
+    ladoInicial: ladoInicial,
+    cabezas: cabezas,
+    orden: orden,
+    turnos: turnos,
+    turnoIdx: turnoIdx,
+    tomasPartida: tomasPartida,
+    tomasMulti: tomasMulti,
+    bolsaImp: bolsaImp,
+    revivir: revivir,
+    faseTurno: faseTurno,
+    tiempoRestanteSeg: tiempoRestanteSeg,
+    cronoIniciado: cronoIniciado
+  };
+}
+
+function restaurarPartidaLocal(p){
+  castigoPartida = p.castigo || null;
+  esMultiPartida = !!p.multi;
+  multiCastigos = Array.isArray(p.multiCastigos) ? p.multiCastigos : [];
+  multiSel = Array.isArray(p.multiSel) ? p.multiSel : [];
+  modoJuego = p.modoJuego || "solo";
+  comoJuegan = p.comoJuegan || "unCelular";
+  tipoJuego = p.tipoJuego || "normal";
+  placerExtremo = !!p.placerExtremo;
+  ladoInicial = p.ladoInicial || "A";
+  cabezas = Array.isArray(p.cabezas) ? p.cabezas : [];
+  orden = Array.isArray(p.orden) ? p.orden : [];
+  turnos = Array.isArray(p.turnos) ? p.turnos : [];
+  turnoIdx = Number(p.turnoIdx)||0;
+  tomasPartida = { ...DEF_TOMA, ...(p.tomasPartida||{}) };
+  tomasMulti = { ...DEF_TOMA, ...(p.tomasMulti||{}) };
+  bolsaImp = {
+    A: (p.bolsaImp && Array.isArray(p.bolsaImp.A)) ? p.bolsaImp.A.slice() : [],
+    B: (p.bolsaImp && Array.isArray(p.bolsaImp.B)) ? p.bolsaImp.B.slice() : []
+  };
+  revivir = (p.revivir === undefined) ? true : !!p.revivir;
+  faseTurno = p.faseTurno || "imposicion";
+  tiempoRestanteSeg = Number(p.tiempoRestanteSeg)||0;
+  cronoIniciado = !!p.cronoIniciado;
+  jugandoCompartido = false;
+  soyHost = false;
+  esAnfitrion = true;
+  enPausa = false;
+  finMostrado = false;
+  pausaRemotaActiva = false;
+  reanudarCronoRemoto = false;
+  try{ setModTabs(); setHowTabs(); setTipoTabs(); }catch(e){}
+  actualizarInicio();
+}
+
+async function pausarPartida(){
+  const compartida = jugandoCompartido;
+  pararTemporizador();
+  const estado = estadoPartidaLocal();
+  pausaEnMemoria = estado;
+  try{ localStorage.setItem(CLAVE_PAUSA, JSON.stringify(estado)); }catch(e){}
+  jugandoCompartido = false;
+  if(compartida && esAnfitrion){
+    try{ await setDoc(sesionRef(), { pausada:true, pausadaPor:(miUsuario && miUsuario.nombre)||"", turno:turnoIdx, turnos:turnos, actualizadaEn: serverTimestamp() }, { merge:true }); }catch(e){}
+    try{ await pausarInvitacion(JUEGO_INV, true); }catch(e){}
+  }
+  enPausa = true;
+  ver("vistaInicio", "replace");
+}
+
+async function leerPausa(){
+  if(pausaEnMemoria) return pausaEnMemoria;
+  try{
+    const raw = localStorage.getItem(CLAVE_PAUSA);
+    if(raw){
+      const local = JSON.parse(raw);
+      if(local && local.pausada) return { ...local, compartida: !!local.compartida };
+    }
+  }catch(e){}
+  try{
+    const sd = await getDoc(sesionRef());
+    if(sd.exists()){
+      const d = sd.data();
+      if(d && d.activa && d.pausada && d.hostUid === miId){
+        return {
+          compartida:true,
+          sesion:d,
+          faseTurno:"imposicion",
+          tiempoRestanteSeg:0,
+          cronoIniciado:false,
+          castigoNombre:d.castigoNombre || "",
+          castigoId:d.castigoId || null,
+          multiIds:d.multiIds || [],
+          turno:d.turno || 0,
+          total:Array.isArray(d.turnos) ? d.turnos.length : 0
+        };
+      }
+    }
+  }catch(e){}
+  return null;
+}
+
+function descripcionPausa(p){
+  const nombre = p.castigoNombre || (p.castigo && p.castigo.nombre) || "la partida anterior";
+  const total = p.total || (p.turnos ? p.turnos.length : 0);
+  const turno = Number(p.turno != null ? p.turno : p.turnoIdx) + 1;
+  return "Es la partida de " + nombre + (total ? ". Ibas en el turno " + turno + " de " + total + "." : ".");
+}
+
+function preguntarPausa(p){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("modalSeguir");
+    document.getElementById("seguirDesc").textContent = descripcionPausa(p);
+    const cerrar = (val)=>{ modal.style.display = "none"; resolve(val); };
+    document.getElementById("btnSeguirContinuar").onclick = ()=>cerrar("continuar");
+    document.getElementById("btnSeguirNueva").onclick = ()=>cerrar("nueva");
+    document.getElementById("btnSeguirCancelar").onclick = ()=>cerrar("cancelar");
+    modal.style.display = "flex";
+  });
+}
+
+async function descartarPausa(p){
+  pararTemporizador();
+  cronoIniciado = false;
+  pausaEnMemoria = null;
+  pausaRemotaActiva = false;
+  ignorarSnapshotPausaHasta = 0;
+  try{ localStorage.removeItem(CLAVE_PAUSA); }catch(e){}
+  if(p && p.compartida){
+    try{ await setDoc(sesionRef(), { activa:false, terminada:true, pausada:false, porAdmin:true, actualizadaEn: serverTimestamp() }, { merge:true }); }catch(e){}
+    try{ await retirarInvitacion(JUEGO_INV); }catch(e){}
+  }
+}
+
+async function continuarPausa(p){
+  const restante = Number(p.tiempoRestanteSeg)||0;
+  const estabaCorriendo = !!p.cronoIniciado;
+  if(p.sesion){
+    cargarSesionEnMemoria(p.sesion);
+    faseTurno = "imposicion";
+    jugandoCompartido = true;
+    soyHost = true;
+    esAnfitrion = true;
+  }else{
+    restaurarPartidaLocal(p);
+    if(p.compartida){
+      jugandoCompartido = true;
+      soyHost = true;
+      esAnfitrion = true;
+    }
+  }
+  if(p.compartida || p.sesion){
+    ignorarSnapshotPausaHasta = Date.now() + 2000;
+    try{
+      await setDoc(sesionRef(), { pausada:false, pausadaPor:"", actualizadaEn: serverTimestamp() }, { merge:true });
+      await pausarInvitacion(JUEGO_INV, false);
+    }catch(e){}
+  }
+  enPausa = false;
+  pausaRemotaActiva = false;
+  document.getElementById("overlayPausa").style.display = "none";
+  finMostrado = false;
+  ver("vistaPartida");
+  controlesAnfitrionVisible();
+  pintarTurno();
+  if(estabaCorriendo && restante > 0){
+    const t = turnos[turnoIdx];
+    if(t && t.accion && t.accion.medida && t.accion.medida.tipo === "tiempo"){
+      iniciarTemporizadorDesde(restante);
+    }
+  }
+  pausaEnMemoria = null;
+  try{ localStorage.removeItem(CLAVE_PAUSA); }catch(e){}
+}
+
 async function seleccionarCastigo(c){
+  const pausa = await leerPausa();
+  if(pausa){
+    const r = await preguntarPausa(pausa);
+    if(r === "cancelar") return;
+    if(r === "continuar"){ await continuarPausa(pausa); return; }
+    await descartarPausa(pausa);
+  }
   castigoPartida = c;
   esMultiPartida = false;
   const ok = await cargarDatosCastigo(c);
@@ -1634,6 +1849,13 @@ document.getElementById("btnMultiConfBack").onclick = ()=>{
 };
 document.getElementById("btnMultiConfOk").onclick = async ()=>{
   document.getElementById("modalMultiConf").style.display = "none";
+  const pausa = await leerPausa();
+  if(pausa){
+    const r = await preguntarPausa(pausa);
+    if(r === "cancelar") return;
+    if(r === "continuar"){ await continuarPausa(pausa); return; }
+    await descartarPausa(pausa);
+  }
   // tomas de Multi son de la partida: empezar desde DEF_TOMA (editables en el paso de tomas)
   tomasMulti = { ...DEF_TOMA };
   esMultiPartida = true;
@@ -1907,6 +2129,12 @@ async function iniciarPartidaMulti(){
   document.getElementById("overlayPausa").style.display = "none";
   finMostrado = false;
   revivir = true;
+  cronoIniciado = false;
+  pausaEnMemoria = null;
+  pausaRemotaActiva = false;
+  reanudarCronoRemoto = false;
+  ignorarSnapshotPausaHasta = 0;
+  try{ localStorage.removeItem(CLAVE_PAUSA); }catch(e){}
   try{ document.getElementById("finTxt").textContent = "¡Gracias por jugar!"; }catch(e){}
 
   accionesMultiCache = {};
@@ -2096,6 +2324,44 @@ function pararTemporizador(){
   if(temporizadorId){ clearInterval(temporizadorId); temporizadorId = null; }
 }
 
+function pintarCrono(seg){
+  const m = Math.floor(seg/60);
+  const s = seg%60;
+  document.getElementById("cronometro").textContent = m + ":" + (s<10?"0":"") + s;
+}
+
+function iniciarTemporizadorDesde(seg){
+  pararTemporizador();
+  tiempoRestanteSeg = Math.max(0, parseInt(seg,10)||0);
+  if(tiempoRestanteSeg <= 0){ cronoIniciado = false; pintarCrono(0); return; }
+  document.getElementById("btnIniciarTiempo").style.display = "none";
+  document.getElementById("btnListo").style.display = "inline-block";
+  document.getElementById("cronometro").style.display = "block";
+  pintarCrono(tiempoRestanteSeg);
+  cronoIniciado = true;
+  temporizadorId = setInterval(()=>{
+    tiempoRestanteSeg--;
+    if(tiempoRestanteSeg <= 0){
+      tiempoRestanteSeg = 0;
+      cronoIniciado = false;
+      pintarCrono(0);
+      pararTemporizador();
+      return;
+    }
+    pintarCrono(tiempoRestanteSeg);
+  }, 1000);
+}
+
+function reanudarCronoRemotoSiHaceFalta(){
+  if(!reanudarCronoRemoto) return;
+  reanudarCronoRemoto = false;
+  if(!cronoIniciado || cronoRestanteRemoto <= 0) return;
+  const t = turnos[turnoIdx];
+  if(t && t.accion && t.accion.medida && t.accion.medida.tipo === "tiempo"){
+    iniciarTemporizadorDesde(cronoRestanteRemoto);
+  }
+}
+
 function avanzarTurnoNoSaltado(){
   while(turnoIdx < turnos.length && turnos[turnoIdx].saltado){
     turnoIdx++;
@@ -2108,6 +2374,12 @@ function iniciarPartida(){
   document.getElementById("overlayPausa").style.display = "none";
   finMostrado = false;
   revivir = true;
+  cronoIniciado = false;
+  pausaEnMemoria = null;
+  pausaRemotaActiva = false;
+  reanudarCronoRemoto = false;
+  ignorarSnapshotPausaHasta = 0;
+  try{ localStorage.removeItem(CLAVE_PAUSA); }catch(e){}
   try{ document.getElementById("finTxt").textContent = "¡Gracias por jugar!"; }catch(e){}
 
   if(esMultiPartida){
@@ -2154,6 +2426,9 @@ async function publicarSesion(){
     modo: modoJuego,
     unCelular: comoJuegan === "unCelular",
     multi: !!esMultiPartida,
+    castigoId: castigoPartida ? castigoPartida.id : null,
+    castigoNombre: esMultiPartida ? multiCastigos.map(c=>c.nombre).join(" + ") : ((castigoPartida && castigoPartida.nombre) || ""),
+    multiIds: esMultiPartida ? multiCastigos.map(c=>c.id) : [],
     placerExtremo: !!placerExtremo,
     revivir: !!revivir,
     ladoInicial: ladoInicial,
@@ -2236,15 +2511,26 @@ function escucharSesionCompartida(){
           const btnR = document.getElementById("btnReanudar");
           if(btnR) btnR.style.display = "none";
           document.getElementById("overlayPausa").style.display = "flex";
+          if(!pausaRemotaActiva){
+            pausaRemotaActiva = true;
+            cronoRestanteRemoto = tiempoRestanteSeg;
+            pararTemporizador();
+          }
           return;
         }
         document.getElementById("overlayPausa").style.display = "none";
         try{ document.getElementById("btnReanudar").style.display = ""; }catch(e){}
+        if(pausaRemotaActiva){
+          pausaRemotaActiva = false;
+          reanudarCronoRemoto = true;
+        }
 
         if(d.sid === sidMostrado && jugandoCompartido){
           // actualización local
+          if(Date.now() < ignorarSnapshotPausaHasta) return;
           cargarSesionEnMemoria(d);
           pintarTurno();
+          reanudarCronoRemotoSiHaceFalta();
           return;
         }
 
@@ -2277,6 +2563,8 @@ function cargarSesionEnMemoria(d){
   if(nuevoTurno !== ultimoTurnoVisto){
     ultimoTurnoVisto = nuevoTurno;
     faseTurno = "imposicion";
+    cronoIniciado = false;
+    pararTemporizador();
   }
   turnoIdx = nuevoTurno;
   tomasPartida = (d.tomas && typeof d.tomas==="object") ? { ...d.tomas } : { ...DEF_TOMA };
@@ -2374,6 +2662,14 @@ document.getElementById("btnEsperaRefrescar").onclick = ()=>{ chequearPartidaEsp
 
 function mostrarFin(){
   pararTemporizador();
+  enPausa = false;
+  document.getElementById("overlayPausa").style.display = "none";
+  cronoIniciado = false;
+  pausaRemotaActiva = false;
+  reanudarCronoRemoto = false;
+  pausaEnMemoria = null;
+  ignorarSnapshotPausaHasta = 0;
+  try{ localStorage.removeItem(CLAVE_PAUSA); }catch(e){}
   try{ encenderFuegos(); }catch(e){}
   const fb = document.getElementById("finBox");
   fb.classList.add("ver");
@@ -2640,23 +2936,12 @@ document.getElementById("btnAceptarImp").onclick = ()=>{
   const esUnCelular = (comoJuegan === "unCelular") || !jugandoCompartido;
   if(!esUnCelular && t.jugador !== miId){ aviso("Solo el que castiga puede continuar."); return; }
   faseTurno = "castigo";
+  cronoIniciado = false;
   pintarTurno();
 };
 
 document.getElementById("btnIniciarTiempo").onclick = ()=>{
-  pararTemporizador();
-  temporizadorId = setInterval(()=>{
-    tiempoRestanteSeg--;
-    const m = Math.floor(tiempoRestanteSeg/60);
-    const s = tiempoRestanteSeg%60;
-    document.getElementById("cronometro").textContent = m + ":" + (s<10?"0":"") + s;
-    if(tiempoRestanteSeg<=0){
-      pararTemporizador();
-      document.getElementById("cronometro").textContent = "0:00";
-    }
-  }, 1000);
-  document.getElementById("btnIniciarTiempo").style.display = "none";
-  document.getElementById("btnListo").style.display = "inline-block";
+  iniciarTemporizadorDesde(tiempoRestanteSeg);
 };
 
 document.getElementById("btnListo").onclick = async ()=>{
@@ -2665,6 +2950,7 @@ document.getElementById("btnListo").onclick = async ()=>{
   const esUnCelular = (comoJuegan === "unCelular") || !jugandoCompartido;
   if(!esUnCelular && t.jugador !== miId){ aviso("Solo el que castiga puede continuar."); return; }
   pararTemporizador();
+  cronoIniciado = false;
   if(jugandoCompartido){
     // El que castiga avanza la sesión; el snapshot actualiza a todos.
     await avanzarTurnoRemoto();
@@ -2713,6 +2999,7 @@ document.getElementById("btnSaltarTurno").onclick = async ()=>{
   });
   if(!ok) return;
   pararTemporizador();
+  cronoIniciado = false;
   if(jugandoCompartido && esAnfitrion){
     await saltarTurnoRemoto();
     faseTurno = "imposicion";
@@ -2728,13 +3015,7 @@ document.getElementById("btnSaltarTurno").onclick = async ()=>{
 
 document.getElementById("btnPausar").onclick = async ()=>{
   if(jugandoCompartido && !esAnfitrion) return;
-  enPausa = true;
-  // NO se detiene el cronómetro (decisión del plan).
-  document.getElementById("overlayPausa").style.display = "flex";
-  try{
-    await setDoc(sesionRef(), { pausada: true, actualizadaEn: serverTimestamp() }, { merge:true });
-    await pausarInvitacion(JUEGO_INV, true);
-  }catch(e){}
+  await pausarPartida();
 };
 document.getElementById("btnReanudar").onclick = async ()=>{
   enPausa = false;
@@ -2744,6 +3025,12 @@ document.getElementById("btnReanudar").onclick = async ()=>{
       await setDoc(sesionRef(), { pausada: false, actualizadaEn: serverTimestamp() }, { merge:true });
       await pausarInvitacion(JUEGO_INV, false);
     }catch(e){}
+  }
+  if(cronoIniciado && tiempoRestanteSeg > 0){
+    const t = turnos[turnoIdx];
+    if(t && t.accion && t.accion.medida && t.accion.medida.tipo === "tiempo"){
+      iniciarTemporizadorDesde(tiempoRestanteSeg);
+    }
   }
 };
 document.getElementById("btnTerminarPartidaEt3").onclick = async ()=>{
@@ -2984,11 +3271,25 @@ async function entrar(){
     if(sd.exists()){
       const d = sd.data();
       if(d && d.activa && soyCabeza(d)){
+        if(d.pausada && d.hostUid === miId){
+          // El anfitrión vuelve a la lista: el aviso de continuar sale al
+          // elegir la actividad, no se entra directo a la partida pausada.
+          ver("vistaInicio", false);
+          return;
+        }
         cargarSesionEnMemoria(d);
         jugandoCompartido = true;
         try{ document.getElementById("modalUnir").style.display = "none"; }catch(e){}
         ver("vistaPartida");
         pintarTurno();
+        if(d.pausada && !esAnfitrion){
+          const btnR = document.getElementById("btnReanudar");
+          if(btnR) btnR.style.display = "none";
+          document.getElementById("overlayPausa").style.display = "flex";
+          pausaRemotaActiva = true;
+          cronoRestanteRemoto = tiempoRestanteSeg;
+          pararTemporizador();
+        }
         return;
       }
     }

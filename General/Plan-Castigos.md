@@ -111,7 +111,10 @@
   **Consume el turno**: se pierde la imposición y el castigo de ese turno y se
   salta al siguiente.
 - **Pausar y Salir** y **Terminar Partida:** solo anfitrión, como Encuentros.
-  **Al pausar, el cronómetro NO se detiene.**
+  **Al pausar, el cronómetro se detiene y se retoma al continuar** (decisión de
+  Fredy, oct-2026; antes seguía corriendo). **Pausar y Salir** deja la partida
+  viva y vuelve a la lista; al elegir la actividad se ofrece
+  **"¿Continuar partida anterior?"**.
 - **Fin:** “¡Gracias por jugar!” + fuegos, y regreso a la lista.
 
 ### 2.4 Imposiciones
@@ -302,7 +305,7 @@ Reglas de la sesión:
   juega**, el anfitrión toma la siguiente imposición de ese lado, la escribe en
   `turnos[turno].imposicion` y actualiza la sesión. Los turnos saltados **no**
   toman. Si la lista se acaba, se rebaraja. No se repite dentro de una ronda.
-- **Pausar:** `pausada: true`. El cronómetro local sigue corriendo.
+- **Pausar:** `pausada: true`; se detiene el cronómetro local y se guarda el avance para continuar.
 - **Terminar:** `activa: false`, `terminada: true`.
 - **Continuar:** `activa: true`, `pausada: false`; se retoma en `turno`.
 
@@ -587,7 +590,7 @@ si necesarias > pool.length:
 7. **Medidas:** libre/veces con “Listo”; tiempo con “Iniciar”, cuenta en minutos,
    “Listo” siempre disponible, al llegar a cero espera; el que recibe no ve
    medida ni cronómetro.
-8. **Pausa:** el cronómetro no se detiene.
+8. **Pausa:** el cronómetro se detiene y se retoma al continuar.
 9. **Invitados:** QR, `conQuien`, sala, agregar; cada uno con su lista; a media
    partida copia la del compañero y juega lo que falta; sin salida.
 10. **Multi:** 3 castigos, confirmación, tomas; reparto en rueda (la de menos
