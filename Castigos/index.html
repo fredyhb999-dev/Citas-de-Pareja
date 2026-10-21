@@ -836,6 +836,17 @@ async function sincronizarOficialesCastigos(){
               await setDoc(ref, { n: n, titulo: o.titulo, actualizadoEn: serverTimestamp() }, { merge:true });
             }
           }
+          // Limpia niveles basura que dejaron versiones viejas (por ejemplo
+          // una llave "undefined"). Solo reescribe si de verdad hay llaves que
+          // no son niveles.
+          const basura = Object.keys(nd).filter(k => NIVELES.indexOf(k) < 0);
+          if(basura.length){
+            const limpio = {};
+            NIVELES.forEach(nv=>{ limpio[nv] = nd[nv] || { A: [], B: [] }; });
+            try{
+              await setDoc(ref, Object.assign({}, data, { n: limpio, actualizadoEn: serverTimestamp() }));
+            }catch(e){}
+          }
           // Solo siembran tomas sugeridas si la pareja no las ha cambiado
           if(o.tomasSugeridas && (!data.tomas || Object.keys(data.tomas).length === 0)){
             await setDoc(ref, { tomas: o.tomasSugeridas, actualizadoEn: serverTimestamp() }, { merge: true });
@@ -2253,7 +2264,7 @@ function armarPartidaNormal(){
   armarBolsasImposicion();
   if(placerExtremo && !placerAlcanzaNormal()){ abortarPlacer(); return false; }
   generarTurnos();
-  avisarAccionesSinTexto([{ datos: datos }]);
+  avisarAccionesSinTexto();
   return true;
 }
 
@@ -2418,24 +2429,14 @@ function accionDeNivel(a, nivel, lado){
     medida: (a && a.medida) || { tipo:"libre", valor:0 }
   };
 }
-// TEMPORAL (diagnostico): dice que acciones del pool vienen sin texto y en que
-// nivel/lado, en vez de que el turno salga en blanco sin ninguna pista.
-function avisarAccionesSinTexto(fuentes){
-  const faltan = [];
-  (fuentes || []).forEach(f=>{
-    NIVELES.forEach(nv=>{
-      LADOS.forEach(lado=>{
-        const arr = (f && f.datos && f.datos[nv] && f.datos[nv][lado]) || [];
-        const malas = arr.filter(a=>!String((a && a.texto) || "").trim());
-        if(malas.length){
-          faltan.push((f.etiqueta ? f.etiqueta + ": " : "") + nv + " / " + nombreDeLado(lado) + " (" + malas.length + ")");
-        }
-      });
-    });
-  });
-  if(faltan.length){
-    aviso("ACCIONES SIN TEXTO: " + faltan.slice(0, 8).join(" · "));
-  }
+// TEMPORAL (diagnostico): dice cuantos turnos quedaron con el texto vacio y un
+// ejemplo con jugador/nivel/lado, en vez de que la pantalla salga en blanco.
+function avisarAccionesSinTexto(){
+  const malas = (turnos || []).filter(t=>t && t.accion && !String(t.accion.texto || "").trim());
+  if(!malas.length) return;
+  const t = malas[0];
+  const c = (cabezas || []).find(x=>x && x.id===t.jugador) || {};
+  aviso("ACCIONES SIN TEXTO: " + malas.length + " turno(s). Ejemplo: " + (c.nombre || t.jugador) + " / " + (t.accion.nivel || "?") + " / " + nombreDeLado(t.accion.lado || "?"));
 }
 function generarTurnos(){
   turnos = [];
@@ -2480,7 +2481,12 @@ function generarTurnos(){
         let poolActual = pool.slice();
         let poolIdx = 0;
         while(tomadas.length < necesarias){
-          if(poolActual.length===0){
+          // OJO: se compara el INDICE, no el largo del arreglo. Antes se
+          // reponía solo si `poolActual.length===0`, pero el arreglo no se
+          // vacía (se recorre con poolIdx): al pasar del final se metían
+          // `undefined`, y eso se volvía un turno con texto vacío. Con dos
+          // jugadores en un lado (invitado) se pedía el doble y se disparaba.
+          if(poolIdx >= poolActual.length){
             poolActual = mezclar((datos[nv]&&datos[nv][lado])||[]);
             poolIdx = 0;
             if(!poolActual.length) break;
@@ -2567,7 +2573,7 @@ async function iniciarPartidaMulti(){
   armarBolsasImposicion();
   if(placerExtremo && !placerAlcanzaMulti()){ abortarPlacer(); return; }
   generarTurnosMulti();
-  avisarAccionesSinTexto(multiCastigos.map(c=>({ etiqueta:c.nombre, datos: accionesMultiCache[c.id] || {} })));
+  avisarAccionesSinTexto();
   if(comoJuegan==="cadaQuien" && modoJuego!=="solo"){
     await publicarSesion();
     return;
