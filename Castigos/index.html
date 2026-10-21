@@ -139,12 +139,13 @@
   .controles .btnSec{ width:auto; flex:1; min-width:0; padding:10px 6px; font-size:.78rem; line-height:1.2; }
   .filaSaltar{ width:100%; min-height:44px; display:flex; align-items:center; justify-content:center; margin:6px 0 0; }
   .filaTerminar{ width:100%; display:flex; justify-content:center; margin:8px 0 0; }
-  .filaTerminar .btnPri{ width:auto; min-width:200px; max-width:85%; padding:14px 24px; margin-bottom:0; }
+  .filaTerminar .btnSec{ width:auto; min-width:200px; max-width:85%; padding:14px 24px; margin-bottom:0; font-size:.9rem; }
   .faseBox{ width:100%; background:var(--card); border:1px solid var(--card-border);
     border-radius:20px; padding:24px; margin:14px 0; text-align:center; display:none; }
   .faseBox.ver{ display:block; }
   .faseTitulo{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.2rem; margin-bottom:8px; }
   .faseTexto{ font-size:1.1rem; line-height:1.6; margin-bottom:16px; color:var(--fg); }
+  #faseCastTexto{ text-align:center; }
   .faseTexto .acce{ color:var(--teal); font-weight:600; }
   #faseImpTexto, #recibeImp{ color:var(--coral); font-weight:600; }
   .faseMedida{ font-size:1rem; color:var(--fg-muted); margin-bottom:16px; }
@@ -261,12 +262,12 @@
 
   <div class="filaSwitches">
     <div class="swGroup">
-      <div>Placer extremo por deseo</div>
-      <label class="sw"><input type="checkbox" id="swPlacer"><span class="swSlider"></span></label>
-    </div>
-    <div class="swGroup">
       <div>Imposiciones</div>
       <label class="sw"><input type="checkbox" id="swImposiciones"><span class="swSlider"></span></label>
+    </div>
+    <div class="swGroup">
+      <div>Placer extremo por deseo</div>
+      <label class="sw"><input type="checkbox" id="swPlacer"><span class="swSlider"></span></label>
     </div>
   </div>
 
@@ -337,8 +338,11 @@
     <div class="cronometro" id="cronometro"></div>
     <div style="display:flex;gap:8px;justify-content:center;">
       <button class="btnSec" id="btnIniciarTiempo" style="width:auto;padding:14px 20px;">Iniciar</button>
-      <button class="btnPri" id="btnListo" style="width:auto;padding:14px 24px;">Listo</button>
     </div>
+  </div>
+
+  <div id="filaListo" style="display:none;width:100%;justify-content:center;margin:0 0 14px;">
+    <button class="btnPri" id="btnListo" style="width:auto;padding:14px 24px;">Listo</button>
   </div>
 
   <!-- Vista del que recibe (y de los demás): sin botones. El que recibe ve la
@@ -354,7 +358,7 @@
       <button class="btnSec" id="btnSaltarTurno" style="width:auto;padding:12px 16px;">Saltar turno</button>
     </div>
     <div class="filaTerminar">
-      <button class="btnPri" id="btnTerminarPartidaEt3">Terminar Partida</button>
+      <button class="btnSec" id="btnTerminarPartidaEt3">Terminar Partida</button>
     </div>
     <div class="controles">
       <button class="btnSec" id="btnPausar">Pausar y Salir</button>
@@ -788,6 +792,7 @@ window.addEventListener("popstate", ()=>{
     castigoActivo = null;
     editorCargado = false;
   }
+  if(vistaActual()==="vistaPartida" && finVisible()) resetearInicioMulti();
   ver("vistaInicio", false);
 });
 try{ history.replaceState({ v:"vistaInicio" }, ""); }catch(e){}
@@ -1835,8 +1840,18 @@ function setHowTabs(){
   });
 }
 document.getElementById("tipoNormal").onclick = ()=>{ tipoJuego="normal"; setTipoTabs(); actualizarInicio(); };
-document.getElementById("tipoMulti").onclick = ()=>{
+document.getElementById("tipoMulti").onclick = async ()=>{
   tipoJuego="multi"; setTipoTabs(); actualizarInicio();
+  const pausa = await leerPausa();
+  if(pausa){
+    const r = await preguntarPausa(pausa);
+    if(r === "continuar"){ await continuarPausa(pausa); return; }
+    if(r === "cancelar") return;
+    await descartarPausa(pausa);
+    multiSel = [];
+    multiCastigos = [];
+    actualizarInicio();
+  }
   setTimeout(()=>{
     try{ document.getElementById("buscarLista").scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){}
   }, 60);
@@ -2347,6 +2362,13 @@ function pararTemporizador(){
   if(temporizadorId){ clearInterval(temporizadorId); temporizadorId = null; }
 }
 
+function mostrarBotonListo(mostrar){
+  const fila = document.getElementById("filaListo");
+  if(fila) fila.style.display = mostrar ? "flex" : "none";
+  const b = document.getElementById("btnListo");
+  if(b) b.style.display = mostrar ? "inline-block" : "none";
+}
+
 function pintarCrono(seg){
   const m = Math.floor(seg/60);
   const s = seg%60;
@@ -2358,7 +2380,7 @@ function iniciarTemporizadorDesde(seg){
   tiempoRestanteSeg = Math.max(0, parseInt(seg,10)||0);
   if(tiempoRestanteSeg <= 0){ cronoIniciado = false; pintarCrono(0); return; }
   document.getElementById("btnIniciarTiempo").style.display = "none";
-  document.getElementById("btnListo").style.display = "inline-block";
+  mostrarBotonListo(true);
   document.getElementById("cronometro").style.display = "block";
   pintarCrono(tiempoRestanteSeg);
   cronoIniciado = true;
@@ -2691,6 +2713,7 @@ function mostrarFin(){
   pararTemporizador();
   enPausa = false;
   document.getElementById("overlayPausa").style.display = "none";
+  mostrarBotonListo(false);
   cronoIniciado = false;
   pausaRemotaActiva = false;
   reanudarCronoRemoto = false;
@@ -2754,6 +2777,7 @@ function pintarTurno(){
   const fr = document.getElementById("faseRecibe");
   const fin = document.getElementById("finBox");
   fi.classList.remove("ver"); fc.classList.remove("ver"); fr.classList.remove("ver"); fin.classList.remove("ver");
+  mostrarBotonListo(false);
   controlesAnfitrionVisible();
   pintarSalidas();
   try{ pintarSala(); }catch(e){}
@@ -2835,12 +2859,10 @@ function pintarTurno(){
     document.getElementById("faseCastTexto").textContent = fraseAccion(acc);
     const medDiv = document.getElementById("faseCastMedida");
     const btnIni = document.getElementById("btnIniciarTiempo");
-    const btnListo = document.getElementById("btnListo");
     const crono = document.getElementById("cronometro");
     const conAccesorioYCantidad = !!(acc && acc.accesorio && acc.medida && acc.medida.tipo!=="libre" && (Number(acc.medida.valor)||0) > 0);
     medDiv.textContent = "";
     btnIni.style.display = "none";
-    btnListo.style.display = "none";
     crono.style.display = "none";
     if(acc && acc.medida && acc.medida.tipo!=="libre"){
       if(!conAccesorioYCantidad){
@@ -2853,10 +2875,10 @@ function pintarTurno(){
         crono.textContent = acc.medida.valor + ":00";
         tiempoRestanteSeg = acc.medida.valor * 60;
       }else{
-        btnListo.style.display = "inline-block";
+        mostrarBotonListo(true);
       }
     }else{
-      btnListo.style.display = "inline-block";
+      mostrarBotonListo(true);
     }
     fc.classList.add("ver");
     return;
@@ -3072,17 +3094,37 @@ document.getElementById("btnTerminarPartidaEt3").onclick = async ()=>{
   });
   if(!ok) return;
   pararTemporizador();
+  finMostrado = true;
+  jugandoCompartido = false;
   try{
     await setDoc(sesionRef(), { activa: false, terminada: true, actualizadaEn: serverTimestamp() }, { merge:true });
     await retirarInvitacion(JUEGO_INV);
     try{ apagarFuegos(); }catch(e){}
   }catch(e){}
+  resetearInicioMulti();
   ver("vistaInicio", "replace");
 };
+function resetearInicioMulti(){
+  multiSel = [];
+  multiCastigos = [];
+  tomasMulti = { ...DEF_TOMA };
+  tipoJuego = "normal";
+  esMultiPartida = false;
+  castigoPartida = null;
+  try{
+    const b = document.getElementById("buscarLista");
+    if(b) b.value = "";
+    const caja = document.getElementById("cajaActs");
+    if(caja) caja.scrollTop = 0;
+  }catch(e){}
+  try{ setTipoTabs(); actualizarInicio(); }catch(e){}
+  try{ window.scrollTo(0,0); }catch(e){}
+}
 async function volverDePartida(){
   pararTemporizador();
   try{ apagarFuegos(); }catch(e){}
   if(esInvitadoFlag){ await salirModoInvitado(); return; }
+  resetearInicioMulti();
   ver("vistaInicio", "replace");
 }
 document.getElementById("btnFinVolver").onclick = ()=>{ volverDePartida(); };
