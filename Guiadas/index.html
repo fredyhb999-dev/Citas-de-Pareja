@@ -681,7 +681,7 @@ function docDe(nombre){
 // oficialesAprobados viene de ../acceso.js.
 async function sincronizarOficiales(){
   try{
-    const ofs = await oficialesAprobados();
+    const ofs = (await oficialesAprobados()).filter(p => p.ruta === "Guiadas");
     for(const p of ofs){
       try{
         const ref = doc(db, "nivelesActividad", p.id);
@@ -736,7 +736,7 @@ async function cargarActividades(){
   base.forEach(n=>{ mapaDocs[n] = { docId: n, oficial: false }; });
 
   try{
-    const ofs = await oficialesAprobados();
+    const ofs = (await oficialesAprobados()).filter(p => p.ruta === "Guiadas");
     const vistos = new Set(base.map(n=>(n || "").toLowerCase()));
     ofs.forEach(p=>{
       const t = (p.titulo || p.id).trim();
