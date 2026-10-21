@@ -229,18 +229,18 @@
 <a class="back" id="lnkInicio" href="../index.html#juegos">← Volver</a>
 <button id="btnCfg" aria-label="Configurar">⚙️</button>
 
-<div class="eyebrow">Cumple tus Deseos, Despertando la Pasión</div>
+<div class="eyebrow">Ganar cumple tus deseos; perder despierta la pasión.</div>
 
 <!-- ============ VISTA INICIO ============ -->
 <div class="vista" id="vistaInicio">
   <h1>El Precio del Placer</h1>
-  <p class="desc">Ganar cumple tus deseos; perder despierta la pasión.</p>
+  <p class="desc">Elige tus opciones de juego</p>
 
   <div style="width:100%;">
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">¿Quién juega hoy?</div>
     <div class="tabs">
       <button class="tab" id="modSolo">Solo</button>
-      <button class="tab activo" id="modPareja">Pareja</button>
+      <button class="tab" id="modPareja">Pareja</button>
       <button class="tab" id="modInvitados">Invitados</button>
     </div>
   </div>
@@ -250,14 +250,6 @@
     <div class="tabs">
       <button class="tab activo" id="howUnCelular">Un celular</button>
       <button class="tab" id="howCadaQuien">Cada quien</button>
-    </div>
-  </div>
-
-  <div id="bloqueQuienCastiga" style="width:100%;">
-    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">¿Quién castiga primero?</div>
-    <div class="tabs">
-      <button class="tab activo" id="quienA">Usuario 1</button>
-      <button class="tab" id="quienB">Usuario 2</button>
     </div>
   </div>
 
@@ -447,6 +439,19 @@
   </div>
 </div>
 
+<!-- ============ MODAL: QUIÉN CASTIGA PRIMERO ============ -->
+<div class="modal" id="modalQuienCastiga">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿Quién castiga primero?</div>
+    <div class="tabs" style="margin-top:14px;">
+      <button class="tab activo" id="quienA">Usuario 1</button>
+      <button class="tab" id="quienB">Usuario 2</button>
+    </div>
+    <button class="btnPri" id="btnQuienOk" style="margin-top:16px;">Aceptar</button>
+    <button class="btnSec" id="btnQuienCancelar">Cancelar</button>
+  </div>
+</div>
+
 <!-- ============ VISTA CONFIG (etapa 1) ============ -->
 <div class="vista" id="vistaConfig">
   <h1>Configuración</h1>
@@ -579,7 +584,7 @@ let cargaCastigoToken = 0;
 let oficiales = []; // {id, titulo, icono, desc, orden, activo, niveles, tomasSugeridas, nuevoHasta}
 
 // ---------- estado de juego ----------
-let modoJuego = "pareja";     // solo | pareja | invitados
+let modoJuego = "";           // solo | pareja | invitados
 let comoJuegan = "unCelular"; // unCelular | cadaQuien
 let tipoJuego = "normal";     // normal | multi
 let placerExtremo = false;
@@ -1187,6 +1192,7 @@ document.getElementById("btnJugar").onclick = async ()=>{
     if(r === "continuar"){ await continuarPausa(pausa); return; }
     await descartarPausa(pausa);
   }
+  if(!modoJuego){ aviso("Elige Solo, Pareja o Invitados."); return; }
   try{ await guardarCastigoDatos(); }catch(e){ aviso("No se pudieron guardar los cambios."); return; }
   castigoPartida = castigoActivo;
   esMultiPartida = false;
@@ -1785,6 +1791,7 @@ async function seleccionarCastigo(c){
     if(r === "continuar"){ await continuarPausa(pausa); return; }
     await descartarPausa(pausa);
   }
+  if(!modoJuego){ aviso("Elige Solo, Pareja o Invitados."); return; }
   castigoPartida = c;
   esMultiPartida = false;
   const ok = await cargarDatosCastigo(c);
@@ -1802,11 +1809,8 @@ async function seleccionarCastigo(c){
 }
 
 function actualizarInicio(){
-  const esPareja = modoJuego === "pareja";
-  const esInvitados = modoJuego === "invitados";
   const esMulti = tipoJuego === "multi";
 
-  document.getElementById("bloqueQuienCastiga").style.display = (esPareja || esInvitados) ? "block" : "none";
   document.getElementById("filaMultiSel").style.display = esMulti ? "flex" : "none";
   document.getElementById("bloqueSorprendeme").style.display = esMulti ? "block" : "none";
   document.getElementById("swPlacer").checked = placerExtremo;
@@ -1830,8 +1834,37 @@ function actualizarInicio(){
 document.getElementById("buscarLista").addEventListener("input", ()=>{ pintarListaInicio(); });
 
 document.getElementById("modSolo").onclick = ()=>{ modoJuego="solo"; setModTabs(); actualizarInicio(); };
-document.getElementById("modPareja").onclick = ()=>{ modoJuego="pareja"; setModTabs(); actualizarInicio(); };
-document.getElementById("modInvitados").onclick = ()=>{ modoJuego="invitados"; setModTabs(); actualizarInicio(); };
+document.getElementById("modPareja").onclick = ()=> elegirModo("pareja");
+document.getElementById("modInvitados").onclick = ()=> elegirModo("invitados");
+
+function preguntarQuienCastiga(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("modalQuienCastiga");
+    document.getElementById("quienA").classList.toggle("activo", ladoInicial==="A");
+    document.getElementById("quienB").classList.toggle("activo", ladoInicial==="B");
+    document.getElementById("btnQuienOk").onclick = ()=>{ modal.style.display="none"; resolve(true); };
+    document.getElementById("btnQuienCancelar").onclick = ()=>{ modal.style.display="none"; resolve(false); };
+    modal.style.display = "flex";
+  });
+}
+
+async function elegirModo(m){
+  const previoModo = modoJuego;
+  const previoLado = ladoInicial;
+  modoJuego = m;
+  setModTabs();
+  actualizarInicio();
+  const ok = await preguntarQuienCastiga();
+  if(!ok){
+    modoJuego = previoModo;
+    ladoInicial = previoLado;
+    document.getElementById("quienA").classList.toggle("activo", ladoInicial==="A");
+    document.getElementById("quienB").classList.toggle("activo", ladoInicial==="B");
+    setModTabs();
+    actualizarInicio();
+  }
+}
+
 function setModTabs(){
   ["modSolo","modPareja","modInvitados"].forEach(id=>{
     document.getElementById(id).classList.toggle("activo", id==="mod"+modoJuego.charAt(0).toUpperCase()+modoJuego.slice(1));
@@ -1898,6 +1931,7 @@ document.getElementById("btnMultiConfOk").onclick = async ()=>{
     if(r === "continuar"){ await continuarPausa(pausa); return; }
     await descartarPausa(pausa);
   }
+  if(!modoJuego){ aviso("Elige Solo, Pareja o Invitados."); return; }
   // tomas de Multi son de la partida: empezar desde DEF_TOMA (editables en el paso de tomas)
   tomasMulti = { ...DEF_TOMA };
   esMultiPartida = true;
