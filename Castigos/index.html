@@ -2253,6 +2253,7 @@ function armarPartidaNormal(){
   armarBolsasImposicion();
   if(placerExtremo && !placerAlcanzaNormal()){ abortarPlacer(); return false; }
   generarTurnos();
+  avisarAccionesSinTexto([{ datos: datos }]);
   return true;
 }
 
@@ -2417,6 +2418,25 @@ function accionDeNivel(a, nivel, lado){
     medida: (a && a.medida) || { tipo:"libre", valor:0 }
   };
 }
+// TEMPORAL (diagnostico): dice que acciones del pool vienen sin texto y en que
+// nivel/lado, en vez de que el turno salga en blanco sin ninguna pista.
+function avisarAccionesSinTexto(fuentes){
+  const faltan = [];
+  (fuentes || []).forEach(f=>{
+    NIVELES.forEach(nv=>{
+      LADOS.forEach(lado=>{
+        const arr = (f && f.datos && f.datos[nv] && f.datos[nv][lado]) || [];
+        const malas = arr.filter(a=>!String((a && a.texto) || "").trim());
+        if(malas.length){
+          faltan.push((f.etiqueta ? f.etiqueta + ": " : "") + nv + " / " + nombreDeLado(lado) + " (" + malas.length + ")");
+        }
+      });
+    });
+  });
+  if(faltan.length){
+    aviso("ACCIONES SIN TEXTO: " + faltan.slice(0, 8).join(" · "));
+  }
+}
 function generarTurnos(){
   turnos = [];
   const accionesPorJugador = {};
@@ -2547,6 +2567,7 @@ async function iniciarPartidaMulti(){
   armarBolsasImposicion();
   if(placerExtremo && !placerAlcanzaMulti()){ abortarPlacer(); return; }
   generarTurnosMulti();
+  avisarAccionesSinTexto(multiCastigos.map(c=>({ etiqueta:c.nombre, datos: accionesMultiCache[c.id] || {} })));
   if(comoJuegan==="cadaQuien" && modoJuego!=="solo"){
     await publicarSesion();
     return;
@@ -2863,9 +2884,9 @@ async function crearSesionCompartida(){
   return publicarSesion();
 }
 
-function anunciarinvitacion(sid){
+async function anunciarinvitacion(sid){
   try{
-    publicarInvitacion({
+    await publicarInvitacion({
       juego: JUEGO_INV,
       titulo: "El Precio del Placer",
       icono: "💫",
@@ -3182,7 +3203,7 @@ function pintarTurno(){
   if(soyReceptor || soyOtro){
     document.getElementById("recibeTitulo").textContent = soyReceptor ? "Te toca recibir" : ("Turno de " + c.nombre);
     const impEl = document.getElementById("recibeImp");
-    const impTxt = imposicionesActivas ? (t.imposicion || "") : "";
+    const impTxt = imposicionesActivas ? String(t.imposicion || "").trim() : "";
     impEl.textContent = impTxt;
     impEl.style.display = impTxt ? "" : "none";
     const acEl = document.getElementById("recibeAccion");
@@ -3199,16 +3220,22 @@ function pintarTurno(){
   }
 
   if(faseTurno === "imposicion"){
+    const impTxt = String(t.imposicion || "").trim();
     if(!imposicionesActivas){
       faseTurno = "castigo";
-    }else if(t.imposicion){
-      document.getElementById("faseImpTexto").textContent = t.imposicion;
+    }else if(impTxt){
+      document.getElementById("faseImpTexto").textContent = impTxt;
       mostrarBotonAccion("aceptar");
       fi.classList.add("ver");
       return;
-    }else if(t.imposicion === "" || !jugandoCompartido){
+    }else if(t.imposicion != null || !jugandoCompartido){
+      // Ya se resolvio el turno: no habia imposicion (o es solo espacio).
       faseTurno = "castigo";
     }else{
+      // El anfitrion todavia no escribio la imposicion: se avisa, no se deja
+      // la pantalla vacia.
+      document.getElementById("faseImpTexto").textContent = "Esperando la imposición…";
+      fi.classList.add("ver");
       return;
     }
   }
@@ -3667,7 +3694,35 @@ async function agregarInvitadoAPartida(inv){
         sesionActual = d;
         cargarSesionEnMemoria(d);
         pintarSala();
-        anunciarinvitacion(d.sid);
+        await Promise.race([
+          anunciarinvitacion(d.sid),
+          new Promise(r=>setTimeout(r, 4000))
+        ]);
+        // Comprobar que la invitacion salio CON el invitado dentro. Si el
+        // aviso en vivo se perdio, se reintenta una vez y, si aun asi no
+        // quedo, se avisa en pantalla en vez de dejarlo esperando en silencio.
+        try{
+          const invSnap = await Promise.race([
+            getDoc(doc(db, "invitaciones", JUEGO_INV)),
+            new Promise(r=>setTimeout(()=>r(null), 4000))
+          ]);
+          if(!invSnap) return;
+          const partes = (invSnap.exists() && Array.isArray(invSnap.data().participantes)) ? invSnap.data().participantes : [];
+          if(partes.indexOf(inv.id) < 0){
+            await Promise.race([
+              anunciarinvitacion(d.sid),
+              new Promise(r=>setTimeout(r, 4000))
+            ]);
+            const inv2 = await Promise.race([
+              getDoc(doc(db, "invitaciones", JUEGO_INV)),
+              new Promise(r=>setTimeout(()=>r(null), 4000))
+            ]);
+            const partes2 = (inv2 && inv2.exists() && Array.isArray(inv2.data().participantes)) ? inv2.data().participantes : [];
+            if(partes2.indexOf(inv.id) < 0){
+              aviso("El invitado ya está en la partida, pero su sala no recibió el aviso. Pídele que pulse Refrescar.");
+            }
+          }
+        }catch(e){}
       }
     }catch(e){}
   }catch(e){
