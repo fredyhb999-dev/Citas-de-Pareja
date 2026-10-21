@@ -53,6 +53,7 @@
   p.desc{ font-size:.88rem; color:var(--fg-muted); max-width:360px; margin:0 0 18px; text-align:center; }
   .vista{ display:none; width:100%; max-width:520px; flex-direction:column; align-items:center; }
   .vista.ver{ display:flex; }
+  #vistaPartida{ min-height:calc(100dvh - 100px); }
   .btnPri{ width:100%; padding:16px; margin-bottom:12px; border:none; border-radius:16px; cursor:pointer;
     font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.05rem; color:var(--bg);
     background:linear-gradient(90deg, var(--coral), var(--teal)); }
@@ -147,7 +148,10 @@
   .faseTexto{ font-size:1.1rem; line-height:1.6; margin-bottom:16px; color:var(--fg); }
   #faseCastTexto{ text-align:center; }
   .faseTexto .acce{ color:var(--teal); font-weight:600; }
-  #faseImpTexto, #recibeImp{ color:var(--coral); font-weight:600; }
+  #faseImpTexto, #recibeImp{ font-weight:600;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    width:fit-content; margin-left:auto; margin-right:auto; }
   .faseMedida{ font-size:1rem; color:var(--fg-muted); margin-bottom:16px; }
   .cronometro{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.5rem;
     color:var(--coral); margin:10px 0; }
@@ -341,16 +345,16 @@
     </div>
   </div>
 
-  <div id="filaListo" style="display:none;width:100%;justify-content:center;margin:0 0 14px;">
-    <button class="btnPri" id="btnListo" style="width:auto;padding:14px 24px;">Listo</button>
-  </div>
-
   <!-- Vista del que recibe (y de los demás): sin botones. El que recibe ve la
        imposición como contexto y SOLO la acción; los demás ven "Turno de X". -->
   <div id="faseRecibe" class="faseBox">
     <div class="faseTitulo" id="recibeTitulo">Te toca recibir</div>
     <div class="faseTexto" id="recibeImp"></div>
     <div class="faseTexto" id="recibeAccion" style="font-weight:600;"></div>
+  </div>
+
+  <div id="filaListo" style="display:none;width:100%;justify-content:center;margin:0 0 14px;">
+    <button class="btnPri" id="btnListo" style="width:auto;padding:14px 24px;">Listo</button>
   </div>
 
   <div id="controlesPartida" style="width:100%;">
@@ -381,7 +385,7 @@
 
   <div class="finBox" id="finBox">
     <div id="finTxt" style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.2rem;color:var(--teal);margin-bottom:8px;">¡Gracias por jugar!</div>
-    <button class="btnPri" id="btnFinVolver" style="display:none;">Volver a lista</button>
+    <button class="btnPri" id="btnFinVolver" style="display:none;">Fin de Juego</button>
   </div>
 
   <div id="overlayPausa">
@@ -2364,9 +2368,13 @@ function pararTemporizador(){
 
 function mostrarBotonListo(mostrar){
   const fila = document.getElementById("filaListo");
-  if(fila) fila.style.display = mostrar ? "flex" : "none";
+  if(fila){
+    fila.style.display = "flex";
+    fila.style.visibility = mostrar ? "visible" : "hidden";
+    fila.style.pointerEvents = mostrar ? "auto" : "none";
+  }
   const b = document.getElementById("btnListo");
-  if(b) b.style.display = mostrar ? "inline-block" : "none";
+  if(b) b.style.display = "inline-block";
 }
 
 function pintarCrono(seg){
@@ -2714,6 +2722,7 @@ function mostrarFin(){
   enPausa = false;
   document.getElementById("overlayPausa").style.display = "none";
   mostrarBotonListo(false);
+  try{ document.getElementById("filaListo").style.display = "none"; }catch(e){}
   cronoIniciado = false;
   pausaRemotaActiva = false;
   reanudarCronoRemoto = false;
@@ -2789,6 +2798,7 @@ function pintarTurno(){
 
   const t = turnos[turnoIdx];
   const c = cabezas.find(x=>x.id===t.jugador) || { nombre:"?", lado:"?" };
+  const colorAccion = (turnoIdx % 2 === 0) ? "var(--coral)" : "var(--teal)";
   document.getElementById("partidaTitulo").textContent = "Turno de " + c.nombre;
 
   const esUnCelular = (comoJuegan === "unCelular") || !jugandoCompartido;
@@ -2831,6 +2841,7 @@ function pintarTurno(){
     const acEl = document.getElementById("recibeAccion");
     if(soyReceptor && t.accion){
       acEl.textContent = fraseAccion(t.accion);
+      acEl.style.color = colorAccion;
       acEl.style.display = "block";
     }else{
       acEl.textContent = "";
@@ -2857,6 +2868,7 @@ function pintarTurno(){
   if(faseTurno === "castigo"){
     const acc = t.accion;
     document.getElementById("faseCastTexto").textContent = fraseAccion(acc);
+    document.getElementById("faseCastTexto").style.color = colorAccion;
     const medDiv = document.getElementById("faseCastMedida");
     const btnIni = document.getElementById("btnIniciarTiempo");
     const crono = document.getElementById("cronometro");
@@ -2996,6 +3008,7 @@ document.getElementById("btnIniciarTiempo").onclick = ()=>{
 };
 
 document.getElementById("btnListo").onclick = async ()=>{
+  try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
   const t = turnos[turnoIdx];
   if(!t) return;
   const esUnCelular = (comoJuegan === "unCelular") || !jugandoCompartido;
