@@ -192,6 +192,11 @@
     align-items:center; justify-content:center; padding:20px; }
   .modal .caja{ width:100%; max-width:380px; background:var(--card); border:1px solid var(--teal);
     border-radius:18px; padding:22px 20px; text-align:center; }
+  #modalImposiciones input{ width:100%; padding:12px; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); font-size:1.1rem; text-align:center; margin:12px 0 6px;
+    font-family:'Inter',sans-serif; }
+  #modalImposiciones .recordatorio{ font-size:.82rem; line-height:1.5; color:var(--fg-muted); margin:0 0 6px; }
+  #modalImposiciones #impElegidas{ min-height:18px; font-size:.8rem; color:var(--teal); margin-bottom:8px; }
   #modalDetalle .caja{ max-height:calc(100dvh - 40px); overflow-y:auto; }
   .campoLabel{ display:block; text-align:left; font-size:.85rem; color:var(--fg-muted); margin-bottom:6px; }
   .campoLabelGrande{ font-size:1rem; }
@@ -452,6 +457,17 @@
   </div>
 </div>
 
+<div class="modal" id="modalImposiciones">
+  <div class="caja">
+    <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">¿Cuántas imposiciones por cada 3 rondas?</div>
+    <input type="number" id="inpImposiciones" min="1" step="1" inputmode="numeric" placeholder="1">
+    <p class="recordatorio">Se reparten entre todos los usuarios, incluidos los inactivos; si su turno no se juega, la imposición se pierde. Solo puede haber una imposición por turno.</p>
+    <div id="impElegidas"></div>
+    <button class="btnPri" id="btnImpOk">Aceptar</button>
+    <button class="btnSec" id="btnImpCancelar">Cancelar</button>
+  </div>
+</div>
+
 <!-- ============ VISTA CONFIG (etapa 1) ============ -->
 <div class="vista" id="vistaConfig">
   <h1>Configuración</h1>
@@ -589,6 +605,8 @@ let comoJuegan = "unCelular"; // unCelular | cadaQuien
 let tipoJuego = "normal";     // normal | multi
 let placerExtremo = false;
 let imposicionesActivas = false;
+let imposicionesPor3 = 0;
+let cancelarPreguntaImposiciones = null;
 let ladoInicial = "A";
 let cabezas = [];             // [{id,nombre,lado,admin,invitado,conQuien}]
 let orden = [];
@@ -833,6 +851,7 @@ function pintarSalidas(){
   }catch(e){}
 }
 function ver(id, guardar){
+  if(cancelarPreguntaImposiciones){ const c = cancelarPreguntaImposiciones; cancelarPreguntaImposiciones = null; c(); }
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("ver"));
   document.getElementById(id).classList.add("ver");
   document.querySelectorAll(".modal").forEach(m=>{ m.style.display = "none"; });
@@ -1685,6 +1704,7 @@ function estadoPartidaLocal(){
     tipoJuego: tipoJuego,
     placerExtremo: placerExtremo,
     imposicionesActivas: imposicionesActivas,
+    imposicionesPor3: imposicionesPor3,
     ladoInicial: ladoInicial,
     cabezas: cabezas,
     orden: orden,
@@ -1709,7 +1729,8 @@ function restaurarPartidaLocal(p){
   comoJuegan = p.comoJuegan || "unCelular";
   tipoJuego = p.tipoJuego || "normal";
   placerExtremo = !!p.placerExtremo;
-  imposicionesActivas = (p.imposicionesActivas === undefined) ? false : !!p.imposicionesActivas;
+  imposicionesPor3 = Number(p.imposicionesPor3)||0;
+  imposicionesActivas = !!p.imposicionesActivas && imposicionesPor3 > 0;
   ladoInicial = p.ladoInicial || "A";
   cabezas = Array.isArray(p.cabezas) ? p.cabezas : [];
   orden = Array.isArray(p.orden) ? p.orden : [];
@@ -1744,7 +1765,7 @@ async function pausarPartida(){
   try{ localStorage.setItem(CLAVE_PAUSA, JSON.stringify(estado)); }catch(e){}
   jugandoCompartido = false;
   if(compartida && esAnfitrion){
-    try{ await setDoc(sesionRef(), { pausada:true, pausadaPor:(miUsuario && miUsuario.nombre)||"", imposicionesActivas:!!imposicionesActivas, turno:turnoIdx, turnos:turnos, actualizadaEn: serverTimestamp() }, { merge:true }); }catch(e){}
+    try{ await setDoc(sesionRef(), { pausada:true, pausadaPor:(miUsuario && miUsuario.nombre)||"", imposicionesActivas:!!imposicionesActivas, imposicionesPor3:imposicionesPor3, turno:turnoIdx, turnos:turnos, actualizadaEn: serverTimestamp() }, { merge:true }); }catch(e){}
     try{ await pausarInvitacion(JUEGO_INV, true); }catch(e){}
   }
   enPausa = true;
@@ -2042,7 +2063,60 @@ document.getElementById("btnSorprendeme").onclick = ()=>{
 document.getElementById("quienA").onclick = ()=>{ ladoInicial="A"; document.getElementById("quienA").classList.add("activo"); document.getElementById("quienB").classList.remove("activo"); };
 document.getElementById("quienB").onclick = ()=>{ ladoInicial="B"; document.getElementById("quienB").classList.add("activo"); document.getElementById("quienA").classList.remove("activo"); };
 document.getElementById("swPlacer").addEventListener("change",()=>{ placerExtremo = document.getElementById("swPlacer").checked; });
-document.getElementById("swImposiciones").addEventListener("change",()=>{ imposicionesActivas = document.getElementById("swImposiciones").checked; });
+
+function preguntarImposicionesPor3(){
+  return new Promise(resolve=>{
+    const modal = document.getElementById("modalImposiciones");
+    const inp = document.getElementById("inpImposiciones");
+    const linea = document.getElementById("impElegidas");
+    const btnOk = document.getElementById("btnImpOk");
+    const btnCancelar = document.getElementById("btnImpCancelar");
+    inp.value = "";
+    linea.textContent = "";
+    const actualizar = ()=>{
+      const n = parseInt(inp.value||"0",10)||0;
+      linea.textContent = n > 0 ? ("Elegiste " + n + " imposiciones cada 3 rondas.") : "";
+    };
+    const cerrar = (valor)=>{
+      cancelarPreguntaImposiciones = null;
+      modal.style.display = "none";
+      inp.oninput = null;
+      inp.onkeydown = null;
+      btnOk.onclick = null;
+      btnCancelar.onclick = null;
+      resolve(valor);
+    };
+    cancelarPreguntaImposiciones = ()=>cerrar(null);
+    inp.oninput = actualizar;
+    inp.onkeydown = (e)=>{ if(e.key === "Enter"){ e.preventDefault(); btnOk.click(); } };
+    btnOk.onclick = ()=>{
+      const n = parseInt(inp.value||"0",10)||0;
+      if(n < 1){ aviso("Escribe un número mayor que 0."); return; }
+      cerrar(n);
+    };
+    btnCancelar.onclick = ()=>cerrar(null);
+    modal.style.display = "flex";
+    setTimeout(()=>{ try{ inp.focus(); }catch(e){} }, 60);
+  });
+}
+
+document.getElementById("swImposiciones").addEventListener("change", async ()=>{
+  const el = document.getElementById("swImposiciones");
+  if(!el.checked){
+    imposicionesActivas = false;
+    imposicionesPor3 = 0;
+    return;
+  }
+  const n = await preguntarImposicionesPor3();
+  if(n === null){
+    el.checked = false;
+    imposicionesActivas = false;
+    imposicionesPor3 = 0;
+    return;
+  }
+  imposicionesActivas = true;
+  imposicionesPor3 = n;
+});
 
 function elegirCastigoParaJugar(){
   return new Promise(resolve=>{
@@ -2178,6 +2252,25 @@ function tomarImposicion(lado){
   return b.length ? b.shift() : null;
 }
 
+function asignarImposicionesAlAzar(rondas){
+  turnos.forEach(t=>{ t.imposicion = ""; });
+  if(!imposicionesActivas || imposicionesPor3 <= 0) return;
+  let cantidad = Math.round((rondas * imposicionesPor3) / 3);
+  if(cantidad < 1) cantidad = 1;
+  cantidad = Math.min(cantidad, turnos.length);
+
+  const indices = mezclar(turnos.map((_,i)=>i));
+  let puestas = 0;
+  for(const idx of indices){
+    if(puestas >= cantidad) break;
+    const t = turnos[idx];
+    const imp = tomarImposicion(t.lado);
+    if(!imp) continue;
+    t.imposicion = imp;
+    puestas++;
+  }
+}
+
 function accionDeNivel(a, nivel, lado){
   return {
     nivel, lado,
@@ -2263,13 +2356,14 @@ function generarTurnos(){
         lado: c.lado,
         ronda: r,
         accion: accion,
-        imposicion: imposicionesActivas ? null : "",
+        imposicion: "",
         saltado: saltado,
         hecho: false
       });
     });
   }
   recalcularSaltadoPorRevivir();
+  asignarImposicionesAlAzar(largo);
 }
 
 // ---------- Multi: reparto en rueda (regla oficial) ----------
@@ -2451,13 +2545,14 @@ function generarTurnosMulti(){
         lado: c.lado,
         ronda: r,
         accion: accion,
-        imposicion: imposicionesActivas ? null : "",
+        imposicion: "",
         saltado: saltado,
         hecho: false
       });
     });
   }
   recalcularSaltadoPorRevivir();
+  asignarImposicionesAlAzar(largo);
 }
 
 function recalcularSaltadoPorRevivir(){
@@ -2594,6 +2689,7 @@ async function publicarSesion(){
     multiIds: esMultiPartida ? multiCastigos.map(c=>c.id) : [],
     placerExtremo: !!placerExtremo,
     imposicionesActivas: !!imposicionesActivas,
+    imposicionesPor3: Number(imposicionesPor3)||0,
     revivir: !!revivir,
     ladoInicial: ladoInicial,
     cabezas: cabezas,
@@ -2740,7 +2836,8 @@ function cargarSesionEnMemoria(d){
   tipoJuego = d.multi ? "multi" : "normal";
   esMultiPartida = !!d.multi;
   placerExtremo = !!d.placerExtremo;
-  imposicionesActivas = (d.imposicionesActivas === undefined) ? false : !!d.imposicionesActivas;
+  imposicionesPor3 = Number(d.imposicionesPor3)||0;
+  imposicionesActivas = !!d.imposicionesActivas && imposicionesPor3 > 0;
   esAnfitrion = (d.hostUid === miId);
   soyHost = esAnfitrion;
   document.getElementById("swRevivir").checked = revivir;
@@ -3359,7 +3456,7 @@ function agregarInvitadoLocal(inv){
     const acc = accionesCompañero[ai++] || null;
     const nt = {
       jugador: inv.id, lado: ladoInv, ronda: r, accion: acc,
-      imposicion: imposicionesActivas ? null : "",
+      imposicion: "",
       saltado: (acc===null) || (ladoInv !== ladoInicial && !revivir),
       hecho: false
     };
@@ -3410,7 +3507,7 @@ async function agregarInvitadoAPartida(inv){
         const acc = accionesCompañero[ai++] || null;
         const nuevoTurno = {
           jugador: inv.id, lado: ladoInv, ronda: r, accion: acc,
-          imposicion: imposicionesActivas ? null : "",
+          imposicion: "",
           saltado: (acc===null) || (ladoInv !== (d.ladoInicial||"A") && !d.revivir),
           hecho: false
         };
