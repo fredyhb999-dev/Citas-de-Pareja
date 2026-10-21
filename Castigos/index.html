@@ -146,9 +146,9 @@
   .faseBox.ver{ display:flex; flex-direction:column; justify-content:center; }
   #faseImposicion, #faseCastigo, #faseRecibe{ min-height:190px; }
   #faseImposicion{ position:relative; padding-top:40px; }
-  .etiquetaImposicion{ position:absolute; top:12px; left:16px;
-    font-family:'Chakra Petch',sans-serif; font-size:.7rem; font-weight:600;
-    letter-spacing:.12em; text-transform:uppercase; color:var(--fg-muted); }
+  .etiquetaImposicion{ position:absolute; top:14px; left:16px;
+    font-family:'Chakra Petch',sans-serif; font-size:1rem; font-weight:700;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--coral); }
   .faseTitulo{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.2rem; margin-bottom:8px; }
   .faseTexto{ font-size:1.1rem; line-height:1.6; margin-bottom:16px; color:var(--fg); }
   #faseCastTexto{ text-align:center; }
@@ -239,8 +239,8 @@
   <div style="width:100%;">
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">¿Quién juega hoy?</div>
     <div class="tabs">
-      <button class="tab activo" id="modSolo">Solo</button>
-      <button class="tab" id="modPareja">Pareja</button>
+      <button class="tab" id="modSolo">Solo</button>
+      <button class="tab activo" id="modPareja">Pareja</button>
       <button class="tab" id="modInvitados">Invitados</button>
     </div>
   </div>
@@ -580,7 +580,7 @@ let cargaCastigoToken = 0;
 let oficiales = []; // {id, titulo, icono, desc, orden, activo, niveles, tomasSugeridas, nuevoHasta}
 
 // ---------- estado de juego ----------
-let modoJuego = "solo";       // solo | pareja | invitados
+let modoJuego = "pareja";     // solo | pareja | invitados
 let comoJuegan = "unCelular"; // unCelular | cadaQuien
 let tipoJuego = "normal";     // normal | multi
 let placerExtremo = false;
