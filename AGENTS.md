@@ -21,6 +21,10 @@ tenia el contexto a la mano.
 | `General/IA-Acompanante.md` | `Acompanante/`: el tono de la IA, los ajustes y los retos que propone | Solo si la tarea toca `Acompanante/` o los retos de la IA |
 | `General/Campana-Pestana.md` | `pestana.js`: campana, bip y cartelito (Chat y Retos) | Solo si la tarea toca los avisos de la campana |
 | `General/Pegamento-y-Citas.md` | El pegamento, la agenda de `Citas/` y las pantallas de Actividades y Accesorios | Solo si la tarea toca esas pantallas |
+| `General/Modulo-Acceso.md` | Detalle del módulo `acceso.js` (licencias, qué exporta, cómo quedó cada página) | Solo si la tarea toca licencias o `acceso.js` |
+| `General/Autorizar.md` | Detalle de `Autorizar/` (aprobar y revocar licencias, login, llave privada) | Solo si la tarea toca la pantalla de licencias |
+| `General/Favores-Express.md` | Detalle del módulo `favor.js` (favores expresos, precios del 🛒, reglas) | Solo si la tarea toca favores |
+| `General/Castigos.md` | Detalle del juego `Castigos/` ("El Precio del Placer", editor, partida, multi) | Solo si la tarea toca el juego de castigos |
 | `General/duelos.md` | El cuarto modo de `Roles/` (Duelo de seducción): las 4 ramas y sus 2 modalidades. **Construido y probado en vivo (oct-2026)** | Solo si la tarea toca el modo de duelo |
 | `General/Plan-Duelo.md` | El plan de desarrollo del Duelo: fases, funciones, modelo de datos y pruebas | Solo si la tarea es **construir** el duelo |
 | `General/Modelo-Datos.md` | Como esta guardada la base y como normalizarla | Antes de migrar datos |
