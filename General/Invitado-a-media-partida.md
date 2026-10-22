@@ -93,3 +93,30 @@ es el botón **"Mostrar código QR"**.
   - `disponiblesInvitados()` — invitados registrados que no están en la partida.
   - `abrirAgregar()` — la ventana con la lista para elegir.
   - `agregarInvitado(id)` — la transacción y el re-publicar de la invitación.
+
+---
+
+### Invitado a media partida en Castigos y Encuentros
+
+### Invitado a media partida: acciones distintas (Castigos y Encuentros)
+
+**Regla vigente:** cuando alguien entra con la partida ya empezada, sus turnos
+restantes **no se copian** del compañero de su lado. Por cada ronda que le falta
+se toma el **nivel** que le tocaría (el de la acción del compañero en esa ronda)
+y se elige **otra acción del mismo nivel y lado**, sacada de la actividad
+elegida o de las actividades de la partida. Se prefieren las que no se han usado;
+si la bolsa se agota se permite repetir, pero **nunca la misma acción del
+compañero en esa ronda**. Si el contenido no se puede leer, se copia como
+respaldo (comportamiento anterior).
+
+- **Castigos** (`Castigos/` → `turnosConInvitado()`): aplica a normal,
+  Multi y Placer extremo, en "cada quien el suyo" y en "un celular". Sus turnos
+  entran al final de cada ronda restante y **no llevan imposiciones nuevas**.
+- **Encuentros** (`Encuentros/` → `listaConInvitado()`): cada jugador
+  tiene una lista por ronda; el invitado recibe la suya con acciones distintas y
+  entra al final de la rotación. Si el contenido no está en memoria, se lee de
+  `nivelesActividad` (`cargarActsParaInvitado()`).
+- **Opciones** no cambia: ya generaba su lista al azar (`R - ronda` opciones del
+  lado) y lo hace entrar desde la ronda siguiente (`agregarInvitado()`).
+
+No se toca el largo de la partida ni la lista de los demás jugadores.

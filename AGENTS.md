@@ -30,6 +30,16 @@ tenia el contexto a la mano.
 | `General/Modelo-Datos.md` | Como esta guardada la base y como normalizarla | Antes de migrar datos |
 | `General/HISTORIA.md` | **El por que**: relato con fecha de cada arreglo | **Solo** en los casos de abajo |
 
+**Regla para documentación de pantallas y módulos nuevos:**
+
+Cuando se cree o modifique una pantalla, un módulo o un juego, la documentación
+de detalle **va directamente a su propio archivo en `General/`**, nunca a
+`GUIA.md`. En `GUIA.md` solo queda una línea de apunte que apunte a ese archivo.
+
+**NO se agrega detalle de pantalla o módulo dentro de `GUIA.md`.** Si se ve
+que falta el archivo de detalle de una pantalla, se crea en `General/` y se
+agrega la línea de apunte en `GUIA.md` y en esta tabla de `AGENTS.md`.
+
 **Los cuatro del medio se partieron del `GUIA.md` el oct-2026** (pasó de 2,274
 a 1,417 líneas). Son **detalle de una sola pantalla o un solo modulo**: se leen
 enteros o no se leen, y estorban al leer lo de todos los dias. **Si la tarea no
