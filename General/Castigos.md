@@ -34,7 +34,7 @@ Movido de `General/GUIA.md`. Contiene el detalle completo de la pantalla de cast
 
 ## Niveles y lados
 
-Niveles: `basico`, `medio`, `avanzado`, `experto`, `alucinado`. Lados: `A` y `B`. Tomas por defecto: `{basico:2, medio:2, avanzado:1, experto:1, alucinado:1}`. Texto de acción: máx. 75 caracteres. Medida: `libre` / `tiempo` / `veces` + valor.
+Niveles: `basico`, `medio`, `avanzado`, `experto`, `alucinado`. Lados: `A` y `B`. Tomas por defecto: `{basico:2, medio:2, avanzado:1, experto:1, alucinado:1}`. Texto de acción: máx. 75 caracteres; el campo del editor crece solo y el texto baja de renglón. Medida: `libre` / `tiempo` / `veces` + valor.
 
 ## Licencias
 

@@ -79,18 +79,20 @@
   .chips{ display:flex; flex-direction:column; gap:8px; margin:8px 0; }
   .accion{ width:100%; background:var(--card); border:1px solid var(--card-border);
     border-radius:14px; padding:8px 10px 6px; }
-  .accionTop{ display:flex; align-items:center; gap:8px; }
+  .accionTop{ display:flex; align-items:flex-start; gap:8px; }
   .accionCampo{ flex:1; min-width:0; width:100%; border-radius:10px; border:1px solid var(--card-border);
-    background:var(--bg); color:var(--fg); padding:10px 12px; font-size:.85rem; font-family:'Inter',sans-serif; }
+    background:var(--bg); color:var(--fg); padding:10px 12px; font-size:.85rem; font-family:'Inter',sans-serif;
+    line-height:1.4; resize:none; overflow:hidden; display:block; }
   .accionCampo:focus{ outline:none; border-color:var(--teal); }
-  .accionIcons{ display:flex; align-items:center; gap:2px; flex:0 0 auto; }
+  .accionIcons{ display:flex; align-items:center; gap:2px; flex:0 0 auto; margin-top:6px; }
   .accionIcons button{ background:none; border:none; cursor:pointer; padding:4px; font-size:1rem; }
   .accionIcons .lapiz{ color:var(--fg-muted); }
   .accionIcons .tache{ color:var(--rojo); }
   .accionMeta{ font-size:.7rem; color:var(--teal); min-height:14px; margin-top:4px; padding-left:2px; }
-  .filaAdd{ display:flex; gap:6px; margin-top:8px; }
-  .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+  .filaAdd{ display:flex; gap:6px; margin-top:8px; align-items:flex-start; }
+  .filaAdd input, .filaAdd textarea{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg); color:var(--fg); padding:12px; font-size:.9rem; font-family:'Inter',sans-serif; }
+  .filaAdd textarea{ line-height:1.4; resize:none; overflow:hidden; display:block; }
   .filaAdd button{ border:none; border-radius:12px; cursor:pointer; padding:12px 16px;
     font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
     background:linear-gradient(90deg, var(--coral), var(--teal)); }
@@ -1112,6 +1114,11 @@ function mezclar(a){
   return x;
 }
 
+function ajustarAltoCampo(el){
+  el.style.height = "auto";
+  el.style.height = (el.scrollHeight + 2) + "px";
+}
+
 function pintarEditor(){
   const box = document.getElementById("nivelesBox");
   box.innerHTML = "";
@@ -1131,10 +1138,12 @@ function pintarEditor(){
         const fila = document.createElement("div"); fila.className="accion";
         const top = document.createElement("div"); top.className="accionTop";
 
-        const campo = document.createElement("input");
-        campo.type="text"; campo.className="accionCampo"; campo.maxLength=MAX_TEXTO;
+        const campo = document.createElement("textarea");
+        campo.rows = 1; campo.className="accionCampo"; campo.maxLength=MAX_TEXTO;
         campo.value = acc.texto;
         campo.title = "Acción (máx. "+MAX_TEXTO+" caracteres)";
+        campo.addEventListener("input", ()=>ajustarAltoCampo(campo));
+        campo.addEventListener("blur", ()=>ajustarAltoCampo(campo));
         campo.addEventListener("change", ()=>{
           const nuevo = campo.value.trim();
           if(!nuevo){ aviso("Escribe la acción."); campo.value = acc.texto; return; }
@@ -1168,7 +1177,9 @@ function pintarEditor(){
       });
       ld.appendChild(chips);
       const fa = document.createElement("div"); fa.className="filaAdd";
-      const inp = document.createElement("input"); inp.type="text"; inp.placeholder="Nueva acción ("+nombre+" "+nombreDeLado(lado)+")"; inp.maxLength=MAX_TEXTO;
+      const inp = document.createElement("textarea"); inp.rows=1; inp.placeholder="Nueva acción ("+nombre+" "+nombreDeLado(lado)+")"; inp.maxLength=MAX_TEXTO;
+      inp.addEventListener("input", ()=>ajustarAltoCampo(inp));
+      inp.addEventListener("blur", ()=>ajustarAltoCampo(inp));
       inp.dataset.nv = nv; inp.dataset.lado = lado;
       const bt = document.createElement("button"); bt.textContent="+";
       const agregar = ()=>{
@@ -1188,12 +1199,13 @@ function pintarEditor(){
     });
     box.appendChild(sec);
   });
+  box.querySelectorAll(".accionCampo, .filaAdd textarea").forEach(ajustarAltoCampo);
   pintarTomas();
   actualizarBotonJugar();
 }
 
 function enfocarAccion(nv,lado){
-  const inp = document.querySelector('#nivelesBox input[data-nv="'+nv+'"][data-lado="'+lado+'"]');
+  const inp = document.querySelector('#nivelesBox [data-nv="'+nv+'"][data-lado="'+lado+'"]');
   if(inp) inp.focus();
 }
 
