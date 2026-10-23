@@ -282,7 +282,7 @@ function pintarNiveles(){
       fila.className = "filaAdd";
       const inp = document.createElement("input");
       inp.placeholder = "Nueva acción " + lado + " (" + nv.nombre.toLowerCase() + ")";
-      inp.maxLength = 60;
+      inp.maxLength = 75;
       const btn = document.createElement("button");
       btn.textContent = "+";
       const agregar = ()=>{
@@ -332,7 +332,7 @@ const modalDetalleHTML = `
 <div class="modal" id="modalDetalle">
   <div class="caja">
     <h3>Detalle de acción</h3>
-    <input type="text" id="detTexto" placeholder="Texto de la acción (máx. 60)">
+    <input type="text" id="detTexto" placeholder="Texto de la acción (máx. 75)">
     <div style="font-size:.8rem;color:var(--fg-muted);margin:4px 0 4px;">Medida</div>
     <div class="medGroup">
       <input type="radio" name="detMedida" id="detLibre" value="libre"><label for="detLibre">Libre</label>
@@ -358,7 +358,7 @@ document.getElementById("btnDetCancelar").onclick = ()=>{
 document.getElementById("btnDetGuardar").onclick = ()=>{
   const texto = document.getElementById("detTexto").value.trim();
   if(!texto){ msg("Escribe el texto de la acción."); return; }
-  if(texto.length > 60){ msg("Máximo 60 caracteres."); return; }
+  if(texto.length > 75){ msg("Máximo 75 caracteres."); return; }
   const tipo = document.querySelector('input[name="detMedida"]:checked').value;
   const val = parseInt(document.getElementById("detValor").value || "0", 10) || 0;
   niveles[detNivel][detLado][detIdx] = {

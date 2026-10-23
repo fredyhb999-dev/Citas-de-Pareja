@@ -34,7 +34,7 @@ Movido de `General/GUIA.md`. Contiene el detalle completo de la pantalla de cast
 
 ## Niveles y lados
 
-Niveles: `basico`, `medio`, `avanzado`, `experto`, `alucinado`. Lados: `A` y `B`. Tomas por defecto: `{basico:2, medio:2, avanzado:1, experto:1, alucinado:1}`. Texto de acción: máx. 60 caracteres. Medida: `libre` / `tiempo` / `veces` + valor.
+Niveles: `basico`, `medio`, `avanzado`, `experto`, `alucinado`. Lados: `A` y `B`. Tomas por defecto: `{basico:2, medio:2, avanzado:1, experto:1, alucinado:1}`. Texto de acción: máx. 75 caracteres. Medida: `libre` / `tiempo` / `veces` + valor.
 
 ## Licencias
 
@@ -93,7 +93,7 @@ Cada N rondas (configurable, 1 o más) se asigna una imposición al azar al turn
 
 Desde el editor de un castigo:
 - **Exportar:** baja un `.json` con `{ niveles: {basico:{A:[…],B:[…]},…} }`.
-- **Pegar:** acepta JSON con niveles/lados, o lista plana de strings, o objeto con niveles. Recorta textos a 60 chars si se pasan. Pregunta antes de reemplazar si ya hay acciones.
+- **Pegar:** acepta JSON con niveles/lados, o lista plana de strings, o objeto con niveles. Recorta textos a 75 chars si se pasan. Pregunta antes de reemplazar si ya hay acciones.
 
 ## Apertura de pantalla
 
