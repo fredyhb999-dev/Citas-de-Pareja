@@ -25,7 +25,7 @@ esas áreas (está la lista al principio de los dos).
 | **2** | **Decisiones tomadas** | **No sobrescribir sin preguntar** |
 | **3** | **Pendientes, límites y mantenimiento** | Lo que falta, y lo que ya se sabe que no se arregla |
 | **4** | **Navegación con el botón atrás** | El arreglo de los submenús y las pantallas |
-| **5** | **Módulos y pantallas de detalle (archivos aparte)** | `Pantallas`, `Modo-Invitado`, `Diablitos`, `Telegram`, `Catalogo`, `Usuarios`, `Modulo-Acceso`, `Autorizar`, `Favores-Express`, `Castigos`, `fuegos`, `confirmar`, `Opciones`, `Roles` |
+| **5** | **Módulos y pantallas de detalle (archivos aparte)** | **Todos** están en la *Tabla de documentos de detalle*, al final de este archivo. No se repiten aquí: una lista corta siempre se queda vieja |
 
 Y los documentos aparte:
 

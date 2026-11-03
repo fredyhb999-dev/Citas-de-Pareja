@@ -368,6 +368,24 @@ no hay historial por plan. Es un límite consciente, no un descuido.
   archivo local no la habilita.
 - Pegar solo funciona en Chrome/Edge de computadora con HTTPS.
 
+## Pasar prendas a otra instalación (exportar / importar)
+
+Al final de **Ajusta tus ilusiones y sueños** hay dos botones discretos:
+**Exportar prendas** e **Importar prendas**. Es para **mudanzas puntuales** entre
+dos instalaciones (por ejemplo, de la app de prueba a la personal), **no** una
+función para clientes.
+
+- **Exportar** genera un JSON con todas las prendas y sus fotos; el texto se copia
+  con un botón y se lleva a la otra app.
+- **Importar** conserva el **id** de cada prenda —así los planes que ya se
+  copiaron siguen apuntando a ellas— y **traduce el dueño**: el `duenoId` que
+  venía de la otra base se reemplaza por el usuario de esta que corresponde al
+  lado A (administrador) o B (pareja).
+- **No copia pedidos ni avisos**: son pasajeros.
+- Si alguna clasificación usada no existe en esta base, avisa al terminar: es la
+  señal de que las listas no quedaron iguales.
+- Se puede correr varias veces: lo que ya está se sobrescribe, no se duplica.
+
 ## Límites conocidos (no son bugs)
 
 | Límite | Por qué |

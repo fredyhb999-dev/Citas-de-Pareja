@@ -164,6 +164,17 @@
   .btnSec.chico{ width:auto; padding:8px 12px; font-size:.8rem; text-decoration:none;
     border:1px solid var(--card-border); border-radius:12px; color:var(--fg);
     background:var(--bg-2); }
+  .filaDatos{ display:flex; gap:8px; justify-content:center; width:100%; flex-wrap:wrap; }
+  /* Caja de exportar / importar prendas (mudanza entre instalaciones). */
+  #datos{ position:fixed; inset:0; background:rgba(6,4,12,.95); z-index:70;
+    display:flex; align-items:center; justify-content:center; padding:14px; }
+  .datosCaja{ width:100%; max-width:520px; max-height:90dvh; display:flex;
+    flex-direction:column; gap:8px; background:var(--card);
+    border:1px solid var(--card-border); border-radius:16px; padding:14px; }
+  .datosCaja h3{ font-family:'Chakra Petch',sans-serif; font-size:1rem; margin:0; }
+  #datosTexto{ flex:1; min-height:160px; width:100%; resize:vertical;
+    font-family:monospace; font-size:.72rem; border-radius:12px;
+    border:1px solid var(--card-border); background:var(--bg); color:var(--fg); padding:10px; }
   .avisoCaja{ font-size:.8rem; color:var(--fg-muted); background:var(--bg-2);
     border:1px solid var(--card-border); border-radius:12px; padding:12px; margin-bottom:12px; }
   #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
@@ -237,6 +248,12 @@
   <div class="ccBox">
     <div class="ccContenido" id="ccContenido"></div>
   </div>
+
+  <!-- Mudanza entre dos instalaciones. Uso puntual, no es una función de cliente. -->
+  <div class="filaDatos">
+    <button class="btnSec chico" id="btnExportarPrendas">Exportar prendas</button>
+    <button class="btnSec chico" id="btnImportarPrendas">Importar prendas</button>
+  </div>
 </div>
 
 <!-- ============ EDITAR UNA CLASIFICACIÓN ============ -->
@@ -290,11 +307,24 @@
 
 <div id="lupa" style="display:none"><img id="lupaImg" alt="Foto de la prenda"></div>
 
+<div id="datos" style="display:none">
+  <div class="datosCaja">
+    <h3 id="datosTitulo">Exportar prendas</h3>
+    <p class="usoTexto" id="datosAyuda"></p>
+    <textarea id="datosTexto" spellcheck="false"></textarea>
+    <div class="filaBtns">
+      <button id="datosCopiar">Copiar</button>
+      <button id="datosAplicar">Importar</button>
+      <button id="datosCerrar">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
   getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc,
-  collection, getDocs, onSnapshot, serverTimestamp, increment, runTransaction
+  collection, getDocs, onSnapshot, serverTimestamp, increment, runTransaction, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase, cargarUsuarios, baseUrl } from "../config.js";
@@ -2085,6 +2115,115 @@ function escuchar(){
     }catch(e){}
   }
 }
+
+// ====== 12) Mudanza de prendas entre dos instalaciones ======
+// Uso puntual (pasar lo capturado en la app de prueba a la personal). No es una
+// función de cliente y no copia pedidos ni avisos: esos son pasajeros.
+function abrirDatos(modo){
+  const esExport = modo === "exportar";
+  document.getElementById("datosTitulo").textContent = esExport ? "Exportar prendas" : "Importar prendas";
+  document.getElementById("datosAyuda").textContent = esExport
+    ? "Copia todo el texto y llévalo a la otra app. Incluye las fotos."
+    : "Pega aquí el texto que exportaste de la otra app. Se conservan los ids y se pone el dueño de aquí.";
+  document.getElementById("datosAplicar").style.display = esExport ? "none" : "";
+
+  const ta = document.getElementById("datosTexto");
+  if(esExport){
+    ta.value = JSON.stringify({
+      tipo: "lenceria-prendas",
+      version: 1,
+      fecha: new Date().toISOString(),
+      prendas: prendas.map(p => ({
+        id: p.id,
+        lado: p.lado === "B" ? "B" : "A",
+        zonaId: p.zonaId || "", estiloId: p.estiloId || "",
+        tipoId: p.tipoId || "", colorId: p.colorId || "",
+        ref: p.ref || "",
+        foto: p.foto || "",
+        fotoW: Number(p.fotoW) || 0,
+        fotoH: Number(p.fotoH) || 0,
+        vecesUsadas: Number(p.vecesUsadas) || 0,
+        ultimaFechaUso: fechaDeUso(p) ? fechaDeUso(p).toISOString() : null
+      }))
+    });
+  }else{
+    ta.value = "";
+  }
+
+  document.getElementById("datos").style.display = "flex";
+  ta.focus();
+}
+
+async function aplicarImportacion(){
+  const ta = document.getElementById("datosTexto");
+  let d = null;
+  try{ d = JSON.parse(ta.value || ""); }catch(e){ aviso("Ese texto no es un JSON válido."); return; }
+  if(!d || d.tipo !== "lenceria-prendas" || !Array.isArray(d.prendas)){
+    aviso("Ese texto no es una exportación de prendas."); return;
+  }
+
+  const conocidos = {
+    zonaId: new Set((clasif.zonas || []).map(x => x.id)),
+    estiloId: new Set((clasif.estilos || []).map(x => x.id)),
+    tipoId: new Set((clasif.tipos || []).map(x => x.id)),
+    colorId: new Set((clasif.colores || []).map(x => x.id))
+  };
+  const faltan = new Set();
+  let ok = 0, fallos = 0;
+
+  for(const p of d.prendas){
+    if(!p || !p.id){ fallos++; continue; }
+    const lado = (p.lado === "B") ? "B" : "A";
+    ["zonaId", "estiloId", "tipoId", "colorId"].forEach(k => {
+      if(p[k] && !conocidos[k].has(p[k])) faltan.add(p[k]);
+    });
+    const campos = {
+      lado,
+      // El dueño del JSON es de la OTRA base: aquí se pone el que toca.
+      duenoId: idDeLado(lado),
+      zonaId: p.zonaId || "", estiloId: p.estiloId || "",
+      tipoId: p.tipoId || "", colorId: p.colorId || "",
+      ref: String(p.ref || ""),
+      foto: p.foto || "",
+      fotoW: Number(p.fotoW) || 0,
+      fotoH: Number(p.fotoH) || 0,
+      vecesUsadas: Number(p.vecesUsadas) || 0,
+      ultimaFechaUso: p.ultimaFechaUso ? Timestamp.fromDate(new Date(p.ultimaFechaUso)) : null,
+      actualizadoEn: serverTimestamp()
+    };
+    try{
+      await setDoc(doc(db, "lenceriaPrendas", p.id), campos, { merge: true });
+      ok++;
+    }catch(e){ fallos++; }
+  }
+
+  await cargarPrendas();
+  pintarConfig();
+  pintarPlanes();
+
+  let msg = "Importadas " + ok + (ok === 1 ? " prenda." : " prendas.");
+  if(fallos) msg += " Fallaron " + fallos + ".";
+  if(faltan.size) msg += " Ojo: hay clasificaciones que no existen aquí.";
+  aviso(msg);
+  document.getElementById("datos").style.display = "none";
+}
+
+document.getElementById("btnExportarPrendas").addEventListener("click", ()=> abrirDatos("exportar"));
+document.getElementById("btnImportarPrendas").addEventListener("click", ()=> abrirDatos("importar"));
+document.getElementById("datosCerrar").addEventListener("click", ()=>{
+  document.getElementById("datos").style.display = "none";
+});
+document.getElementById("datosAplicar").addEventListener("click", aplicarImportacion);
+document.getElementById("datosCopiar").addEventListener("click", async ()=>{
+  const ta = document.getElementById("datosTexto");
+  try{
+    await navigator.clipboard.writeText(ta.value);
+    aviso("Copiado. Ya lo puedes pegar en la otra app.");
+  }catch(e){
+    ta.select();
+    aviso("El texto quedó seleccionado: cópialo con el botón de copiar del teléfono.");
+  }
+});
 
 // ====== 11) Arranque ======
 async function arrancar(){

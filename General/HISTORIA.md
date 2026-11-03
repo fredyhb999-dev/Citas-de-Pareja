@@ -1135,3 +1135,34 @@ medidas exactas de cada uno, y los 4 chequeos que hay que correr antes de decir
 **Lo que de verdad salió mal fue de método, no de código:** se maquetó la pantalla
 sin abrir primero la que había que copiar, y se copió la equivocada. Todo el
 tiempo perdido fue por no leer dos archivos que ya tenían la respuesta.
+
+---
+
+## Catálogo de Lencería (nov-2026)
+
+Se construyó **`Lenceria/`** desde cero, en fases, con un plan de desarrollo que
+vivía aparte (`plan-lenceria.md`, en `.opencode/plan`). Ese plan **ya se borró**:
+cumplió su propósito y había empezado a contradecir a la app (hablaba de filtros
+por zona, de fotos de 1024 px y de pedidos que no caducan). Lo que rige hoy está
+en **`General/Catalogo-Lenceria.md`**.
+
+**Lo que se decidió sobre la marcha, ya usándola de verdad:**
+
+- El filtro pasó de **zona** a **tipo** (idea de Mary): se busca "un babydoll", no
+  "de pecho". Después se le sumaron los filtros de **color** y **estilo**.
+- Se agregó **"Sorpréndeme"** para revivir ropa olvidada, y el Vestidor ahora
+  **ordena por olvido** dentro de cada zona.
+- Los **pedidos que vencen sin respuesta se borran** al abrir la app: no dejan un
+  "pendiente" eterno.
+- La referencia de cada prenda es **automática por tipo** (`top-1`, `ves-1`).
+
+**El error que costó más:** una línea de código quedó pegada al final de un
+comentario, así que la declaración desapareció y el arranque moría en silencio.
+La pantalla se quedaba a medias, con "Lado A / Lado B" y nada cargado. `jscheck`
+**no lo detecta** (para el analizador era un comentario válido). Se encontró
+leyendo el error real en la consola del navegador, y desde entonces
+`arrancar().catch()` **registra** el error en vez de tragárselo.
+
+**Límite que se aceptó a conciencia:** el contador mide **planes**, no usos
+confirmados. Si se planeó y la fecha pasó, cuenta. La app da la pauta; no pone
+policía.
