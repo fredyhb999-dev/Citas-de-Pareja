@@ -390,6 +390,7 @@ let verPasados = false;    // los planes pasados se abren solo si se piden
 let ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
 let prendaEditando = null;
 let fotoProcesada = null;
+let refAuto = "";          // última referencia generada sola (para saber si pisarla)
 let ladoPrenda = "A";
 let tabPrendas = "A";
 
@@ -476,6 +477,30 @@ function ordenarClasif(){
 
 function valor(grupo, id){
   return (clasif[grupo] || []).find(x => x.id === id) || null;
+}
+
+// Referencia automática: las 3 primeras letras del TIPO + número consecutivo.
+// Ejemplo: Top -> top-1, top-2; Vestido -> ves-1. Nunca repite: toma el mayor
+// que ya existe y suma uno; si por lo que sea ese ya está, sigue subiendo.
+function siguienteRef(tipoId, excluirId){
+  const nombre = (nombreDe("tipos", tipoId) || "pre")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase().slice(0, 3).toLowerCase();
+  const prefijo = nombre + "-";
+  const usadas = new Set();
+  let max = 0;
+  prendas.forEach(p => {
+    if(!p || (excluirId && p.id === excluirId)) return;
+    const r = String(p.ref || "").trim().toLowerCase();
+    if(!r) return;
+    usadas.add(r);
+    if(!r.startsWith(prefijo)) return;
+    const n = parseInt(r.slice(prefijo.length), 10);
+    if(!isNaN(n) && n > max) max = n;
+  });
+  let n = max + 1;
+  while(usadas.has(prefijo + n)) n++;
+  return prefijo + n;
 }
 
 function nombreDe(grupo, id){
@@ -844,7 +869,17 @@ function abrirPrenda(id){
   llenarSelect(document.getElementById("pEstilo"), "estilos", p && p.estiloId);
   llenarSelect(document.getElementById("pTipo"), "tipos", p && p.tipoId);
   llenarSelect(document.getElementById("pColor"), "colores", p && p.colorId);
-  document.getElementById("pRef").value = (p && p.ref) || "";
+
+  // La referencia se llena sola con el tipo: top-1, ves-1… En una prenda que ya
+  // existe se respeta la que tenga; solo se genera si está vacía.
+  refAuto = "";
+  const campoRef = document.getElementById("pRef");
+  if(p && p.ref){
+    campoRef.value = p.ref;
+  }else{
+    refAuto = siguienteRef(document.getElementById("pTipo").value, prendaEditando);
+    campoRef.value = refAuto;
+  }
 
   // Bloqueo de lado y zona si está en un plan futuro o en un pedido pendiente.
   // Se explica el motivo: un select apagado sin razón parece un error.
@@ -985,7 +1020,17 @@ async function guardarPrenda(){
   const tipoId = document.getElementById("pTipo").value;
   const colorId = document.getElementById("pColor").value;
   const lado = document.getElementById("pLado").value;
-  const referencia = String(document.getElementById("pRef").value || "").trim();
+  let referencia = String(document.getElementById("pRef").value || "").trim();
+
+  if(!referencia){
+    referencia = siguienteRef(tipoId, prendaEditando);
+  }
+  // Que no se repita: dos prendas con la misma referencia serían un lío.
+  const repetida = prendas.some(p => p && p.id !== prendaEditando
+    && normTexto(p.ref || "") === normTexto(referencia));
+  if(repetida){
+    aviso("Esa referencia ya existe. Ponle otra."); return;
+  }
 
   if(!zonaId || !estiloId || !tipoId || !colorId){
     aviso("Falta elegir zona, estilo, tipo o color."); return;
@@ -1080,6 +1125,18 @@ async function borrarPrenda(){
     history.back();
   }catch(e){ aviso("No se pudo borrar la prenda."); }
 }
+
+document.getElementById("pRef").addEventListener("input", ()=>{ refAuto = ""; });
+
+document.getElementById("pTipo").addEventListener("change", ()=>{
+  // Si la referencia estaba vacía o era la que se generó sola, se vuelve a
+  // generar con el tipo nuevo. Si la escribieron a mano, no se toca.
+  const campo = document.getElementById("pRef");
+  if(!campo.value.trim() || campo.value === refAuto){
+    refAuto = siguienteRef(document.getElementById("pTipo").value, prendaEditando);
+    campo.value = refAuto;
+  }
+});
 
 document.getElementById("btnGuardarPrenda").addEventListener("click", guardarPrenda);
 document.getElementById("btnBorrarPrenda").addEventListener("click", borrarPrenda);

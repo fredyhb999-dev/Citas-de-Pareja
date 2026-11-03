@@ -98,10 +98,18 @@ no se ve: **"8× · 7 nov"**, o **"Nunca usada"** si no se ha usado, y al final 
 **referencia** si la tiene: **"8× · 7 nov · R-12"**. La fecha es la **última vez
 que estuvo en un plan**, no el día en que se contó.
 
-La referencia es un dato **opcional y corto** (máximo 8 caracteres) que se
-captura junto al color, en la misma fila del formulario. Va en el texto y no
-como etiqueta encima de la foto: en una tarjeta de tres columnas, una etiqueta
-taparía parte de la imagen.
+**La referencia se llena sola:** las **tres primeras letras del tipo** y un
+número consecutivo — `top-1`, `top-2`, `ves-1`, `bab-1`.
+
+- Se calcula con el **mayor número que ya exista** de ese prefijo y se suma uno.
+  Por eso **no se repite ni se reutiliza**: si borras `top-2`, la siguiente sigue
+  siendo `top-3`. La numeración es **de toda la pareja**, no por lado, para que
+  `top-1` no signifique dos cosas distintas.
+- **Se puede escribir a mano.** Si cambias el tipo y la referencia seguía siendo
+  la automática, se regenera con el prefijo nuevo; si la escribiste tú, no se
+  toca.
+- **Al guardar se comprueba que no exista otra igual** y se avisa si la hay.
+- Máximo **8 caracteres**, para que quepa en la tarjeta.
 
 **La lupa.** Cada tarjeta con foto tiene un botón 🔍 en la esquina inferior
 derecha que abre la imagen a pantalla completa (se cierra tocando). No estorba
@@ -155,7 +163,7 @@ esquema en las cuatro:
 | `lado` | `"A"` \| `"B"` | Para mostrar y agrupar |
 | `duenoId` | string | Id del usuario dueño. **Manda sobre `lado`** |
 | `zonaId`, `estiloId`, `tipoId`, `colorId` | string | Ids de las clasificaciones |
-| `ref` | string | Referencia corta y opcional (máx. 8). Se muestra en la tarjeta |
+| `ref` | string | Referencia corta y automática (máx. 8): `top-1`, `ves-1` |
 | `foto` | string | Data URL JPEG (`data:image/jpeg;base64,...`) |
 | `fotoW`, `fotoH` | number | Medidas de la imagen guardada |
 | `vecesUsadas` | number | Empieza en 0 |
