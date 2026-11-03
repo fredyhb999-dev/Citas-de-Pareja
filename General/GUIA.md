@@ -48,6 +48,7 @@ Y los documentos aparte:
 | **Detalle de `confirmar.js` y `aviso()`** | **`General/confirmar.md`** |
 | **Detalle del juego `Opciones/` (Elecciones Peligrosas)** | **`General/Opciones.md`** |
 | **Detalle del juego `Roles/` (modos, duelo, personajes)** | **`General/Roles.md`** |
+| **Detalle del Catálogo de Lencería (`Lenceria/`)** | **`General/Catalogo-Lenceria.md`** |
 
 ## Nota (oct-2026): se retiró el arnés de pruebas
 
@@ -597,6 +598,7 @@ Al agregar o quitar algo del JSON de fabrica hay que subir `VERSION_FABRICA` en
 | `General/confirmar.md` | `confirmar.js`: cuadros modales de confirmar() y aviso() | Solo si la tarea toca los cuadros de confirmación |
 | `General/Opciones.md` | `Opciones/`: Elecciones Peligrosas, modos, reparto, lista de opciones | Solo si la tarea toca el juego de opciones |
 | `General/Roles.md` | `Roles/`: Juego de Roles, modos, duelo, personajes | Solo si la tarea toca el juego de Roles |
+| `General/Catalogo-Lenceria.md` | `Lenceria/`: catálogo, planes, pedidos y fotos | Solo si la tarea toca la lencería |
 | `General/duelos.md` | El cuarto modo de `Roles/` (Duelo de seducción): las 4 ramas y sus 2 modalidades | Solo si la tarea toca el modo de duelo |
 | `General/Puntos.md` | El sistema de puntos: saldos, historial de movimientos y qué registra cada módulo | Solo si la tarea toca puntos, favores, retos o el Centro |
 

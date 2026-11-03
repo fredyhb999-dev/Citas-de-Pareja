@@ -78,6 +78,13 @@ const TIPOS = {
     // es que te contestaron, aceptaron o rechazaron tu favor.
     titulo: "Tienes un Favor Express",
     texto: "Ábrelo para ver de qué se trata."
+  },
+  lenceria: {
+    coleccion: "invitosLenceria",
+    // Uno por quien manda, como favores y retos.
+    unoSolo: false,
+    titulo: "Tienes un vestuario pendiente",
+    texto: "Ve a Experiencias → Lencería para verlo."
   }
 };
 

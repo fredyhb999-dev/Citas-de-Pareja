@@ -28,7 +28,6 @@
   }
   .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
     text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
-  /* width:fit-content para que el degradado pinte solo las letras (ver GUIA.md). */
   h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px;
     text-align:center; width:fit-content;
     background:linear-gradient(90deg, var(--coral), var(--teal));
@@ -47,7 +46,6 @@
     border-radius:16px; padding:16px; margin-bottom:12px; }
   .ficha h2{ font-family:'Chakra Petch',sans-serif; font-size:1rem; margin:0 0 6px; }
   .vacio{ font-size:.85rem; color:var(--fg-muted); text-align:center; margin:10px 0 16px; }
-  /* ===== listas: el molde del engrane de Opciones/ ===== */
   .tabs{ display:flex; gap:8px; width:100%; margin-bottom:12px; }
   .tab{ flex:1; padding:12px; border-radius:12px; border:1px solid var(--card-border);
     background:var(--card); color:var(--fg-muted); font-family:'Chakra Petch',sans-serif;
@@ -72,7 +70,6 @@
   .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
     background:var(--card); color:var(--fg); padding:13px 14px; font-size:.95rem;
     font-family:'Inter',sans-serif; margin-bottom:14px; }
-  /* ===== cuadrícula de prendas ===== */
   .rejilla{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; width:100%; }
   .rejilla .prenda{ background:var(--card); border:2px solid var(--card-border);
     border-radius:12px; padding:6px; cursor:pointer; text-align:center; }
@@ -83,6 +80,34 @@
   .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
     padding:7px 14px; font-size:.82rem; color:var(--fg-muted); cursor:pointer; }
   .chip.activo{ border-color:var(--teal); color:var(--teal); }
+  .campo{ width:100%; display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .campo span{ font-size:.78rem; color:var(--fg-muted); }
+  .campo input, .campo select{ border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg-2); color:var(--fg); padding:12px; font-size:.95rem;
+    font-family:'Inter',sans-serif; width:100%; }
+  .fotoBox{ width:100%; aspect-ratio:1/1; max-width:240px; align-self:center;
+    background:var(--bg-2); border:1px dashed var(--card-border); border-radius:16px;
+    display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:10px; }
+  .fotoBox img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .fotoBox .ph{ font-size:.8rem; color:var(--fg-muted); text-align:center; padding:12px; }
+  .tira{ display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
+  .mini{ width:56px; height:56px; border-radius:12px; background:var(--bg-2);
+    border:1px solid var(--card-border); overflow:hidden; display:flex;
+    align-items:center; justify-content:center; font-size:.55rem; color:var(--fg-muted);
+    text-align:center; padding:2px; }
+  .mini img{ width:100%; height:100%; object-fit:cover; }
+  .etiqueta{ display:inline-block; font-size:.68rem; color:var(--teal);
+    border:1px solid var(--teal); border-radius:8px; padding:2px 8px; margin:0 6px 6px 0;
+    font-family:'Chakra Petch',sans-serif; text-transform:uppercase; letter-spacing:.08em; }
+  .etiqueta.usado{ color:var(--fg-muted); border-color:var(--card-border); }
+  .filaBtns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .filaBtns button{ flex:1; min-width:90px; padding:11px; border-radius:12px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:600; font-size:.82rem;
+    background:var(--bg-2); color:var(--fg); border:1px solid var(--card-border); }
+  .filaBtns button:active{ transform:scale(.97); }
+  .contador{ font-size:.8rem; color:var(--fg-muted); margin:10px 0; text-align:center; }
+  .avisoCaja{ font-size:.8rem; color:var(--fg-muted); background:var(--bg-2);
+    border:1px solid var(--card-border); border-radius:12px; padding:12px; margin-bottom:12px; }
   #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
 </style>
 </head>
@@ -102,33 +127,53 @@
     <button class="tab activo" id="tabA">Lado A</button>
     <button class="tab" id="tabB">Lado B</button>
   </div>
-  <div id="listaPlanes"></div>
-  <p class="vacio" id="planesVacio">Todavía no hay planes.</p>
+  <div id="panelPlanes" style="width:100%"></div>
 </div>
 
-<!-- ============ VESTIDOR ============ -->
+<!-- ============ VESTIDOR (plan propio o propuesta) ============ -->
 <div class="vista" id="vistaElegir">
   <h1 id="elegirTitulo">Vestidor</h1>
   <p class="desc">Elige hasta 3 prendas por zona.</p>
-  <button class="btnSec" id="btnVolverElegir">Volver</button>
+  <label class="campo"><span>Fecha</span><input id="eFecha" type="date"></label>
+  <div class="chips" id="eChips"></div>
+  <div class="rejilla" id="eRejilla"></div>
+  <p class="vacio" id="eVacio">No hay prendas todavía. Agrégalas con el ⚙️.</p>
+  <div class="contador" id="eContador"></div>
+  <button class="btnPri" id="eGuardar">Guardar plan</button>
+  <button class="btnSec" id="eCancelar">Cancelar</button>
 </div>
 
 <!-- ============ PEDIDO RECIBIDO ============ -->
 <div class="vista" id="vistaPedido">
   <h1 id="pedidoTitulo">Vestuario</h1>
   <p class="desc">Puedes cambiar las prendas y la fecha antes de aceptar.</p>
-  <button class="btnSec" id="btnVolverPedido">Volver</button>
+  <label class="campo"><span>Fecha</span><input id="pFecha" type="date"></label>
+  <div class="chips" id="pChips"></div>
+  <div class="rejilla" id="pRejilla"></div>
+  <div class="contador" id="pContador"></div>
+  <button class="btnPri" id="pAceptar">Aceptar</button>
+  <button class="btnSec" id="pRechazar">Rechazar</button>
+  <button class="btnSec" id="pVolver">Volver</button>
 </div>
 
 <!-- ============ CONFIGURACIÓN ============ -->
 <div class="vista" id="vistaConfig">
   <h1>Configuración</h1>
   <p class="desc">Zonas, estilos, tipos, colores y prendas.</p>
-  <div id="bloquesClasif"></div>
-  <div class="ficha">
+  <div id="bloquesClasif" style="width:100%"></div>
+
+  <div class="ficha" style="width:100%">
     <h2>Prendas</h2>
-    <p class="vacio">No hay prendas todavía.</p>
+    <div class="tabs">
+      <button class="tab activo" id="pTabA">Lado A</button>
+      <button class="tab" id="pTabB">Lado B</button>
+    </div>
+    <div class="chips" id="pChipsZona"></div>
+    <div class="rejilla" id="pRejillaPrendas"></div>
+    <p class="vacio" id="pVacio">No hay prendas todavía.</p>
+    <button class="btnPri" id="btnNuevaPrenda" style="margin-top:12px">Nueva prenda</button>
   </div>
+
   <button class="btnSec" id="btnVolverConfig">Volver</button>
 </div>
 
@@ -136,7 +181,7 @@
 <div class="vista" id="vistaClasif">
   <h1 id="clasifTitulo">Zona</h1>
   <p class="desc">Puedes cambiarle el nombre. Si está en uso, no se puede borrar.</p>
-  <input class="buscar" id="cNombre" placeholder="Nombre">
+  <input class="buscar" id="cNombre" placeholder="Nombre" maxlength="40">
   <p class="vacio" id="cUso"></p>
   <button class="btnPri" id="cGuardar">Guardar</button>
   <button class="btnSec" id="cBorrar" style="display:none">Borrar</button>
@@ -147,16 +192,40 @@
 <div class="vista" id="vistaPrenda">
   <h1 id="prendaTitulo">Nueva prenda</h1>
   <p class="desc">La foto es obligatoria.</p>
-  <button class="btnSec" id="btnVolverPrenda">Cancelar</button>
+
+  <label class="campo"><span>Lado</span><select id="pLado"></select></label>
+  <label class="campo"><span>Zona</span><select id="pZona"></select></label>
+  <label class="campo"><span>Estilo</span><select id="pEstilo"></select></label>
+  <label class="campo"><span>Tipo</span><select id="pTipo"></select></label>
+  <label class="campo"><span>Color</span><select id="pColor"></select></label>
+
+  <div class="fotoBox" id="pFotoBox">
+    <img id="pPreview" alt="Vista previa de la prenda" style="display:none">
+    <div class="ph" id="pFotoMsg">Sin foto todavía.</div>
+  </div>
+  <input id="fFoto" type="file" accept="image/*" style="display:none">
+  <div class="filaBtns">
+    <button id="btnElegirFoto">Elegir foto</button>
+    <button id="btnPegar">Pegar</button>
+  </div>
+
+  <button class="btnPri" id="btnGuardarPrenda" style="margin-top:14px">Guardar</button>
+  <button class="btnSec" id="btnBorrarPrenda" style="display:none">Borrar</button>
+  <button class="btnSec" id="btnCancelarPrenda">Cancelar</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import {
+  getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc,
+  collection, getDocs, onSnapshot, serverTimestamp, increment, runTransaction
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios } from "../config.js";
+import { resolverFirebase, cargarUsuarios, baseUrl } from "../config.js";
 import { soyInvitado, CLAVE_LOCAL } from "../invitado.js";
 import { confirmar, aviso } from "../confirmar.js";
+import { avisarTelegram } from "../telegram.js";
+import { vigilarInvitaciones } from "../pestana.js";
 
 const app = initializeApp(resolverFirebase(firebaseConfigBase));
 const db = getFirestore(app);
@@ -184,24 +253,18 @@ window.addEventListener("popstate", (e)=>{
   ver(v, false);
 });
 
-// El "‹ Volver" es contextual: dentro de la pantalla regresa un paso; desde la
-// vista principal sale al submenú de Experiencias.
 document.getElementById("lnkInicio").addEventListener("click", (e)=>{
   if(vistaActual === "vistaPlanes") return;
   e.preventDefault();
   history.back();
 });
 
-[["btnVolverElegir","vistaElegir"],["btnVolverPedido","vistaPedido"],
- ["btnVolverConfig","vistaConfig"],["btnVolverClasif","vistaClasif"],
- ["btnVolverPrenda","vistaPrenda"]].forEach(([btn])=>{
-  const el = document.getElementById(btn);
+["btnVolverConfig", "btnVolverClasif", "btnCancelarPrenda", "eCancelar", "pVolver"].forEach((id)=>{
+  const el = document.getElementById(id);
   if(el) el.addEventListener("click", ()=> history.back());
 });
 
-document.getElementById("btnCfg").addEventListener("click", ()=>{
-  ver("vistaConfig");
-});
+document.getElementById("btnCfg").addEventListener("click", ()=> ver("vistaConfig"));
 
 history.replaceState({ v: "vistaPlanes" }, "");
 
@@ -209,6 +272,7 @@ history.replaceState({ v: "vistaPlanes" }, "");
 let usuariosLista = [];
 let miUsuario = null;
 let miId = "";
+let miNombre = "";
 let miLado = "A";
 let otroLado = "B";
 let otroId = "";
@@ -218,7 +282,33 @@ function nombreLado(lado){
   return (u && u.nombre) || ("Lado " + lado);
 }
 
-// ====== 4) Clasificaciones: zonas, estilos, tipos y colores ======
+// ====== 4) Utilidades de fecha. `fechaTexto` manda: no se comparan timestamps
+// (evita líos de zona horaria). ======
+function hoyTexto(){
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
+function fechaAObjeto(texto){
+  const [a, m, d] = String(texto || "").split("-").map(Number);
+  return new Date(a, (m || 1) - 1, d || 1);
+}
+
+function fechaLarga(texto){
+  if(!texto) return "";
+  try{
+    return fechaAObjeto(texto).toLocaleDateString("es-MX",
+      { weekday: "long", day: "numeric", month: "long" });
+  }catch(e){ return texto; }
+}
+
+function normTexto(s){
+  return String(s || "").trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// ====== 5) Clasificaciones: zonas, estilos, tipos y colores ======
 // La llave es el id (GUIA.md, "La llave es el id, no el nombre"): la prenda
 // guarda zonaId / estiloId / tipoId / colorId, así que renombrar no rompe nada.
 const COLS = {
@@ -230,16 +320,26 @@ const COLS = {
 const GRUPOS = ["zonas", "estilos", "tipos", "colores"];
 
 let clasif = { zonas: [], estilos: [], tipos: [], colores: [] };
-let prendas = [];            // se llena en la fase de prendas
+let prendas = [];
+let planes = [];
+let pedidoRecibido = null;   // doc lenceriaPedidos/{miId}
+let pedidoEnviado = null;    // doc lenceriaPedidos/{otroId}
 let clasifActual = null;     // { grupo, id }
 
-function normTexto(s){
-  return String(s || "").trim().toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
+// Estado del vestidor.
+let modoElegir = "plan";     // "plan" | "propuesta"
+let ladoElegir = "A";
+let seleccion = [];
+let fechaElegir = "";
+let planEditando = null;     // id del plan que se está editando
+let filtroZona = "";
+let tabActivo = "A";
+let ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
+let prendaEditando = null;
+let fotoProcesada = null;
+let ladoPrenda = "A";
+let tabPrendas = "A";
 
-// Copia a la base los valores de fábrica la primera vez. Devuelve las cuatro
-// listas ya leídas (para no leer dos veces), o null si no se pudo.
 async function sembrarClasificaciones(){
   let fab = null;
   try{ fab = await (await fetch("clasificaciones.json")).json(); }catch(e){ return null; }
@@ -302,9 +402,7 @@ async function sembrarClasificaciones(){
 
 async function cargarClasificaciones(){
   const sembrado = await sembrarClasificaciones();
-  if(sembrado){ clasif = sembrado; return; }
-  // Sin permiso o sin red: el JSON es la lista de respaldo, como en las demás
-  // fábricas. La pantalla no se rompe.
+  if(sembrado){ clasif = sembrado; ordenarClasif(); return; }
   try{
     const fab = await (await fetch("clasificaciones.json")).json();
     const nuevo = { zonas: [], estilos: [], tipos: [], colores: [] };
@@ -312,6 +410,7 @@ async function cargarClasificaciones(){
       nuevo[g] = (fab[g] || []).map(x => ({ id: x.id, nombre: x.nombre, orden: x.orden, origen: "fabrica" }));
     }
     clasif = nuevo;
+    ordenarClasif();
   }catch(e){}
 }
 
@@ -322,7 +421,15 @@ function ordenarClasif(){
   }
 }
 
-// Cuántas prendas usan un valor. Se cuenta por id, no por nombre.
+function valor(grupo, id){
+  return (clasif[grupo] || []).find(x => x.id === id) || null;
+}
+
+function nombreDe(grupo, id){
+  const v = valor(grupo, id);
+  return v ? (v.nombre || "") : "";
+}
+
 function usoDe(grupo, id){
   const campo = COLS[grupo].campo;
   return prendas.filter(p => p && p[campo] === id).length;
@@ -333,6 +440,7 @@ function pintarConfig(){
   if(!box) return;
   box.innerHTML = "";
   for(const g of GRUPOS) box.appendChild(bloqueClasif(g));
+  pintarPrendasConfig();
 }
 
 function bloqueClasif(grupo){
@@ -341,6 +449,7 @@ function bloqueClasif(grupo){
 
   const f = document.createElement("div");
   f.className = "ficha";
+  f.style.width = "100%";
 
   const h = document.createElement("h2");
   h.textContent = info.titulo;
@@ -414,7 +523,7 @@ async function agregarClasif(grupo, texto){
 }
 
 function abrirClasif(grupo, id){
-  const x = (clasif[grupo] || []).find(v => v.id === id);
+  const x = valor(grupo, id);
   if(!x) return;
   clasifActual = { grupo, id };
   pintarClasifVista();
@@ -424,8 +533,7 @@ function abrirClasif(grupo, id){
 function pintarClasifVista(){
   if(!clasifActual) return;
   const { grupo, id } = clasifActual;
-  const valores = clasif[grupo] || [];
-  const x = valores.find(v => v.id === id);
+  const x = valor(grupo, id);
   if(!x) return;
   document.getElementById("clasifTitulo").textContent = COLS[grupo].cabeza;
   document.getElementById("cNombre").value = x.nombre || "";
@@ -449,7 +557,7 @@ async function guardarClasif(){
   boton.disabled = true;
   try{
     await setDoc(doc(db, info.col, id), { nombre, actualizadoEn: serverTimestamp() }, { merge: true });
-    const x = clasif[grupo].find(v => v.id === id);
+    const x = valor(grupo, id);
     if(x) x.nombre = nombre;
     ordenarClasif();
     pintarConfig();
@@ -462,7 +570,7 @@ async function borrarClasif(){
   if(!clasifActual) return;
   const { grupo, id } = clasifActual;
   const info = COLS[grupo];
-  const x = (clasif[grupo] || []).find(v => v.id === id);
+  const x = valor(grupo, id);
   if(!x) return;
   const n = usoDe(grupo, id);
   if(n){ aviso("Está en uso: no se puede borrar."); return; }
@@ -479,9 +587,961 @@ async function borrarClasif(){
 document.getElementById("cGuardar").addEventListener("click", guardarClasif);
 document.getElementById("cBorrar").addEventListener("click", borrarClasif);
 
+// ====== 6) Prendas: cuadrícula y editor ======
+function prendasDeLado(lado){
+  return prendas.filter(p => p && (p.duenoId ? p.duenoId === idDeLado(lado) : p.lado === lado));
+}
+
+function idDeLado(lado){
+  if(lado === miLado) return miId;
+  return otroId;
+}
+
+function pintarPrendasConfig(){
+  document.getElementById("pTabA").textContent = nombreLado(ordenTabs[0]);
+  document.getElementById("pTabB").textContent = nombreLado(ordenTabs[1]);
+  document.getElementById("pTabA").classList.toggle("activo", tabPrendas === ordenTabs[0]);
+  document.getElementById("pTabB").classList.toggle("activo", tabPrendas === ordenTabs[1]);
+
+  // chips de zona
+  const chips = document.getElementById("pChipsZona");
+  chips.innerHTML = "";
+  const todas = document.createElement("button");
+  todas.className = "chip" + (filtroZona ? "" : " activo");
+  todas.textContent = "Todas";
+  todas.addEventListener("click", ()=>{ filtroZona = ""; pintarPrendasConfig(); });
+  chips.appendChild(todas);
+  (clasif.zonas || []).forEach(z => {
+    const b = document.createElement("button");
+    b.className = "chip" + (filtroZona === z.id ? " activo" : "");
+    b.textContent = z.nombre || "";
+    b.addEventListener("click", ()=>{ filtroZona = z.id; pintarPrendasConfig(); });
+    chips.appendChild(b);
+  });
+
+  const rej = document.getElementById("pRejillaPrendas");
+  rej.innerHTML = "";
+  const lista = prendasDeLado(tabPrendas).filter(p => !filtroZona || p.zonaId === filtroZona);
+  lista.sort((a, b) => {
+    const za = valor("zonas", a.zonaId), zb = valor("zonas", b.zonaId);
+    const ta = valor("tipos", a.tipoId), tb = valor("tipos", b.tipoId);
+    return ((za ? za.orden : 0) - (zb ? zb.orden : 0))
+      || ((ta ? ta.orden : 0) - (tb ? tb.orden : 0));
+  });
+
+  document.getElementById("pVacio").style.display = lista.length ? "none" : "";
+  lista.forEach(p => rej.appendChild(tarjetaPrenda(p, null, ()=> abrirPrenda(p.id))));
+}
+
+function tarjetaPrenda(p, seleccionada, alTocar){
+  const d = document.createElement("div");
+  d.className = "prenda" + (seleccionada ? " sel" : "");
+  if(p && p.foto){
+    const img = document.createElement("img");
+    img.src = p.foto;
+    img.alt = "Prenda";
+    d.appendChild(img);
+  }else{
+    const ph = document.createElement("div");
+    ph.className = "ph";
+    ph.textContent = "Sin foto";
+    d.appendChild(ph);
+  }
+  const nom = document.createElement("div");
+  nom.className = "nom";
+  if(p){
+    const t = nombreDe("tipos", p.tipoId);
+    const c = nombreDe("colores", p.colorId);
+    nom.textContent = [t, c].filter(Boolean).join(" · ") || "Prenda";
+  }else{
+    nom.textContent = "Prenda eliminada";
+  }
+  d.appendChild(nom);
+  if(alTocar) d.addEventListener("click", alTocar);
+  return d;
+}
+
+function llenarSelect(sel, grupo, actual){
+  sel.innerHTML = "";
+  (clasif[grupo] || []).forEach(x => {
+    const o = document.createElement("option");
+    o.value = x.id;
+    o.textContent = x.nombre || "";
+    sel.appendChild(o);
+  });
+  if(actual) sel.value = actual;
+}
+
+function abrirPrenda(id){
+  prendaEditando = id || null;
+  fotoProcesada = null;
+
+  const p = id ? prendas.find(x => x.id === id) : null;
+  ladoPrenda = p ? (p.lado || tabPrendas) : tabPrendas;
+
+  document.getElementById("prendaTitulo").textContent = id ? "Editar prenda" : "Nueva prenda";
+  document.getElementById("btnBorrarPrenda").style.display = id ? "" : "none";
+
+  const selLado = document.getElementById("pLado");
+  selLado.innerHTML = "";
+  [["A", nombreLado("A")], ["B", nombreLado("B")]].forEach(([v, txt]) => {
+    const o = document.createElement("option");
+    o.value = v; o.textContent = txt;
+    selLado.appendChild(o);
+  });
+  selLado.value = ladoPrenda;
+
+  llenarSelect(document.getElementById("pZona"), "zonas", p && p.zonaId);
+  llenarSelect(document.getElementById("pEstilo"), "estilos", p && p.estiloId);
+  llenarSelect(document.getElementById("pTipo"), "tipos", p && p.tipoId);
+  llenarSelect(document.getElementById("pColor"), "colores", p && p.colorId);
+
+  // Bloqueo de lado y zona si está en un plan futuro o en un pedido pendiente.
+  const enUso = p ? prendaEnUsoFuturo(p.id) : false;
+  selLado.disabled = enUso;
+  document.getElementById("pZona").disabled = enUso;
+
+  mostrarFoto(p ? p.foto : null);
+  ver("vistaPrenda", true);
+}
+
+function mostrarFoto(dataUrl){
+  const img = document.getElementById("pPreview");
+  const ph = document.getElementById("pFotoMsg");
+  if(dataUrl){
+    img.src = dataUrl;
+    img.style.display = "block";
+    ph.style.display = "none";
+  }else{
+    img.removeAttribute("src");
+    img.style.display = "none";
+    ph.style.display = "";
+    ph.textContent = "Sin foto todavía.";
+  }
+}
+
+function prendaEnUsoFuturo(id){
+  const hoy = hoyTexto();
+  if(planes.some(p => (p.prendas || []).indexOf(id) >= 0 && String(p.fechaTexto || "") >= hoy)) return true;
+  if(pedidoRecibido && pedidoRecibido.estado === "pendiente"
+      && (pedidoRecibido.prendas || []).indexOf(id) >= 0) return true;
+  return false;
+}
+
+async function leerImagen(file){
+  if(!file) return null;
+  if(file.size > 15 * 1024 * 1024){ aviso("La foto es muy grande."); return null; }
+  try{
+    if(typeof createImageBitmap === "function"){
+      return await createImageBitmap(file, { imageOrientation: "from-image" });
+    }
+  }catch(e){}
+  return await new Promise((res)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{ URL.revokeObjectURL(url); res(img); };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); res(null); };
+    img.src = url;
+  });
+}
+
+// 640 px de lado máximo y tope de 150 000 caracteres: la app NO tiene caché
+// persistente, así que cada apertura vuelve a bajar las fotos (ver el plan).
+async function procesarFoto(file){
+  const src = await leerImagen(file);
+  if(!src){ aviso("Ese archivo no es una imagen."); return false; }
+  const w0 = src.width || src.naturalWidth;
+  const h0 = src.height || src.naturalHeight;
+  if(!w0 || !h0){ aviso("Ese archivo no es una imagen."); return false; }
+
+  for(const maxLado of [640, 480]){
+    const escala = Math.min(1, maxLado / Math.max(w0, h0));
+    const w = Math.max(1, Math.round(w0 * escala));
+    const h = Math.max(1, Math.round(h0 * escala));
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(src, 0, 0, w, h);
+    for(const q of [0.72, 0.62, 0.55, 0.48]){
+      const data = canvas.toDataURL("image/jpeg", q);
+      if(data.length <= 150000){
+        if(src.close) try{ src.close(); }catch(e){}
+        fotoProcesada = { foto: data, fotoW: w, fotoH: h };
+        return true;
+      }
+    }
+  }
+  if(src.close) try{ src.close(); }catch(e){}
+  aviso("No se pudo comprimir la foto. Prueba con otra.");
+  return false;
+}
+
+document.getElementById("btnElegirFoto").addEventListener("click", ()=>{
+  document.getElementById("fFoto").click();
+});
+
+document.getElementById("fFoto").addEventListener("change", async (e)=>{
+  const f = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if(!f) return;
+  if(await procesarFoto(f)) mostrarFoto(fotoProcesada.foto);
+});
+
+document.getElementById("btnPegar").addEventListener("click", async ()=>{
+  try{
+    const items = await navigator.clipboard.read();
+    for(const it of items){
+      const tipo = (it.types || []).find(t => t.startsWith("image/"));
+      if(!tipo) continue;
+      const blob = await it.getType(tipo);
+      const f = new File([blob], "pegada.jpg", { type: tipo });
+      if(await procesarFoto(f)) mostrarFoto(fotoProcesada.foto);
+      return;
+    }
+    aviso("No hay una imagen en el portapapeles.");
+  }catch(e){
+    aviso("En este dispositivo hay que elegir la foto del carrete.");
+  }
+});
+
+document.addEventListener("paste", async (e)=>{
+  if(vistaActual !== "vistaPrenda") return;
+  const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
+  const it = items.find(i => i.type && i.type.startsWith("image/"));
+  if(!it) return;
+  const f = it.getAsFile();
+  if(f && await procesarFoto(f)) mostrarFoto(fotoProcesada.foto);
+});
+
+async function guardarPrenda(){
+  const zonaId = document.getElementById("pZona").value;
+  const estiloId = document.getElementById("pEstilo").value;
+  const tipoId = document.getElementById("pTipo").value;
+  const colorId = document.getElementById("pColor").value;
+  const lado = document.getElementById("pLado").value;
+
+  if(!zonaId || !estiloId || !tipoId || !colorId){
+    aviso("Falta elegir zona, estilo, tipo o color."); return;
+  }
+  if(!fotoProcesada && !prendaEditando){
+    aviso("La foto es obligatoria."); return;
+  }
+
+  const boton = document.getElementById("btnGuardarPrenda");
+  boton.disabled = true;
+  try{
+    if(prendaEditando){
+      const campos = { lado, zonaId, estiloId, tipoId, colorId, actualizadoEn: serverTimestamp() };
+      if(fotoProcesada){
+        campos.foto = fotoProcesada.foto;
+        campos.fotoW = fotoProcesada.fotoW;
+        campos.fotoH = fotoProcesada.fotoH;
+      }
+      await setDoc(doc(db, "lenceriaPrendas", prendaEditando), campos, { merge: true });
+      const p = prendas.find(x => x.id === prendaEditando);
+      if(p) Object.assign(p, campos);
+    }else{
+      const ref = await addDoc(collection(db, "lenceriaPrendas"), {
+        lado, duenoId: idDeLado(lado),
+        zonaId, estiloId, tipoId, colorId,
+        foto: fotoProcesada.foto, fotoW: fotoProcesada.fotoW, fotoH: fotoProcesada.fotoH,
+        vecesUsadas: 0, ultimaFechaUso: null,
+        creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp(),
+        creadoPorId: miId
+      });
+      prendas.push({ id: ref.id, lado, duenoId: idDeLado(lado), zonaId, estiloId, tipoId, colorId,
+        foto: fotoProcesada.foto, fotoW: fotoProcesada.fotoW, fotoH: fotoProcesada.fotoH, vecesUsadas: 0 });
+    }
+    tabPrendas = lado;
+    aviso("Prenda guardada.");
+    pintarConfig();
+    history.back();
+  }catch(e){ aviso("No se pudo guardar la prenda."); }
+  finally{ boton.disabled = false; }
+}
+
+async function borrarPrenda(){
+  if(!prendaEditando) return;
+  const id = prendaEditando;
+  const p = prendas.find(x => x.id === id);
+  if(!p) return;
+
+  const hoy = hoyTexto();
+  const futuros = planes.filter(x => (x.prendas || []).indexOf(id) >= 0 && String(x.fechaTexto || "") >= hoy);
+  const enPedido = pedidoRecibido && pedidoRecibido.estado === "pendiente"
+    && (pedidoRecibido.prendas || []).indexOf(id) >= 0;
+
+  let texto = "Se va a borrar del catálogo.";
+  if(futuros.length){
+    texto += " También se va a quitar de " + (futuros.length === 1 ? "este plan" : "estos planes") + ": "
+      + futuros.map(x => fechaLarga(x.fechaTexto)).join(", ") + ".";
+  }
+  if(enPedido) texto += " También se va a quitar del pedido que te mandaron.";
+
+  const ok = await confirmar({ titulo: "¿Borrar esta prenda?", texto, ok: "Borrar" });
+  if(!ok) return;
+
+  try{
+    for(const plan of futuros){
+      const quedan = (plan.prendas || []).filter(x => x !== id);
+      if(quedan.length){
+        await setDoc(doc(db, "lenceriaVestuarios", plan.id), { prendas: quedan, actualizadoEn: serverTimestamp() }, { merge: true });
+        plan.prendas = quedan;
+      }else{
+        await deleteDoc(doc(db, "lenceriaVestuarios", plan.id));
+        planes = planes.filter(x => x.id !== plan.id);
+      }
+    }
+
+    if(enPedido){
+      const deId = pedidoRecibido.deId;
+      const quedan = (pedidoRecibido.prendas || []).filter(x => x !== id);
+      if(quedan.length){
+        await setDoc(doc(db, "lenceriaPedidos", miId), { prendas: quedan }, { merge: true });
+        pedidoRecibido.prendas = quedan;
+      }else{
+        await deleteDoc(doc(db, "lenceriaPedidos", miId));
+        pedidoRecibido = null;
+        try{ await setDoc(doc(db, "invitosLenceria", deId), { visto: true }, { merge: true }); }catch(e){}
+      }
+    }
+
+    await deleteDoc(doc(db, "lenceriaPrendas", id));
+    prendas = prendas.filter(x => x.id !== id);
+    aviso("Prenda borrada.");
+    pintarConfig();
+    history.back();
+  }catch(e){ aviso("No se pudo borrar la prenda."); }
+}
+
+document.getElementById("btnGuardarPrenda").addEventListener("click", guardarPrenda);
+document.getElementById("btnBorrarPrenda").addEventListener("click", borrarPrenda);
+document.getElementById("btnNuevaPrenda").addEventListener("click", ()=> abrirPrenda(null));
+document.getElementById("pTabA").addEventListener("click", ()=>{ tabPrendas = ordenTabs[0]; pintarPrendasConfig(); });
+document.getElementById("pTabB").addEventListener("click", ()=>{ tabPrendas = ordenTabs[1]; pintarPrendasConfig(); });
+
+// ====== 7) Planes ======
+function planesDe(lado){
+  const dueno = idDeLado(lado);
+  const lista = planes.filter(p => p && (p.duenoId ? p.duenoId === dueno : p.lado === lado));
+  const hoy = hoyTexto();
+  const fut = lista.filter(p => String(p.fechaTexto || "") >= hoy)
+    .sort((a, b) => String(a.fechaTexto).localeCompare(String(b.fechaTexto)));
+  const pas = lista.filter(p => String(p.fechaTexto || "") < hoy)
+    .sort((a, b) => String(b.fechaTexto).localeCompare(String(a.fechaTexto)));
+  return fut.concat(pas);
+}
+
+function pintarPlanes(){
+  document.getElementById("tabA").textContent = nombreLado(ordenTabs[0]);
+  document.getElementById("tabB").textContent = nombreLado(ordenTabs[1]);
+  document.getElementById("tabA").classList.toggle("activo", tabActivo === ordenTabs[0]);
+  document.getElementById("tabB").classList.toggle("activo", tabActivo === ordenTabs[1]);
+
+  const panel = document.getElementById("panelPlanes");
+  panel.innerHTML = "";
+
+  const esMia = (tabActivo === miLado);
+
+  if(esMia && pedidoRecibido && pedidoRecibido.estado === "pendiente"){
+    panel.appendChild(tarjetaPedidoRecibido());
+  }
+
+  const boton = document.createElement("button");
+  boton.className = "btnPri";
+  boton.textContent = esMia ? "Nuevo plan" : "Proponer";
+  if(!otroId && !esMia) boton.disabled = true;
+  boton.addEventListener("click", ()=> abrirElegir(esMia ? "plan" : "propuesta", null));
+  panel.appendChild(boton);
+
+  if(!esMia && pedidoEnviado && pedidoEnviado.deId === miId){
+    panel.appendChild(tarjetaPedidoEnviado());
+  }
+
+  const lista = planesDe(tabActivo);
+  if(!lista.length){
+    const p = document.createElement("p");
+    p.className = "vacio";
+    p.textContent = otroId || esMia ? "Todavía no hay planes." : "Falta configurar a tu pareja.";
+    panel.appendChild(p);
+    return;
+  }
+
+  lista.forEach(plan => panel.appendChild(tarjetaPlan(plan, esMia)));
+}
+
+function tarjetaPlan(plan, esMia){
+  const hoy = hoyTexto();
+  const usado = String(plan.fechaTexto || "") < hoy;
+
+  const f = document.createElement("div");
+  f.className = "ficha";
+
+  const h = document.createElement("h2");
+  h.style.color = "var(--fg)";
+  h.textContent = fechaLarga(plan.fechaTexto);
+  f.appendChild(h);
+
+  const tira = document.createElement("div");
+  tira.className = "tira";
+  (plan.prendas || []).forEach(id => {
+    const p = prendas.find(x => x.id === id) || null;
+    tira.appendChild(miniatura(p));
+  });
+  f.appendChild(tira);
+
+  if(plan.fijo){
+    const e = document.createElement("span");
+    e.className = "etiqueta";
+    e.textContent = "Fijo";
+    f.appendChild(e);
+  }
+  if(usado){
+    const e = document.createElement("span");
+    e.className = "etiqueta usado";
+    e.textContent = "Usado";
+    f.appendChild(e);
+  }
+
+  if(esMia){
+    const btns = document.createElement("div");
+    btns.className = "filaBtns";
+    if(!usado){
+      const bEd = document.createElement("button");
+      bEd.textContent = "Editar";
+      bEd.addEventListener("click", ()=> abrirElegir("plan", plan));
+      btns.appendChild(bEd);
+
+      const bFi = document.createElement("button");
+      bFi.textContent = plan.fijo ? "Quitar fijo" : "Fijo";
+      bFi.addEventListener("click", ()=> alternarFijo(plan));
+      btns.appendChild(bFi);
+    }
+    const bBo = document.createElement("button");
+    bBo.textContent = "Borrar";
+    bBo.addEventListener("click", ()=> borrarPlan(plan));
+    btns.appendChild(bBo);
+    f.appendChild(btns);
+  }
+
+  return f;
+}
+
+function miniatura(p){
+  const d = document.createElement("div");
+  d.className = "mini";
+  if(p && p.foto){
+    const img = document.createElement("img");
+    img.src = p.foto;
+    img.alt = "Prenda";
+    d.appendChild(img);
+  }else{
+    d.textContent = "Prenda eliminada";
+  }
+  return d;
+}
+
+function tarjetaPedidoRecibido(){
+  const f = document.createElement("div");
+  f.className = "ficha";
+  const h = document.createElement("h2");
+  const de = usuariosLista.find(u => u && u.id === pedidoRecibido.deId);
+  h.textContent = (de && de.nombre ? de.nombre : "Tu pareja") + " te propone un vestuario";
+  f.appendChild(h);
+
+  const p = document.createElement("p");
+  p.className = "usoTexto";
+  p.textContent = "Para el " + fechaLarga(pedidoRecibido.fechaTexto) + ".";
+  f.appendChild(p);
+
+  const tira = document.createElement("div");
+  tira.className = "tira";
+  (pedidoRecibido.prendas || []).forEach(id => tira.appendChild(miniatura(prendas.find(x => x.id === id) || null)));
+  f.appendChild(tira);
+
+  const btns = document.createElement("div");
+  btns.className = "filaBtns";
+  const bA = document.createElement("button");
+  bA.textContent = "Ajustar y aceptar";
+  bA.addEventListener("click", ()=> abrirPedido());
+  btns.appendChild(bA);
+  const bR = document.createElement("button");
+  bR.textContent = "Rechazar";
+  bR.addEventListener("click", rechazarPedido);
+  btns.appendChild(bR);
+  f.appendChild(btns);
+
+  return f;
+}
+
+function tarjetaPedidoEnviado(){
+  const f = document.createElement("div");
+  f.className = "ficha";
+  const h = document.createElement("h2");
+  h.textContent = "Tu propuesta";
+  f.appendChild(h);
+
+  const p = document.createElement("p");
+  p.className = "usoTexto";
+  if(pedidoEnviado.estado === "pendiente"){
+    p.textContent = "Pendiente de respuesta. Para el " + fechaLarga(pedidoEnviado.fechaTexto) + ".";
+  }else if(pedidoEnviado.estado === "aceptado"){
+    p.textContent = (pedidoEnviado.modificado ? "Aceptado con cambios" : "Aceptado")
+      + ". Para el " + fechaLarga(pedidoEnviado.fechaFinalTexto || pedidoEnviado.fechaTexto) + ".";
+  }else{
+    p.textContent = "Rechazado.";
+  }
+  f.appendChild(p);
+
+  if(pedidoEnviado.estado === "pendiente"){
+    const btns = document.createElement("div");
+    btns.className = "filaBtns";
+    const b = document.createElement("button");
+    b.textContent = "Cancelar pedido";
+    b.addEventListener("click", cancelarPedido);
+    btns.appendChild(b);
+    f.appendChild(btns);
+  }
+  return f;
+}
+
+function abrirElegir(modo, plan){
+  modoElegir = modo;
+  planEditando = plan ? plan.id : null;
+  ladoElegir = (modo === "plan") ? miLado : otroLado;
+  fechaElegir = plan ? (plan.fechaTexto || "") : "";
+  seleccion = plan ? (plan.prendas || []).slice() : [];
+  filtroZona = "";
+
+  document.getElementById("elegirTitulo").textContent =
+    (modo === "plan" ? "Vestidor de " : "Proponer a ") + nombreLado(ladoElegir);
+  document.getElementById("eFecha").value = fechaElegir;
+  document.getElementById("eFecha").min = hoyTexto();
+  document.getElementById("eGuardar").textContent = (modo === "plan") ? "Guardar plan" : "Mandar propuesta";
+
+  pintarVestidor();
+  ver("vistaElegir");
+}
+
+function pintarVestidor(){
+  // chips de zona
+  const chips = document.getElementById("eChips");
+  chips.innerHTML = "";
+  const todas = document.createElement("button");
+  todas.className = "chip" + (filtroZona ? "" : " activo");
+  todas.textContent = "Todas";
+  todas.addEventListener("click", ()=>{ filtroZona = ""; pintarVestidor(); });
+  chips.appendChild(todas);
+  (clasif.zonas || []).forEach(z => {
+    const b = document.createElement("button");
+    b.className = "chip" + (filtroZona === z.id ? " activo" : "");
+    b.textContent = z.nombre || "";
+    b.addEventListener("click", ()=>{ filtroZona = z.id; pintarVestidor(); });
+    chips.appendChild(b);
+  });
+
+  const rej = document.getElementById("eRejilla");
+  rej.innerHTML = "";
+  const lista = prendasDeLado(ladoElegir).filter(p => !filtroZona || p.zonaId === filtroZona);
+  document.getElementById("eVacio").style.display = lista.length ? "none" : "";
+  lista.forEach(p => {
+    rej.appendChild(tarjetaPrenda(p, seleccion.indexOf(p.id) >= 0, ()=> alternarSeleccion(p)));
+  });
+
+  pintarContador("eContador");
+}
+
+function alternarSeleccion(p){
+  const i = seleccion.indexOf(p.id);
+  if(i >= 0){
+    seleccion.splice(i, 1);
+  }else{
+    const cuantas = seleccion.filter(id => {
+      const x = prendas.find(y => y.id === id);
+      return x && x.zonaId === p.zonaId;
+    }).length;
+    if(cuantas >= 3){
+      aviso("Ya hay 3 prendas de " + (nombreDe("zonas", p.zonaId) || "esa zona") + ".");
+      return;
+    }
+    seleccion.push(p.id);
+  }
+  // Se repinta la vista que está a la vista: el Vestidor o el pedido recibido.
+  if(vistaActual === "vistaPedido") pintarPedido(); else pintarVestidor();
+}
+
+function pintarContador(idEl){
+  const el = document.getElementById(idEl);
+  if(!el) return;
+  const porZona = {};
+  seleccion.forEach(id => {
+    const p = prendas.find(x => x.id === id);
+    if(!p) return;
+    porZona[p.zonaId] = (porZona[p.zonaId] || 0) + 1;
+  });
+  const partes = Object.keys(porZona).map(z => (nombreDe("zonas", z) || "Zona") + " " + porZona[z] + "/3");
+  el.textContent = partes.join(" · ");
+}
+
+async function guardarPlan(){
+  const fechaTexto = document.getElementById("eFecha").value;
+  if(!seleccion.length){ aviso("Elige al menos una prenda."); return; }
+  if(!fechaTexto || fechaTexto < hoyTexto()){ aviso("Elige una fecha de hoy en adelante."); return; }
+
+  if(modoElegir === "propuesta"){
+    await mandarPropuesta(fechaTexto);
+    return;
+  }
+  await liquidarUsos();
+
+  const nuevoId = miLado + "_" + fechaTexto;
+  const existente = planes.find(p => p.id === nuevoId);
+  const cambiandoDia = planEditando && planEditando !== nuevoId;
+
+  if(existente && existente.id !== planEditando){
+    const ok = await confirmar({ titulo: "Ese día ya tienes un plan", texto: "¿Reemplazarlo?", ok: "Reemplazar" });
+    if(!ok) return;
+  }
+
+  try{
+    if(cambiandoDia){
+      await deleteDoc(doc(db, "lenceriaVestuarios", planEditando));
+      planes = planes.filter(p => p.id !== planEditando);
+    }
+    if(planEditando === nuevoId){
+      // Mismo día: solo lo editable. No se tocan `fijo`, `contado` ni `creadoEn`.
+      await setDoc(doc(db, "lenceriaVestuarios", nuevoId), {
+        prendas: seleccion, actualizadoEn: serverTimestamp(), guardadoPorId: miId
+      }, { merge: true });
+    }else{
+      await setDoc(doc(db, "lenceriaVestuarios", nuevoId), {
+        lado: miLado, duenoId: miId, fechaTexto,
+        fechaUso: fechaAObjeto(fechaTexto),
+        prendas: seleccion, fijo: existente ? !!existente.fijo : false,
+        contado: existente ? !!existente.contado : false,
+        creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp(),
+        guardadoPorId: miId
+      }, { merge: true });
+    }
+
+    aviso("Plan guardado.");
+    await cargarPlanes();
+    pintarPlanes();
+    history.back();
+  }catch(e){ aviso("No se pudo guardar el plan."); }
+}
+
+async function alternarFijo(plan){
+  try{
+    await setDoc(doc(db, "lenceriaVestuarios", plan.id),
+      { fijo: !plan.fijo, actualizadoEn: serverTimestamp() }, { merge: true });
+    plan.fijo = !plan.fijo;
+    pintarPlanes();
+  }catch(e){ aviso("No se pudo cambiar."); }
+}
+
+async function borrarPlan(plan){
+  const usado = String(plan.fechaTexto || "") < hoyTexto();
+  const ok = await confirmar({
+    titulo: "¿Borrar este plan?",
+    texto: usado ? "Ya se usó. El conteo de uso ya aplicado no se revierte." : "",
+    ok: "Borrar"
+  });
+  if(!ok) return;
+  try{
+    await deleteDoc(doc(db, "lenceriaVestuarios", plan.id));
+    planes = planes.filter(p => p.id !== plan.id);
+    pintarPlanes();
+  }catch(e){ aviso("No se pudo borrar."); }
+}
+
+// ====== 8) Pedidos ======
+async function mandarPropuesta(fechaTexto){
+  const mio = planes.find(p => p.duenoId === otroId && p.fechaTexto === fechaTexto);
+  if(mio && mio.fijo){
+    aviso("Ese día está fijo. No se le puede proponer."); return;
+  }
+
+  if(pedidoEnviado && pedidoEnviado.estado === "pendiente"){
+    const ok = await confirmar({ titulo: "Ya tiene un pedido tuyo", texto: "¿Reemplazarlo?", ok: "Reemplazar" });
+    if(!ok) return;
+  }
+
+  try{
+    await setDoc(doc(db, "lenceriaPedidos", otroId), {
+      deId: miId, deLado: miLado, paraId: otroId, paraLado: otroLado,
+      prendas: seleccion, fechaTexto, fechaUso: fechaAObjeto(fechaTexto),
+      estado: "pendiente", creadoEn: serverTimestamp(), respondidoEn: null,
+      prendasFinales: null, fechaFinalTexto: null, modificado: false
+    });
+
+    await escribirAviso(otroId, miId, "pendiente",
+      miNombre + " te propone un vestuario",
+      "Para el " + fechaLarga(fechaTexto) + ". Ve a Lencería para ajustarlo y aceptarlo.");
+
+    avisarTelegram("👗 " + miNombre + " te propuso un vestuario para el " + fechaLarga(fechaTexto) + ".",
+      baseUrl() + "Lenceria/");
+
+    aviso("Mandado. " + nombreLado(otroLado) + " lo va a ver.");
+    await cargarPedidos();
+    pintarPlanes();
+    history.back();
+  }catch(e){ aviso("No se pudo mandar la propuesta."); }
+}
+
+async function escribirAviso(para, de, estado, titulo, texto){
+  try{
+    await setDoc(doc(db, "invitosLenceria", de), {
+      para, de, deNombre: miNombre, estado, titulo, aviso: texto,
+      creadoEn: serverTimestamp(), visto: false
+    }, { merge: true });
+  }catch(e){}
+}
+
+function abrirPedido(){
+  if(!pedidoRecibido) return;
+  ladoElegir = miLado;
+  fechaElegir = pedidoRecibido.fechaTexto || "";
+  seleccion = (pedidoRecibido.prendas || []).slice();
+  filtroZona = "";
+
+  document.getElementById("pedidoTitulo").textContent = "El vestuario que te propone " + nombreLado(otroLado);
+  document.getElementById("pFecha").value = fechaElegir;
+  document.getElementById("pFecha").min = hoyTexto();
+
+  pintarPedido();
+  ver("vistaPedido");
+}
+
+function pintarPedido(){
+  const chips = document.getElementById("pChips");
+  chips.innerHTML = "";
+  const todas = document.createElement("button");
+  todas.className = "chip" + (filtroZona ? "" : " activo");
+  todas.textContent = "Todas";
+  todas.addEventListener("click", ()=>{ filtroZona = ""; pintarPedido(); });
+  chips.appendChild(todas);
+  (clasif.zonas || []).forEach(z => {
+    const b = document.createElement("button");
+    b.className = "chip" + (filtroZona === z.id ? " activo" : "");
+    b.textContent = z.nombre || "";
+    b.addEventListener("click", ()=>{ filtroZona = z.id; pintarPedido(); });
+    chips.appendChild(b);
+  });
+
+  const rej = document.getElementById("pRejilla");
+  rej.innerHTML = "";
+  prendasDeLado(miLado)
+    .filter(p => !filtroZona || p.zonaId === filtroZona)
+    .forEach(p => rej.appendChild(tarjetaPrenda(p, seleccion.indexOf(p.id) >= 0, ()=> alternarSeleccion(p))));
+
+  pintarContador("pContador");
+}
+
+function mismoConjunto(a, b){
+  const x = (a || []).slice().sort().join(",");
+  const y = (b || []).slice().sort().join(",");
+  return x === y;
+}
+
+async function aceptarPedido(){
+  if(!pedidoRecibido) return;
+  const fechaTexto = document.getElementById("pFecha").value;
+  if(!fechaTexto || fechaTexto < hoyTexto()){ aviso("La fecha ya pasó. Elige otra."); return; }
+  if(!seleccion.length){ aviso("Elige al menos una prenda."); return; }
+
+  const vivas = seleccion.filter(id => prendas.some(p => p.id === id));
+  if(!vivas.length){ aviso("Las prendas de ese pedido ya no existen."); return; }
+
+  const planDia = planes.find(p => p.duenoId === miId && p.fechaTexto === fechaTexto);
+  if(planDia && planDia.fijo){
+    aviso("Ese día está fijo. Quítale Fijo para aceptarlo."); return;
+  }
+  if(planDia){
+    const ok = await confirmar({ titulo: "Ese día ya tienes un plan",
+      texto: "Se va a reemplazar por este. ¿Seguir?", ok: "Reemplazar" });
+    if(!ok) return;
+  }
+
+  await liquidarUsos();
+
+  try{
+    const idPlan = miLado + "_" + fechaTexto;
+    await setDoc(doc(db, "lenceriaVestuarios", idPlan), {
+      lado: miLado, duenoId: miId, fechaTexto,
+      fechaUso: fechaAObjeto(fechaTexto),
+      prendas: vivas, fijo: false, contado: false,
+      creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp(),
+      guardadoPorId: miId
+    }, { merge: true });
+
+    const modificado = !mismoConjunto(vivas, pedidoRecibido.prendas) || fechaTexto !== pedidoRecibido.fechaTexto;
+
+    await setDoc(doc(db, "lenceriaPedidos", miId), {
+      estado: "aceptado", respondidoEn: serverTimestamp(),
+      prendasFinales: vivas, fechaFinalTexto: fechaTexto,
+      fechaUso: fechaAObjeto(fechaTexto), modificado
+    }, { merge: true });
+
+    await escribirAviso(pedidoRecibido.deId, miId, "aceptado",
+      "Aceptaron tu vestuario",
+      (modificado ? "Con cambios. " : "") + "Para el " + fechaLarga(fechaTexto) + ".");
+
+    avisarTelegram("✅ " + miNombre + " aceptó el vestuario del " + fechaLarga(fechaTexto)
+      + (modificado ? " (con cambios)" : "") + ".", baseUrl() + "Lenceria/");
+
+    aviso("Aceptado.");
+    await cargarPlanes();
+    await cargarPedidos();
+    pintarPlanes();
+    history.back();
+  }catch(e){ aviso("No se pudo aceptar."); }
+}
+
+async function rechazarPedido(){
+  if(!pedidoRecibido) return;
+  const ok = await confirmar({ titulo: "¿Rechazar el vestuario?", ok: "Rechazar" });
+  if(!ok) return;
+  try{
+    await setDoc(doc(db, "lenceriaPedidos", miId), {
+      estado: "rechazado", respondidoEn: serverTimestamp()
+    }, { merge: true });
+
+    await escribirAviso(pedidoRecibido.deId, miId, "rechazado",
+      "Rechazaron tu vestuario", "Puedes proponer otro cuando quieras.");
+
+    avisarTelegram("❌ " + miNombre + " rechazó el vestuario del "
+      + fechaLarga(pedidoRecibido.fechaTexto) + ".", baseUrl() + "Lenceria/");
+
+    aviso("Rechazado.");
+    await cargarPedidos();
+    pintarPlanes();
+    if(vistaActual === "vistaPedido") history.back();
+  }catch(e){ aviso("No se pudo rechazar."); }
+}
+
+async function cancelarPedido(){
+  const ok = await confirmar({ titulo: "¿Cancelar tu pedido?", ok: "Cancelar pedido" });
+  if(!ok) return;
+  try{
+    await deleteDoc(doc(db, "lenceriaPedidos", otroId));
+    try{ await setDoc(doc(db, "invitosLenceria", miId), { visto: true }, { merge: true }); }catch(e){}
+    pedidoEnviado = null;
+    pintarPlanes();
+  }catch(e){ aviso("No se pudo cancelar."); }
+}
+
+document.getElementById("eGuardar").addEventListener("click", guardarPlan);
+document.getElementById("pAceptar").addEventListener("click", aceptarPedido);
+document.getElementById("pRechazar").addEventListener("click", rechazarPedido);
+document.getElementById("tabA").addEventListener("click", ()=>{ tabActivo = ordenTabs[0]; pintarPlanes(); });
+document.getElementById("tabB").addEventListener("click", ()=>{ tabActivo = ordenTabs[1]; pintarPlanes(); });
+
+// ====== 9) Conteo de uso ======
+// Sube cuando la FECHA DEL PLAN ya pasó, no al guardar. Va en transacción: si
+// los dos celulares abren a la vez, solo uno puede marcar `contado`.
+async function liquidarUsos(){
+  try{
+    const snap = await getDocs(collection(db, "lenceriaVestuarios"));
+    for(const ds of snap.docs){
+      const d = ds.data();
+      if(d.contado) continue;
+      if(!d.fechaTexto || d.fechaTexto >= hoyTexto()) continue;
+      try{
+        await runTransaction(db, async (tx) => {
+          const planSnap = await tx.get(ds.ref);
+          if(!planSnap.exists()) return;
+          const plan = planSnap.data();
+          if(plan.contado) return;
+          const ids = plan.prendas || [];
+          const refs = [];
+          for(const id of ids){
+            const ref = doc(db, "lenceriaPrendas", id);
+            const p = await tx.get(ref);
+            if(p.exists()) refs.push(ref);
+          }
+          for(const ref of refs){
+            tx.update(ref, {
+              vecesUsadas: increment(1),
+              ultimaFechaUso: plan.fechaUso || null
+            });
+          }
+          tx.update(ds.ref, { contado: true });
+        });
+      }catch(e){ /* sin red: se reintenta en la siguiente apertura */ }
+    }
+  }catch(e){}
+}
+
+// ====== 10) Carga y escucha en vivo ======
+async function cargarPrendas(){
+  try{
+    const snap = await getDocs(collection(db, "lenceriaPrendas"));
+    prendas = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+  }catch(e){ prendas = []; }
+}
+
+async function cargarPlanes(){
+  try{
+    const snap = await getDocs(collection(db, "lenceriaVestuarios"));
+    planes = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+  }catch(e){ planes = []; }
+}
+
+async function cargarPedidos(){
+  pedidoRecibido = null;
+  pedidoEnviado = null;
+  try{
+    if(miId){
+      const a = await getDoc(doc(db, "lenceriaPedidos", miId));
+      pedidoRecibido = a.exists() ? Object.assign({ id: a.id }, a.data()) : null;
+    }
+    if(otroId){
+      const b = await getDoc(doc(db, "lenceriaPedidos", otroId));
+      pedidoEnviado = b.exists() ? Object.assign({ id: b.id }, b.data()) : null;
+    }
+  }catch(e){}
+}
+
+function escuchar(){
+  try{
+    onSnapshot(collection(db, "lenceriaPrendas"), (snap)=>{
+      prendas = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      if(document.activeElement && document.activeElement.tagName === "INPUT") return;
+      pintarPrendasConfig();
+      pintarPlanes();
+    }, ()=>{});
+  }catch(e){}
+
+  try{
+    onSnapshot(collection(db, "lenceriaVestuarios"), (snap)=>{
+      planes = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      pintarPlanes();
+    }, ()=>{});
+  }catch(e){}
+
+  try{
+    if(miId){
+      onSnapshot(doc(db, "lenceriaPedidos", miId), (snap)=>{
+        pedidoRecibido = snap.exists() ? Object.assign({ id: snap.id }, snap.data()) : null;
+        pintarPlanes();
+      }, ()=>{});
+    }
+    if(otroId){
+      onSnapshot(doc(db, "lenceriaPedidos", otroId), (snap)=>{
+        pedidoEnviado = snap.exists() ? Object.assign({ id: snap.id }, snap.data()) : null;
+        pintarPlanes();
+      }, ()=>{});
+    }
+  }catch(e){}
+}
+
+// ====== 11) Arranque ======
 async function arrancar(){
   try{ miUsuario = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null"); }catch(e){ miUsuario = null; }
   if(!miUsuario){ location.replace("../index.html"); return; }
+  miId = miUsuario.id || "";
+  miNombre = miUsuario.nombre || "";
 
   try{
     const r = await fetch("../Citas/usuarios.json");
@@ -496,18 +1556,22 @@ async function arrancar(){
   otroLado = (miLado === "A") ? "B" : "A";
   const otro = usuariosLista.find(u => u && (otroLado === "A" ? u.admin : (!u.admin && !u.invitado)));
   otroId = (otro && otro.id) || "";
-  miId = miUsuario.id || "";
 
-  document.getElementById("tabA").textContent = nombreLado("A");
-  document.getElementById("tabB").textContent = nombreLado("B");
-
-  if(!otroId){
-    document.getElementById("planesVacio").textContent = "Falta configurar a tu pareja.";
-  }
+  tabActivo = miLado;
+  tabPrendas = miLado;
+  ordenTabs = [miLado, otroLado];
 
   await cargarClasificaciones();
-  ordenarClasif();
+  await cargarPrendas();
+  await liquidarUsos();
+  await cargarPlanes();
+  await cargarPedidos();
+
   pintarConfig();
+  pintarPlanes();
+  escuchar();
+
+  vigilarInvitaciones(db, { tipo: "lenceria", esEsta: true, alTerminar: ()=> ver("vistaPlanes") });
 }
 
 arrancar().catch(()=>{});

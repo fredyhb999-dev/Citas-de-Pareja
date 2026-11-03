@@ -63,6 +63,12 @@ Antes se cerraba como "cobrado" en silencio, aunque no se hubiera cobrado nada.
 El ajuste manual de puntos ahora registra la **diferencia** (cuánto se movió),
 no el número absoluto, con motivo `ajuste manual`.
 
+### Lencería (`Lenceria/`)
+
+No registra movimientos: no mueve puntos. Tiene colecciones propias
+(`lenceriaPrendas`, `lenceriaVestuarios`, `lenceriaPedidos`, las cuatro de
+clasificaciones) y no toca `puntosUsuarios` ni `puntos/{id}/movimientos`.
+
 ## Cambio importante: el script diario ya NO mueve puntos
 
 `recordatorio.py` (GitHub Actions) antes liquidaba retos vencidos y movía
