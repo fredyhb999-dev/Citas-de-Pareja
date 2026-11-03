@@ -19,10 +19,10 @@ La tarjeta se agrega en el arreglo `packs` de `renderPacksDeVerdad()`
 
 | Vista | Para qué |
 |---|---|
-| `vistaPlanes` | Principal: pestañas de lado afuera y recuadro con los planes; el botón de acción va debajo |
+| `vistaPlanes` | Principal, **"Ilusiones y sueños"**: pestañas de lado afuera y recuadro con los planes; el botón de acción va debajo |
 | `vistaElegir` | El Vestidor: elegir prendas y fecha, para un plan propio o una propuesta |
 | `vistaPedido` | Ajustar y aceptar/rechazar el vestuario que le propusieron |
-| `vistaConfig` | "Ilusiones y sueños": prendas y las cuatro clasificaciones, con las pestañas fuera del recuadro |
+| `vistaConfig` | **"Ajusta tus ilusiones y sueños"**: prendas y las cuatro clasificaciones, con las pestañas fuera del recuadro |
 | `vistaClasif` | Editar o borrar un valor de una clasificación |
 | `vistaPrenda` | Alta, edición y baja de una prenda |
 
@@ -43,16 +43,18 @@ recuadro con scroll adentro y la acción abajo.**
 - La pestaña activa se marca **solo con el texto en turquesa y una línea fina
   debajo**, sin bloque de color.
 
-### Principal (planes)
+### Principal: "Ilusiones y sueños"
 
+Título **Ilusiones y sueños** y subtítulo **"Planifica y da vida a tu ilusión."**
 Pestañas de lado afuera (`A`/`B`, el de uno primero), recuadro con las tarjetas
 de plan, la del pedido recibido y la del estado del enviado, y **debajo del
 recuadro** el botón **Nuevo plan** / **Proponer**.
 
-### Configuración: "Ilusiones y sueños"
+### Configuración: "Ajusta tus ilusiones y sueños"
 
-El título de la pantalla del engrane es **Ilusiones y sueños**. **No tiene
-"Volver" abajo**: se sale con el **‹ Volver** de la esquina superior derecha.
+El título de la pantalla del engrane es **Ajusta tus ilusiones y sueños** (a
+1.5rem, más chico que los demás títulos, porque es largo). **No tiene "Volver"
+abajo**: se sale con el **‹ Volver** de la esquina superior derecha.
 
 Las cinco pestañas van **fuera del recuadro**, en dos renglones: **Prendas ·
 Tipos · Colores · Zonas · Estilos**. Adentro, el contenido tiene su propio

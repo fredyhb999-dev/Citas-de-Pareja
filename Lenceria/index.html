@@ -64,9 +64,9 @@
   /* ===== recuadro fijo: toma el alto que sobra, así no se sale en ningún
      teléfono (nada de porcentajes que adivinen la pantalla) ===== */
   #vistaPlanes.ver, #vistaConfig.ver{ flex:1; min-height:0; }
-  .ccBox{ width:100%; flex:1; min-height:200px; display:flex; flex-direction:column;
+  .ccBox{ width:100%; flex:1; min-height:0; display:flex; flex-direction:column;
     background:var(--bg-2); border:1px solid var(--card-border); border-radius:16px;
-    padding:10px; margin-bottom:12px; }
+    padding:10px; margin-bottom:8px; }
   /* Pestañas FUERA del recuadro: solo el texto se enciende (con una línea fina
      debajo, para que se distinga aunque no se distingan bien los colores). */
   .ccTabs{ display:flex; flex-wrap:wrap; gap:6px 8px; width:100%; margin-bottom:10px; flex:0 0 auto; }
@@ -78,6 +78,7 @@
   .ccPanel{ display:flex; flex-direction:column; flex:1; min-height:0; width:100%; }
   .ccScroll{ flex:1; min-height:0; overflow-y:auto; width:100%; }
   .ccPie{ flex:0 0 auto; padding-top:8px; }
+  #btnAccionPlan{ margin-bottom:0; }
   .filaAdd{ display:flex; gap:8px; width:100%; margin-top:8px; }
   .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg); color:var(--fg); padding:12px; font-size:.9rem; font-family:'Inter',sans-serif; }
@@ -95,7 +96,7 @@
   .rejilla .prenda.sel{ border-color:var(--teal); }
   .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
   .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
-    padding:5px 11px; font-size:.78rem; color:var(--fg-muted); cursor:pointer; }
+    padding:4px 10px; font-size:.85rem; color:var(--fg-muted); cursor:pointer; }
   .chip.activo{ border-color:var(--teal); color:var(--teal); }
   .campo{ width:100%; display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
   .campo span{ font-size:.78rem; color:var(--fg-muted); }
@@ -138,8 +139,8 @@
 
 <!-- ============ PRINCIPAL: planes ============ -->
 <div class="vista ver" id="vistaPlanes">
-  <h1>Catálogo de Lencería</h1>
-  <p class="desc">Los planes de vestuario de cada quien.</p>
+  <h1>Ilusiones y sueños</h1>
+  <p class="desc">Planifica y da vida a tu ilusión.</p>
   <div class="tabs">
     <button class="tab activo" id="tabA">Lado A</button>
     <button class="tab" id="tabB">Lado B</button>
@@ -178,8 +179,8 @@
 
 <!-- ============ CONFIGURACIÓN ============ -->
 <div class="vista" id="vistaConfig">
-  <h1>Ilusiones y sueños</h1>
-  <p class="desc">Tus prendas y lo que las clasifica.</p>
+  <h1 style="font-size:1.5rem">Ajusta tus ilusiones y sueños</h1>
+  <p class="desc">Tus prendas y su clasificación.</p>
 
   <div class="ccTabs" id="ccTabs"></div>
   <div class="ccBox">
