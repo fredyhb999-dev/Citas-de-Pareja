@@ -300,6 +300,11 @@ la tarjeta y la tienda lo desmarca. Sin que el cliente recargue nada.
 - Sesion de Encuentros en `sesionEncuentros/actual`: la lista de TODOS los
   participantes (incluidos invitados) vive en un solo documento. Confirmar en la
   consola que ese path no queda abierto a lectura ajena.
+- **Recordatorio de la mañana (Telegram):** el script muestra el **nombre
+  guardado** en cada cita, no su id. Si se renombra una actividad que ya tenía
+  una cita con `actividadId`, el mensaje dice el nombre viejo aunque la app
+  muestre el correcto. No rompe nada; queda por decidir si se corrige. -> ve
+  `General/Recordatorio.md`
 
 > Invitado a media partida: acciones distintas -> ve General/Invitado-a-media-partida.md (regla vigente para invitado que entra con partida empezada)
 ### Limites conocidos (no bloquean)
@@ -564,6 +569,7 @@ Al agregar o quitar algo del JSON de fabrica hay que subir `VERSION_FABRICA` en
 | `General/Modo-Invitado.md` | Modo invitado: sin salida, vuelve solo al abrir, registro por QR | Solo si la tarea toca el modo invitado |
 | `General/Diablitos.md` | Iconos dibujados (SVG) del juego Diablitos | Solo si la tarea toca el icono de Diablitos |
 | `General/Telegram.md` | `avisarTelegram()`: módulo central de avisos por Telegram | Solo si la tarea toca avisos por Telegram |
+| `General/Recordatorio.md` | Recordatorio de la mañana (GitHub Actions + Telegram): qué lee, los dos tipos de mensajes y el hueco del nombre | Solo si la tarea toca el recordatorio de la mañana |
 | `General/Catalogo.md` | Aviso de "nuevo": packs nuevos en el carrito y Centro | Solo si la tarea toca el aviso de packs nuevos |
 | `General/Usuarios.md` | Pantalla de Usuarios: Cambiar usuario, editar nombres y puntos | Solo si la tarea toca Usuarios |
 | `General/Modulo-Acceso.md` | `acceso.js`: módulo central de licencias, qué exporta y cómo quedó cada página | Solo si la tarea toca licencias o `acceso.js` |

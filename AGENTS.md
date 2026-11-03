@@ -20,6 +20,7 @@ tenia el contexto a la mano.
 | `General/Centro-Adquisiciones.md` | El Centro: deseos, tienda y pedidos | Solo si la tarea toca `Retos/centro.html` |
 | `General/IA-Acompanante.md` | `Acompanante/`: el tono de la IA, los ajustes y los retos que propone | Solo si la tarea toca `Acompanante/` o los retos de la IA |
 | `General/Campana-Pestana.md` | `pestana.js`: campana, bip y cartelito (Chat y Retos) | Solo si la tarea toca los avisos de la campana |
+| `General/Recordatorio.md` | El recordatorio de la mañana (GitHub Actions + Telegram): qué lee, los dos tipos de mensajes y el hueco del nombre | Solo si la tarea toca el recordatorio de la mañana |
 | `General/Pegamento-y-Citas.md` | El pegamento, la agenda de `Citas/` y las pantallas de Actividades y Accesorios | Solo si la tarea toca esas pantallas |
 | `General/Modulo-Acceso.md` | Detalle del módulo `acceso.js` (licencias, qué exporta, cómo quedó cada página) | Solo si la tarea toca licencias o `acceso.js` |
 | `General/Autorizar.md` | Detalle de `Autorizar/` (aprobar y revocar licencias, login, llave privada) | Solo si la tarea toca la pantalla de licencias |
