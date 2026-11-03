@@ -314,9 +314,12 @@
     <textarea id="datosTexto" spellcheck="false"></textarea>
     <div class="filaBtns">
       <button id="datosCopiar">Copiar</button>
+      <button id="datosDescargar">Descargar</button>
+      <button id="datosElegirArchivo">Elegir archivo</button>
       <button id="datosAplicar">Importar</button>
       <button id="datosCerrar">Cerrar</button>
     </div>
+    <input id="datosArchivo" type="file" accept=".json,application/json,text/plain" style="display:none">
   </div>
 </div>
 
@@ -2123,9 +2126,12 @@ function abrirDatos(modo){
   const esExport = modo === "exportar";
   document.getElementById("datosTitulo").textContent = esExport ? "Exportar prendas" : "Importar prendas";
   document.getElementById("datosAyuda").textContent = esExport
-    ? "Copia todo el texto y llévalo a la otra app. Incluye las fotos."
-    : "Pega aquí el texto que exportaste de la otra app. Se conservan los ids y se pone el dueño de aquí.";
+    ? "Descarga el archivo y mándalo por WhatsApp. También puedes copiar el texto."
+    : "Elige el archivo que te mandaron, o pega aquí el texto. Se conservan los ids y se pone el dueño de aquí.";
   document.getElementById("datosAplicar").style.display = esExport ? "none" : "";
+  document.getElementById("datosCopiar").style.display = esExport ? "" : "none";
+  document.getElementById("datosDescargar").style.display = esExport ? "" : "none";
+  document.getElementById("datosElegirArchivo").style.display = esExport ? "none" : "";
 
   const ta = document.getElementById("datosTexto");
   if(esExport){
@@ -2214,6 +2220,46 @@ document.getElementById("datosCerrar").addEventListener("click", ()=>{
   document.getElementById("datos").style.display = "none";
 });
 document.getElementById("datosAplicar").addEventListener("click", aplicarImportacion);
+
+// Descargar el JSON como archivo, para mandarlo por WhatsApp.
+document.getElementById("datosDescargar").addEventListener("click", ()=>{
+  const texto = document.getElementById("datosTexto").value || "";
+  if(!texto){ aviso("Todavía no hay nada que descargar."); return; }
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  const nombre = "lenceria-prendas-" + d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + ".json";
+  try{
+    const blob = new Blob([texto], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 2000);
+    aviso("Descargado: " + nombre);
+  }catch(e){
+    aviso("No se pudo descargar. Usa Copiar y pega el texto.");
+  }
+});
+
+// Elegir el archivo que llegó por WhatsApp y cargarlo en el cuadro.
+document.getElementById("datosElegirArchivo").addEventListener("click", ()=>{
+  document.getElementById("datosArchivo").click();
+});
+document.getElementById("datosArchivo").addEventListener("change", async (e)=>{
+  const f = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if(!f) return;
+  try{
+    document.getElementById("datosTexto").value = await f.text();
+    aviso("Archivo cargado. Toca Importar.");
+  }catch(err){
+    aviso("No se pudo leer el archivo.");
+  }
+});
+
 document.getElementById("datosCopiar").addEventListener("click", async ()=>{
   const ta = document.getElementById("datosTexto");
   try{
