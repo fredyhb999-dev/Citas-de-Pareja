@@ -22,7 +22,7 @@ La tarjeta se agrega en el arreglo `packs` de `renderPacksDeVerdad()`
 | `vistaPlanes` | Principal: pestañas A/B, pedido recibido, pedido enviado y la lista de planes |
 | `vistaElegir` | El Vestidor: elegir prendas y fecha, para un plan propio o una propuesta |
 | `vistaPedido` | Ajustar y aceptar/rechazar el vestuario que le propusieron |
-| `vistaConfig` | Las cuatro clasificaciones y las prendas |
+| `vistaConfig` | Prendas y las cuatro clasificaciones, en pestañas dentro de un recuadro fijo |
 | `vistaClasif` | Editar o borrar un valor de una clasificación |
 | `vistaPrenda` | Alta, edición y baja de una prenda |
 
@@ -32,6 +32,24 @@ Cada vista es un paso del historial (`pushState` + `popstate`), y el
 
 El invitado no entra: el menú no le muestra la tarjeta y la pantalla lo
 devuelve con un aviso.
+
+## Configuración: un recuadro fijo con pestañas
+
+Antes era una columna de cinco bloques y había que bajar por todos para llegar
+al último. Ahora es **un solo recuadro** (`height:min(64dvh, 560px)`) con:
+
+- **Las cinco pestañas en dos renglones** (tres arriba, dos abajo), sin nada
+  escondido y sin deslizar: **Prendas · Tipos · Colores · Zonas · Estilos**.
+- Un **contenido con su propio scroll**.
+- El **"agregar" fijo abajo**, siempre a la mano (no se va con el scroll).
+
+**Por qué ese orden:** Prendas y Tipos son los que más se tocan (cada prenda
+lleva tipo, y los tipos se amplían). Zonas, colores y estilos son casi fijos:
+las zonas del cuerpo y los colores no cambian. Decidido con Fredy (nov-2026).
+
+**Prendas** conserva dentro sus propias pestañas de lado (el de uno primero) y
+sus chips de zona. El filtro de zona de la configuración es **independiente**
+del filtro del Vestidor (`filtroZonaConfig` vs `filtroZona`).
 
 ## La llave es el id (regla de `GUIA.md`)
 

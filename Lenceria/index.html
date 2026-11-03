@@ -61,6 +61,18 @@
   .x{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:1rem; padding:6px 10px; }
   .uso{ font-size:.8rem; color:var(--fg-muted); min-width:22px; text-align:right; }
   .usoTexto{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; }
+  /* ===== configuración: recuadro fijo con pestañas ===== */
+  .ccBox{ width:100%; height:min(64dvh, 560px); display:flex; flex-direction:column;
+    background:var(--bg-2); border:1px solid var(--card-border); border-radius:16px;
+    padding:10px; margin-bottom:12px; }
+  /* Las cinco pestañas en dos renglones (tres arriba, dos abajo), sin esconder
+     ninguna. Se acomodan solas si algún día se agrega otra. */
+  .ccTabs{ display:flex; flex-wrap:wrap; gap:8px; flex:0 0 auto; padding-bottom:8px; }
+  .ccTabs .tab{ flex:1 1 28%; padding:10px 8px; font-size:.82rem; white-space:nowrap; }
+  .ccContenido{ flex:1; min-height:0; display:flex; width:100%; }
+  .ccPanel{ display:flex; flex-direction:column; flex:1; min-height:0; width:100%; }
+  .ccScroll{ flex:1; min-height:0; overflow-y:auto; width:100%; }
+  .ccPie{ flex:0 0 auto; padding-top:8px; }
   .filaAdd{ display:flex; gap:8px; width:100%; margin-top:8px; }
   .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg); color:var(--fg); padding:12px; font-size:.9rem; font-family:'Inter',sans-serif; }
@@ -159,19 +171,11 @@
 <!-- ============ CONFIGURACIÓN ============ -->
 <div class="vista" id="vistaConfig">
   <h1>Configuración</h1>
-  <p class="desc">Zonas, estilos, tipos, colores y prendas.</p>
-  <div id="bloquesClasif" style="width:100%"></div>
+  <p class="desc">Prendas y clasificaciones.</p>
 
-  <div class="ficha" style="width:100%">
-    <h2>Prendas</h2>
-    <div class="tabs">
-      <button class="tab activo" id="pTabA">Lado A</button>
-      <button class="tab" id="pTabB">Lado B</button>
-    </div>
-    <div class="chips" id="pChipsZona"></div>
-    <div class="rejilla" id="pRejillaPrendas"></div>
-    <p class="vacio" id="pVacio">No hay prendas todavía.</p>
-    <button class="btnPri" id="btnNuevaPrenda" style="margin-top:12px">Nueva prenda</button>
+  <div class="ccBox">
+    <div class="ccTabs" id="ccTabs"></div>
+    <div class="ccContenido" id="ccContenido"></div>
   </div>
 
   <button class="btnSec" id="btnVolverConfig">Volver</button>
@@ -267,6 +271,9 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
 document.getElementById("btnCfg").addEventListener("click", ()=> ver("vistaConfig"));
 
 history.replaceState({ v: "vistaPlanes" }, "");
+// Arranque: deja la vista principal como paso actual y ENCIENDE el engrane.
+// Sin esta llamada el botón se quedaba oculto hasta entrar y salir de otra vista.
+ver("vistaPlanes", false);
 
 // ====== 3) Identidad y lados (mismo cálculo que Guiadas/) ======
 let usuariosLista = [];
@@ -333,6 +340,7 @@ let seleccion = [];
 let fechaElegir = "";
 let planEditando = null;     // id del plan que se está editando
 let filtroZona = "";
+let filtroZonaConfig = "";
 let tabActivo = "A";
 let ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
 let prendaEditando = null;
@@ -435,41 +443,59 @@ function usoDe(grupo, id){
   return prendas.filter(p => p && p[campo] === id).length;
 }
 
+// La configuración es un recuadro fijo con pestañas: la pantalla no crece y
+// siempre se sabe en qué bloque se está. Orden acordado con Fredy (nov-2026):
+// Prendas y Tipos son los que más se tocan; zonas, colores y estilos casi no.
+const TABS_CONFIG = [
+  { id: "prendas", txt: "Prendas" },
+  { id: "tipos",   txt: "Tipos" },
+  { id: "colores", txt: "Colores" },
+  { id: "zonas",   txt: "Zonas" },
+  { id: "estilos", txt: "Estilos" }
+];
+let tabConfig = "prendas";
+
 function pintarConfig(){
-  const box = document.getElementById("bloquesClasif");
-  if(!box) return;
-  box.innerHTML = "";
-  for(const g of GRUPOS) box.appendChild(bloqueClasif(g));
-  pintarPrendasConfig();
+  const tabs = document.getElementById("ccTabs");
+  const cont = document.getElementById("ccContenido");
+  if(!tabs || !cont) return;
+  tabs.innerHTML = "";
+  cont.innerHTML = "";
+
+  TABS_CONFIG.forEach(t => {
+    const b = document.createElement("button");
+    b.className = "tab" + (tabConfig === t.id ? " activo" : "");
+    b.textContent = t.txt;
+    b.addEventListener("click", ()=>{ tabConfig = t.id; pintarConfig(); });
+    tabs.appendChild(b);
+  });
+
+  cont.appendChild(tabConfig === "prendas" ? bloquePrendas() : bloqueClasif(tabConfig));
 }
 
 function bloqueClasif(grupo){
   const info = COLS[grupo];
   const lista = clasif[grupo] || [];
 
-  const f = document.createElement("div");
-  f.className = "ficha";
-  f.style.width = "100%";
+  const wrap = document.createElement("div");
+  wrap.className = "ccPanel";
 
-  const h = document.createElement("h2");
-  h.textContent = info.titulo;
-  f.appendChild(h);
+  const scroll = document.createElement("div");
+  scroll.className = "ccScroll";
 
   const enUso = prendas.filter(p => p && p[info.campo]).length;
   if(enUso){
     const p = document.createElement("p");
     p.className = "usoTexto";
     p.textContent = "En uso: " + enUso + (enUso === 1 ? " prenda." : " prendas.");
-    f.appendChild(p);
+    scroll.appendChild(p);
   }
 
-  const box = document.createElement("div");
-  box.className = "tablaBox";
   if(!lista.length){
     const p = document.createElement("p");
     p.className = "vacio";
     p.textContent = "No hay " + info.plural + " todavía.";
-    box.appendChild(p);
+    scroll.appendChild(p);
   }else{
     lista.forEach(x => {
       const fila = document.createElement("div");
@@ -483,11 +509,12 @@ function bloqueClasif(grupo){
       n.textContent = String(usoDe(grupo, x.id));
       fila.appendChild(b);
       fila.appendChild(n);
-      box.appendChild(fila);
+      scroll.appendChild(fila);
     });
   }
-  f.appendChild(box);
 
+  const pie = document.createElement("div");
+  pie.className = "ccPie";
   const fa = document.createElement("div");
   fa.className = "filaAdd";
   const inp = document.createElement("input");
@@ -499,9 +526,11 @@ function bloqueClasif(grupo){
   inp.addEventListener("keydown", (e) => { if(e.key === "Enter") agregarClasif(grupo, inp.value); });
   fa.appendChild(inp);
   fa.appendChild(btn);
-  f.appendChild(fa);
+  pie.appendChild(fa);
 
-  return f;
+  wrap.appendChild(scroll);
+  wrap.appendChild(pie);
+  return wrap;
 }
 
 async function agregarClasif(grupo, texto){
@@ -597,40 +626,73 @@ function idDeLado(lado){
   return otroId;
 }
 
-function pintarPrendasConfig(){
-  document.getElementById("pTabA").textContent = nombreLado(ordenTabs[0]);
-  document.getElementById("pTabB").textContent = nombreLado(ordenTabs[1]);
-  document.getElementById("pTabA").classList.toggle("activo", tabPrendas === ordenTabs[0]);
-  document.getElementById("pTabB").classList.toggle("activo", tabPrendas === ordenTabs[1]);
+function bloquePrendas(){
+  const wrap = document.createElement("div");
+  wrap.className = "ccPanel";
+
+  const scroll = document.createElement("div");
+  scroll.className = "ccScroll";
+
+  // pestañas de lado: el de uno va primero (ordenTabs)
+  const tabs = document.createElement("div");
+  tabs.className = "tabs";
+  [ordenTabs[0], ordenTabs[1]].forEach(lado => {
+    const b = document.createElement("button");
+    b.className = "tab" + (tabPrendas === lado ? " activo" : "");
+    b.textContent = nombreLado(lado);
+    b.addEventListener("click", ()=>{ tabPrendas = lado; pintarConfig(); });
+    tabs.appendChild(b);
+  });
+  scroll.appendChild(tabs);
 
   // chips de zona
-  const chips = document.getElementById("pChipsZona");
-  chips.innerHTML = "";
+  const chips = document.createElement("div");
+  chips.className = "chips";
   const todas = document.createElement("button");
-  todas.className = "chip" + (filtroZona ? "" : " activo");
+  todas.className = "chip" + (filtroZonaConfig ? "" : " activo");
   todas.textContent = "Todas";
-  todas.addEventListener("click", ()=>{ filtroZona = ""; pintarPrendasConfig(); });
+  todas.addEventListener("click", ()=>{ filtroZonaConfig = ""; pintarConfig(); });
   chips.appendChild(todas);
   (clasif.zonas || []).forEach(z => {
     const b = document.createElement("button");
-    b.className = "chip" + (filtroZona === z.id ? " activo" : "");
+    b.className = "chip" + (filtroZonaConfig === z.id ? " activo" : "");
     b.textContent = z.nombre || "";
-    b.addEventListener("click", ()=>{ filtroZona = z.id; pintarPrendasConfig(); });
+    b.addEventListener("click", ()=>{ filtroZonaConfig = z.id; pintarConfig(); });
     chips.appendChild(b);
   });
+  scroll.appendChild(chips);
 
-  const rej = document.getElementById("pRejillaPrendas");
-  rej.innerHTML = "";
-  const lista = prendasDeLado(tabPrendas).filter(p => !filtroZona || p.zonaId === filtroZona);
+  const rej = document.createElement("div");
+  rej.className = "rejilla";
+  const lista = prendasDeLado(tabPrendas).filter(p => !filtroZonaConfig || p.zonaId === filtroZonaConfig);
   lista.sort((a, b) => {
     const za = valor("zonas", a.zonaId), zb = valor("zonas", b.zonaId);
     const ta = valor("tipos", a.tipoId), tb = valor("tipos", b.tipoId);
     return ((za ? za.orden : 0) - (zb ? zb.orden : 0))
       || ((ta ? ta.orden : 0) - (tb ? tb.orden : 0));
   });
-
-  document.getElementById("pVacio").style.display = lista.length ? "none" : "";
   lista.forEach(p => rej.appendChild(tarjetaPrenda(p, null, ()=> abrirPrenda(p.id))));
+  scroll.appendChild(rej);
+
+  if(!lista.length){
+    const p = document.createElement("p");
+    p.className = "vacio";
+    p.textContent = "No hay prendas todavía.";
+    scroll.appendChild(p);
+  }
+
+  const pie = document.createElement("div");
+  pie.className = "ccPie";
+  const btn = document.createElement("button");
+  btn.className = "btnPri";
+  btn.style.marginBottom = "0";
+  btn.textContent = "Nueva prenda";
+  btn.addEventListener("click", ()=> abrirPrenda(null));
+  pie.appendChild(btn);
+
+  wrap.appendChild(scroll);
+  wrap.appendChild(pie);
+  return wrap;
 }
 
 function tarjetaPrenda(p, seleccionada, alTocar){
@@ -916,9 +978,6 @@ async function borrarPrenda(){
 
 document.getElementById("btnGuardarPrenda").addEventListener("click", guardarPrenda);
 document.getElementById("btnBorrarPrenda").addEventListener("click", borrarPrenda);
-document.getElementById("btnNuevaPrenda").addEventListener("click", ()=> abrirPrenda(null));
-document.getElementById("pTabA").addEventListener("click", ()=>{ tabPrendas = ordenTabs[0]; pintarPrendasConfig(); });
-document.getElementById("pTabB").addEventListener("click", ()=>{ tabPrendas = ordenTabs[1]; pintarPrendasConfig(); });
 
 // ====== 7) Planes ======
 function planesDe(lado){
@@ -962,7 +1021,9 @@ function pintarPlanes(){
   if(!lista.length){
     const p = document.createElement("p");
     p.className = "vacio";
-    p.textContent = otroId || esMia ? "Todavía no hay planes." : "Falta configurar a tu pareja.";
+    p.textContent = (esMia || otroId)
+      ? (nombreLado(tabActivo) + " todavía no tiene planes.")
+      : "Falta configurar a tu pareja.";
     panel.appendChild(p);
     return;
   }
@@ -1508,7 +1569,7 @@ function escuchar(){
     onSnapshot(collection(db, "lenceriaPrendas"), (snap)=>{
       prendas = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
       if(document.activeElement && document.activeElement.tagName === "INPUT") return;
-      pintarPrendasConfig();
+      pintarConfig();
       pintarPlanes();
     }, ()=>{});
   }catch(e){}
