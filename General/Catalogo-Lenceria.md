@@ -19,10 +19,10 @@ La tarjeta se agrega en el arreglo `packs` de `renderPacksDeVerdad()`
 
 | Vista | Para qué |
 |---|---|
-| `vistaPlanes` | Principal: pestañas A/B, pedido recibido, pedido enviado y la lista de planes |
+| `vistaPlanes` | Principal: pestañas de lado afuera y recuadro con los planes; el botón de acción va debajo |
 | `vistaElegir` | El Vestidor: elegir prendas y fecha, para un plan propio o una propuesta |
 | `vistaPedido` | Ajustar y aceptar/rechazar el vestuario que le propusieron |
-| `vistaConfig` | Prendas y las cuatro clasificaciones, en pestañas dentro de un recuadro fijo |
+| `vistaConfig` | "Ilusiones y sueños": prendas y las cuatro clasificaciones, con las pestañas fuera del recuadro |
 | `vistaClasif` | Editar o borrar un valor de una clasificación |
 | `vistaPrenda` | Alta, edición y baja de una prenda |
 
@@ -33,23 +33,40 @@ Cada vista es un paso del historial (`pushState` + `popstate`), y el
 El invitado no entra: el menú no le muestra la tarjeta y la pantalla lo
 devuelve con un aviso.
 
-## Configuración: un recuadro fijo con pestañas
+## Las dos pantallas con recuadro fijo
 
-Antes era una columna de cinco bloques y había que bajar por todos para llegar
-al último. Ahora es **un solo recuadro** (`height:min(64dvh, 560px)`) con:
+La principal y la configuración comparten la misma forma: **pestañas afuera,
+recuadro con scroll adentro y la acción abajo.**
 
-- **Las cinco pestañas en dos renglones** (tres arriba, dos abajo), sin nada
-  escondido y sin deslizar: **Prendas · Tipos · Colores · Zonas · Estilos**.
-- Un **contenido con su propio scroll**.
-- El **"agregar" fijo abajo**, siempre a la mano (no se va con el scroll).
+- El recuadro **toma el alto que sobra** (`flex:1; min-height:200px`), no un
+  porcentaje fijo: así no se sale de la pantalla en ningún teléfono.
+- La pestaña activa se marca **solo con el texto en turquesa y una línea fina
+  debajo**, sin bloque de color.
+
+### Principal (planes)
+
+Pestañas de lado afuera (`A`/`B`, el de uno primero), recuadro con las tarjetas
+de plan, la del pedido recibido y la del estado del enviado, y **debajo del
+recuadro** el botón **Nuevo plan** / **Proponer**.
+
+### Configuración: "Ilusiones y sueños"
+
+El título de la pantalla del engrane es **Ilusiones y sueños**. **No tiene
+"Volver" abajo**: se sale con el **‹ Volver** de la esquina superior derecha.
+
+Las cinco pestañas van **fuera del recuadro**, en dos renglones: **Prendas ·
+Tipos · Colores · Zonas · Estilos**. Adentro, el contenido tiene su propio
+scroll y el **"agregar" queda fijo abajo**, siempre a la mano.
 
 **Por qué ese orden:** Prendas y Tipos son los que más se tocan (cada prenda
 lleva tipo, y los tipos se amplían). Zonas, colores y estilos son casi fijos:
 las zonas del cuerpo y los colores no cambian. Decidido con Fredy (nov-2026).
 
 **Prendas** conserva dentro sus propias pestañas de lado (el de uno primero) y
-sus chips de zona. El filtro de zona de la configuración es **independiente**
-del filtro del Vestidor (`filtroZonaConfig` vs `filtroZona`).
+sus chips de zona, con el botón "Nueva prenda" fijo abajo. Los chips se dejaron
+a la vista a propósito (un toque para elegir zona) y se apretaron para que los
+8 quepan en dos renglones. El filtro de zona de la configuración es
+**independiente** del filtro del Vestidor (`filtroZonaConfig` vs `filtroZona`).
 
 ## La llave es el id (regla de `GUIA.md`)
 

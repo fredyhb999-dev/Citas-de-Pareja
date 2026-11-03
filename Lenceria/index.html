@@ -61,14 +61,19 @@
   .x{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:1rem; padding:6px 10px; }
   .uso{ font-size:.8rem; color:var(--fg-muted); min-width:22px; text-align:right; }
   .usoTexto{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; }
-  /* ===== configuración: recuadro fijo con pestañas ===== */
-  .ccBox{ width:100%; height:min(64dvh, 560px); display:flex; flex-direction:column;
+  /* ===== recuadro fijo: toma el alto que sobra, así no se sale en ningún
+     teléfono (nada de porcentajes que adivinen la pantalla) ===== */
+  #vistaPlanes.ver, #vistaConfig.ver{ flex:1; min-height:0; }
+  .ccBox{ width:100%; flex:1; min-height:200px; display:flex; flex-direction:column;
     background:var(--bg-2); border:1px solid var(--card-border); border-radius:16px;
     padding:10px; margin-bottom:12px; }
-  /* Las cinco pestañas en dos renglones (tres arriba, dos abajo), sin esconder
-     ninguna. Se acomodan solas si algún día se agrega otra. */
-  .ccTabs{ display:flex; flex-wrap:wrap; gap:8px; flex:0 0 auto; padding-bottom:8px; }
-  .ccTabs .tab{ flex:1 1 28%; padding:10px 8px; font-size:.82rem; white-space:nowrap; }
+  /* Pestañas FUERA del recuadro: solo el texto se enciende (con una línea fina
+     debajo, para que se distinga aunque no se distingan bien los colores). */
+  .ccTabs{ display:flex; flex-wrap:wrap; gap:6px 8px; width:100%; margin-bottom:10px; flex:0 0 auto; }
+  .ccTabs .tab{ flex:1 1 28%; padding:8px 6px; font-size:.82rem; white-space:nowrap;
+    background:none; border:none; border-bottom:2px solid transparent; border-radius:0;
+    color:var(--fg-muted); }
+  .ccTabs .tab.activo{ background:none; color:var(--teal); border-bottom-color:var(--teal); }
   .ccContenido{ flex:1; min-height:0; display:flex; width:100%; }
   .ccPanel{ display:flex; flex-direction:column; flex:1; min-height:0; width:100%; }
   .ccScroll{ flex:1; min-height:0; overflow-y:auto; width:100%; }
@@ -88,9 +93,9 @@
   .rejilla .prenda img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; display:block; }
   .rejilla .prenda .nom{ font-size:.72rem; color:var(--fg-muted); margin-top:4px; line-height:1.2; }
   .rejilla .prenda.sel{ border-color:var(--teal); }
-  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
   .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
-    padding:7px 14px; font-size:.82rem; color:var(--fg-muted); cursor:pointer; }
+    padding:5px 11px; font-size:.78rem; color:var(--fg-muted); cursor:pointer; }
   .chip.activo{ border-color:var(--teal); color:var(--teal); }
   .campo{ width:100%; display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
   .campo span{ font-size:.78rem; color:var(--fg-muted); }
@@ -139,7 +144,10 @@
     <button class="tab activo" id="tabA">Lado A</button>
     <button class="tab" id="tabB">Lado B</button>
   </div>
-  <div id="panelPlanes" style="width:100%"></div>
+  <div class="ccBox">
+    <div class="ccScroll" id="panelPlanes"></div>
+  </div>
+  <button class="btnPri" id="btnAccionPlan">Nuevo plan</button>
 </div>
 
 <!-- ============ VESTIDOR (plan propio o propuesta) ============ -->
@@ -170,15 +178,13 @@
 
 <!-- ============ CONFIGURACIÓN ============ -->
 <div class="vista" id="vistaConfig">
-  <h1>Configuración</h1>
-  <p class="desc">Prendas y clasificaciones.</p>
+  <h1>Ilusiones y sueños</h1>
+  <p class="desc">Tus prendas y lo que las clasifica.</p>
 
+  <div class="ccTabs" id="ccTabs"></div>
   <div class="ccBox">
-    <div class="ccTabs" id="ccTabs"></div>
     <div class="ccContenido" id="ccContenido"></div>
   </div>
-
-  <button class="btnSec" id="btnVolverConfig">Volver</button>
 </div>
 
 <!-- ============ EDITAR UNA CLASIFICACIÓN ============ -->
@@ -263,7 +269,7 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
   history.back();
 });
 
-["btnVolverConfig", "btnVolverClasif", "btnCancelarPrenda", "eCancelar", "pVolver"].forEach((id)=>{
+["btnVolverClasif", "btnCancelarPrenda", "eCancelar", "pVolver"].forEach((id)=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener("click", ()=> history.back());
 });
@@ -1006,12 +1012,12 @@ function pintarPlanes(){
     panel.appendChild(tarjetaPedidoRecibido());
   }
 
-  const boton = document.createElement("button");
-  boton.className = "btnPri";
-  boton.textContent = esMia ? "Nuevo plan" : "Proponer";
-  if(!otroId && !esMia) boton.disabled = true;
-  boton.addEventListener("click", ()=> abrirElegir(esMia ? "plan" : "propuesta", null));
-  panel.appendChild(boton);
+  const accion = document.getElementById("btnAccionPlan");
+  if(accion){
+    accion.textContent = esMia ? "Nuevo plan" : "Proponer";
+    accion.disabled = (!otroId && !esMia);
+    accion.onclick = ()=> abrirElegir(esMia ? "plan" : "propuesta", null);
+  }
 
   if(!esMia && pedidoEnviado && pedidoEnviado.deId === miId){
     panel.appendChild(tarjetaPedidoEnviado());
