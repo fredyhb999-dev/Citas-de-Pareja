@@ -53,6 +53,16 @@ Pestañas de lado afuera (`A`/`B`, el de uno primero), recuadro con las tarjetas
 de plan, la del pedido recibido y la del estado del enviado, y **debajo del
 recuadro** el botón **Nuevo plan** / **Proponer**.
 
+Los planes van en **dos secciones**:
+
+- **Próximos:** siempre a la vista, del más cercano al más lejano.
+- **Pasados:** **plegados** con un botón **"Ver pasados (N)"**. Al abrirlo
+  aparecen, del más reciente al más viejo, con "Ocultar pasados" al final. Así
+  la pantalla no se llena aunque pasen los meses. Se pliegan otra vez al cambiar
+  de pestaña.
+
+Un plan pasado se marca con la etiqueta **"Usado"** y solo deja **Borrar**.
+
 ### Configuración: "Ajusta tus ilusiones y sueños"
 
 El título de la pantalla del engrane es **Ajusta tus ilusiones y sueños** (a
@@ -72,6 +82,16 @@ sus chips de zona, con el botón "Nueva prenda" fijo abajo. Los chips se dejaron
 a la vista a propósito (un toque para elegir zona) y se apretaron para que los
 8 quepan en dos renglones. El filtro de zona de la configuración es
 **independiente** del filtro del Vestidor (`filtroZonaConfig` vs `filtroZona`).
+
+### El contador de uso, en la tarjeta
+
+La descripción de cada tarjeta de prenda (en el Vestidor y en la configuración)
+**no repite el tipo ni el color**, porque eso ya se ve en la foto. Dice lo que
+no se ve: **"8× · 7 nov"**, o **"Nunca usada"** si no se ha usado. La fecha es
+la **última vez que estuvo en un plan**, no el día en que se contó.
+
+Se puso ahí y no en el detalle de la prenda porque el momento en que importa es
+**cuando se arma el plan**: ahí se decide cambiar una prenda por otra.
 
 ## La llave es el id (regla de `GUIA.md`)
 

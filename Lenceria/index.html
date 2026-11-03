@@ -96,7 +96,11 @@
     border-radius:12px; padding:6px; cursor:pointer; text-align:center; }
   .rejilla .prenda img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; display:block; }
   .rejilla .prenda .nom{ font-size:.72rem; color:var(--fg-muted); margin-top:4px; line-height:1.2; }
+  .rejilla .prenda .nom.conUso{ color:var(--teal); }
   .rejilla .prenda.sel{ border-color:var(--teal); }
+  .separador{ width:100%; font-family:'Chakra Petch',sans-serif; font-size:.72rem;
+    text-transform:uppercase; letter-spacing:.12em; color:var(--fg-muted);
+    margin:6px 0 8px; }
   .chips{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
   .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
     padding:4px 10px; font-size:.85rem; color:var(--fg-muted); cursor:pointer; }
@@ -354,6 +358,7 @@ let planEditando = null;     // id del plan que se está editando
 let filtroZona = "";
 let filtroZonaConfig = "";
 let tabActivo = "A";
+let verPasados = false;    // los planes pasados se abren solo si se piden
 let ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
 let prendaEditando = null;
 let fotoProcesada = null;
@@ -724,13 +729,27 @@ function tarjetaPrenda(p, seleccionada, alTocar){
   const nom = document.createElement("div");
   nom.className = "nom";
   if(p){
-    const t = nombreDe("tipos", p.tipoId);
-    const c = nombreDe("colores", p.colorId);
-    nom.textContent = [t, c].filter(Boolean).join(" · ") || "Prenda";
+    // La descripción NO repite el tipo ni el color: eso ya se ve en la foto.
+    // Dice lo que no se ve: cuántas veces se ha usado y cuándo fue la última.
+    const usos = Number(p.vecesUsadas) || 0;
+    let ultima = "";
+    if(p.ultimaFechaUso){
+      const d2 = p.ultimaFechaUso.toDate ? p.ultimaFechaUso.toDate() : new Date(p.ultimaFechaUso);
+      if(!isNaN(d2.getTime())){
+        ultima = d2.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+      }
+    }
+    if(usos){
+      nom.textContent = usos + "×" + (ultima ? " · " + ultima : "");
+      nom.classList.add("conUso");
+    }else{
+      nom.textContent = "Nunca usada";
+    }
   }else{
     nom.textContent = "Prenda eliminada";
   }
   d.appendChild(nom);
+
   if(alTocar) d.addEventListener("click", alTocar);
   return d;
 }
@@ -1000,7 +1019,22 @@ function planesDe(lado){
     .sort((a, b) => String(a.fechaTexto).localeCompare(String(b.fechaTexto)));
   const pas = lista.filter(p => String(p.fechaTexto || "") < hoy)
     .sort((a, b) => String(b.fechaTexto).localeCompare(String(a.fechaTexto)));
-  return fut.concat(pas);
+  return { fut, pas };
+}
+
+function separadorPlanes(texto){
+  const d = document.createElement("div");
+  d.className = "separador";
+  d.textContent = texto;
+  return d;
+}
+
+function botonPasados(texto, alTocar){
+  const b = document.createElement("button");
+  b.className = "btnSec";
+  b.textContent = texto;
+  b.addEventListener("click", alTocar);
+  return b;
 }
 
 function pintarPlanes(){
@@ -1029,8 +1063,8 @@ function pintarPlanes(){
     panel.appendChild(tarjetaPedidoEnviado());
   }
 
-  const lista = planesDe(tabActivo);
-  if(!lista.length){
+  const { fut, pas } = planesDe(tabActivo);
+  if(!fut.length && !pas.length){
     const p = document.createElement("p");
     p.className = "vacio";
     p.textContent = (esMia || otroId)
@@ -1040,7 +1074,32 @@ function pintarPlanes(){
     return;
   }
 
-  lista.forEach(plan => panel.appendChild(tarjetaPlan(plan, esMia)));
+  // Próximos: siempre a la vista.
+  panel.appendChild(separadorPlanes("Próximos"));
+  if(fut.length){
+    fut.forEach(plan => panel.appendChild(tarjetaPlan(plan, esMia)));
+  }else{
+    const p = document.createElement("p");
+    p.className = "vacio";
+    p.textContent = "No hay planes próximos.";
+    panel.appendChild(p);
+  }
+
+  // Pasados: plegados. Con muchos registros la pantalla se llenaría, así que
+  // se abren solo si se piden.
+  if(pas.length){
+    if(!verPasados){
+      panel.appendChild(botonPasados("Ver pasados (" + pas.length + ")", ()=>{
+        verPasados = true; pintarPlanes();
+      }));
+    }else{
+      panel.appendChild(separadorPlanes("Pasados"));
+      pas.forEach(plan => panel.appendChild(tarjetaPlan(plan, esMia)));
+      panel.appendChild(botonPasados("Ocultar pasados", ()=>{
+        verPasados = false; pintarPlanes();
+      }));
+    }
+  }
 }
 
 function tarjetaPlan(plan, esMia){
@@ -1507,8 +1566,8 @@ async function cancelarPedido(){
 document.getElementById("eGuardar").addEventListener("click", guardarPlan);
 document.getElementById("pAceptar").addEventListener("click", aceptarPedido);
 document.getElementById("pRechazar").addEventListener("click", rechazarPedido);
-document.getElementById("tabA").addEventListener("click", ()=>{ tabActivo = ordenTabs[0]; pintarPlanes(); });
-document.getElementById("tabB").addEventListener("click", ()=>{ tabActivo = ordenTabs[1]; pintarPlanes(); });
+document.getElementById("tabA").addEventListener("click", ()=>{ tabActivo = ordenTabs[0]; verPasados = false; pintarPlanes(); });
+document.getElementById("tabB").addEventListener("click", ()=>{ tabActivo = ordenTabs[1]; verPasados = false; pintarPlanes(); });
 
 // ====== 9) Conteo de uso ======
 // Sube cuando la FECHA DEL PLAN ya pasó, no al guardar. Va en transacción: si
