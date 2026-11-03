@@ -95,6 +95,7 @@
   .rejilla .prenda{ background:var(--card); border:2px solid var(--card-border);
     border-radius:12px; padding:6px; cursor:pointer; text-align:center; position:relative; }
   .rejilla .prenda img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; display:block; }
+  .rejilla .prenda .fotoWrap{ position:relative; width:100%; }
   .rejilla .prenda .nom{ font-size:.72rem; color:var(--fg-muted); margin-top:4px; line-height:1.2; }
   .rejilla .prenda .nom.conUso{ color:var(--teal); }
   .rejilla .prenda.sel{ border-color:var(--teal); }
@@ -770,20 +771,25 @@ function tarjetaPrenda(p, seleccionada, alTocar){
   const d = document.createElement("div");
   d.className = "prenda" + (seleccionada ? " sel" : "");
   if(p && p.foto){
+    // La lupa va pegada a la FOTO, no a la tarjeta: si no, cae sobre la línea
+    // de abajo (el uso y la referencia) y la tapa.
+    const wrap = document.createElement("div");
+    wrap.className = "fotoWrap";
+
     const img = document.createElement("img");
     img.src = p.foto;
     img.alt = "Prenda";
-    d.appendChild(img);
+    wrap.appendChild(img);
 
-    // Lupa: la foto en grande. Se detiene la propagación para que tocar la lupa
-    // no seleccione la prenda ni abra el editor.
     const lupa = document.createElement("button");
     lupa.className = "lupaBtn";
     lupa.type = "button";
     lupa.textContent = "🔍";
     lupa.setAttribute("aria-label", "Ver la foto más grande");
     lupa.addEventListener("click", (e)=>{ e.stopPropagation(); abrirLupa(p.foto); });
-    d.appendChild(lupa);
+    wrap.appendChild(lupa);
+
+    d.appendChild(wrap);
   }else{
     const ph = document.createElement("div");
     ph.className = "ph";
