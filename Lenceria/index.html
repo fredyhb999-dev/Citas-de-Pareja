@@ -115,6 +115,15 @@
   .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
     padding:4px 10px; font-size:.85rem; color:var(--fg-muted); cursor:pointer; }
   .chip.activo{ border-color:var(--teal); color:var(--teal); }
+  /* Filtros: chips de tipo y, al elegir uno, la fila compacta con Color y Estilo. */
+  .filtroCaja{ display:flex; flex-direction:column; width:100%; margin:8px 0; }
+  .filtroFila{ display:flex; gap:6px; width:100%; align-items:center; }
+  .filtroFila .chip{ flex:0 0 auto; }
+  .selFiltro{ flex:1; min-width:0; background:var(--bg-2); border:1px solid var(--card-border);
+    border-radius:20px; color:var(--fg-muted); font-size:.78rem; padding:6px 8px;
+    font-family:'Inter',sans-serif; }
+  .limpiarFiltros{ background:none; border:none; color:var(--fg-muted); font-size:.75rem;
+    text-decoration:underline; cursor:pointer; padding:4px 0; align-self:flex-end; }
   .campo{ width:100%; display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
   .campo span{ font-size:.78rem; color:var(--fg-muted); }
   .campo input, .campo select{ border-radius:12px; border:1px solid var(--card-border);
@@ -388,11 +397,90 @@ let ladoElegir = "A";
 let seleccion = [];
 let fechaElegir = "";
 let planEditando = null;     // id del plan que se está editando
-let filtroTipo = "";
-let filtroTipoConfig = "";
+// Filtros de prendas. Se SUMAN: tipo + color + estilo. Con el tipo vacío se
+// muestran los chips de tipo; al elegir uno, la fila se recoge y aparecen los
+// desplegables de color y estilo (nov-2026, idea de Mary).
+const filtroE = { tipo: "", color: "", estilo: "" };   // Vestidor y pedido
+const filtroC = { tipo: "", color: "", estilo: "" };   // Configuración
+
+function limpiarFiltros(f){
+  f.tipo = ""; f.color = ""; f.estilo = "";
+}
+
+function pasaFiltro(p, f){
+  if(f.tipo && p.tipoId !== f.tipo) return false;
+  if(f.color && p.colorId !== f.color) return false;
+  if(f.estilo && p.estiloId !== f.estilo) return false;
+  return true;
+}
+
+// Dibuja la zona de filtros dentro de `cont`. `alCambiar` repinta la pantalla.
+function construirFiltros(cont, f, alCambiar){
+  if(!cont) return;
+  cont.innerHTML = "";
+
+  // Sin tipo elegido: los chips de tipo.
+  if(!f.tipo){
+    cont.className = "chips";
+    const todos = document.createElement("button");
+    todos.className = "chip" + (f.color || f.estilo ? "" : " activo");
+    todos.textContent = "Todos";
+    todos.addEventListener("click", ()=>{ limpiarFiltros(f); alCambiar(); });
+    cont.appendChild(todos);
+    (clasif.tipos || []).forEach(t => {
+      const b = document.createElement("button");
+      b.className = "chip";
+      b.textContent = t.nombre || "";
+      b.addEventListener("click", ()=>{ f.tipo = t.id; alCambiar(); });
+      cont.appendChild(b);
+    });
+    return;
+  }
+
+  // Con tipo elegido: etiqueta con ✕ + Color + Estilo + limpiar.
+  cont.className = "filtroCaja";
+
+  const fila = document.createElement("div");
+  fila.className = "filtroFila";
+
+  const pill = document.createElement("button");
+  pill.className = "chip activo";
+  pill.textContent = (nombreDe("tipos", f.tipo) || "Tipo") + " ✕";
+  pill.title = "Quitar el filtro";
+  pill.addEventListener("click", ()=>{ limpiarFiltros(f); alCambiar(); });
+  fila.appendChild(pill);
+
+  fila.appendChild(desplegableFiltro("Color", "colores", f.color, (v)=>{ f.color = v; alCambiar(); }));
+  fila.appendChild(desplegableFiltro("Estilo", "estilos", f.estilo, (v)=>{ f.estilo = v; alCambiar(); }));
+
+  cont.appendChild(fila);
+
+  const limpiar = document.createElement("button");
+  limpiar.className = "limpiarFiltros";
+  limpiar.textContent = "Limpiar todo";
+  limpiar.addEventListener("click", ()=>{ limpiarFiltros(f); alCambiar(); });
+  cont.appendChild(limpiar);
+}
+
+function desplegableFiltro(etiqueta, grupo, valor, alCambiar){
+  const sel = document.createElement("select");
+  sel.className = "selFiltro";
+  const o0 = document.createElement("option");
+  o0.value = "";
+  o0.textContent = etiqueta;
+  sel.appendChild(o0);
+  (clasif[grupo] || []).forEach(x => {
+    const o = document.createElement("option");
+    o.value = x.id;
+    o.textContent = x.nombre || "";
+    sel.appendChild(o);
+  });
+  sel.value = valor || "";
+  sel.addEventListener("change", ()=> alCambiar(sel.value));
+  return sel;
+}
 let tabActivo = "A";
-let verPasados = false;    // los planes pasados se abren solo si se piden
-let ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
+let verPasados = false;    // los planes pasados se abren solo si se pidenlet ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
 let prendaEditando = null;
 let fotoProcesada = null;
 let refAuto = "";          // última referencia generada sola (para saber si pisarla)
@@ -717,30 +805,18 @@ function bloquePrendas(){
   });
   wrap.appendChild(tabs);
 
-  // Chips por TIPO (nov-2026): se busca "un babydoll", no "de pecho".
-  // Van fuera del scroll para que el filtro no se pierda al bajar.
-  const chips = document.createElement("div");
-  chips.className = "chips";
-  const todos = document.createElement("button");
-  todos.className = "chip" + (filtroTipoConfig ? "" : " activo");
-  todos.textContent = "Todos";
-  todos.addEventListener("click", ()=>{ filtroTipoConfig = ""; pintarConfig(); });
-  chips.appendChild(todos);
-  (clasif.tipos || []).forEach(t => {
-    const b = document.createElement("button");
-    b.className = "chip" + (filtroTipoConfig === t.id ? " activo" : "");
-    b.textContent = t.nombre || "";
-    b.addEventListener("click", ()=>{ filtroTipoConfig = t.id; pintarConfig(); });
-    chips.appendChild(b);
-  });
-  wrap.appendChild(chips);
+  // Filtros: chips por tipo y, al elegir uno, Color y Estilo. Van fuera del
+  // scroll para que el filtro no se pierda al bajar.
+  const cajaFiltros = document.createElement("div");
+  construirFiltros(cajaFiltros, filtroC, pintarConfig);
+  wrap.appendChild(cajaFiltros);
 
   const scroll = document.createElement("div");
   scroll.className = "ccScroll";
 
   const rej = document.createElement("div");
   rej.className = "rejilla";
-  const lista = prendasDeLado(tabPrendas).filter(p => !filtroTipoConfig || p.tipoId === filtroTipoConfig);
+  const lista = prendasDeLado(tabPrendas).filter(p => pasaFiltro(p, filtroC));
   lista.sort((a, b) => {
     const za = valor("zonas", a.zonaId), zb = valor("zonas", b.zonaId);
     const ta = valor("tipos", a.tipoId), tb = valor("tipos", b.tipoId);
@@ -753,7 +829,9 @@ function bloquePrendas(){
   if(!lista.length){
     const p = document.createElement("p");
     p.className = "vacio";
-    p.textContent = "No hay prendas todavía.";
+    p.textContent = (filtroC.tipo || filtroC.color || filtroC.estilo)
+      ? "No hay prendas con esos filtros."
+      : "No hay prendas todavía.";
     scroll.appendChild(p);
   }
 
@@ -1391,7 +1469,7 @@ function abrirElegir(modo, plan){
   ladoElegir = (modo === "plan") ? miLado : otroLado;
   fechaElegir = plan ? (plan.fechaTexto || "") : "";
   seleccion = plan ? (plan.prendas || []).slice() : [];
-  filtroTipo = "";
+  limpiarFiltros(filtroE);
 
   document.getElementById("elegirTitulo").textContent =
     (modo === "plan" ? "Vestidor de " : "Proponer a ") + nombreLado(ladoElegir);
@@ -1404,26 +1482,17 @@ function abrirElegir(modo, plan){
 }
 
 function pintarVestidor(){
-  // chips por tipo (nov-2026): así se busca "un babydoll" y no "de pecho"
-  const chips = document.getElementById("eChips");
-  chips.innerHTML = "";
-  const todos = document.createElement("button");
-  todos.className = "chip" + (filtroTipo ? "" : " activo");
-  todos.textContent = "Todos";
-  todos.addEventListener("click", ()=>{ filtroTipo = ""; pintarVestidor(); });
-  chips.appendChild(todos);
-  (clasif.tipos || []).forEach(t => {
-    const b = document.createElement("button");
-    b.className = "chip" + (filtroTipo === t.id ? " activo" : "");
-    b.textContent = t.nombre || "";
-    b.addEventListener("click", ()=>{ filtroTipo = t.id; pintarVestidor(); });
-    chips.appendChild(b);
-  });
+  // Filtros: chips por tipo y, al elegir uno, Color y Estilo.
+  construirFiltros(document.getElementById("eChips"), filtroE, pintarVestidor);
 
   const rej = document.getElementById("eRejilla");
   rej.innerHTML = "";
-  const lista = prendasDeLado(ladoElegir).filter(p => !filtroTipo || p.tipoId === filtroTipo);
-  document.getElementById("eVacio").style.display = lista.length ? "none" : "";
+  const lista = prendasDeLado(ladoElegir).filter(p => pasaFiltro(p, filtroE));
+  const vacio = document.getElementById("eVacio");
+  vacio.style.display = lista.length ? "none" : "";
+  vacio.textContent = (filtroE.tipo || filtroE.color || filtroE.estilo)
+    ? "No hay prendas con esos filtros."
+    : "No hay prendas todavía. Agrégalas con el ⚙️.";
   lista.forEach(p => {
     rej.appendChild(tarjetaPrenda(p, seleccion.indexOf(p.id) >= 0, ()=> alternarSeleccion(p)));
   });
@@ -1583,7 +1652,7 @@ function abrirPedido(){
   ladoElegir = miLado;
   fechaElegir = pedidoRecibido.fechaTexto || "";
   seleccion = (pedidoRecibido.prendas || []).slice();
-  filtroTipo = "";
+  limpiarFiltros(filtroE);
 
   document.getElementById("pedidoTitulo").textContent = "El vestuario que te propone " + nombreLado(otroLado);
   document.getElementById("pFecha").value = fechaElegir;
@@ -1594,25 +1663,12 @@ function abrirPedido(){
 }
 
 function pintarPedido(){
-  const chips = document.getElementById("pChips");
-  chips.innerHTML = "";
-  const todos = document.createElement("button");
-  todos.className = "chip" + (filtroTipo ? "" : " activo");
-  todos.textContent = "Todos";
-  todos.addEventListener("click", ()=>{ filtroTipo = ""; pintarPedido(); });
-  chips.appendChild(todos);
-  (clasif.tipos || []).forEach(t => {
-    const b = document.createElement("button");
-    b.className = "chip" + (filtroTipo === t.id ? " activo" : "");
-    b.textContent = t.nombre || "";
-    b.addEventListener("click", ()=>{ filtroTipo = t.id; pintarPedido(); });
-    chips.appendChild(b);
-  });
+  construirFiltros(document.getElementById("pChips"), filtroE, pintarPedido);
 
   const rej = document.getElementById("pRejilla");
   rej.innerHTML = "";
   prendasDeLado(miLado)
-    .filter(p => !filtroTipo || p.tipoId === filtroTipo)
+    .filter(p => pasaFiltro(p, filtroE))
     .forEach(p => rej.appendChild(tarjetaPrenda(p, seleccion.indexOf(p.id) >= 0, ()=> alternarSeleccion(p))));
 
   pintarContador("pContador");

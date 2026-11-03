@@ -85,10 +85,23 @@ sus **chips por tipo**, con el botón "Nueva prenda" fijo abajo. Los chips se
 dejaron a la vista a propósito (un toque para elegir tipo) y se apretaron para
 que quepan en dos renglones.
 
-**El filtro es por tipo, no por zona** (nov-2026, idea de la esposa de Fredy):
-así se busca "un babydoll" y no "de pecho", que es como de verdad se elige. El
-filtro de la configuración es **independiente** del filtro del Vestidor
-(`filtroTipoConfig` vs `filtroTipo`).
+**El filtro es progresivo** (nov-2026, idea de Mary): primero se ve la fila de
+chips **por tipo** ("Todos", Top, Mono, Babydoll, Falda, Vestido). Al elegir un
+tipo, los chips se recogen y aparece una fila compacta:
+
+```
+[ Babydoll ✕ ]   [ Color ▾ ]   [ Estilo ▾ ]
+                        Limpiar todo
+```
+
+- **Los filtros se suman**: tipo + color + estilo.
+- La **✕** de la etiqueta y **"Limpiar todo"** devuelven la fila de chips.
+- Los desplegables se llenan con las clasificaciones guardadas, así que crecen
+  solos si se agrega un color o un estilo.
+- Si no hay prendas con esa combinación, dice **"No hay prendas con esos
+  filtros."** (no "no hay prendas todavía", que confundiría).
+- El filtro de la configuración es **independiente** del del Vestidor
+  (`filtroC` vs `filtroE`).
 
 ### El contador de uso, en la tarjeta
 
