@@ -197,12 +197,5 @@ su `actividadId`; si no se conoce (cita vieja, o actividad eliminada), el
 `actividad` que quedo guardado. `actividadId` solo se escribe si se encontro el
 id, y al modificar una cita se borra si ya no hay.
 
----|---|
-| La actividad | `actividadesExtra` (campo `nombre`) |
-| Sus accesorios | `presetsActividad/{nombre}` |
-| Sus acciones de Guiadas | `nivelesActividad/{id de la actividad}` |
-| Sus tomas | Dentro del mismo `nivelesActividad/{id}` (campo `tomas`): se mueven con él (oct-2026) |
-| **Las citas ya agendadas** | coleccion `citas`, campo `actividad` |
-
 La ultima es la que se escapa facil: si no se actualiza, esas citas quedan
 apuntando a un nombre que ya no existe, y **al editarlas se cambiarian solas**.
