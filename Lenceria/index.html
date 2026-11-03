@@ -211,11 +211,13 @@
   <h1 id="prendaTitulo">Nueva prenda</h1>
   <p class="desc">La foto es obligatoria.</p>
 
-  <label class="campo"><span>Lado</span><select id="pLado"></select></label>
+  <label class="campo"><span>Propietario</span><select id="pLado"></select></label>
   <label class="campo"><span>Zona</span><select id="pZona"></select></label>
   <label class="campo"><span>Estilo</span><select id="pEstilo"></select></label>
   <label class="campo"><span>Tipo</span><select id="pTipo"></select></label>
   <label class="campo"><span>Color</span><select id="pColor"></select></label>
+
+  <p class="vacio" id="pNotaBloqueo" style="display:none"></p>
 
   <div class="fotoBox" id="pFotoBox">
     <img id="pPreview" alt="Vista previa de la prenda" style="display:none">
@@ -790,9 +792,19 @@ function abrirPrenda(id){
   llenarSelect(document.getElementById("pColor"), "colores", p && p.colorId);
 
   // Bloqueo de lado y zona si está en un plan futuro o en un pedido pendiente.
+  // Se explica el motivo: un select apagado sin razón parece un error.
   const enUso = p ? prendaEnUsoFuturo(p.id) : false;
   selLado.disabled = enUso;
   document.getElementById("pZona").disabled = enUso;
+  const nota = document.getElementById("pNotaBloqueo");
+  if(enUso){
+    nota.style.display = "";
+    nota.textContent = "Está en un plan de hoy en adelante o en un pedido pendiente. "
+      + "Para cambiar el propietario o la zona, primero quítala de ahí.";
+  }else{
+    nota.style.display = "none";
+    nota.textContent = "";
+  }
 
   mostrarFoto(p ? p.foto : null);
   ver("vistaPrenda", true);

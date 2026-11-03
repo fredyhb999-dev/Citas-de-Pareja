@@ -233,8 +233,9 @@ el mismo documento.
   pendiente; si un plan se queda sin prendas, se borra. Los planes pasados
   conservan el id y muestran "Prenda eliminada".
 - **Borrar una clasificación en uso** se bloquea.
-- **Cambiar zona o lado** de una prenda se bloquea si está en un plan futuro o en
-  un pedido pendiente.
+- **Cambiar zona o propietario** de una prenda se bloquea si está en un plan de
+  hoy en adelante o en un pedido pendiente, y la pantalla **explica el motivo**
+  (antes se apagaban los campos sin decir por qué).
 
 ## Conteo de uso
 
