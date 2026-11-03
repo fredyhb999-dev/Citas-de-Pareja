@@ -174,17 +174,17 @@ viendo una pantalla que nadie va a contestar.
 
 ## 2. Diagnostico: los 7 problemas
 
-### P1. El nombre de una actividad es llave en 5 sitios
+### P1. El nombre de una actividad es llave en 5 sitios — RESUELTO (nov-2026)
 
-`actividadesExtra` (doc), `presetsActividad` (id), `nivelesActividad` (id),
-`citas.actividad`, `retos.actividad`. Renombrar obliga a mover los cinco, y
-`GUIA.md` ya lo dice: *"El nombre de una actividad es la llave de casi todo"*,
-con la tabla de los cinco y la advertencia de que *"la última es la que se
-escapa fácil"*.
+**Antes** `presetsActividad` y `nivelesActividad` guardaban el nombre como id del
+documento, y las citas solo tenían el nombre. Renombrar obligaba a mover
+documentos de un lado a otro, y si un paso fallaba la actividad quedaba a medias.
 
-El motivo de fondo: **falta un identificador estable.** El nombre es un atributo
-que el usuario cambia; se esta usando como llave primaria. Es la causa raiz de
-la mayoria de los avisos que ya hay en la guia.
+**Ahora la llave es el id:** las dos colecciones se guardan con el id de
+`actividadesExtra`, cada cita lleva `actividadId` junto al nombre, y renombrar
+solo cambia el campo `nombre`. La migración de lo que ya estaba guardado está más
+abajo, en *Actividades por id*. `retos.actividad` no era una llave: es texto
+libre que escribe la pareja.
 
 ### P2. El nombre de un usuario esta copiado en 22 campos
 

@@ -96,6 +96,28 @@ correspondiente, en la tabla de documentos de detalle al final de este archivo.
 Si algo empieza con "antes se hacía X" o lleva una fecha de hace meses, va a
 `General/HISTORIA.md`, no aquí.
 
+## La llave es el id, no el nombre
+
+**Regla para todo lo que se construya de aquí en adelante.** Es la lección del
+cambio de actividades por id (nov-2026): el nombre es una etiqueta que la pareja
+cambia, así que **nunca** sirve para enlazar datos.
+
+- **Cada colección nueva usa el id del documento como llave:** uno automático
+  (`addDoc`) o uno fijo con significado (`A_2026-11-07`, `zona_pecho`).
+- **Lo que apunta a otro guarda `<algo>Id`** (`zonaId`, `actividadId`,
+  `duenoId`), nunca el nombre.
+- **El nombre se guarda solo para mostrar.** Renombrar cambia únicamente el campo
+  `nombre`; no se mueve ni se recrea ningún documento.
+- **Para mostrar, se resuelve por id;** si el id no se encuentra (dato viejo, o
+  borrado), se cae al nombre guardado. El patrón es `leerDocActividad()`
+  (`config.js`) y `nombreDeCita()` (`Citas/index.html`).
+- **Las excepciones son dos, y hay que decir cuál se está usando:**
+  - Texto libre que escribe la pareja y no apunta a nada: `retos.actividad`.
+  - Copia del nombre **solo** para el texto de un aviso pasajero
+    (`invitosFavor`, `invitosLenceria`).
+- **Si una pantalla nueva guarda datos y no se puede decir cuál es la llave, se
+  pregunta antes de escribir.**
+
 
 ## Estado de las reglas de Firebase (cerrado y revisado)
 

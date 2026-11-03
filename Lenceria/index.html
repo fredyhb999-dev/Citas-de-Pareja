@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Catálogo de Lencería</title>
+<meta name="theme-color" content="#120e1c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#120e1c; --bg-2:#1a1428; --card:#201933; --card-border:#322a4a;
+    --fg:#f4f1fb; --fg-muted:#a599c7; --coral:#ff6a5c; --teal:#2fd9c7; --rojo:#ff5c7a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; min-height:100%; width:100%; color:var(--fg);
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(circle at 15% 0%, var(--bg-2), transparent 55%),
+      radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
+  body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
+    padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
+  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  #btnCfg{
+    position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
+    background:none; border:none; font-size:1.3rem; cursor:pointer; padding:4px;
+  }
+  .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
+    text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
+  /* width:fit-content para que el degradado pinte solo las letras (ver GUIA.md). */
+  h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.8rem; margin:0 0 8px;
+    text-align:center; width:fit-content;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  p.desc{ font-size:.88rem; color:var(--fg-muted); max-width:360px; margin:0 0 18px; text-align:center; }
+  .vista{ display:none; width:100%; max-width:520px; flex-direction:column; align-items:center; }
+  .vista.ver{ display:flex; }
+  .btnPri{ width:100%; padding:16px; margin-bottom:10px; border:none; border-radius:16px; cursor:pointer;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .btnPri:active{ transform:scale(.97); }
+  .btnPri:disabled{ opacity:.45; }
+  .btnSec{ width:100%; padding:12px; background:none; border:none; cursor:pointer;
+    color:var(--fg-muted); font-size:.9rem; text-decoration:underline; }
+  .ficha{ width:100%; background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin-bottom:12px; }
+  .ficha h2{ font-family:'Chakra Petch',sans-serif; font-size:1rem; margin:0 0 6px; }
+  .vacio{ font-size:.85rem; color:var(--fg-muted); text-align:center; margin:10px 0 16px; }
+  /* ===== listas: el molde del engrane de Opciones/ ===== */
+  .tabs{ display:flex; gap:8px; width:100%; margin-bottom:12px; }
+  .tab{ flex:1; padding:12px; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--card); color:var(--fg-muted); font-family:'Chakra Petch',sans-serif;
+    font-weight:600; font-size:.9rem; cursor:pointer; }
+  .tab.activo{ background:linear-gradient(90deg, var(--coral), var(--teal)); color:var(--bg);
+    border-color:transparent; }
+  .tablaBox{ width:100%; max-height:48dvh; overflow-y:auto; border:1px solid var(--card-border);
+    border-radius:12px; background:var(--bg-2); padding:8px; }
+  .fila{ display:flex; gap:8px; align-items:center; margin-bottom:6px; }
+  .celda{ flex:1; min-width:0; border:1px solid var(--card-border); background:var(--card);
+    border-radius:10px; padding:10px; font-size:.85rem; color:var(--fg);
+    font-family:'Inter',sans-serif; text-align:left; cursor:pointer; }
+  .x{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:1rem; padding:6px 10px; }
+  .uso{ font-size:.8rem; color:var(--fg-muted); min-width:22px; text-align:right; }
+  .usoTexto{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; }
+  .filaAdd{ display:flex; gap:8px; width:100%; margin-top:8px; }
+  .filaAdd input{ flex:1; min-width:0; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:12px; font-size:.9rem; font-family:'Inter',sans-serif; }
+  .filaAdd button{ border:none; border-radius:12px; cursor:pointer; padding:12px 16px;
+    font-family:'Chakra Petch',sans-serif; font-weight:700; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
+  .buscar{ width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--card); color:var(--fg); padding:13px 14px; font-size:.95rem;
+    font-family:'Inter',sans-serif; margin-bottom:14px; }
+  /* ===== cuadrícula de prendas ===== */
+  .rejilla{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; width:100%; }
+  .rejilla .prenda{ background:var(--card); border:2px solid var(--card-border);
+    border-radius:12px; padding:6px; cursor:pointer; text-align:center; }
+  .rejilla .prenda img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; display:block; }
+  .rejilla .prenda .nom{ font-size:.72rem; color:var(--fg-muted); margin-top:4px; line-height:1.2; }
+  .rejilla .prenda.sel{ border-color:var(--teal); }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+  .chip{ background:var(--bg-2); border:1px solid var(--card-border); border-radius:20px;
+    padding:7px 14px; font-size:.82rem; color:var(--fg-muted); cursor:pointer; }
+  .chip.activo{ border-color:var(--teal); color:var(--teal); }
+  #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
+</style>
+</head>
+<body>
+
+<a class="back" id="lnkInicio" href="../index.html#experiencias">‹ Volver</a>
+<!-- El engrane nace oculto: solo se enciende en vistaPlanes (GUIA.md). -->
+<button id="btnCfg" aria-label="Configurar" style="display:none">⚙️</button>
+
+<div class="eyebrow">Lencería</div>
+
+<!-- ============ PRINCIPAL: planes ============ -->
+<div class="vista ver" id="vistaPlanes">
+  <h1>Catálogo de Lencería</h1>
+  <p class="desc">Los planes de vestuario de cada quien.</p>
+  <div class="tabs">
+    <button class="tab activo" id="tabA">Lado A</button>
+    <button class="tab" id="tabB">Lado B</button>
+  </div>
+  <div id="listaPlanes"></div>
+  <p class="vacio" id="planesVacio">Todavía no hay planes.</p>
+</div>
+
+<!-- ============ VESTIDOR ============ -->
+<div class="vista" id="vistaElegir">
+  <h1 id="elegirTitulo">Vestidor</h1>
+  <p class="desc">Elige hasta 3 prendas por zona.</p>
+  <button class="btnSec" id="btnVolverElegir">Volver</button>
+</div>
+
+<!-- ============ PEDIDO RECIBIDO ============ -->
+<div class="vista" id="vistaPedido">
+  <h1 id="pedidoTitulo">Vestuario</h1>
+  <p class="desc">Puedes cambiar las prendas y la fecha antes de aceptar.</p>
+  <button class="btnSec" id="btnVolverPedido">Volver</button>
+</div>
+
+<!-- ============ CONFIGURACIÓN ============ -->
+<div class="vista" id="vistaConfig">
+  <h1>Configuración</h1>
+  <p class="desc">Zonas, estilos, tipos, colores y prendas.</p>
+  <div id="bloquesClasif"></div>
+  <div class="ficha">
+    <h2>Prendas</h2>
+    <p class="vacio">No hay prendas todavía.</p>
+  </div>
+  <button class="btnSec" id="btnVolverConfig">Volver</button>
+</div>
+
+<!-- ============ EDITAR UNA CLASIFICACIÓN ============ -->
+<div class="vista" id="vistaClasif">
+  <h1 id="clasifTitulo">Zona</h1>
+  <p class="desc">Puedes cambiarle el nombre. Si está en uso, no se puede borrar.</p>
+  <input class="buscar" id="cNombre" placeholder="Nombre">
+  <p class="vacio" id="cUso"></p>
+  <button class="btnPri" id="cGuardar">Guardar</button>
+  <button class="btnSec" id="cBorrar" style="display:none">Borrar</button>
+  <button class="btnSec" id="btnVolverClasif">Volver</button>
+</div>
+
+<!-- ============ ALTA / EDICIÓN DE UNA PRENDA ============ -->
+<div class="vista" id="vistaPrenda">
+  <h1 id="prendaTitulo">Nueva prenda</h1>
+  <p class="desc">La foto es obligatoria.</p>
+  <button class="btnSec" id="btnVolverPrenda">Cancelar</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase, cargarUsuarios } from "../config.js";
+import { soyInvitado, CLAVE_LOCAL } from "../invitado.js";
+import { confirmar, aviso } from "../confirmar.js";
+
+const app = initializeApp(resolverFirebase(firebaseConfigBase));
+const db = getFirestore(app);
+
+// ====== 1) El invitado no entra. Doble candado: el menú no le muestra la
+// tarjeta (soloPareja) y aquí se comprueba otra vez, por si llega por enlace.
+if(soyInvitado()){
+  aviso("Esta sección es solo para la pareja.").then(()=> location.replace("../index.html"));
+}
+
+// ====== 2) Navegación: cada vista es un paso del historial ======
+let vistaActual = "vistaPlanes";
+
+function ver(id, guardar = true){
+  document.querySelectorAll(".vista").forEach(v => v.classList.remove("ver"));
+  document.getElementById(id).classList.add("ver");
+  vistaActual = id;
+  document.getElementById("btnCfg").style.display = (id === "vistaPlanes") ? "block" : "none";
+  if(guardar){ try{ history.pushState({ v: id }, ""); }catch(e){} }
+  window.scrollTo(0, 0);
+}
+
+window.addEventListener("popstate", (e)=>{
+  const v = (e.state && e.state.v) || "vistaPlanes";
+  ver(v, false);
+});
+
+// El "‹ Volver" es contextual: dentro de la pantalla regresa un paso; desde la
+// vista principal sale al submenú de Experiencias.
+document.getElementById("lnkInicio").addEventListener("click", (e)=>{
+  if(vistaActual === "vistaPlanes") return;
+  e.preventDefault();
+  history.back();
+});
+
+[["btnVolverElegir","vistaElegir"],["btnVolverPedido","vistaPedido"],
+ ["btnVolverConfig","vistaConfig"],["btnVolverClasif","vistaClasif"],
+ ["btnVolverPrenda","vistaPrenda"]].forEach(([btn])=>{
+  const el = document.getElementById(btn);
+  if(el) el.addEventListener("click", ()=> history.back());
+});
+
+document.getElementById("btnCfg").addEventListener("click", ()=>{
+  ver("vistaConfig");
+});
+
+history.replaceState({ v: "vistaPlanes" }, "");
+
+// ====== 3) Identidad y lados (mismo cálculo que Guiadas/) ======
+let usuariosLista = [];
+let miUsuario = null;
+let miId = "";
+let miLado = "A";
+let otroLado = "B";
+let otroId = "";
+
+function nombreLado(lado){
+  const u = usuariosLista.find(x => x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
+  return (u && u.nombre) || ("Lado " + lado);
+}
+
+// ====== 4) Clasificaciones: zonas, estilos, tipos y colores ======
+// La llave es el id (GUIA.md, "La llave es el id, no el nombre"): la prenda
+// guarda zonaId / estiloId / tipoId / colorId, así que renombrar no rompe nada.
+const COLS = {
+  zonas:   { col: "lenceriaZonas",   titulo: "Zonas",   cabeza: "Zona",   singular: "zona",   campo: "zonaId",   plural: "zonas" },
+  estilos: { col: "lenceriaEstilos", titulo: "Estilos", cabeza: "Estilo", singular: "estilo", campo: "estiloId", plural: "estilos" },
+  tipos:   { col: "lenceriaTipos",   titulo: "Tipos",   cabeza: "Tipo",   singular: "tipo",   campo: "tipoId",   plural: "tipos" },
+  colores: { col: "lenceriaColores", titulo: "Colores", cabeza: "Color",  singular: "color",  campo: "colorId",  plural: "colores" }
+};
+const GRUPOS = ["zonas", "estilos", "tipos", "colores"];
+
+let clasif = { zonas: [], estilos: [], tipos: [], colores: [] };
+let prendas = [];            // se llena en la fase de prendas
+let clasifActual = null;     // { grupo, id }
+
+function normTexto(s){
+  return String(s || "").trim().toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// Copia a la base los valores de fábrica la primera vez. Devuelve las cuatro
+// listas ya leídas (para no leer dos veces), o null si no se pudo.
+async function sembrarClasificaciones(){
+  let fab = null;
+  try{ fab = await (await fetch("clasificaciones.json")).json(); }catch(e){ return null; }
+
+  let bandera = null;
+  try{
+    const b = await getDoc(doc(db, "config", "fabricaLenceria"));
+    bandera = b.exists() ? b.data() : null;
+  }catch(e){ return null; }
+
+  const salida = {};
+  const instalados = {};
+  let huboCambios = false;
+
+  for(const g of GRUPOS){
+    const col = COLS[g].col;
+    const lista = [];
+    try{
+      const snap = await getDocs(collection(db, col));
+      snap.forEach(d => lista.push(Object.assign({ id: d.id }, d.data())));
+    }catch(e){ return null; }
+
+    const ids = new Set(lista.map(x => x.id));
+    const inst = new Set((bandera && bandera[g]) || []);
+
+    for(const item of (fab[g] || [])){
+      if(ids.has(item.id)){
+        // Ya existe (aunque le hayan cambiado el nombre): no se escribe nada.
+        if(!inst.has(item.id)){ inst.add(item.id); huboCambios = true; }
+        continue;
+      }
+      if(inst.has(item.id)) continue;      // lo borraron: no vuelve
+      try{
+        await setDoc(doc(db, col, item.id), {
+          nombre: item.nombre, orden: item.orden, origen: "fabrica",
+          creadoEn: serverTimestamp()
+        }, { merge: true });
+        lista.push({ id: item.id, nombre: item.nombre, orden: item.orden, origen: "fabrica" });
+        ids.add(item.id); inst.add(item.id);
+        huboCambios = true;
+      }catch(e){}
+    }
+    salida[g] = lista;
+    instalados[g] = Array.from(inst);
+  }
+
+  // Banderita propia: NO se usa config/fabrica, porque asegurarFabrica() la
+  // escribe completa y borraría estas listas (ver General/Catalogo-Lenceria.md).
+  if(huboCambios || !bandera){
+    try{
+      await setDoc(doc(db, "config", "fabricaLenceria"), {
+        version: 1, fecha: serverTimestamp(),
+        zonas: instalados.zonas, estilos: instalados.estilos,
+        tipos: instalados.tipos, colores: instalados.colores
+      });
+    }catch(e){}
+  }
+  return salida;
+}
+
+async function cargarClasificaciones(){
+  const sembrado = await sembrarClasificaciones();
+  if(sembrado){ clasif = sembrado; return; }
+  // Sin permiso o sin red: el JSON es la lista de respaldo, como en las demás
+  // fábricas. La pantalla no se rompe.
+  try{
+    const fab = await (await fetch("clasificaciones.json")).json();
+    const nuevo = { zonas: [], estilos: [], tipos: [], colores: [] };
+    for(const g of GRUPOS){
+      nuevo[g] = (fab[g] || []).map(x => ({ id: x.id, nombre: x.nombre, orden: x.orden, origen: "fabrica" }));
+    }
+    clasif = nuevo;
+  }catch(e){}
+}
+
+function ordenarClasif(){
+  for(const g of GRUPOS){
+    clasif[g].sort((a, b) => ((a.orden ?? 0) - (b.orden ?? 0))
+      || String(a.nombre || "").localeCompare(String(b.nombre || "")));
+  }
+}
+
+// Cuántas prendas usan un valor. Se cuenta por id, no por nombre.
+function usoDe(grupo, id){
+  const campo = COLS[grupo].campo;
+  return prendas.filter(p => p && p[campo] === id).length;
+}
+
+function pintarConfig(){
+  const box = document.getElementById("bloquesClasif");
+  if(!box) return;
+  box.innerHTML = "";
+  for(const g of GRUPOS) box.appendChild(bloqueClasif(g));
+}
+
+function bloqueClasif(grupo){
+  const info = COLS[grupo];
+  const lista = clasif[grupo] || [];
+
+  const f = document.createElement("div");
+  f.className = "ficha";
+
+  const h = document.createElement("h2");
+  h.textContent = info.titulo;
+  f.appendChild(h);
+
+  const enUso = prendas.filter(p => p && p[info.campo]).length;
+  if(enUso){
+    const p = document.createElement("p");
+    p.className = "usoTexto";
+    p.textContent = "En uso: " + enUso + (enUso === 1 ? " prenda." : " prendas.");
+    f.appendChild(p);
+  }
+
+  const box = document.createElement("div");
+  box.className = "tablaBox";
+  if(!lista.length){
+    const p = document.createElement("p");
+    p.className = "vacio";
+    p.textContent = "No hay " + info.plural + " todavía.";
+    box.appendChild(p);
+  }else{
+    lista.forEach(x => {
+      const fila = document.createElement("div");
+      fila.className = "fila";
+      const b = document.createElement("button");
+      b.className = "celda";
+      b.textContent = x.nombre || "(sin nombre)";
+      b.addEventListener("click", () => abrirClasif(grupo, x.id));
+      const n = document.createElement("span");
+      n.className = "uso";
+      n.textContent = String(usoDe(grupo, x.id));
+      fila.appendChild(b);
+      fila.appendChild(n);
+      box.appendChild(fila);
+    });
+  }
+  f.appendChild(box);
+
+  const fa = document.createElement("div");
+  fa.className = "filaAdd";
+  const inp = document.createElement("input");
+  inp.placeholder = "Nueva " + info.singular;
+  inp.maxLength = 40;
+  const btn = document.createElement("button");
+  btn.textContent = "+";
+  btn.addEventListener("click", () => agregarClasif(grupo, inp.value));
+  inp.addEventListener("keydown", (e) => { if(e.key === "Enter") agregarClasif(grupo, inp.value); });
+  fa.appendChild(inp);
+  fa.appendChild(btn);
+  f.appendChild(fa);
+
+  return f;
+}
+
+async function agregarClasif(grupo, texto){
+  const nombre = String(texto || "").trim();
+  const info = COLS[grupo];
+  if(!nombre){ aviso("Escribe un nombre."); return; }
+  if((clasif[grupo] || []).some(x => normTexto(x.nombre) === normTexto(nombre))){
+    aviso("Ese " + info.singular + " ya existe."); return;
+  }
+  const orden = (clasif[grupo] || []).reduce((m, x) => Math.max(m, Number(x.orden) || 0), 0) + 10;
+  try{
+    const ref = await addDoc(collection(db, info.col), {
+      nombre, orden, origen: "usuario", creadoEn: serverTimestamp()
+    });
+    clasif[grupo].push({ id: ref.id, nombre, orden, origen: "usuario" });
+    ordenarClasif();
+    pintarConfig();
+  }catch(e){ aviso("No se pudo guardar."); }
+}
+
+function abrirClasif(grupo, id){
+  const x = (clasif[grupo] || []).find(v => v.id === id);
+  if(!x) return;
+  clasifActual = { grupo, id };
+  pintarClasifVista();
+  ver("vistaClasif");
+}
+
+function pintarClasifVista(){
+  if(!clasifActual) return;
+  const { grupo, id } = clasifActual;
+  const valores = clasif[grupo] || [];
+  const x = valores.find(v => v.id === id);
+  if(!x) return;
+  document.getElementById("clasifTitulo").textContent = COLS[grupo].cabeza;
+  document.getElementById("cNombre").value = x.nombre || "";
+  const n = usoDe(grupo, id);
+  document.getElementById("cUso").textContent = n
+    ? ("En uso: " + n + (n === 1 ? " prenda." : " prendas."))
+    : "Sin prendas que la usen.";
+  document.getElementById("cBorrar").style.display = n ? "none" : "";
+}
+
+async function guardarClasif(){
+  if(!clasifActual) return;
+  const { grupo, id } = clasifActual;
+  const nombre = String(document.getElementById("cNombre").value || "").trim();
+  const info = COLS[grupo];
+  if(!nombre){ aviso("Escribe un nombre."); return; }
+  if((clasif[grupo] || []).some(v => v.id !== id && normTexto(v.nombre) === normTexto(nombre))){
+    aviso("Ese " + info.singular + " ya existe."); return;
+  }
+  const boton = document.getElementById("cGuardar");
+  boton.disabled = true;
+  try{
+    await setDoc(doc(db, info.col, id), { nombre, actualizadoEn: serverTimestamp() }, { merge: true });
+    const x = clasif[grupo].find(v => v.id === id);
+    if(x) x.nombre = nombre;
+    ordenarClasif();
+    pintarConfig();
+    history.back();
+  }catch(e){ aviso("No se pudo guardar."); }
+  finally{ boton.disabled = false; }
+}
+
+async function borrarClasif(){
+  if(!clasifActual) return;
+  const { grupo, id } = clasifActual;
+  const info = COLS[grupo];
+  const x = (clasif[grupo] || []).find(v => v.id === id);
+  if(!x) return;
+  const n = usoDe(grupo, id);
+  if(n){ aviso("Está en uso: no se puede borrar."); return; }
+  const ok = await confirmar({ titulo: "¿Borrar " + info.singular + "?", texto: x.nombre, ok: "Borrar" });
+  if(!ok) return;
+  try{
+    await deleteDoc(doc(db, info.col, id));
+    clasif[grupo] = clasif[grupo].filter(v => v.id !== id);
+    pintarConfig();
+    history.back();
+  }catch(e){ aviso("No se pudo borrar."); }
+}
+
+document.getElementById("cGuardar").addEventListener("click", guardarClasif);
+document.getElementById("cBorrar").addEventListener("click", borrarClasif);
+
+async function arrancar(){
+  try{ miUsuario = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null"); }catch(e){ miUsuario = null; }
+  if(!miUsuario){ location.replace("../index.html"); return; }
+
+  try{
+    const r = await fetch("../Citas/usuarios.json");
+    usuariosLista = await cargarUsuarios(db, getDoc, doc, await r.json());
+  }catch(e){ usuariosLista = []; }
+
+  const admin = usuariosLista.find(u => u && u.admin);
+  if(miUsuario && typeof miUsuario.admin === "boolean") miLado = miUsuario.admin ? "A" : "B";
+  else if(admin && miUsuario) miLado = (miUsuario.id === admin.id) ? "A" : "B";
+  else miLado = "A";
+
+  otroLado = (miLado === "A") ? "B" : "A";
+  const otro = usuariosLista.find(u => u && (otroLado === "A" ? u.admin : (!u.admin && !u.invitado)));
+  otroId = (otro && otro.id) || "";
+  miId = miUsuario.id || "";
+
+  document.getElementById("tabA").textContent = nombreLado("A");
+  document.getElementById("tabB").textContent = nombreLado("B");
+
+  if(!otroId){
+    document.getElementById("planesVacio").textContent = "Falta configurar a tu pareja.";
+  }
+
+  await cargarClasificaciones();
+  ordenarClasif();
+  pintarConfig();
+}
+
+arrancar().catch(()=>{});
+</script>
+</body>
+</html>

@@ -202,6 +202,11 @@ inicio de `GUIA.md`). **Que no vuelva a pasar:**
 
 8. **Ortografía:** todo texto que se escriba en la app (títulos, botones, avisos, etiquetas, mensajes, placeholders, descripciones, etc.) debe ir **con ortografía correcta** (acentos, tildes, mayúsculas, puntuación). Corríjalo de entrada, sin que se lo pidan cada vez. Si una frase tiene una falta obvia o suena mal, réparla antes de decir "listo". Esto aplica también a los textos de ejemplo y a la documentación en `General/`.
 
+9. **La llave de los datos es el id, no el nombre.** Toda colección o pantalla
+   nueva enlaza por id; el nombre es solo para mostrar. Si una tarea guarda datos
+   y no está claro cuál es la llave, se pregunta antes de escribir. Ver
+   `General/GUIA.md`, sección *La llave es el id, no el nombre*.
+
 ## La llave del `Panel/` — NUNCA al repo
 
 `Panel/` y `Autorizar/` piden una **llave privada JWK** (`{"kty":"EC",...}`).

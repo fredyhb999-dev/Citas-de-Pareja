@@ -1,0 +1,29 @@
+{
+  "zonas": [
+    { "id": "zona_pecho", "nombre": "Pecho", "orden": 10 },
+    { "id": "zona_cintura", "nombre": "Cintura", "orden": 20 },
+    { "id": "zona_cadera", "nombre": "Cadera", "orden": 30 },
+    { "id": "zona_piernas", "nombre": "Piernas", "orden": 40 },
+    { "id": "zona_pies", "nombre": "Pies", "orden": 50 },
+    { "id": "zona_cuello", "nombre": "Cuello", "orden": 60 },
+    { "id": "zona_brazo", "nombre": "Brazo", "orden": 70 }
+  ],
+  "estilos": [
+    { "id": "estilo_romantico", "nombre": "Romántico", "orden": 10 },
+    { "id": "estilo_sensual", "nombre": "Sensual", "orden": 20 },
+    { "id": "estilo_atrevido", "nombre": "Atrevido", "orden": 30 },
+    { "id": "estilo_casual", "nombre": "Casual", "orden": 40 }
+  ],
+  "tipos": [
+    { "id": "tipo_top", "nombre": "Top", "orden": 10 },
+    { "id": "tipo_mono", "nombre": "Mono", "orden": 20 },
+    { "id": "tipo_babydoll", "nombre": "Babydoll", "orden": 30 },
+    { "id": "tipo_falda", "nombre": "Falda", "orden": 40 },
+    { "id": "tipo_vestido", "nombre": "Vestido", "orden": 50 }
+  ],
+  "colores": [
+    { "id": "color_negro", "nombre": "Negro", "orden": 10 },
+    { "id": "color_rojo", "nombre": "Rojo", "orden": 20 },
+    { "id": "color_blanco", "nombre": "Blanco", "orden": 30 }
+  ]
+}

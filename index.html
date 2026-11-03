@@ -751,9 +751,16 @@ async function renderPacksDeVerdad(){
     // ordenaba por nombre y "Centro..." caia antes que "Retos".
     { id: "centro", titulo: "Centro de Adquisiciones", icono: "🛒",
       desc: "Tu lista de deseos y la tienda de tu pareja",
-      ruta: "Retos/centro.html", seccion: "retos", libre: true, necesitaPareja: true, orden: 20 }
+      ruta: "Retos/centro.html", seccion: "retos", libre: true, necesitaPareja: true, orden: 20 },
+    // Lenceria/ (nov-2026). Va al final de Experiencias con orden:999. No lleva
+    // licencia (libre) y es de dos (necesitaPareja). `soloPareja` la esconde al
+    // invitado; ver el filtro mas abajo.
+    { id: "lenceria", titulo: "Lencería", icono: "👗",
+      desc: "Catálogo, vestuarios y planes",
+      ruta: "Lenceria", seccion: "experiencias",
+      libre: true, necesitaPareja: true, soloPareja: true, orden: 999 }
   ];
-  const FIJOS = ["guiadas", "diablitos", "retos", "centro"];
+  const FIJOS = ["guiadas", "diablitos", "retos", "centro", "lenceria"];
   try{
     const tdb = getFirestore(appTaq());
     const snap = await getDocs(collection(tdb, "packs"));
@@ -771,6 +778,9 @@ async function renderPacksDeVerdad(){
   }else{
     packs = packs.filter(p=> !p.necesitaPareja);
   }
+  // El invitado ve el menu, pero no las tarjetas que son solo de la pareja
+  // (`soloPareja`). Sin esto veria la tarjeta de Lenceria.
+  if(soyInvitado()) packs = packs.filter(p=> !p.soloPareja);
   const miId = miProyecto();
   const lic = leerLicencias();
   // Mapa de gracias disponibles por item (vencido + graciaUsada==false)

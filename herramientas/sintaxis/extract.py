@@ -54,6 +54,10 @@ targets = [
     # antes de agregarla (pasa). Con esto ya no queda ninguna pantalla con
     # JavaScript fuera del chequeo: `Privacidad/` y `Terminos/` no tienen ninguno.
     ("Autorizar/index.html", "autorizar"),
+    # Lenceria/ se agrego el 03-nov-2026, desde el primer dia de la pantalla: si
+    # se deja fuera, `revisar.py` no la revisa nunca (ya paso con Opciones/ y con
+    # las cinco del 18-oct-2026).
+    ("Lenceria/index.html", "lenceria"),
 ]
 
 pat = re.compile(r'<script([^>]*)>(.*?)</script>', re.S | re.I)
