@@ -92,6 +92,23 @@ def nombre(u):
     return (u or {}).get("nombre", "?") if isinstance(u, dict) else "?"
 
 
+def mapa_actividades():
+    """Id de actividadesExtra -> nombre actual. Si no se puede leer, devuelve
+    vacio y cada cita usa el nombre que tiene guardado (como antes)."""
+    m = {}
+    for a in docs("actividadesExtra"):
+        n = (a.get("nombre") or "").strip()
+        if n:
+            m[a["_id"]] = n
+    return m
+
+
+def nombre_de_cita(cita, mapa):
+    """Nombre actual de la actividad de una cita. Las citas nuevas guardan
+    actividadId; las viejas (o las de una actividad ya borrada) solo el nombre."""
+    return mapa.get(cita.get("actividadId")) or cita.get("actividad") or ""
+
+
 def enviar_telegram(texto):
     if DRY:
         print("--- MENSAJE (no enviado, MODO_PRUEBA) ---")
@@ -119,6 +136,7 @@ def main():
 
     citas = docs("citas")
     retos = docs("retos")
+    acts = mapa_actividades()
 
     # --- citas de hoy ---
     de_hoy = [
@@ -156,7 +174,7 @@ def main():
         for c in sorted(de_hoy, key=lambda x: str(x.get("fechaCita"))):
             marca = "✅" if c.get("estado") == "confirmada" else "⏳"
             L.append("%s %s — %s (%s → %s)" % (
-                marca, fecha_corta(c.get("fechaCita")), c.get("actividad"),
+                marca, fecha_corta(c.get("fechaCita")), nombre_de_cita(c, acts),
                 c.get("proponenteNombre"), c.get("paraNombre")))
     else:
         L.append("📅 Sin citas hoy. 😉")

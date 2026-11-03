@@ -1,0 +1,4 @@
+# Python genera esta carpeta al compilar. Es una cache: se rehace sola y no
+# debe subirse al repo (ver General/Recordatorio.md).
+__pycache__/
+*.pyc

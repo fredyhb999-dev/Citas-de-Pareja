@@ -300,11 +300,6 @@ la tarjeta y la tienda lo desmarca. Sin que el cliente recargue nada.
 - Sesion de Encuentros en `sesionEncuentros/actual`: la lista de TODOS los
   participantes (incluidos invitados) vive en un solo documento. Confirmar en la
   consola que ese path no queda abierto a lectura ajena.
-- **Recordatorio de la mañana (Telegram):** el script muestra el **nombre
-  guardado** en cada cita, no su id. Si se renombra una actividad que ya tenía
-  una cita con `actividadId`, el mensaje dice el nombre viejo aunque la app
-  muestre el correcto. No rompe nada; queda por decidir si se corrige. -> ve
-  `General/Recordatorio.md`
 
 > Invitado a media partida: acciones distintas -> ve General/Invitado-a-media-partida.md (regla vigente para invitado que entra con partida empezada)
 ### Limites conocidos (no bloquean)
