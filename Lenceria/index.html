@@ -103,8 +103,9 @@
      normal de la tarjeta (que selecciona o abre el editor). */
   .lupaBtn{ position:absolute; right:4px; bottom:4px; width:26px; height:26px;
     border-radius:50%; background:rgba(0,0,0,.62); border:1px solid var(--card-border);
-    color:#fff; font-size:.75rem; display:flex; align-items:center; justify-content:center;
+    color:#fff; display:flex; align-items:center; justify-content:center;
     cursor:pointer; padding:0; line-height:1; }
+  .lupaBtn svg{ width:13px; height:13px; display:block; }
   #lupa{ position:fixed; inset:0; background:rgba(6,4,12,.95); display:flex;
     align-items:center; justify-content:center; z-index:60; padding:16px; }
   #lupa img{ max-width:100%; max-height:100%; border-radius:12px; }
@@ -867,8 +868,13 @@ function tarjetaPrenda(p, seleccionada, alTocar){
     const lupa = document.createElement("button");
     lupa.className = "lupaBtn";
     lupa.type = "button";
-    lupa.textContent = "🔍";
     lupa.setAttribute("aria-label", "Ver la foto más grande");
+    // Flechas en diagonal hacia afuera (expandir). Va dibujado, no como símbolo
+    // de texto: cada teléfono dibuja los símbolos distinto (o sale un cuadrito).
+    lupa.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">'
+      + '<path d="M9.5 3.5H13v3.5M13 3.5 8 8.5M6.5 12.5H3V9M3 12.5 8 7.5" '
+      + 'fill="none" stroke="currentColor" stroke-width="1.5" '
+      + 'stroke-linecap="round" stroke-linejoin="round"/></svg>';
     lupa.addEventListener("click", (e)=>{ e.stopPropagation(); abrirLupa(p.foto); });
     wrap.appendChild(lupa);
 

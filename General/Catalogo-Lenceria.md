@@ -124,11 +124,12 @@ número consecutivo — `top-1`, `top-2`, `ves-1`, `bab-1`.
 - **Al guardar se comprueba que no exista otra igual** y se avisa si la hay.
 - Máximo **8 caracteres**, para que quepa en la tarjeta.
 
-**La lupa.** Cada tarjeta con foto tiene un botón 🔍 en la esquina inferior
-derecha que abre la imagen a pantalla completa (se cierra tocando). No estorba
-al toque normal de la tarjeta —que selecciona la prenda o abre el editor—
-porque el botón detiene el toque. La vista previa del formulario también se
-abre en grande al tocarla.
+**El botón de ampliar.** Cada tarjeta con foto tiene un botón redondo en la
+esquina inferior derecha con **dos flechas en diagonal** (dibujadas en SVG, no
+como símbolo de texto: cada teléfono dibuja los símbolos distinto). Abre la
+imagen a pantalla completa y se cierra tocando. No estorba al toque normal de la
+tarjeta —que selecciona la prenda o abre el editor— porque el botón detiene el
+toque. La vista previa del formulario también se abre en grande al tocarla.
 
 **Las clasificaciones se actualizan en vivo** (`onSnapshot` de las cuatro
 colecciones). Sin eso, si la otra persona agrega un tipo, tu lista no lo tendría:
