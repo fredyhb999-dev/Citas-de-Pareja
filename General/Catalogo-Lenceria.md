@@ -81,7 +81,13 @@ lleva tipo, y los tipos se amplían). Zonas, colores y estilos son casi fijos:
 las zonas del cuerpo y los colores no cambian. Decidido con Fredy (nov-2026).
 
 **Prendas** conserva dentro sus propias pestañas de lado (el de uno primero) y
-sus **chips por tipo**, con el botón "Nueva prenda" fijo abajo. Los chips se
+sus **chips por tipo**, con el botón "Nueva prenda" fijo abajo.
+
+**En Tipos** (la pestaña de al lado) cada tipo tiene una casilla **"Ocupa todo
+el cuerpo (vestido, mono)"**. Sirve para que el "Sorpréndeme" y la selección
+manual sepan que esa prenda no se combina con otras. Los de fábrica vienen
+marcados; si la base ya existía, se marcan solos la primera vez que se abra
+—solo si el campo está vacío, así que si los apagaste a mano, se respeta. Los chips se
 dejaron a la vista a propósito (un toque para elegir tipo) y se apretaron para
 que quepan en dos renglones.
 
@@ -110,6 +116,27 @@ La descripción de cada tarjeta de prenda (en el Vestidor y en la configuración
 no se ve: **"8× · 7 nov"**, o **"Nunca usada"** si no se ha usado, y al final la
 **referencia** si la tiene: **"8× · 7 nov · R-12"**. La fecha es la **última vez
 que estuvo en un plan**, no el día en que se contó.
+
+**Si fue hace siete días o menos**, en vez de la fecha dice **"hace 2 días"** (o
+"ayer", o "hoy") y la línea se pinta en **coral** en lugar de turquesa. Es un
+aviso suave —"esta ya la usaste"— sin mensaje ni bloqueo.
+
+### Orden por olvido
+
+Dentro de cada zona, las prendas se ordenan **de la que lleva más tiempo sin
+usarse a la más reciente**, y las nunca usadas van primero. Así, al abrir el
+Vestidor, lo abandonado aparece arriba sin tener que buscar. No cambia la
+pantalla: solo el orden.
+
+### "Sorpréndeme"
+
+Botón en el Vestidor que arma un conjunto **respetando las reglas**:
+
+- Si hay un **vestido o un mono** (tipo marcado "ocupa todo el cuerpo"), elige
+  ese y, si hay, unos zapatos.
+- Si no, elige **una prenda por zona**, la más olvidada de cada una.
+- Respeta los filtros activos; si no dejan nada, usa todo el catálogo del lado.
+- No guarda: solo deja la selección puesta para que la ajustes y le des Guardar.
 
 **La referencia se llena sola:** las **tres primeras letras del tipo** y un
 número consecutivo — `top-1`, `top-2`, `ves-1`, `bab-1`.
@@ -269,11 +296,26 @@ el mismo documento.
 
 - **Máximo 3 prendas por zona** al armar un plan o una propuesta. El catálogo
   puede tener más.
+  **El porqué (de Fredy, nov-2026):** pensó en capas — bra, blusa y chamarra van
+  en la misma zona, y cada una puede ser un tipo distinto. El tope cuenta
+  **zonas, no tipos**: se permiten tres capas sobre la misma parte del cuerpo.
+  Si algún día se quiere una cuarta capa, se cambia el número sabiendo esto.
+- **Un vestido o un mono no se combinan** con otras prendas: el tipo se marca
+  como **"ocupa todo el cuerpo"** (Configuración → Tipos) y solo admite prendas
+  de los pies. Si el plan ya tiene uno, se bloquea agregar otra cosa; y si ya hay
+  prendas, se bloquea agregar el vestido. Es coherencia, no gusto.
 - **Un plan por día**, garantizado por el id `lado_YYYY-MM-DD`. Guardar o aceptar
   para un día que ya tiene plan **reemplaza**, con confirmación.
 - **Fijo** es por plan (por día): no se puede mandar ni aceptar un pedido para
   ese día. El dueño sí puede editar su plan aunque esté fijo.
-- **Un pedido por persona**, sin caducidad. El nuevo reemplaza al anterior.
+- **Un pedido por persona**, sin caducidad mientras su fecha siga en el futuro.
+  El nuevo reemplaza al anterior.
+  **Si la fecha pasa sin respuesta, el pedido se borra** la siguiente vez que
+  cualquiera de los dos abra la app (y se apaga su aviso): ya no sirve, porque no
+  se aceptó. Mientras la pantalla siga abierta de un día para otro, se ve como
+  **"Vencido"**; al volver a entrar, ya no está.
+- **Un pedido nunca cuenta como "usado".** El conteo solo mira los **planes**:
+  si no se aceptó, nunca hubo plan, así que no suma nada.
 - Quien recibe un pedido puede **cambiar prendas y fecha y aceptar sin pedir
   autorización**. Quien lo mandó ve "Aceptado" o "Aceptado con cambios".
 - **Borrar una prenda** avisa, la quita de los planes futuros y del pedido
@@ -292,6 +334,14 @@ al guardar. Se liquida al abrir la pantalla y antes de guardar o aceptar.
 Va en `runTransaction`: si los dos celulares abren a la vez, solo uno puede
 marcar `contado:true`; el otro se sale sin sumar. Sin la transacción, los dos
 sumaban y el conteo quedaba doble.
+
+**Cuenta planes, no usos confirmados** (decisión de Fredy y Mary, nov-2026): si
+se planeó y la fecha pasó, suma, aunque no se lo hayan puesto. Preguntar "¿sí lo
+usaste?" sería una carga para un dato que la app no puede comprobar, y quien no
+le interese el número simplemente lo ignora. La app da la pauta; no pone policía.
+
+Por lo mismo, **borrar un plan pasado no devuelve el conteo**: ya está aplicado y
+no hay historial por plan. Es un límite consciente, no un descuido.
 
 ## Avisos
 
@@ -328,6 +378,7 @@ sumaban y el conteo quedaba doble.
 | La campana **solo** funciona en Chrome/Edge de computadora | Los navegadores de celular no dejan cambiar el ícono de la pestaña |
 | Las fotos las puede ver cualquiera con la configuración de la pareja | Las reglas de la pareja están abiertas **a propósito** |
 | Un pedido por persona, sin historial | El nuevo reemplaza al anterior |
+| El conteo mide **planes**, no usos confirmados | Si se planeó y la fecha pasó, cuenta. Pedir confirmación sería una carga y la app no puede comprobarlo |
 | Borrar un plan usado no revierte el conteo | No hay historial de uso por plan |
 
 ## Archivos

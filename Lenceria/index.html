@@ -98,6 +98,7 @@
   .rejilla .prenda .fotoWrap{ position:relative; width:100%; }
   .rejilla .prenda .nom{ font-size:.72rem; color:var(--fg-muted); margin-top:4px; line-height:1.2; }
   .rejilla .prenda .nom.conUso{ color:var(--teal); }
+  .rejilla .prenda .nom.reciente{ color:var(--coral); }
   .rejilla .prenda.sel{ border-color:var(--teal); }
   /* Lupa: abre la foto en grande. Va en la esquina para no estorbar al toque
      normal de la tarjeta (que selecciona o abre el editor). */
@@ -132,6 +133,10 @@
     font-family:'Inter',sans-serif; width:100%; }
   /* Color y Referencia, mitad y mitad en el mismo renglón. */
   .campoDoble{ display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+  .opModo{ display:flex; align-items:center; gap:10px; padding:11px 12px;
+    background:var(--bg-2); border:1px solid var(--card-border); border-radius:12px;
+    margin-bottom:12px; font-size:.85rem; width:100%; cursor:pointer; }
+  .opModo input{ width:auto; accent-color:var(--teal); }
   .fotoBox{ width:100%; aspect-ratio:1/1; max-width:240px; align-self:center;
     background:var(--bg-2); border:1px dashed var(--card-border); border-radius:16px;
     display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:10px; }
@@ -153,6 +158,12 @@
     background:var(--bg-2); color:var(--fg); border:1px solid var(--card-border); }
   .filaBtns button:active{ transform:scale(.97); }
   .contador{ font-size:.8rem; color:var(--fg-muted); margin:10px 0; text-align:center; }
+  .pieVestidor{ display:flex; align-items:center; justify-content:space-between;
+    gap:8px; width:100%; margin:8px 0; }
+  .pieVestidor .contador{ margin:0; text-align:left; flex:1; }
+  .btnSec.chico{ width:auto; padding:8px 12px; font-size:.8rem; text-decoration:none;
+    border:1px solid var(--card-border); border-radius:12px; color:var(--fg);
+    background:var(--bg-2); }
   .avisoCaja{ font-size:.8rem; color:var(--fg-muted); background:var(--bg-2);
     border:1px solid var(--card-border); border-radius:12px; padding:12px; margin-bottom:12px; }
   #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; }
@@ -192,7 +203,10 @@
       <p class="vacio" id="eVacio">No hay prendas todavía. Agrégalas con el ⚙️.</p>
     </div>
   </div>
-  <div class="contador" id="eContador"></div>
+  <div class="pieVestidor">
+    <div class="contador" id="eContador"></div>
+    <button class="btnSec chico" id="btnSorpresa">Sorpréndeme</button>
+  </div>
   <button class="btnPri" id="eGuardar">Guardar plan</button>
   <button class="btnSec" id="eCancelar">Cancelar</button>
 </div>
@@ -231,6 +245,9 @@
   <p class="desc">Puedes cambiarle el nombre. Si está en uso, no se puede borrar.</p>
   <input class="buscar" id="cNombre" placeholder="Nombre" maxlength="40">
   <p class="vacio" id="cUso"></p>
+  <label class="opModo" id="cCubreWrap" style="display:none">
+    <input type="checkbox" id="cCubre"> Ocupa todo el cuerpo (vestido, mono)
+  </label>
   <button class="btnPri" id="cGuardar">Guardar</button>
   <button class="btnSec" id="cBorrar" style="display:none">Borrar</button>
   <button class="btnSec" id="btnVolverClasif">Volver</button>
@@ -518,15 +535,28 @@ async function sembrarClasificaciones(){
       if(ids.has(item.id)){
         // Ya existe (aunque le hayan cambiado el nombre): no se escribe nada.
         if(!inst.has(item.id)){ inst.add(item.id); huboCambios = true; }
+        // Relleno único: los tipos de fábrica que ya existían antes de la marca
+        // "ocupa todo el cuerpo" la reciben una vez. Si alguien la apagó a mano,
+        // el campo ya existe (false) y no se toca.
+        if(g === "tipos" && item.cubreTodo){
+          const doc = lista.find(x => x.id === item.id);
+          if(doc && doc.cubreTodo === undefined){
+            try{
+              await setDoc(doc(db, col, item.id), { cubreTodo: true }, { merge: true });
+              doc.cubreTodo = true;
+            }catch(e){}
+          }
+        }
         continue;
       }
       if(inst.has(item.id)) continue;      // lo borraron: no vuelve
       try{
-        await setDoc(doc(db, col, item.id), {
+        const extra = (g === "tipos") ? { cubreTodo: !!item.cubreTodo } : {};
+        await setDoc(doc(db, col, item.id), Object.assign({
           nombre: item.nombre, orden: item.orden, origen: "fabrica",
           creadoEn: serverTimestamp()
-        }, { merge: true });
-        lista.push({ id: item.id, nombre: item.nombre, orden: item.orden, origen: "fabrica" });
+        }, extra), { merge: true });
+        lista.push(Object.assign({ id: item.id, nombre: item.nombre, orden: item.orden, origen: "fabrica" }, extra));
         ids.add(item.id); inst.add(item.id);
         huboCambios = true;
       }catch(e){}
@@ -556,7 +586,7 @@ async function cargarClasificaciones(){
     const fab = await (await fetch("clasificaciones.json")).json();
     const nuevo = { zonas: [], estilos: [], tipos: [], colores: [] };
     for(const g of GRUPOS){
-      nuevo[g] = (fab[g] || []).map(x => ({ id: x.id, nombre: x.nombre, orden: x.orden, origen: "fabrica" }));
+      nuevo[g] = (fab[g] || []).map(x => ({ id: x.id, nombre: x.nombre, orden: x.orden, origen: "fabrica", cubreTodo: !!x.cubreTodo }));
     }
     clasif = nuevo;
     ordenarClasif();
@@ -577,6 +607,56 @@ function valor(grupo, id){
 // Referencia automática: las 3 primeras letras del TIPO + número consecutivo.
 // Ejemplo: Top -> top-1, top-2; Vestido -> ves-1. Nunca repite: toma el mayor
 // que ya existe y suma uno; si por lo que sea ese ya está, sigue subiendo.
+// ====== Uso de las prendas: para ordenar por olvido y avisar de lo reciente ======
+function fechaDeUso(p){
+  if(!p || !p.ultimaFechaUso) return null;
+  const d = p.ultimaFechaUso.toDate ? p.ultimaFechaUso.toDate() : new Date(p.ultimaFechaUso);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// Nunca usada = 0: así queda al principio de la zona.
+function tsUso(p){
+  const d = fechaDeUso(p);
+  return d ? d.getTime() : 0;
+}
+
+function diasDesdeUso(p){
+  const d = fechaDeUso(p);
+  if(!d) return null;
+  const hoy = new Date();
+  const a = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()).getTime();
+  const b = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.round((a - b) / 86400000);
+}
+
+function textoUso(p){
+  const d = fechaDeUso(p);
+  if(!d) return "";
+  const dias = diasDesdeUso(p);
+  if(dias === null) return "";
+  if(dias <= 0) return "hoy";
+  if(dias === 1) return "ayer";
+  if(dias <= 7) return "hace " + dias + " días";
+  return d.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+}
+
+// Dentro de cada zona, primero lo que lleva más tiempo sin usarse.
+function ordenPorOlvido(lista){
+  return lista.slice().sort((a, b) => {
+    const za = valor("zonas", a.zonaId), zb = valor("zonas", b.zonaId);
+    const z = ((za ? za.orden : 0) - (zb ? zb.orden : 0));
+    if(z) return z;
+    return tsUso(a) - tsUso(b);
+  });
+}
+
+// Un tipo "ocupa todo el cuerpo" (vestido, mono): no admite otras prendas
+// salvo las de los pies. Se marca en Configuración → Tipos.
+function tipoCubreTodo(tipoId){
+  const t = valor("tipos", tipoId);
+  return !!(t && t.cubreTodo);
+}
+
 function siguienteRef(tipoId, excluirId){
   const nombre = (nombreDe("tipos", tipoId) || "pre")
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -736,6 +816,17 @@ function pintarClasifVista(){
     ? ("En uso: " + n + (n === 1 ? " prenda." : " prendas."))
     : "Sin prendas que la usen.";
   document.getElementById("cBorrar").style.display = n ? "none" : "";
+
+  // La marca de "ocupa todo el cuerpo" solo tiene sentido en los tipos.
+  const wrap = document.getElementById("cCubreWrap");
+  const chk = document.getElementById("cCubre");
+  if(grupo === "tipos"){
+    wrap.style.display = "";
+    chk.checked = !!x.cubreTodo;
+  }else{
+    wrap.style.display = "none";
+    chk.checked = false;
+  }
 }
 
 async function guardarClasif(){
@@ -750,9 +841,11 @@ async function guardarClasif(){
   const boton = document.getElementById("cGuardar");
   boton.disabled = true;
   try{
-    await setDoc(doc(db, info.col, id), { nombre, actualizadoEn: serverTimestamp() }, { merge: true });
+    const campos = { nombre, actualizadoEn: serverTimestamp() };
+    if(grupo === "tipos") campos.cubreTodo = !!document.getElementById("cCubre").checked;
+    await setDoc(doc(db, info.col, id), campos, { merge: true });
     const x = valor(grupo, id);
-    if(x) x.nombre = nombre;
+    if(x){ x.nombre = nombre; if(grupo === "tipos") x.cubreTodo = campos.cubreTodo; }
     ordenarClasif();
     pintarConfig();
     history.back();
@@ -818,13 +911,7 @@ function bloquePrendas(){
 
   const rej = document.createElement("div");
   rej.className = "rejilla";
-  const lista = prendasDeLado(tabPrendas).filter(p => pasaFiltro(p, filtroC));
-  lista.sort((a, b) => {
-    const za = valor("zonas", a.zonaId), zb = valor("zonas", b.zonaId);
-    const ta = valor("tipos", a.tipoId), tb = valor("tipos", b.tipoId);
-    return ((za ? za.orden : 0) - (zb ? zb.orden : 0))
-      || ((ta ? ta.orden : 0) - (tb ? tb.orden : 0));
-  });
+  const lista = ordenPorOlvido(prendasDeLado(tabPrendas).filter(p => pasaFiltro(p, filtroC)));
   lista.forEach(p => rej.appendChild(tarjetaPrenda(p, null, ()=> abrirPrenda(p.id))));
   scroll.appendChild(rej);
 
@@ -891,16 +978,13 @@ function tarjetaPrenda(p, seleccionada, alTocar){
     // La descripción NO repite el tipo ni el color: eso ya se ve en la foto.
     // Dice lo que no se ve: cuántas veces se ha usado y cuándo fue la última.
     const usos = Number(p.vecesUsadas) || 0;
-    let ultima = "";
-    if(p.ultimaFechaUso){
-      const d2 = p.ultimaFechaUso.toDate ? p.ultimaFechaUso.toDate() : new Date(p.ultimaFechaUso);
-      if(!isNaN(d2.getTime())){
-        ultima = d2.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
-      }
-    }
+    const ultima = textoUso(p);
+    const dias = diasDesdeUso(p);
     if(usos){
       nom.textContent = usos + "×" + (ultima ? " · " + ultima : "");
       nom.classList.add("conUso");
+      // Usada hace pocos días: se pinta en coral, para dar el "ya la usaste".
+      if(dias !== null && dias <= 7) nom.classList.add("reciente");
     }else{
       nom.textContent = "Nunca usada";
     }
@@ -1406,6 +1490,14 @@ function miniatura(p){
   return d;
 }
 
+// Un pedido pendiente cuya fecha ya pasó NO se queda "pendiente" para siempre:
+// se muestra como vencido. Se calcula al vuelo (no se escribe nada), así que
+// los dos lados ven lo mismo sin depender de que alguien abra la app a tiempo.
+function pedidoVencido(p){
+  return !!p && p.estado === "pendiente"
+    && String(p.fechaTexto || "") < hoyTexto();
+}
+
 function tarjetaPedidoRecibido(){
   const f = document.createElement("div");
   f.className = "ficha";
@@ -1414,9 +1506,19 @@ function tarjetaPedidoRecibido(){
   h.textContent = (de && de.nombre ? de.nombre : "Tu pareja") + " te propone un vestuario";
   f.appendChild(h);
 
+  const vencido = pedidoVencido(pedidoRecibido);
+  if(vencido){
+    const e = document.createElement("span");
+    e.className = "etiqueta usado";
+    e.textContent = "Vencido";
+    f.appendChild(e);
+  }
+
   const p = document.createElement("p");
   p.className = "usoTexto";
-  p.textContent = "Para el " + fechaLarga(pedidoRecibido.fechaTexto) + ".";
+  p.textContent = vencido
+    ? ("Era para el " + fechaLarga(pedidoRecibido.fechaTexto) + ". Esa fecha ya pasó: elige otra para aceptarlo.")
+    : ("Para el " + fechaLarga(pedidoRecibido.fechaTexto) + ".");
   f.appendChild(p);
 
   const tira = document.createElement("div");
@@ -1427,7 +1529,7 @@ function tarjetaPedidoRecibido(){
   const btns = document.createElement("div");
   btns.className = "filaBtns";
   const bA = document.createElement("button");
-  bA.textContent = "Ajustar y aceptar";
+  bA.textContent = vencido ? "Elegir fecha y aceptar" : "Ajustar y aceptar";
   bA.addEventListener("click", ()=> abrirPedido());
   btns.appendChild(bA);
   const bR = document.createElement("button");
@@ -1446,9 +1548,13 @@ function tarjetaPedidoEnviado(){
   h.textContent = "Tu propuesta";
   f.appendChild(h);
 
+  const vencido = pedidoVencido(pedidoEnviado);
   const p = document.createElement("p");
   p.className = "usoTexto";
-  if(pedidoEnviado.estado === "pendiente"){
+  if(vencido){
+    p.textContent = "Vencido. Era para el " + fechaLarga(pedidoEnviado.fechaTexto)
+      + " y no se respondió a tiempo.";
+  }else if(pedidoEnviado.estado === "pendiente"){
     p.textContent = "Pendiente de respuesta. Para el " + fechaLarga(pedidoEnviado.fechaTexto) + ".";
   }else if(pedidoEnviado.estado === "aceptado"){
     p.textContent = (pedidoEnviado.modificado ? "Aceptado con cambios" : "Aceptado")
@@ -1462,12 +1568,39 @@ function tarjetaPedidoEnviado(){
     const btns = document.createElement("div");
     btns.className = "filaBtns";
     const b = document.createElement("button");
-    b.textContent = "Cancelar pedido";
+    b.textContent = vencido ? "Quitar el pedido" : "Cancelar pedido";
     b.addEventListener("click", cancelarPedido);
     btns.appendChild(b);
     f.appendChild(btns);
   }
   return f;
+}
+
+// Los pedidos que quedaron sin responder y cuya fecha ya pasó no sirven: se
+// borran la siguiente vez que cualquiera de los dos abra la app. Un pedido
+// nunca cuenta como "usado": eso solo lo hacen los planes.
+async function limpiarPedidosVencidos(){
+  const hoy = hoyTexto();
+
+  if(pedidoRecibido && pedidoRecibido.estado === "pendiente"
+      && String(pedidoRecibido.fechaTexto || "") < hoy){
+    const deId = pedidoRecibido.deId;
+    try{
+      await deleteDoc(doc(db, "lenceriaPedidos", miId));
+      pedidoRecibido = null;
+      if(deId){
+        try{ await setDoc(doc(db, "invitosLenceria", deId), { visto: true }, { merge: true }); }catch(e){}
+      }
+    }catch(e){}
+  }
+
+  if(pedidoEnviado && pedidoEnviado.estado === "pendiente"
+      && String(pedidoEnviado.fechaTexto || "") < hoy){
+    try{
+      await deleteDoc(doc(db, "lenceriaPedidos", otroId));
+      pedidoEnviado = null;
+    }catch(e){}
+  }
 }
 
 function abrirElegir(modo, plan){
@@ -1494,7 +1627,7 @@ function pintarVestidor(){
 
   const rej = document.getElementById("eRejilla");
   rej.innerHTML = "";
-  const lista = prendasDeLado(ladoElegir).filter(p => pasaFiltro(p, filtroE));
+  const lista = ordenPorOlvido(prendasDeLado(ladoElegir).filter(p => pasaFiltro(p, filtroE)));
   const vacio = document.getElementById("eVacio");
   vacio.style.display = lista.length ? "none" : "";
   vacio.textContent = (filtroE.tipo || filtroE.color || filtroE.estilo)
@@ -1512,6 +1645,29 @@ function alternarSeleccion(p){
   if(i >= 0){
     seleccion.splice(i, 1);
   }else{
+    const esPies = p.zonaId === "zona_pies";
+
+    // Un vestido o un mono ocupa todo el cuerpo: no convive con otras prendas
+    // salvo las de los pies. Es regla de coherencia, no de gusto.
+    const hayEntero = seleccion.some(id => {
+      const x = prendas.find(y => y.id === id);
+      return x && tipoCubreTodo(x.tipoId);
+    });
+    if(hayEntero && !esPies && !tipoCubreTodo(p.tipoId)){
+      aviso("Ya hay un vestido o un mono. Quita esa prenda para agregar otra.");
+      return;
+    }
+    if(tipoCubreTodo(p.tipoId)){
+      const otras = seleccion.some(id => {
+        const x = prendas.find(y => y.id === id);
+        return x && x.zonaId !== "zona_pies";
+      });
+      if(otras){
+        aviso("Un vestido o un mono reemplaza las demás prendas. Solo se le suman los pies.");
+        return;
+      }
+    }
+
     const cuantas = seleccion.filter(id => {
       const x = prendas.find(y => y.id === id);
       return x && x.zonaId === p.zonaId;
@@ -1658,6 +1814,8 @@ function abrirPedido(){
   if(!pedidoRecibido) return;
   ladoElegir = miLado;
   fechaElegir = pedidoRecibido.fechaTexto || "";
+  // Si la propuesta venció, se abre sin fecha: hay que elegir una nueva.
+  if(fechaElegir < hoyTexto()) fechaElegir = "";
   seleccion = (pedidoRecibido.prendas || []).slice();
   limpiarFiltros(filtroE);
 
@@ -1676,6 +1834,7 @@ function pintarPedido(){
   rej.innerHTML = "";
   prendasDeLado(miLado)
     .filter(p => pasaFiltro(p, filtroE))
+    .sort((a, b) => tsUso(a) - tsUso(b))
     .forEach(p => rej.appendChild(tarjetaPrenda(p, seleccion.indexOf(p.id) >= 0, ()=> alternarSeleccion(p))));
 
   pintarContador("pContador");
@@ -1774,6 +1933,38 @@ async function cancelarPedido(){
   }catch(e){ aviso("No se pudo cancelar."); }
 }
 
+// Un conjunto al azar, pero con sentido: prioriza lo más olvidado y respeta las
+// reglas del vestidor. Si el filtro no deja nada, usa todo el catálogo del lado.
+function sorprendeme(){
+  const conFiltro = ordenPorOlvido(prendasDeLado(ladoElegir).filter(p => pasaFiltro(p, filtroE)));
+  const todas = conFiltro.length ? conFiltro : ordenPorOlvido(prendasDeLado(ladoElegir));
+  if(!todas.length){
+    aviso("No hay prendas todavía. Agrégalas con el ⚙️."); return;
+  }
+
+  const elegidas = [];
+  const enteros = todas.filter(p => tipoCubreTodo(p.tipoId));
+
+  if(enteros.length){
+    // Vestido o mono: manda esa prenda y solo se le suman los pies.
+    elegidas.push(enteros[0]);
+    const pies = todas.find(p => p.zonaId === "zona_pies");
+    if(pies) elegidas.push(pies);
+  }else{
+    // Una por zona, la más olvidada de cada una (el orden ya las deja primero).
+    const porZona = {};
+    todas.forEach(p => {
+      const z = p.zonaId || "sin_zona";
+      if(!porZona[z]) porZona[z] = p;
+    });
+    Object.keys(porZona).forEach(z => elegidas.push(porZona[z]));
+  }
+
+  seleccion = elegidas.map(p => p.id);
+  pintarVestidor();
+}
+
+document.getElementById("btnSorpresa").addEventListener("click", sorprendeme);
 document.getElementById("eGuardar").addEventListener("click", guardarPlan);
 document.getElementById("pAceptar").addEventListener("click", aceptarPedido);
 document.getElementById("pRechazar").addEventListener("click", rechazarPedido);
@@ -1925,6 +2116,7 @@ async function arrancar(){
   await liquidarUsos();
   await cargarPlanes();
   await cargarPedidos();
+  await limpiarPedidosVencidos();
 
   pintarConfig();
   pintarPlanes();

@@ -16,10 +16,10 @@
   ],
   "tipos": [
     { "id": "tipo_top", "nombre": "Top", "orden": 10 },
-    { "id": "tipo_mono", "nombre": "Mono", "orden": 20 },
+    { "id": "tipo_mono", "nombre": "Mono", "orden": 20, "cubreTodo": true },
     { "id": "tipo_babydoll", "nombre": "Babydoll", "orden": 30 },
     { "id": "tipo_falda", "nombre": "Falda", "orden": 40 },
-    { "id": "tipo_vestido", "nombre": "Vestido", "orden": 50 }
+    { "id": "tipo_vestido", "nombre": "Vestido", "orden": 50, "cubreTodo": true }
   ],
   "colores": [
     { "id": "color_negro", "nombre": "Negro", "orden": 10 },
