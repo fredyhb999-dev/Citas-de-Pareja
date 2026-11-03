@@ -480,7 +480,8 @@ function desplegableFiltro(etiqueta, grupo, valor, alCambiar){
   return sel;
 }
 let tabActivo = "A";
-let verPasados = false;    // los planes pasados se abren solo si se pidenlet ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
+let verPasados = false;    // los planes pasados se abren solo si se piden
+let ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
 let prendaEditando = null;
 let fotoProcesada = null;
 let refAuto = "";          // última referencia generada sola (para saber si pisarla)
@@ -1926,7 +1927,7 @@ async function arrancar(){
   vigilarInvitaciones(db, { tipo: "lenceria", esEsta: true, alTerminar: ()=> ver("vistaPlanes") });
 }
 
-arrancar().catch(()=>{});
+arrancar().catch((e)=>{ console.error("ARRANQUE_FALLO:", e); });
 </script>
 </body>
 </html>
