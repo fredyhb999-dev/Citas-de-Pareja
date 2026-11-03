@@ -61,9 +61,12 @@
   .x{ background:none; border:none; color:var(--rojo); cursor:pointer; font-size:1rem; padding:6px 10px; }
   .uso{ font-size:.8rem; color:var(--fg-muted); min-width:22px; text-align:right; }
   .usoTexto{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; }
-  /* ===== recuadro fijo: toma el alto que sobra, así no se sale en ningún
-     teléfono (nada de porcentajes que adivinen la pantalla) ===== */
+  /* En estas dos pantallas la página mide exactamente la pantalla, así el
+     recuadro puede ENCOGERSE y el botón de abajo nunca se sale. Las demás
+     vistas siguen con scroll normal. */
+  body.sinScroll{ height:100dvh; }
   #vistaPlanes.ver, #vistaConfig.ver{ flex:1; min-height:0; }
+  #vistaPlanes .desc, #vistaConfig .desc{ margin-bottom:12px; }
   .ccBox{ width:100%; flex:1; min-height:0; display:flex; flex-direction:column;
     background:var(--bg-2); border:1px solid var(--card-border); border-radius:16px;
     padding:10px; margin-bottom:8px; }
@@ -255,6 +258,8 @@ function ver(id, guardar = true){
   document.getElementById(id).classList.add("ver");
   vistaActual = id;
   document.getElementById("btnCfg").style.display = (id === "vistaPlanes") ? "block" : "none";
+  // Solo en las dos pantallas de recuadro la página mide exactamente la pantalla.
+  document.body.classList.toggle("sinScroll", id === "vistaPlanes" || id === "vistaConfig");
   if(guardar){ try{ history.pushState({ v: id }, ""); }catch(e){} }
   window.scrollTo(0, 0);
 }

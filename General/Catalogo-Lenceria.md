@@ -38,10 +38,13 @@ devuelve con un aviso.
 La principal y la configuración comparten la misma forma: **pestañas afuera,
 recuadro con scroll adentro y la acción abajo.**
 
-- El recuadro **toma el alto que sobra** (`flex:1; min-height:200px`), no un
-  porcentaje fijo: así no se sale de la pantalla en ningún teléfono.
+- En estas dos pantallas la página mide **exactamente la pantalla** (`body.sinScroll`
+  con `height:100dvh`), y el recuadro **se encoge solo** si hace falta. Así el
+  botón de abajo nunca se sale. Las demás vistas siguen con scroll normal.
 - La pestaña activa se marca **solo con el texto en turquesa y una línea fina
   debajo**, sin bloque de color.
+- Los dos recuadros son iguales de forma, pero **el de configuración queda unos
+  40 px más bajo**, porque tiene dos renglones de pestañas y la principal uno.
 
 ### Principal: "Ilusiones y sueños"
 
