@@ -65,7 +65,7 @@
      recuadro puede ENCOGERSE y el botón de abajo nunca se sale. Las demás
      vistas siguen con scroll normal. */
   body.sinScroll{ height:100dvh; }
-  #vistaPlanes.ver, #vistaConfig.ver{ flex:1; min-height:0; }
+  #vistaPlanes.ver, #vistaConfig.ver, #vistaElegir.ver, #vistaPedido.ver{ flex:1; min-height:0; }
   #vistaPlanes .desc, #vistaConfig .desc{ margin-bottom:12px; }
   .ccBox{ width:100%; flex:1; min-height:0; display:flex; flex-direction:column;
     background:var(--bg-2); border:1px solid var(--card-border); border-radius:16px;
@@ -93,11 +93,20 @@
     font-family:'Inter',sans-serif; margin-bottom:14px; }
   .rejilla{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; width:100%; }
   .rejilla .prenda{ background:var(--card); border:2px solid var(--card-border);
-    border-radius:12px; padding:6px; cursor:pointer; text-align:center; }
+    border-radius:12px; padding:6px; cursor:pointer; text-align:center; position:relative; }
   .rejilla .prenda img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:8px; display:block; }
   .rejilla .prenda .nom{ font-size:.72rem; color:var(--fg-muted); margin-top:4px; line-height:1.2; }
   .rejilla .prenda .nom.conUso{ color:var(--teal); }
   .rejilla .prenda.sel{ border-color:var(--teal); }
+  /* Lupa: abre la foto en grande. Va en la esquina para no estorbar al toque
+     normal de la tarjeta (que selecciona o abre el editor). */
+  .lupaBtn{ position:absolute; right:4px; bottom:4px; width:26px; height:26px;
+    border-radius:50%; background:rgba(0,0,0,.62); border:1px solid var(--card-border);
+    color:#fff; font-size:.75rem; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; padding:0; line-height:1; }
+  #lupa{ position:fixed; inset:0; background:rgba(6,4,12,.95); display:flex;
+    align-items:center; justify-content:center; z-index:60; padding:16px; }
+  #lupa img{ max-width:100%; max-height:100%; border-radius:12px; }
   .separador{ width:100%; font-family:'Chakra Petch',sans-serif; font-size:.72rem;
     text-transform:uppercase; letter-spacing:.12em; color:var(--fg-muted);
     margin:6px 0 8px; }
@@ -110,6 +119,8 @@
   .campo input, .campo select{ border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg-2); color:var(--fg); padding:12px; font-size:.95rem;
     font-family:'Inter',sans-serif; width:100%; }
+  /* Color y Referencia, mitad y mitad en el mismo renglón. */
+  .campoDoble{ display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
   .fotoBox{ width:100%; aspect-ratio:1/1; max-width:240px; align-self:center;
     background:var(--bg-2); border:1px dashed var(--card-border); border-radius:16px;
     display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:10px; }
@@ -164,8 +175,12 @@
   <p class="desc">Elige hasta 3 prendas por zona.</p>
   <label class="campo"><span>Fecha</span><input id="eFecha" type="date"></label>
   <div class="chips" id="eChips"></div>
-  <div class="rejilla" id="eRejilla"></div>
-  <p class="vacio" id="eVacio">No hay prendas todavía. Agrégalas con el ⚙️.</p>
+  <div class="ccBox">
+    <div class="ccScroll">
+      <div class="rejilla" id="eRejilla"></div>
+      <p class="vacio" id="eVacio">No hay prendas todavía. Agrégalas con el ⚙️.</p>
+    </div>
+  </div>
   <div class="contador" id="eContador"></div>
   <button class="btnPri" id="eGuardar">Guardar plan</button>
   <button class="btnSec" id="eCancelar">Cancelar</button>
@@ -177,7 +192,11 @@
   <p class="desc">Puedes cambiar las prendas y la fecha antes de aceptar.</p>
   <label class="campo"><span>Fecha</span><input id="pFecha" type="date"></label>
   <div class="chips" id="pChips"></div>
-  <div class="rejilla" id="pRejilla"></div>
+  <div class="ccBox">
+    <div class="ccScroll">
+      <div class="rejilla" id="pRejilla"></div>
+    </div>
+  </div>
   <div class="contador" id="pContador"></div>
   <button class="btnPri" id="pAceptar">Aceptar</button>
   <button class="btnSec" id="pRechazar">Rechazar</button>
@@ -215,7 +234,10 @@
   <label class="campo"><span>Zona</span><select id="pZona"></select></label>
   <label class="campo"><span>Estilo</span><select id="pEstilo"></select></label>
   <label class="campo"><span>Tipo</span><select id="pTipo"></select></label>
-  <label class="campo"><span>Color</span><select id="pColor"></select></label>
+  <div class="campoDoble">
+    <label class="campo"><span>Color</span><select id="pColor"></select></label>
+    <label class="campo"><span>Referencia</span><input id="pRef" maxlength="8" placeholder="Opcional"></label>
+  </div>
 
   <p class="vacio" id="pNotaBloqueo" style="display:none"></p>
 
@@ -233,6 +255,8 @@
   <button class="btnSec" id="btnBorrarPrenda" style="display:none">Borrar</button>
   <button class="btnSec" id="btnCancelarPrenda">Cancelar</button>
 </div>
+
+<div id="lupa" style="display:none"><img id="lupaImg" alt="Foto de la prenda"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
@@ -264,8 +288,10 @@ function ver(id, guardar = true){
   document.getElementById(id).classList.add("ver");
   vistaActual = id;
   document.getElementById("btnCfg").style.display = (id === "vistaPlanes") ? "block" : "none";
-  // Solo en las dos pantallas de recuadro la página mide exactamente la pantalla.
-  document.body.classList.toggle("sinScroll", id === "vistaPlanes" || id === "vistaConfig");
+  // Solo en las pantallas con recuadro la página mide exactamente la pantalla,
+  // para que el botón de abajo no se salga.
+  document.body.classList.toggle("sinScroll",
+    id === "vistaPlanes" || id === "vistaConfig" || id === "vistaElegir" || id === "vistaPedido");
   if(guardar){ try{ history.pushState({ v: id }, ""); }catch(e){} }
   window.scrollTo(0, 0);
 }
@@ -357,8 +383,8 @@ let ladoElegir = "A";
 let seleccion = [];
 let fechaElegir = "";
 let planEditando = null;     // id del plan que se está editando
-let filtroZona = "";
-let filtroZonaConfig = "";
+let filtroTipo = "";
+let filtroTipoConfig = "";
 let tabActivo = "A";
 let verPasados = false;    // los planes pasados se abren solo si se piden
 let ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
@@ -649,9 +675,6 @@ function bloquePrendas(){
   const wrap = document.createElement("div");
   wrap.className = "ccPanel";
 
-  const scroll = document.createElement("div");
-  scroll.className = "ccScroll";
-
   // pestañas de lado: el de uno va primero (ordenTabs)
   const tabs = document.createElement("div");
   tabs.className = "tabs";
@@ -662,28 +685,32 @@ function bloquePrendas(){
     b.addEventListener("click", ()=>{ tabPrendas = lado; pintarConfig(); });
     tabs.appendChild(b);
   });
-  scroll.appendChild(tabs);
+  wrap.appendChild(tabs);
 
-  // chips de zona
+  // Chips por TIPO (nov-2026): se busca "un babydoll", no "de pecho".
+  // Van fuera del scroll para que el filtro no se pierda al bajar.
   const chips = document.createElement("div");
   chips.className = "chips";
-  const todas = document.createElement("button");
-  todas.className = "chip" + (filtroZonaConfig ? "" : " activo");
-  todas.textContent = "Todas";
-  todas.addEventListener("click", ()=>{ filtroZonaConfig = ""; pintarConfig(); });
-  chips.appendChild(todas);
-  (clasif.zonas || []).forEach(z => {
+  const todos = document.createElement("button");
+  todos.className = "chip" + (filtroTipoConfig ? "" : " activo");
+  todos.textContent = "Todos";
+  todos.addEventListener("click", ()=>{ filtroTipoConfig = ""; pintarConfig(); });
+  chips.appendChild(todos);
+  (clasif.tipos || []).forEach(t => {
     const b = document.createElement("button");
-    b.className = "chip" + (filtroZonaConfig === z.id ? " activo" : "");
-    b.textContent = z.nombre || "";
-    b.addEventListener("click", ()=>{ filtroZonaConfig = z.id; pintarConfig(); });
+    b.className = "chip" + (filtroTipoConfig === t.id ? " activo" : "");
+    b.textContent = t.nombre || "";
+    b.addEventListener("click", ()=>{ filtroTipoConfig = t.id; pintarConfig(); });
     chips.appendChild(b);
   });
-  scroll.appendChild(chips);
+  wrap.appendChild(chips);
+
+  const scroll = document.createElement("div");
+  scroll.className = "ccScroll";
 
   const rej = document.createElement("div");
   rej.className = "rejilla";
-  const lista = prendasDeLado(tabPrendas).filter(p => !filtroZonaConfig || p.zonaId === filtroZonaConfig);
+  const lista = prendasDeLado(tabPrendas).filter(p => !filtroTipoConfig || p.tipoId === filtroTipoConfig);
   lista.sort((a, b) => {
     const za = valor("zonas", a.zonaId), zb = valor("zonas", b.zonaId);
     const ta = valor("tipos", a.tipoId), tb = valor("tipos", b.tipoId);
@@ -722,6 +749,16 @@ function tarjetaPrenda(p, seleccionada, alTocar){
     img.src = p.foto;
     img.alt = "Prenda";
     d.appendChild(img);
+
+    // Lupa: la foto en grande. Se detiene la propagación para que tocar la lupa
+    // no seleccione la prenda ni abra el editor.
+    const lupa = document.createElement("button");
+    lupa.className = "lupaBtn";
+    lupa.type = "button";
+    lupa.textContent = "🔍";
+    lupa.setAttribute("aria-label", "Ver la foto más grande");
+    lupa.addEventListener("click", (e)=>{ e.stopPropagation(); abrirLupa(p.foto); });
+    d.appendChild(lupa);
   }else{
     const ph = document.createElement("div");
     ph.className = "ph";
@@ -747,6 +784,8 @@ function tarjetaPrenda(p, seleccionada, alTocar){
     }else{
       nom.textContent = "Nunca usada";
     }
+    const refTxt = String(p.ref || "").trim();
+    if(refTxt) nom.textContent += " · " + refTxt;
   }else{
     nom.textContent = "Prenda eliminada";
   }
@@ -755,6 +794,21 @@ function tarjetaPrenda(p, seleccionada, alTocar){
   if(alTocar) d.addEventListener("click", alTocar);
   return d;
 }
+
+// ====== La lupa: la foto en grande, a pantalla completa ======
+function abrirLupa(src){
+  if(!src) return;
+  document.getElementById("lupaImg").src = src;
+  document.getElementById("lupa").style.display = "flex";
+}
+
+function cerrarLupa(){
+  document.getElementById("lupa").style.display = "none";
+  const img = document.getElementById("lupaImg");
+  img.removeAttribute("src");
+}
+
+document.getElementById("lupa").addEventListener("click", cerrarLupa);
 
 function llenarSelect(sel, grupo, actual){
   sel.innerHTML = "";
@@ -790,6 +844,7 @@ function abrirPrenda(id){
   llenarSelect(document.getElementById("pEstilo"), "estilos", p && p.estiloId);
   llenarSelect(document.getElementById("pTipo"), "tipos", p && p.tipoId);
   llenarSelect(document.getElementById("pColor"), "colores", p && p.colorId);
+  document.getElementById("pRef").value = (p && p.ref) || "";
 
   // Bloqueo de lado y zona si está en un plan futuro o en un pedido pendiente.
   // Se explica el motivo: un select apagado sin razón parece un error.
@@ -885,6 +940,12 @@ document.getElementById("btnElegirFoto").addEventListener("click", ()=>{
   document.getElementById("fFoto").click();
 });
 
+// La vista previa también se abre en grande.
+document.getElementById("pPreview").addEventListener("click", ()=>{
+  const src = document.getElementById("pPreview").getAttribute("src");
+  if(src) abrirLupa(src);
+});
+
 document.getElementById("fFoto").addEventListener("change", async (e)=>{
   const f = e.target.files && e.target.files[0];
   e.target.value = "";
@@ -924,6 +985,7 @@ async function guardarPrenda(){
   const tipoId = document.getElementById("pTipo").value;
   const colorId = document.getElementById("pColor").value;
   const lado = document.getElementById("pLado").value;
+  const referencia = String(document.getElementById("pRef").value || "").trim();
 
   if(!zonaId || !estiloId || !tipoId || !colorId){
     aviso("Falta elegir zona, estilo, tipo o color."); return;
@@ -936,7 +998,7 @@ async function guardarPrenda(){
   boton.disabled = true;
   try{
     if(prendaEditando){
-      const campos = { lado, zonaId, estiloId, tipoId, colorId, actualizadoEn: serverTimestamp() };
+      const campos = { lado, zonaId, estiloId, tipoId, colorId, ref: referencia, actualizadoEn: serverTimestamp() };
       if(fotoProcesada){
         campos.foto = fotoProcesada.foto;
         campos.fotoW = fotoProcesada.fotoW;
@@ -946,16 +1008,16 @@ async function guardarPrenda(){
       const p = prendas.find(x => x.id === prendaEditando);
       if(p) Object.assign(p, campos);
     }else{
-      const ref = await addDoc(collection(db, "lenceriaPrendas"), {
+      const docRef = await addDoc(collection(db, "lenceriaPrendas"), {
         lado, duenoId: idDeLado(lado),
-        zonaId, estiloId, tipoId, colorId,
+        zonaId, estiloId, tipoId, colorId, ref: referencia,
         foto: fotoProcesada.foto, fotoW: fotoProcesada.fotoW, fotoH: fotoProcesada.fotoH,
         vecesUsadas: 0, ultimaFechaUso: null,
         creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp(),
         creadoPorId: miId
       });
-      prendas.push({ id: ref.id, lado, duenoId: idDeLado(lado), zonaId, estiloId, tipoId, colorId,
-        foto: fotoProcesada.foto, fotoW: fotoProcesada.fotoW, fotoH: fotoProcesada.fotoH, vecesUsadas: 0 });
+      prendas.push({ id: docRef.id, lado, duenoId: idDeLado(lado), zonaId, estiloId, tipoId, colorId,
+        ref: referencia, foto: fotoProcesada.foto, fotoW: fotoProcesada.fotoW, fotoH: fotoProcesada.fotoH, vecesUsadas: 0 });
     }
     tabPrendas = lado;
     aviso("Prenda guardada.");
@@ -1255,7 +1317,7 @@ function abrirElegir(modo, plan){
   ladoElegir = (modo === "plan") ? miLado : otroLado;
   fechaElegir = plan ? (plan.fechaTexto || "") : "";
   seleccion = plan ? (plan.prendas || []).slice() : [];
-  filtroZona = "";
+  filtroTipo = "";
 
   document.getElementById("elegirTitulo").textContent =
     (modo === "plan" ? "Vestidor de " : "Proponer a ") + nombreLado(ladoElegir);
@@ -1268,25 +1330,25 @@ function abrirElegir(modo, plan){
 }
 
 function pintarVestidor(){
-  // chips de zona
+  // chips por tipo (nov-2026): así se busca "un babydoll" y no "de pecho"
   const chips = document.getElementById("eChips");
   chips.innerHTML = "";
-  const todas = document.createElement("button");
-  todas.className = "chip" + (filtroZona ? "" : " activo");
-  todas.textContent = "Todas";
-  todas.addEventListener("click", ()=>{ filtroZona = ""; pintarVestidor(); });
-  chips.appendChild(todas);
-  (clasif.zonas || []).forEach(z => {
+  const todos = document.createElement("button");
+  todos.className = "chip" + (filtroTipo ? "" : " activo");
+  todos.textContent = "Todos";
+  todos.addEventListener("click", ()=>{ filtroTipo = ""; pintarVestidor(); });
+  chips.appendChild(todos);
+  (clasif.tipos || []).forEach(t => {
     const b = document.createElement("button");
-    b.className = "chip" + (filtroZona === z.id ? " activo" : "");
-    b.textContent = z.nombre || "";
-    b.addEventListener("click", ()=>{ filtroZona = z.id; pintarVestidor(); });
+    b.className = "chip" + (filtroTipo === t.id ? " activo" : "");
+    b.textContent = t.nombre || "";
+    b.addEventListener("click", ()=>{ filtroTipo = t.id; pintarVestidor(); });
     chips.appendChild(b);
   });
 
   const rej = document.getElementById("eRejilla");
   rej.innerHTML = "";
-  const lista = prendasDeLado(ladoElegir).filter(p => !filtroZona || p.zonaId === filtroZona);
+  const lista = prendasDeLado(ladoElegir).filter(p => !filtroTipo || p.tipoId === filtroTipo);
   document.getElementById("eVacio").style.display = lista.length ? "none" : "";
   lista.forEach(p => {
     rej.appendChild(tarjetaPrenda(p, seleccion.indexOf(p.id) >= 0, ()=> alternarSeleccion(p)));
@@ -1447,7 +1509,7 @@ function abrirPedido(){
   ladoElegir = miLado;
   fechaElegir = pedidoRecibido.fechaTexto || "";
   seleccion = (pedidoRecibido.prendas || []).slice();
-  filtroZona = "";
+  filtroTipo = "";
 
   document.getElementById("pedidoTitulo").textContent = "El vestuario que te propone " + nombreLado(otroLado);
   document.getElementById("pFecha").value = fechaElegir;
@@ -1460,23 +1522,23 @@ function abrirPedido(){
 function pintarPedido(){
   const chips = document.getElementById("pChips");
   chips.innerHTML = "";
-  const todas = document.createElement("button");
-  todas.className = "chip" + (filtroZona ? "" : " activo");
-  todas.textContent = "Todas";
-  todas.addEventListener("click", ()=>{ filtroZona = ""; pintarPedido(); });
-  chips.appendChild(todas);
-  (clasif.zonas || []).forEach(z => {
+  const todos = document.createElement("button");
+  todos.className = "chip" + (filtroTipo ? "" : " activo");
+  todos.textContent = "Todos";
+  todos.addEventListener("click", ()=>{ filtroTipo = ""; pintarPedido(); });
+  chips.appendChild(todos);
+  (clasif.tipos || []).forEach(t => {
     const b = document.createElement("button");
-    b.className = "chip" + (filtroZona === z.id ? " activo" : "");
-    b.textContent = z.nombre || "";
-    b.addEventListener("click", ()=>{ filtroZona = z.id; pintarPedido(); });
+    b.className = "chip" + (filtroTipo === t.id ? " activo" : "");
+    b.textContent = t.nombre || "";
+    b.addEventListener("click", ()=>{ filtroTipo = t.id; pintarPedido(); });
     chips.appendChild(b);
   });
 
   const rej = document.getElementById("pRejilla");
   rej.innerHTML = "";
   prendasDeLado(miLado)
-    .filter(p => !filtroZona || p.zonaId === filtroZona)
+    .filter(p => !filtroTipo || p.tipoId === filtroTipo)
     .forEach(p => rej.appendChild(tarjetaPrenda(p, seleccion.indexOf(p.id) >= 0, ()=> alternarSeleccion(p))));
 
   pintarContador("pContador");
@@ -1678,6 +1740,22 @@ function escuchar(){
       }, ()=>{});
     }
   }catch(e){}
+
+  // Las clasificaciones también en vivo. Sin esto, si la otra persona agrega un
+  // tipo, tu lista no lo tiene: los chips no lo muestran y al abrir una prenda
+  // suya el select caería en el primer tipo y lo cambiaría al guardar.
+  for(const g of GRUPOS){
+    try{
+      onSnapshot(collection(db, COLS[g].col), (snap)=>{
+        clasif[g] = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        ordenarClasif();
+        if(document.activeElement && document.activeElement.tagName === "INPUT") return;
+        pintarConfig();
+        if(vistaActual === "vistaElegir") pintarVestidor();
+        if(vistaActual === "vistaPedido") pintarPedido();
+      }, ()=>{});
+    }catch(e){}
+  }
 }
 
 // ====== 11) Arranque ======

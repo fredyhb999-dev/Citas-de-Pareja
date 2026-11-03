@@ -20,8 +20,8 @@ La tarjeta se agrega en el arreglo `packs` de `renderPacksDeVerdad()`
 | Vista | Para qué |
 |---|---|
 | `vistaPlanes` | Principal, **"Ilusiones y sueños"**: pestañas de lado afuera y recuadro con los planes; el botón de acción va debajo |
-| `vistaElegir` | El Vestidor: elegir prendas y fecha, para un plan propio o una propuesta |
-| `vistaPedido` | Ajustar y aceptar/rechazar el vestuario que le propusieron |
+| `vistaElegir` | El Vestidor: elegir prendas y fecha, con la cuadrícula en recuadro y el botón abajo |
+| `vistaPedido` | Ajustar y aceptar/rechazar el vestuario que le propusieron, igual que el Vestidor |
 | `vistaConfig` | **"Ajusta tus ilusiones y sueños"**: prendas y las cuatro clasificaciones, con las pestañas fuera del recuadro |
 | `vistaClasif` | Editar o borrar un valor de una clasificación |
 | `vistaPrenda` | Alta, edición y baja de una prenda |
@@ -33,14 +33,17 @@ Cada vista es un paso del historial (`pushState` + `popstate`), y el
 El invitado no entra: el menú no le muestra la tarjeta y la pantalla lo
 devuelve con un aviso.
 
-## Las dos pantallas con recuadro fijo
+## Las pantallas con recuadro fijo
 
-La principal y la configuración comparten la misma forma: **pestañas afuera,
-recuadro con scroll adentro y la acción abajo.**
+La principal, la configuración, el Vestidor y el ajuste de un pedido comparten la
+misma forma: **pestañas o filtros afuera, recuadro con scroll adentro y la
+acción abajo.** Así, con muchas prendas o planes, **el botón de guardar nunca
+se va**.
 
-- En estas dos pantallas la página mide **exactamente la pantalla** (`body.sinScroll`
+- En estas pantallas la página mide **exactamente la pantalla** (`body.sinScroll`
   con `height:100dvh`), y el recuadro **se encoge solo** si hace falta. Así el
-  botón de abajo nunca se sale. Las demás vistas siguen con scroll normal.
+  botón de abajo nunca se sale. Las vistas de alta de prenda y de clasificación
+  siguen con scroll normal, que ahí sí hace falta.
 - La pestaña activa se marca **solo con el texto en turquesa y una línea fina
   debajo**, sin bloque de color.
 - Los dos recuadros son iguales de forma, pero **el de configuración queda unos
@@ -78,17 +81,38 @@ lleva tipo, y los tipos se amplían). Zonas, colores y estilos son casi fijos:
 las zonas del cuerpo y los colores no cambian. Decidido con Fredy (nov-2026).
 
 **Prendas** conserva dentro sus propias pestañas de lado (el de uno primero) y
-sus chips de zona, con el botón "Nueva prenda" fijo abajo. Los chips se dejaron
-a la vista a propósito (un toque para elegir zona) y se apretaron para que los
-8 quepan en dos renglones. El filtro de zona de la configuración es
-**independiente** del filtro del Vestidor (`filtroZonaConfig` vs `filtroZona`).
+sus **chips por tipo**, con el botón "Nueva prenda" fijo abajo. Los chips se
+dejaron a la vista a propósito (un toque para elegir tipo) y se apretaron para
+que quepan en dos renglones.
+
+**El filtro es por tipo, no por zona** (nov-2026, idea de la esposa de Fredy):
+así se busca "un babydoll" y no "de pecho", que es como de verdad se elige. El
+filtro de la configuración es **independiente** del filtro del Vestidor
+(`filtroTipoConfig` vs `filtroTipo`).
 
 ### El contador de uso, en la tarjeta
 
 La descripción de cada tarjeta de prenda (en el Vestidor y en la configuración)
 **no repite el tipo ni el color**, porque eso ya se ve en la foto. Dice lo que
-no se ve: **"8× · 7 nov"**, o **"Nunca usada"** si no se ha usado. La fecha es
-la **última vez que estuvo en un plan**, no el día en que se contó.
+no se ve: **"8× · 7 nov"**, o **"Nunca usada"** si no se ha usado, y al final la
+**referencia** si la tiene: **"8× · 7 nov · R-12"**. La fecha es la **última vez
+que estuvo en un plan**, no el día en que se contó.
+
+La referencia es un dato **opcional y corto** (máximo 8 caracteres) que se
+captura junto al color, en la misma fila del formulario. Va en el texto y no
+como etiqueta encima de la foto: en una tarjeta de tres columnas, una etiqueta
+taparía parte de la imagen.
+
+**La lupa.** Cada tarjeta con foto tiene un botón 🔍 en la esquina inferior
+derecha que abre la imagen a pantalla completa (se cierra tocando). No estorba
+al toque normal de la tarjeta —que selecciona la prenda o abre el editor—
+porque el botón detiene el toque. La vista previa del formulario también se
+abre en grande al tocarla.
+
+**Las clasificaciones se actualizan en vivo** (`onSnapshot` de las cuatro
+colecciones). Sin eso, si la otra persona agrega un tipo, tu lista no lo tendría:
+los chips no lo mostrarían y al abrir una prenda suya el select caería en el
+primer tipo y lo cambiaría al guardar.
 
 Se puso ahí y no en el detalle de la prenda porque el momento en que importa es
 **cuando se arma el plan**: ahí se decide cambiar una prenda por otra.
@@ -131,6 +155,7 @@ esquema en las cuatro:
 | `lado` | `"A"` \| `"B"` | Para mostrar y agrupar |
 | `duenoId` | string | Id del usuario dueño. **Manda sobre `lado`** |
 | `zonaId`, `estiloId`, `tipoId`, `colorId` | string | Ids de las clasificaciones |
+| `ref` | string | Referencia corta y opcional (máx. 8). Se muestra en la tarjeta |
 | `foto` | string | Data URL JPEG (`data:image/jpeg;base64,...`) |
 | `fotoW`, `fotoH` | number | Medidas de la imagen guardada |
 | `vecesUsadas` | number | Empieza en 0 |
