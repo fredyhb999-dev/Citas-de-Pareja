@@ -247,8 +247,12 @@
     <div class="ph" id="pFotoMsg">Sin foto todavía.</div>
   </div>
   <input id="fFoto" type="file" accept="image/*" style="display:none">
+  <!-- `capture` abre la cámara directo en el celular; en la compu se ignora y
+       abre el explorador, que es lo normal. -->
+  <input id="fFotoCam" type="file" accept="image/*" capture="environment" style="display:none">
   <div class="filaBtns">
-    <button id="btnElegirFoto">Elegir foto</button>
+    <button id="btnTomarFoto">Cámara</button>
+    <button id="btnElegirFoto">Carrete</button>
     <button id="btnPegar">Pegar</button>
   </div>
 
@@ -981,18 +985,25 @@ document.getElementById("btnElegirFoto").addEventListener("click", ()=>{
   document.getElementById("fFoto").click();
 });
 
+document.getElementById("btnTomarFoto").addEventListener("click", ()=>{
+  document.getElementById("fFotoCam").click();
+});
+
 // La vista previa también se abre en grande.
 document.getElementById("pPreview").addEventListener("click", ()=>{
   const src = document.getElementById("pPreview").getAttribute("src");
   if(src) abrirLupa(src);
 });
 
-document.getElementById("fFoto").addEventListener("change", async (e)=>{
+async function usarArchivoFoto(e){
   const f = e.target.files && e.target.files[0];
   e.target.value = "";
   if(!f) return;
   if(await procesarFoto(f)) mostrarFoto(fotoProcesada.foto);
-});
+}
+
+document.getElementById("fFoto").addEventListener("change", usarArchivoFoto);
+document.getElementById("fFotoCam").addEventListener("change", usarArchivoFoto);
 
 document.getElementById("btnPegar").addEventListener("click", async ()=>{
   try{

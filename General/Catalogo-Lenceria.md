@@ -296,8 +296,13 @@ sumaban y el conteo quedaba doble.
   baja, se prueba a 480 px y después se rechaza.
 - Se valida **decodificando** la imagen (no se confía en `file.type` ni en la
   extensión) y se corrige la orientación EXIF con `createImageBitmap`.
-- Se puede elegir del carrete o **pegar** (solo Chrome/Edge de computadora con
-  HTTPS).
+- Se puede elegir con **tres botones**: **Cámara** (abre la cámara del teléfono
+  directo, con `capture="environment"`), **Carrete** (el carrete de fotos) y
+  **Pegar**. En la computadora, "Cámara" abre el explorador de archivos, porque
+  no hay cámara.
+- La cámara necesita **HTTPS**: la app publicada en Pages ya lo es; abrir el
+  archivo local no la habilita.
+- Pegar solo funciona en Chrome/Edge de computadora con HTTPS.
 
 ## Límites conocidos (no son bugs)
 
