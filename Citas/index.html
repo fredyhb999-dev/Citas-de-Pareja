@@ -136,6 +136,10 @@
   .cita .acciones button{ flex:1; min-width:90px; padding:12px; font-size:.85rem; }
   .btnConfirmar{ background: var(--teal); color:#08211d; }
   .btnModificar{ background: var(--bg-2); color: var(--fg); border:1px solid var(--card-border) !important; }
+  .btnVestuario{ flex:0 0 auto !important; width:34px !important; min-width:0 !important;
+    height:34px; padding:0 !important; border-radius:50%; cursor:pointer;
+    background:var(--bg-2); border:1px solid var(--card-border); color:var(--fg);
+    font-size:1rem; line-height:1; }
   .btnRechazar{ background: var(--rojo); color:#2b0410; }
   .cita .espera{ color: var(--fg-muted); font-size:.85rem; font-style:italic; }
 
@@ -255,12 +259,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
-  onSnapshot, query, orderBy, serverTimestamp, getDocs, getDoc, deleteField
+  onSnapshot, query, orderBy, serverTimestamp, getDocs, getDoc, deleteField,
+  setDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase, baseUrl, cargarUsuarios, asegurarFabrica, unirConFabrica, leerDocActividad } from "../config.js";
-import { confirmar } from "../confirmar.js";
+import { confirmar, aviso } from "../confirmar.js";
+import { soyInvitado } from "../invitado.js";
 import { avisarTelegram } from "../telegram.js";
 import { montarFavor } from "../favor.js";
 try{ montarFavor(); }catch(e){}
@@ -673,6 +679,120 @@ listaAccesoriosForm.addEventListener("change", (e)=>{
   if(e.target && e.target.type === "checkbox") ordenarAccesorios();
 });
 
+// ====== VESTUARIO DE LA CITA (Lencería) ======
+// El enlace no se guarda: se calcula con la fecha de la cita y el lado de quien
+// la recibe. Aquí solo se usa para mover el vestuario cuando la cita cambia de día.
+function hoyISO(){
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
+function fechaAObjetoISO(t){
+  const [a, m, d] = String(t || "").split("-").map(Number);
+  return new Date(a, (m || 1) - 1, d || 1);
+}
+
+function fechaLargaISO(t){
+  try{
+    return fechaAObjetoISO(t).toLocaleDateString("es-MX",
+      { weekday: "long", day: "numeric", month: "long" });
+  }catch(e){ return t; }
+}
+
+function nombreDeLado(lado){
+  const u = usuarios.find(x => x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
+  return (u && u.nombre) || ("Lado " + lado);
+}
+
+// Si la cita cambia de día, mueve los planes y las propuestas de ese día.
+// Devuelve false solo si el usuario decide no mover (y entonces no se guarda).
+async function moverVestuario(vieja, nueva, paraId){
+  if(!vieja || !nueva || vieja === nueva) return true;
+
+  const hoy = hoyISO();
+  // Un día que ya pasó no se mueve: el conteo de uso ya se aplicó.
+  if(vieja < hoy || nueva < hoy) return true;
+
+  let planes = [];
+  try{
+    const s = await getDocs(collection(db, "lenceriaVestuarios"));
+    planes = s.docs.map(d => Object.assign({ id: d.id }, d.data()));
+  }catch(e){ return true; }
+
+  const planesViejos = planes.filter(p => String(p.fechaTexto || "") === vieja);
+
+  const pedidos = [];
+  for(const uid of [paraId, miIdentidad.id]){
+    if(!uid) continue;
+    try{
+      const d = await getDoc(doc(db, "lenceriaPedidos", uid));
+      if(d.exists()){
+        const x = d.data() || {};
+        if(x.estado === "pendiente" && String(x.fechaTexto || "") === vieja){
+          pedidos.push({ uid, data: x });
+        }
+      }
+    }catch(e){}
+  }
+
+  if(!planesViejos.length && !pedidos.length) return true;
+
+  const lineas = [];
+  planesViejos.forEach(p => {
+    lineas.push("• Plan de " + nombreDeLado(p.lado) + " del " + fechaLargaISO(vieja)
+      + " → " + fechaLargaISO(nueva));
+  });
+  pedidos.forEach(r => {
+    lineas.push("• Propuesta de " + nombreDeLado(r.data.deLado) + " del " + fechaLargaISO(vieja)
+      + " → " + fechaLargaISO(nueva));
+  });
+
+  const choques = planesViejos.filter(p =>
+    planes.some(x => x.id === (p.lado + "_" + nueva)));
+  if(choques.length){
+    lineas.push("");
+    lineas.push("El " + fechaLargaISO(nueva) + " ya tiene plan de "
+      + choques.map(p => nombreDeLado(p.lado)).join(" y ") + ": se va a reemplazar.");
+  }
+
+  const ok = await confirmar({
+    titulo: "Se va a mover el vestuario al " + fechaLargaISO(nueva),
+    texto: lineas.join("\n"),
+    ok: "Mover"
+  });
+  if(!ok) return false;
+
+  for(const p of planesViejos){
+    try{
+      await deleteDoc(doc(db, "lenceriaVestuarios", p.id));
+      await setDoc(doc(db, "lenceriaVestuarios", p.lado + "_" + nueva), {
+        lado: p.lado,
+        duenoId: p.duenoId || "",
+        fechaTexto: nueva,
+        fechaUso: Timestamp.fromDate(fechaAObjetoISO(nueva)),
+        prendas: p.prendas || [],
+        fijo: !!p.fijo,
+        contado: false,
+        creadoEn: p.creadoEn || serverTimestamp(),
+        actualizadoEn: serverTimestamp(),
+        guardadoPorId: miIdentidad.id
+      });
+    }catch(e){}
+  }
+
+  for(const r of pedidos){
+    try{
+      await setDoc(doc(db, "lenceriaPedidos", r.uid), {
+        fechaTexto: nueva,
+        fechaUso: Timestamp.fromDate(fechaAObjetoISO(nueva))
+      }, { merge: true });
+    }catch(e){}
+  }
+
+  return true;
+}
+
 btnGuardarCita.onclick = async ()=>{
   const fecha = fCampoFecha.value;
   const actividad = fCampoActividad.value;
@@ -695,6 +815,19 @@ btnGuardarCita.onclick = async ()=>{
   }
 
   btnGuardarCita.disabled = true;
+
+  // Al MODIFICAR y cambiar de día, se ofrece mover el vestuario de ese día.
+  if(editandoId){
+    try{
+      const anterior = citasPorId[editandoId];
+      const vieja = String((anterior && anterior.fechaCita) || "").slice(0, 10);
+      const nueva = String(fecha).slice(0, 10);
+      if(anterior && vieja && nueva && vieja !== nueva){
+        const seguir = await moverVestuario(vieja, nueva, anterior.paraId);
+        if(!seguir){ btnGuardarCita.disabled = false; return; }
+      }
+    }catch(e){}
+  }
 
   try{
     if(editandoId){
@@ -834,6 +967,23 @@ function renderCitas(docsSnap){
     quienEl.className = "quien";
     quienEl.textContent = "Propuesta por " + c.proponenteNombre + " para " + c.paraNombre;
     card.appendChild(quienEl);
+
+    // Botón de vestuario: lleva a Lencería con la fecha y la persona ya puestas.
+    // Es un icono para no gastar un renglón en la tarjeta.
+    const fechaVest = String(c.fechaCita || "").slice(0, 10);
+    if(fechaVest.length === 10){
+      const uPara = usuarios.find(u => u && u.id === c.paraId);
+      const ladoVest = (uPara && uPara.admin) ? "A" : "B";
+      const btnVest = document.createElement("button");
+      btnVest.className = "btnVestuario";
+      btnVest.textContent = "👗";
+      btnVest.title = "Vestuario de " + (c.paraNombre || "la pareja");
+      btnVest.setAttribute("aria-label", "Vestuario de " + (c.paraNombre || "la pareja"));
+      btnVest.onclick = ()=>{
+        location.href = "../Lenceria/?fecha=" + encodeURIComponent(fechaVest) + "&lado=" + ladoVest;
+      };
+      filaTop.appendChild(btnVest);
+    }
 
     if(c.descripcion){
       const descEl = document.createElement("div");
@@ -984,6 +1134,14 @@ function escucharCitas(){
 
 // ====== INICIO ======
 (async function iniciar(){
+  // El invitado no entra: las citas son de la pareja. Hoy el camino no lo trae
+  // aquí, pero la pantalla se puede abrir por enlace y no tenía candado.
+  if(soyInvitado()){
+    aviso("Esta sección es solo para la pareja.")
+      .then(()=> location.replace("../index.html"));
+    return;
+  }
+
   await cargarCatalogos();
 
   const guardado = cargarIdentidadGuardada();

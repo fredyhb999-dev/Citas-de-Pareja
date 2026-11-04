@@ -48,7 +48,7 @@ const ESTILO = `
 .cfTitulo{ font-family:'Chakra Petch',sans-serif; font-weight:700;
   font-size:1.1rem; line-height:1.4; color:var(--fg, var(--texto)); }
 .cfTexto{ font-size:.85rem; line-height:1.5; margin-top:8px;
-  color:var(--fg-muted, var(--apagado)); }
+  color:var(--fg-muted, var(--apagado)); white-space:pre-line; }
 .cfOk{ width:100%; margin-top:16px; padding:16px; margin-bottom:10px; border:none;
   border-radius:16px; cursor:pointer; font-family:'Chakra Petch',sans-serif;
   font-weight:700; font-size:1.05rem; color:var(--bg, var(--fondo));

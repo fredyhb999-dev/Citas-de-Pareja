@@ -199,3 +199,19 @@ id, y al modificar una cita se borra si ya no hay.
 
 La ultima es la que se escapa facil: si no se actualiza, esas citas quedan
 apuntando a un nombre que ya no existe, y **al editarlas se cambiarian solas**.
+
+---
+
+## El vestuario de una cita (`Lenceria/`)
+
+Cada tarjeta de cita tiene un botón **👗** que abre Lencería con el día de la cita
+y el lado de **quien la recibe**. El enlace **no se guarda**: se calcula, así que
+si la cita cambia de día el botón apunta solo al día nuevo.
+
+**Si la cita se mueve de fecha**, al guardar el cambio la app revisa el día viejo
+y ofrece mover el vestuario: los planes de las dos personas y las propuestas
+pendientes, avisando qué se va a reemplazar. Si el día viejo ya pasó, no se mueve
+nada.
+
+El detalle completo está en **`General/Catalogo-Lenceria.md`**, sección *Entrar
+desde una cita*.

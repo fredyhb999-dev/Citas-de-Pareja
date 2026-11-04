@@ -214,6 +214,9 @@
   <h1 id="elegirTitulo">Vestidor</h1>
   <p class="desc">Elige hasta 3 prendas por zona.</p>
   <label class="campo"><span>Fecha</span><input id="eFecha" type="date"></label>
+  <label class="opModo" id="eCongelarWrap" style="display:none">
+    <input type="checkbox" id="eCongelar"> Que no lo pueda cambiar
+  </label>
   <div class="chips" id="eChips"></div>
   <div class="ccBox">
     <div class="ccScroll">
@@ -232,7 +235,7 @@
 <!-- ============ PEDIDO RECIBIDO ============ -->
 <div class="vista" id="vistaPedido">
   <h1 id="pedidoTitulo">Vestuario</h1>
-  <p class="desc">Puedes cambiar las prendas y la fecha antes de aceptar.</p>
+  <p class="desc" id="pedidoDesc">Puedes cambiar las prendas y la fecha antes de aceptar.</p>
   <label class="campo"><span>Fecha</span><input id="pFecha" type="date"></label>
   <div class="chips" id="pChips"></div>
   <div class="ccBox">
@@ -451,6 +454,7 @@ let prendas = [];
 let planes = [];
 let pedidoRecibido = null;   // doc lenceriaPedidos/{miId}
 let pedidoEnviado = null;    // doc lenceriaPedidos/{otroId}
+let pedidoCongelado = false; // el que propuso pidió que no se cambie
 let clasifActual = null;     // { grupo, id }
 
 // Estado del vestidor.
@@ -1556,6 +1560,12 @@ function tarjetaPedidoRecibido(){
     e.textContent = "Vencido";
     f.appendChild(e);
   }
+  if(pedidoRecibido.congelado){
+    const e = document.createElement("span");
+    e.className = "etiqueta";
+    e.textContent = "Sin cambios";
+    f.appendChild(e);
+  }
 
   const p = document.createElement("p");
   p.className = "usoTexto";
@@ -1646,11 +1656,11 @@ async function limpiarPedidosVencidos(){
   }
 }
 
-function abrirElegir(modo, plan){
+function abrirElegir(modo, plan, fecha, sinHistorial){
   modoElegir = modo;
   planEditando = plan ? plan.id : null;
   ladoElegir = (modo === "plan") ? miLado : otroLado;
-  fechaElegir = plan ? (plan.fechaTexto || "") : "";
+  fechaElegir = plan ? (plan.fechaTexto || "") : (fecha || "");
   seleccion = plan ? (plan.prendas || []).slice() : [];
   limpiarFiltros(filtroE);
 
@@ -1660,8 +1670,20 @@ function abrirElegir(modo, plan){
   document.getElementById("eFecha").min = hoyTexto();
   document.getElementById("eGuardar").textContent = (modo === "plan") ? "Guardar plan" : "Mandar propuesta";
 
+  // La casilla de congelar solo tiene sentido al proponer.
+  const wrapCong = document.getElementById("eCongelarWrap");
+  wrapCong.style.display = (modo === "propuesta") ? "" : "none";
+  document.getElementById("eCongelar").checked = false;
+
   pintarVestidor();
-  ver("vistaElegir");
+  if(sinHistorial){
+    // Se llegó desde Citas: se reemplaza el paso para que "‹ Volver" y el atrás
+    // del celular regresen a la cita, no a la pantalla principal de Lencería.
+    try{ history.replaceState({ v: "vistaElegir" }, ""); }catch(e){}
+    ver("vistaElegir", false);
+  }else{
+    ver("vistaElegir");
+  }
 }
 
 function pintarVestidor(){
@@ -1684,6 +1706,10 @@ function pintarVestidor(){
 }
 
 function alternarSeleccion(p){
+  if(vistaActual === "vistaPedido" && pedidoCongelado){
+    aviso("Ese vestuario lo eligió la otra persona y no se puede cambiar.");
+    return;
+  }
   const i = seleccion.indexOf(p.id);
   if(i >= 0){
     seleccion.splice(i, 1);
@@ -1826,6 +1852,7 @@ async function mandarPropuesta(fechaTexto){
     await setDoc(doc(db, "lenceriaPedidos", otroId), {
       deId: miId, deLado: miLado, paraId: otroId, paraLado: otroLado,
       prendas: seleccion, fechaTexto, fechaUso: fechaAObjeto(fechaTexto),
+      congelado: !!document.getElementById("eCongelar").checked,
       estado: "pendiente", creadoEn: serverTimestamp(), respondidoEn: null,
       prendasFinales: null, fechaFinalTexto: null, modificado: false
     });
@@ -1866,6 +1893,13 @@ function abrirPedido(){
   document.getElementById("pFecha").value = fechaElegir;
   document.getElementById("pFecha").min = hoyTexto();
 
+  // Si viene congelado, no se puede cambiar: solo aceptar o rechazar.
+  pedidoCongelado = !!pedidoRecibido.congelado;
+  document.getElementById("pFecha").disabled = pedidoCongelado;
+  document.getElementById("pedidoDesc").textContent = pedidoCongelado
+    ? "Lo eligió quien te lo propuso y no se puede cambiar. Solo aceptar o rechazar."
+    : "Puedes cambiar las prendas y la fecha antes de aceptar.";
+
   pintarPedido();
   ver("vistaPedido");
 }
@@ -1891,7 +1925,9 @@ function mismoConjunto(a, b){
 
 async function aceptarPedido(){
   if(!pedidoRecibido) return;
-  const fechaTexto = document.getElementById("pFecha").value;
+  const fechaTexto = pedidoCongelado
+    ? String(pedidoRecibido.fechaTexto || "")
+    : document.getElementById("pFecha").value;
   if(!fechaTexto || fechaTexto < hoyTexto()){ aviso("La fecha ya pasó. Elige otra."); return; }
   if(!seleccion.length){ aviso("Elige al menos una prenda."); return; }
 
@@ -2376,6 +2412,32 @@ async function cargarTodo(){
   await limpiarPedidosVencidos();
 }
 
+// Entrada desde una cita: ?fecha=2026-11-07&lado=B
+// - Mi lado: abre el Vestidor con ese día (para crear o editar mi plan).
+// - El otro lado: si ya tiene plan, se queda en su lista; si no, abre la
+//   propuesta con la fecha puesta.
+// - Día pasado: solo se muestra el historial; no se crea nada.
+function aplicarEntradaCita(){
+  const p = new URLSearchParams(location.search);
+  const fecha = String(p.get("fecha") || "").slice(0, 10);
+  const lado = p.get("lado");
+  if(fecha.length !== 10 || (lado !== "A" && lado !== "B")) return;
+
+  tabActivo = lado;
+  pintarPlanes();
+
+  if(fecha < hoyTexto()) return;
+
+  const plan = planes.find(x => x && x.fechaTexto === fecha
+    && (x.duenoId ? x.duenoId === idDeLado(lado) : x.lado === lado));
+
+  if(lado === miLado){
+    abrirElegir("plan", plan || null, fecha, true);
+  }else if(!plan){
+    abrirElegir("propuesta", null, fecha, true);
+  }
+}
+
 // ====== 11) Arranque ======
 async function arrancar(){
   try{ miUsuario = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null"); }catch(e){ miUsuario = null; }
@@ -2406,6 +2468,7 @@ async function arrancar(){
   pintarConfig();
   pintarPlanes();
   escuchar();
+  aplicarEntradaCita();
 
   vigilarInvitaciones(db, { tipo: "lenceria", esEsta: true, alTerminar: ()=> ver("vistaPlanes") });
 }

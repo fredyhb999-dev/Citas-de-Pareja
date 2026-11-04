@@ -251,6 +251,7 @@ pendiente y los dos sentidos no se pisan.
 | `prendasFinales` | array \| null | Lo que quedó al aceptar |
 | `fechaFinalTexto` | string \| null | Fecha final al aceptar |
 | `modificado` | boolean | `true` si el receptor cambió prendas o fecha |
+| `congelado` | boolean | Quien propone pidió que **no se pueda cambiar**: solo aceptar o rechazar |
 
 Se conserva el último pedido con su estado; el siguiente lo sobrescribe. **No
 hay historial de pedidos.**
@@ -320,6 +321,10 @@ el mismo documento.
   si no se aceptó, nunca hubo plan, así que no suma nada.
 - Quien recibe un pedido puede **cambiar prendas y fecha y aceptar sin pedir
   autorización**. Quien lo mandó ve "Aceptado" o "Aceptado con cambios".
+  **Salvo que la propuesta venga congelada**: al proponer hay una casilla *"Que no
+  lo pueda cambiar"* (`congelado: true`). En ese caso el receptor **no puede
+  tocar prendas ni fecha**: solo aceptar o rechazar, y la tarjeta lo marca como
+  **"Sin cambios"**.
 - **Borrar una prenda** avisa, la quita de los planes futuros y del pedido
   pendiente; si un plan se queda sin prendas, se borra. Los planes pasados
   conservan el id y muestran "Prenda eliminada".
@@ -369,6 +374,43 @@ no hay historial por plan. Es un límite consciente, no un descuido.
 - La cámara necesita **HTTPS**: la app publicada en Pages ya lo es; abrir el
   archivo local no la habilita.
 - Pegar solo funciona en Chrome/Edge de computadora con HTTPS.
+
+## Entrar desde una cita
+
+Cada tarjeta de cita tiene un botón **👗** que abre
+`Lenceria/?fecha=AAAA-MM-DD&lado=A|B`, con el día de la cita y el lado de **quien
+la recibe**.
+
+Qué hace al llegar:
+
+- **Mi lado:** abre el Vestidor con esa fecha (para crear o editar mi plan).
+- **Lado del otro:** si ya tiene plan ese día, se queda en su lista (solo
+  lectura); si no tiene, abre la **propuesta** con la fecha puesta.
+- **Día pasado:** solo muestra el historial. No se crea nada, porque la app no
+  permite fechas anteriores a hoy.
+- **"‹ Volver":** regresa a la cita. Se reemplaza el paso del historial para que
+  no caiga en la pantalla principal de Lencería.
+
+El enlace **no se guarda en la base**: se calcula con la fecha de la cita y el
+lado de quien la recibe. Por eso, si la cita se mueve de día, el botón apunta
+solo al día nuevo.
+
+### Mover la fecha de la cita
+
+Al guardar una cita con fecha nueva, **antes** de guardarla la app revisa el día
+viejo y, si hay algo, pregunta con una lista de lo que va a mover:
+
+- **Planes de las dos personas** de ese día → al día nuevo.
+- **Propuestas pendientes** de ese día → al día nuevo.
+
+Y avisa si el día nuevo **ya tiene** un plan de esa persona: se reemplaza.
+
+- **Un plan no se puede renombrar**, así que se crea el nuevo (`lado_fecha`) y se
+  borra el viejo.
+- **Si el día viejo ya pasó**, no se mueve nada: el conteo de uso ya se aplicó.
+- **Si el día nuevo es pasado**, tampoco (la app no crea planes en el pasado).
+- Si no hay nada que mover, no pregunta nada y la cita se guarda normal.
+- Si cancelas el aviso, **la cita no se guarda**.
 
 ## Pasar prendas a otra instalación (exportar / importar)
 
