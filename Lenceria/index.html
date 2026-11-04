@@ -278,14 +278,17 @@
 <div class="vista" id="vistaClasif">
   <h1 id="clasifTitulo">Zona</h1>
   <p class="desc">Puedes cambiarle el nombre. Si está en uso, no se puede borrar.</p>
-  <input class="buscar" id="cNombre" placeholder="Nombre" maxlength="40">
-  <p class="vacio" id="cUso"></p>
-  <label class="opModo" id="cCubreWrap" style="display:none">
-    <input type="checkbox" id="cCubre"> Ocupa todo el cuerpo (vestido, mono)
-  </label>
+
+  <div class="ficha" style="width:100%">
+    <label class="campo"><span>Nombre</span><input id="cNombre" maxlength="40" placeholder="Nombre"></label>
+    <p class="usoTexto" id="cUso" style="margin-bottom:0"></p>
+    <label class="opModo" id="cCubreWrap" style="display:none; margin:10px 0 0">
+      <input type="checkbox" id="cCubre"> Ocupa todo el cuerpo (vestido, mono)
+    </label>
+  </div>
+
   <button class="btnPri" id="cGuardar">Guardar</button>
   <button class="btnSec" id="cBorrar" style="display:none">Borrar</button>
-  <button class="btnSec" id="btnVolverClasif">Volver</button>
 </div>
 
 <!-- ============ ALTA / EDICIÓN DE UNA PRENDA ============ -->
@@ -394,7 +397,7 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
   // Desde la vista principal sin cita: deja ir a ../index.html#experiencias.
 });
 
-["btnVolverClasif", "btnCancelarPrenda", "eCancelar", "pVolver"].forEach((id)=>{
+["btnCancelarPrenda", "eCancelar", "pVolver"].forEach((id)=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener("click", ()=> history.back());
 });

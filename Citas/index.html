@@ -159,7 +159,10 @@
     box-shadow: 0 18px 50px rgba(0,0,0,.55);
   }
   /* El contenido del formulario hace scroll; los botones quedan fijos abajo. */
-  #formScroll{ flex:1; min-height:0; overflow-y:auto; padding-right:2px; }
+  #formScroll{ flex:1; min-height:0; overflow-y:auto; padding-right:2px;
+    overscroll-behavior:contain; }
+  /* Mientras el cuadro está abierto, la página de atrás no se desplaza. */
+  body.modalAbierto{ overflow:hidden; }
   #formCard h2{ font-size:1.3rem; margin-bottom:14px; }
   .campo{ margin-bottom:16px; }
   .campo label{ display:block; font-size:.85rem; color: var(--fg-muted); margin-bottom:6px; }
@@ -666,11 +669,14 @@ async function abrirFormulario(modo, citaExistente){
   }
 
   overlay.style.display = "flex";
+  // Con el cuadro abierto, la página de atrás no se mueve.
+  document.body.classList.add("modalAbierto");
 }
 
 function cerrarFormulario(){
   overlay.style.display = "none";
   editandoId = null;
+  document.body.classList.remove("modalAbierto");
 }
 
 btnCancelarForm.onclick = cerrarFormulario;
