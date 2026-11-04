@@ -81,7 +81,9 @@ lleva tipo, y los tipos se amplían). Zonas, colores y estilos son casi fijos:
 las zonas del cuerpo y los colores no cambian. Decidido con Fredy (nov-2026).
 
 **Prendas** conserva dentro sus propias pestañas de lado (el de uno primero) y
-sus **chips por tipo**, con el botón "Nueva prenda" fijo abajo.
+sus **chips por tipo**. Las dos pestañas de persona y el botón **"Nueva prenda"**
+van **en el mismo renglón**, para no gastar alto: la cuadrícula gana ese espacio
+(lo pidió Mary: en su celular se veían muy pocas prendas).
 
 **En Tipos** (la pestaña de al lado) cada tipo tiene una casilla **"Ocupa todo
 el cuerpo (vestido, mono)"**. Sirve para que el "Sorpréndeme" y la selección
@@ -374,6 +376,9 @@ Al final de **Ajusta tus ilusiones y sueños** hay cuatro botones discretos:
 **Exportar prendas**, **Importar prendas**, **Exportar listas** e **Importar
 listas**. Es para **mudanzas puntuales** entre dos instalaciones (por ejemplo, de
 la app de prueba a la personal), **no** una función para clientes.
+
+**Están ocultos** para no quitarle alto a la cuadrícula: se abren (y se cierran)
+con **cinco toques seguidos en el rótulo "LENCERÍA"**, arriba de la pantalla.
 
 - **Prendas** lleva las prendas y sus fotos. **Listas** lleva zonas, estilos,
   tipos y colores en un solo archivo: van juntas porque cada prenda apunta a las

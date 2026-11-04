@@ -165,6 +165,13 @@
     border:1px solid var(--card-border); border-radius:12px; color:var(--fg);
     background:var(--bg-2); }
   .filaDatos{ display:flex; gap:8px; justify-content:center; width:100%; flex-wrap:wrap; }
+  /* Personas + "Nueva prenda" en un solo renglón, para no gastar alto. */
+  .filaPrendas{ display:flex; gap:6px; width:100%; margin-bottom:8px; flex:0 0 auto; }
+  .filaPrendas .tab{ flex:1; min-width:0; padding:9px 6px; font-size:.82rem; }
+  .filaPrendas .btnNueva{ flex:0 0 auto; border:none; border-radius:12px; cursor:pointer;
+    padding:9px 12px; font-family:'Chakra Petch',sans-serif; font-weight:700;
+    font-size:.78rem; color:var(--bg);
+    background:linear-gradient(90deg, var(--coral), var(--teal)); }
   /* Caja de exportar / importar prendas (mudanza entre instalaciones). */
   #datos{ position:fixed; inset:0; background:rgba(6,4,12,.95); z-index:70;
     display:flex; align-items:center; justify-content:center; padding:14px; }
@@ -249,8 +256,10 @@
     <div class="ccContenido" id="ccContenido"></div>
   </div>
 
-  <!-- Mudanza entre dos instalaciones. Uso puntual, no es una función de cliente. -->
-  <div class="filaDatos">
+  <!-- Mudanza entre dos instalaciones. OCULTO a propósito: se abre con 5 toques
+       seguidos en el rótulo "LENCERÍA". No es una función de cliente y hay que
+       quitarlo antes de vender (ver General/GUIA.md, Otros pendientes). -->
+  <div class="filaDatos" style="display:none">
     <button class="btnSec chico" id="btnExportarPrendas">Exportar prendas</button>
     <button class="btnSec chico" id="btnImportarPrendas">Importar prendas</button>
     <button class="btnSec chico" id="btnExportarListas">Exportar listas</button>
@@ -923,17 +932,27 @@ function bloquePrendas(){
   const wrap = document.createElement("div");
   wrap.className = "ccPanel";
 
-  // pestañas de lado: el de uno va primero (ordenTabs)
-  const tabs = document.createElement("div");
-  tabs.className = "tabs";
+  // pestañas de lado y "Nueva prenda" en el MISMO renglón: así el renglón del pie
+  // desaparece y la cuadrícula gana ese alto (lo pidió Mary: en su celular se ven
+  // muy pocas prendas).
+  const fila = document.createElement("div");
+  fila.className = "filaPrendas";
+
   [ordenTabs[0], ordenTabs[1]].forEach(lado => {
     const b = document.createElement("button");
     b.className = "tab" + (tabPrendas === lado ? " activo" : "");
     b.textContent = nombreLado(lado);
     b.addEventListener("click", ()=>{ tabPrendas = lado; pintarConfig(); });
-    tabs.appendChild(b);
+    fila.appendChild(b);
   });
-  wrap.appendChild(tabs);
+
+  const bNueva = document.createElement("button");
+  bNueva.className = "btnNueva";
+  bNueva.textContent = "Nueva prenda";
+  bNueva.addEventListener("click", ()=> abrirPrenda(null));
+  fila.appendChild(bNueva);
+
+  wrap.appendChild(fila);
 
   // Filtros: chips por tipo y, al elegir uno, Color y Estilo. Van fuera del
   // scroll para que el filtro no se pierda al bajar.
@@ -959,20 +978,9 @@ function bloquePrendas(){
     scroll.appendChild(p);
   }
 
-  const pie = document.createElement("div");
-  pie.className = "ccPie";
-  const btn = document.createElement("button");
-  btn.className = "btnPri";
-  btn.style.marginBottom = "0";
-  btn.textContent = "Nueva prenda";
-  btn.addEventListener("click", ()=> abrirPrenda(null));
-  pie.appendChild(btn);
-
   wrap.appendChild(scroll);
-  wrap.appendChild(pie);
   return wrap;
 }
-
 function tarjetaPrenda(p, seleccionada, alTocar){
   const d = document.createElement("div");
   d.className = "prenda" + (seleccionada ? " sel" : "");
@@ -2323,6 +2331,22 @@ document.getElementById("datosArchivo").addEventListener("change", async (e)=>{
   }
 });
 
+// Los botones de mudanza nacen ocultos para no quitarle espacio a las prendas.
+// Se abren con 5 toques seguidos en el rótulo "LENCERÍA" (y se vuelven a cerrar
+// con otros 5). Es temporal: se quitan antes de vender.
+let toquesRotulo = 0, ultimoToque = 0;
+document.querySelector(".eyebrow").addEventListener("click", ()=>{
+  const ahora = Date.now();
+  toquesRotulo = (ahora - ultimoToque < 900) ? toquesRotulo + 1 : 1;
+  ultimoToque = ahora;
+  if(toquesRotulo < 5) return;
+  toquesRotulo = 0;
+  const f = document.querySelector(".filaDatos");
+  const mostrando = f.style.display === "none";
+  f.style.display = mostrando ? "flex" : "none";
+  if(mostrando) aviso("Mudanza: exportar e importar prendas y listas.");
+});
+
 document.getElementById("datosCopiar").addEventListener("click", async ()=>{
   const ta = document.getElementById("datosTexto");
   try{
@@ -2333,6 +2357,24 @@ document.getElementById("datosCopiar").addEventListener("click", async ()=>{
     aviso("El texto quedó seleccionado: cópialo con el botón de copiar del teléfono.");
   }
 });
+
+// Si Firebase tarda o se cuelga, la pantalla NO se queda en blanco: se pinta con
+// lo que haya y los escuchadores en vivo la completan después.
+function conTiempo(promesa, ms){
+  return Promise.race([
+    promesa,
+    new Promise((_, rechazar)=> setTimeout(()=> rechazar(new Error("timeout")), ms))
+  ]);
+}
+
+async function cargarTodo(){
+  await cargarClasificaciones();
+  await cargarPrendas();
+  await liquidarUsos();
+  await cargarPlanes();
+  await cargarPedidos();
+  await limpiarPedidosVencidos();
+}
 
 // ====== 11) Arranque ======
 async function arrancar(){
@@ -2359,12 +2401,7 @@ async function arrancar(){
   tabPrendas = miLado;
   ordenTabs = [miLado, otroLado];
 
-  await cargarClasificaciones();
-  await cargarPrendas();
-  await liquidarUsos();
-  await cargarPlanes();
-  await cargarPedidos();
-  await limpiarPedidosVencidos();
+  await conTiempo(cargarTodo(), 10000).catch(()=>{});
 
   pintarConfig();
   pintarPlanes();
