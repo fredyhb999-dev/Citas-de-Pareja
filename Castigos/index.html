@@ -939,11 +939,30 @@ function ver(id, guardar){
   try{ if(id==="vistaConfig"){ mostrarPanel("castigos"); pintarCastigos(); } }catch(e){}
 }
 // Mismo patrón que Encuentros/Guiadas: el gesto de atrás del celular no saca de
-// la partida; fuera de la partida regresa a la lista de inicio.
+// la partida; fuera de la partida obedece al historial.
 let reponiendo = false;
-window.addEventListener("popstate", ()=>{
+// Vista de respaldo del "← Volver" cuando no hay paso que deshacer (p. ej. la
+// página se abrió directa y no hay nada antes).
+let volviendoA = null;
+
+// El "← Volver" deshace el paso del historial, igual que el atrás del celular.
+// Si no hay paso anterior, no llega ningún popstate: a los 400 ms se cae a la
+// vista de respaldo para que el botón nunca quede sin hacer nada.
+function volverConHistorial(respaldo){
+  volviendoA = respaldo;
+  try{ history.back(); }catch(e){ volviendoA = null; ver(respaldo); return; }
+  setTimeout(()=>{
+    if(volviendoA !== respaldo) return;
+    volviendoA = null;
+    ver(respaldo);
+  }, 400);
+}
+
+window.addEventListener("popstate", (ev)=>{
   if(reponiendo){ reponiendo = false; return; }
-  const enJuego = vistaActual()==="vistaPartida" && !finVisible();
+  volviendoA = null;
+  const actual = vistaActual();
+  const enJuego = actual === "vistaPartida" && !finVisible();
   // El invitado no sale nunca de su pantalla: podría ver datos del anfitrión.
   // Con partida activa tampoco se sale con el gesto de atrás.
   if(enJuego || esInvitadoFlag){
@@ -951,15 +970,22 @@ window.addEventListener("popstate", ()=>{
     try{ history.go(1); }catch(e){ reponiendo = false; }
     return;
   }
-  if(vistaActual()==="vistaEditar"){
+  if(actual==="vistaEditar"){
     try{ if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); }catch(e){}
     if(castigoActivo && editorCargado){ try{ guardarCastigoDatos(); }catch(e){} }
     editorToken++;
     castigoActivo = null;
     editorCargado = false;
   }
-  if(vistaActual()==="vistaPartida" && finVisible()) resetearInicioMulti();
-  ver("vistaInicio", false);
+  if(actual==="vistaPartida" && finVisible()) resetearInicioMulti();
+  // El paso deshecho manda. Solo se restaura Configuración: el editor, las tomas
+  // y la partida no se reabren desde el historial (mostrarían datos viejos).
+  const destino = (ev && ev.state && ev.state.v === "vistaConfig") ? "vistaConfig" : "vistaInicio";
+  // Si el paso deshecho lleva a la misma pantalla que ya se está viendo, quedó
+  // de más (por ejemplo dos Configuración seguidas): se sigue deshaciendo para
+  // que el atrás del celular no se quede en el mismo sitio.
+  if(destino === actual){ try{ history.back(); return; }catch(e){} }
+  ver(destino, false);
 });
 try{ history.replaceState({ v:"vistaInicio" }, ""); }catch(e){}
 document.getElementById("btnCfg").onclick = ()=>{
@@ -977,11 +1003,11 @@ document.getElementById("lnkInicio").addEventListener("click", async (e)=>{
     editorToken++;
     castigoActivo = null;
     editorCargado = false;
-    ver("vistaConfig");
+    volverConHistorial("vistaConfig");
     return;
   }
-  if(v==="vistaConfig"){ e.preventDefault(); ver("vistaInicio", false); return; }
-  if(v==="vistaTomas"){ e.preventDefault(); ver("vistaInicio", false); return; }
+  if(v==="vistaConfig"){ e.preventDefault(); volverConHistorial("vistaInicio"); return; }
+  if(v==="vistaTomas"){ e.preventDefault(); volverConHistorial("vistaInicio"); return; }
   if(v==="vistaPartida"){ e.preventDefault(); if(finVisible()) await volverDePartida(); return; }
 });
 
@@ -1386,7 +1412,10 @@ document.getElementById("btnJugar").onclick = async ()=>{
   }
   tomasPartida = { ...tomas };
   pintarTomasJugar();
-  ver("vistaTomas");
+  // "replace": el paso de tomas sustituye al del editor. Si se dejara el editor
+  // debajo, el "← Volver"/atrás desde tomas desharía ese paso y se quedaría
+  // mostrando el inicio con un paso de más en el historial.
+  ver("vistaTomas", "replace");
 };
 
 document.getElementById("btnExportarJSON").onclick = ()=>{

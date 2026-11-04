@@ -116,6 +116,30 @@ Cada N rondas (configurable, 1 o más) se asigna una imposición al azar al turn
 - **Terminar Partida:** solo el anfitrión; termina para todos, `activa:false, terminada:true`.
 - **Revivir:** switch del anfitrión; si está apagado, los turnos del lado no inicial se saltan.
 
+## Navegación: «Volver», atrás del celular e historial
+
+El botón **«← Volver»** de la esquina superior derecha (`lnkInicio`) y el **atrás
+del celular** hacen **lo mismo**: deshacen un paso del historial. Antes el botón
+solo pintaba otra vista sin tocar el historial y por eso los dos acababan en
+sitios distintos (quedaban pasos de más y había que pulsar atrás dos o tres
+veces para salir). Corregido en nov-2026.
+
+- **Inicio:** no se intercepta; sale al menú de Juegos (`../index.html#juegos`).
+- **Configuración:** deshace el paso y vuelve al inicio.
+- **Editor:** **guarda solo** las acciones y deshace el paso: cae en Configuración.
+- **Tomas ("Castigos por nivel"):** deshace el paso: cae en el inicio.
+  Al entrar desde el **editor** con "Jugar ▶" se usa `replace`, para que el paso
+  del editor no quede debajo (si no, el atrás se quedaría en el mismo sitio).
+- **Partida en curso:** el botón no se ve y el atrás del celular se "reempuja"
+  (`history.go(1)`). Igual para el **invitado**, en cualquier pantalla.
+- **Partida terminada:** el texto pasa a **"← Volver a lista"** y vuelve al inicio.
+- **Sala de espera / pantalla de bloqueo:** el botón no se intercepta y sale al menú.
+
+El **paso deshecho manda**: si apunta a Configuración se muestra Configuración; el
+editor, las tomas y la partida **no** se reabren desde el historial (mostrarían
+datos viejos) y caen al inicio. Si el paso lleva a la misma pantalla que ya se ve,
+se sigue deshaciendo, para que el atrás nunca se quede en el mismo sitio.
+
 ## Invitados
 
 - QR (`btnQR` / `btnQRInicio`) lleva la configuración de Firebase (mismo patrón que Encuentros).
