@@ -35,6 +35,10 @@
   p.desc{ font-size:.88rem; color:var(--fg-muted); max-width:360px; margin:0 0 18px; text-align:center; }
   .vista{ display:none; width:100%; max-width:520px; flex-direction:column; align-items:center; }
   .vista.ver{ display:flex; }
+  /* La principal nace invisible hasta que tiene los nombres y los datos: así no
+     se ve el parpadeo de "Lado A / Lado B". */
+  #vistaPlanes{ visibility:hidden; }
+  #vistaPlanes.listo{ visibility:visible; }
   .btnPri{ width:100%; padding:16px; margin-bottom:10px; border:none; border-radius:16px; cursor:pointer;
     font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1rem; color:var(--bg);
     background:linear-gradient(90deg, var(--coral), var(--teal)); }
@@ -200,8 +204,8 @@
   <h1>Ilusiones y sueños</h1>
   <p class="desc">Planifica y da vida a tu ilusión.</p>
   <div class="tabs">
-    <button class="tab activo" id="tabA">Lado A</button>
-    <button class="tab" id="tabB">Lado B</button>
+    <button class="tab activo" id="tabA"></button>
+    <button class="tab" id="tabB"></button>
   </div>
   <div class="ccBox">
     <div class="ccScroll" id="panelPlanes"></div>
@@ -381,9 +385,13 @@ window.addEventListener("popstate", (e)=>{
 });
 
 document.getElementById("lnkInicio").addEventListener("click", (e)=>{
-  if(vistaActual === "vistaPlanes") return;
-  e.preventDefault();
-  history.back();
+  // Si se llegó desde una cita, "‹ Volver" regresa a Citas (no al submenú).
+  if(esEntradaCita || vistaActual !== "vistaPlanes"){
+    e.preventDefault();
+    history.back();
+    return;
+  }
+  // Desde la vista principal sin cita: deja ir a ../index.html#experiencias.
 });
 
 ["btnVolverClasif", "btnCancelarPrenda", "eCancelar", "pVolver"].forEach((id)=>{
@@ -546,6 +554,8 @@ function desplegableFiltro(etiqueta, grupo, valor, alCambiar){
   return sel;
 }
 let tabActivo = "A";
+let diaFiltro = "";        // cuando se llega desde una cita: solo ese día
+let esEntradaCita = false; // se llegó con ?fecha=…: "‹ Volver" regresa a Citas
 let verPasados = false;    // los planes pasados se abren solo si se piden
 let ordenTabs = ["A", "B"];   // el de uno va primero; se ajusta en el arranque
 let prendaEditando = null;
@@ -1402,6 +1412,7 @@ function botonPasados(texto, alTocar){
 }
 
 function pintarPlanes(){
+  document.getElementById("vistaPlanes").classList.add("listo");
   document.getElementById("tabA").textContent = nombreLado(ordenTabs[0]);
   document.getElementById("tabB").textContent = nombreLado(ordenTabs[1]);
   document.getElementById("tabA").classList.toggle("activo", tabActivo === ordenTabs[0]);
@@ -1428,6 +1439,24 @@ function pintarPlanes(){
   }
 
   const { fut, pas } = planesDe(tabActivo);
+
+  // Llegando desde una cita: solo el plan de ese día.
+  if(diaFiltro){
+    const solo = fut.concat(pas).filter(p => String(p.fechaTexto || "") === diaFiltro);
+    if(!solo.length){
+      const p = document.createElement("p");
+      p.className = "vacio";
+      p.textContent = "No hay plan para el " + fechaLarga(diaFiltro) + ".";
+      panel.appendChild(p);
+    }else{
+      solo.forEach(plan => panel.appendChild(tarjetaPlan(plan, esMia)));
+    }
+    panel.appendChild(botonPasados("Ver todos los planes", ()=>{
+      diaFiltro = ""; pintarPlanes();
+    }));
+    return;
+  }
+
   if(!fut.length && !pas.length){
     const p = document.createElement("p");
     p.className = "vacio";
@@ -2047,8 +2076,8 @@ document.getElementById("btnSorpresa").addEventListener("click", sorprendeme);
 document.getElementById("eGuardar").addEventListener("click", guardarPlan);
 document.getElementById("pAceptar").addEventListener("click", aceptarPedido);
 document.getElementById("pRechazar").addEventListener("click", rechazarPedido);
-document.getElementById("tabA").addEventListener("click", ()=>{ tabActivo = ordenTabs[0]; verPasados = false; pintarPlanes(); });
-document.getElementById("tabB").addEventListener("click", ()=>{ tabActivo = ordenTabs[1]; verPasados = false; pintarPlanes(); });
+document.getElementById("tabA").addEventListener("click", ()=>{ tabActivo = ordenTabs[0]; verPasados = false; diaFiltro = ""; pintarPlanes(); });
+document.getElementById("tabB").addEventListener("click", ()=>{ tabActivo = ordenTabs[1]; verPasados = false; diaFiltro = ""; pintarPlanes(); });
 
 // ====== 9) Conteo de uso ======
 // Sube cuando la FECHA DEL PLAN ya pasó, no al guardar. Va en transacción: si
@@ -2424,7 +2453,9 @@ function aplicarEntradaCita(){
   const modo = p.get("modo");   // "plan" | "proponer" (lo manda la hojita de Citas)
   if(fecha.length !== 10 || (lado !== "A" && lado !== "B")) return;
 
+  esEntradaCita = true;
   tabActivo = lado;
+  diaFiltro = (modo === "ver") ? fecha : "";
   pintarPlanes();
 
   // "ver": solo se muestra lo que hay ese día (no se abre el Vestidor).
