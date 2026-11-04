@@ -370,23 +370,28 @@ no hay historial por plan. Es un límite consciente, no un descuido.
 
 ## Pasar prendas a otra instalación (exportar / importar)
 
-Al final de **Ajusta tus ilusiones y sueños** hay dos botones discretos:
-**Exportar prendas** e **Importar prendas**. Es para **mudanzas puntuales** entre
-dos instalaciones (por ejemplo, de la app de prueba a la personal), **no** una
-función para clientes.
+Al final de **Ajusta tus ilusiones y sueños** hay cuatro botones discretos:
+**Exportar prendas**, **Importar prendas**, **Exportar listas** e **Importar
+listas**. Es para **mudanzas puntuales** entre dos instalaciones (por ejemplo, de
+la app de prueba a la personal), **no** una función para clientes.
 
-- **Exportar** genera un JSON con todas las prendas y sus fotos. **Descargar** lo
-  guarda como `lenceria-prendas-AAAA-MM-DD.json` (ese archivo es el que se manda
-  por WhatsApp); también se puede copiar el texto con **Copiar**.
+- **Prendas** lleva las prendas y sus fotos. **Listas** lleva zonas, estilos,
+  tipos y colores en un solo archivo: van juntas porque cada prenda apunta a las
+  cuatro, y exportar solo una dejaría las demás a medias.
+- **Exportar** genera un JSON y **Descargar** lo guarda como
+  `lenceria-prendas-AAAA-MM-DD.json` o `lenceria-listas-AAAA-MM-DD.json` (ese
+  archivo es el que se manda por WhatsApp); también se puede copiar el texto.
 - **Importar** acepta el archivo con **Elegir archivo** o el texto pegado.
-  Conserva el **id** de cada prenda —así los planes que ya se copiaron siguen
-  apuntando a ellas— y **traduce el dueño**: el `duenoId` que venía de la otra
-  base se reemplaza por el usuario de esta que corresponde al lado A
-  (administrador) o B (pareja).
+  Conserva los **ids**, así las prendas siguen apuntando a su zona, estilo, tipo y
+  color, y los planes a sus prendas. En las prendas además **traduce el dueño**:
+  el `duenoId` que venía de la otra base se reemplaza por el usuario de esta que
+  corresponde al lado A (administrador) o B (pareja).
 - **No copia pedidos ni avisos**: son pasajeros.
 - Si alguna clasificación usada no existe en esta base, avisa al terminar: es la
   señal de que las listas no quedaron iguales.
 - Se puede correr varias veces: lo que ya está se sobrescribe, no se duplica.
+- **No borra** lo que sobre en la base destino: si allá existe algo que aquí ya
+  no, se queda. Para igualar borrando haría falta otro modo, y no está hecho.
 
 ## Límites conocidos (no son bugs)
 

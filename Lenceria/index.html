@@ -253,6 +253,8 @@
   <div class="filaDatos">
     <button class="btnSec chico" id="btnExportarPrendas">Exportar prendas</button>
     <button class="btnSec chico" id="btnImportarPrendas">Importar prendas</button>
+    <button class="btnSec chico" id="btnExportarListas">Exportar listas</button>
+    <button class="btnSec chico" id="btnImportarListas">Importar listas</button>
   </div>
 </div>
 
@@ -2122,12 +2124,24 @@ function escuchar(){
 // ====== 12) Mudanza de prendas entre dos instalaciones ======
 // Uso puntual (pasar lo capturado en la app de prueba a la personal). No es una
 // función de cliente y no copia pedidos ni avisos: esos son pasajeros.
-function abrirDatos(modo){
-  const esExport = modo === "exportar";
-  document.getElementById("datosTitulo").textContent = esExport ? "Exportar prendas" : "Importar prendas";
+let datosTipo = "prendas";   // "prendas" | "listas"
+
+function abrirDatos(accion, tipo){
+  datosTipo = tipo || "prendas";
+  const esExport = accion === "exportar";
+  const esPrendas = datosTipo === "prendas";
+
+  document.getElementById("datosTitulo").textContent =
+    (esExport ? "Exportar " : "Importar ") + (esPrendas ? "prendas" : "listas");
+
   document.getElementById("datosAyuda").textContent = esExport
-    ? "Descarga el archivo y mándalo por WhatsApp. También puedes copiar el texto."
-    : "Elige el archivo que te mandaron, o pega aquí el texto. Se conservan los ids y se pone el dueño de aquí.";
+    ? (esPrendas
+        ? "Descarga el archivo y mándalo por WhatsApp. También puedes copiar el texto."
+        : "Zonas, estilos, tipos y colores en un solo archivo. Va todo junto porque cada prenda apunta a las cuatro.")
+    : (esPrendas
+        ? "Elige el archivo que te mandaron, o pega aquí el texto. Se conservan los ids y se pone el dueño de aquí."
+        : "Elige el archivo de listas. Se conservan los ids, así que las prendas siguen apuntando bien.");
+
   document.getElementById("datosAplicar").style.display = esExport ? "none" : "";
   document.getElementById("datosCopiar").style.display = esExport ? "" : "none";
   document.getElementById("datosDescargar").style.display = esExport ? "" : "none";
@@ -2135,23 +2149,40 @@ function abrirDatos(modo){
 
   const ta = document.getElementById("datosTexto");
   if(esExport){
-    ta.value = JSON.stringify({
-      tipo: "lenceria-prendas",
-      version: 1,
-      fecha: new Date().toISOString(),
-      prendas: prendas.map(p => ({
-        id: p.id,
-        lado: p.lado === "B" ? "B" : "A",
-        zonaId: p.zonaId || "", estiloId: p.estiloId || "",
-        tipoId: p.tipoId || "", colorId: p.colorId || "",
-        ref: p.ref || "",
-        foto: p.foto || "",
-        fotoW: Number(p.fotoW) || 0,
-        fotoH: Number(p.fotoH) || 0,
-        vecesUsadas: Number(p.vecesUsadas) || 0,
-        ultimaFechaUso: fechaDeUso(p) ? fechaDeUso(p).toISOString() : null
-      }))
-    });
+    if(esPrendas){
+      ta.value = JSON.stringify({
+        tipo: "lenceria-prendas",
+        version: 1,
+        fecha: new Date().toISOString(),
+        prendas: prendas.map(p => ({
+          id: p.id,
+          lado: p.lado === "B" ? "B" : "A",
+          zonaId: p.zonaId || "", estiloId: p.estiloId || "",
+          tipoId: p.tipoId || "", colorId: p.colorId || "",
+          ref: p.ref || "",
+          foto: p.foto || "",
+          fotoW: Number(p.fotoW) || 0,
+          fotoH: Number(p.fotoH) || 0,
+          vecesUsadas: Number(p.vecesUsadas) || 0,
+          ultimaFechaUso: fechaDeUso(p) ? fechaDeUso(p).toISOString() : null
+        }))
+      });
+    }else{
+      const simple = g => (clasif[g] || []).map(x => {
+        const o = { id: x.id, nombre: x.nombre || "", orden: Number(x.orden) || 0, origen: x.origen || "usuario" };
+        if(g === "tipos") o.cubreTodo = !!x.cubreTodo;
+        return o;
+      });
+      ta.value = JSON.stringify({
+        tipo: "lenceria-listas",
+        version: 1,
+        fecha: new Date().toISOString(),
+        zonas: simple("zonas"),
+        estilos: simple("estilos"),
+        tipos: simple("tipos"),
+        colores: simple("colores")
+      });
+    }
   }else{
     ta.value = "";
   }
@@ -2164,8 +2195,37 @@ async function aplicarImportacion(){
   const ta = document.getElementById("datosTexto");
   let d = null;
   try{ d = JSON.parse(ta.value || ""); }catch(e){ aviso("Ese texto no es un JSON válido."); return; }
+
+  // ===== Listas: zonas, estilos, tipos y colores =====
+  if(d && d.tipo === "lenceria-listas"){
+    let okL = 0, fallosL = 0;
+    for(const g of GRUPOS){
+      for(const x of (d[g] || [])){
+        if(!x || !x.id){ fallosL++; continue; }
+        const campos = {
+          nombre: String(x.nombre || ""),
+          orden: Number(x.orden) || 0,
+          origen: x.origen === "fabrica" ? "fabrica" : "usuario",
+          actualizadoEn: serverTimestamp()
+        };
+        if(g === "tipos") campos.cubreTodo = !!x.cubreTodo;
+        try{
+          await setDoc(doc(db, COLS[g].col, x.id), campos, { merge: true });
+          okL++;
+        }catch(e){ fallosL++; }
+      }
+    }
+    await cargarClasificaciones();
+    pintarConfig();
+    let msgL = "Importadas " + okL + (okL === 1 ? " lista." : " listas.");
+    if(fallosL) msgL += " Fallaron " + fallosL + ".";
+    aviso(msgL);
+    document.getElementById("datos").style.display = "none";
+    return;
+  }
+
   if(!d || d.tipo !== "lenceria-prendas" || !Array.isArray(d.prendas)){
-    aviso("Ese texto no es una exportación de prendas."); return;
+    aviso("Ese texto no es una exportación de lencería."); return;
   }
 
   const conocidos = {
@@ -2214,8 +2274,10 @@ async function aplicarImportacion(){
   document.getElementById("datos").style.display = "none";
 }
 
-document.getElementById("btnExportarPrendas").addEventListener("click", ()=> abrirDatos("exportar"));
-document.getElementById("btnImportarPrendas").addEventListener("click", ()=> abrirDatos("importar"));
+document.getElementById("btnExportarPrendas").addEventListener("click", ()=> abrirDatos("exportar", "prendas"));
+document.getElementById("btnImportarPrendas").addEventListener("click", ()=> abrirDatos("importar", "prendas"));
+document.getElementById("btnExportarListas").addEventListener("click", ()=> abrirDatos("exportar", "listas"));
+document.getElementById("btnImportarListas").addEventListener("click", ()=> abrirDatos("importar", "listas"));
 document.getElementById("datosCerrar").addEventListener("click", ()=>{
   document.getElementById("datos").style.display = "none";
 });
@@ -2227,7 +2289,8 @@ document.getElementById("datosDescargar").addEventListener("click", ()=>{
   if(!texto){ aviso("Todavía no hay nada que descargar."); return; }
   const d = new Date();
   const p = n => String(n).padStart(2, "0");
-  const nombre = "lenceria-prendas-" + d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + ".json";
+  const nombre = (datosTipo === "listas" ? "lenceria-listas-" : "lenceria-prendas-")
+    + d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + ".json";
   try{
     const blob = new Blob([texto], { type: "application/json" });
     const url = URL.createObjectURL(blob);
