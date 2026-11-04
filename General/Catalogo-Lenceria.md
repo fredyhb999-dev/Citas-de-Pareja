@@ -377,23 +377,27 @@ no hay historial por plan. Es un límite consciente, no un descuido.
 
 ## Entrar desde una cita
 
-Cada tarjeta de cita tiene un botón **👗** que abre
-`Lenceria/?fecha=AAAA-MM-DD&lado=A|B`, con el día de la cita y el lado de **quien
-la recibe**.
+Cada tarjeta de cita tiene un botón **👗**. **No sale en citas pasadas** (no se
+puede crear nada para ayer).
 
-Qué hace al llegar:
+**El icono muestra, no propone.** Al tocarlo abre Lencería en la pestaña de quien
+recibe la cita: ahí se ve **su plan** si ya existe, o **la propuesta pendiente** si
+todavía no hay plan. Llega con `?fecha=AAAA-MM-DD&lado=A|B&modo=ver`.
 
-- **Mi lado:** abre el Vestidor con esa fecha (para crear o editar mi plan).
-- **Lado del otro:** si ya tiene plan ese día, se queda en su lista (solo
-  lectura); si no tiene, abre la **propuesta** con la fecha puesta.
-- **Día pasado:** solo muestra el historial. No se crea nada, porque la app no
-  permite fechas anteriores a hoy.
-- **"‹ Volver":** regresa a la cita. Se reemplaza el paso del historial para que
-  no caiga en la pantalla principal de Lencería.
+**Proponer** el atuendo se ofrece en otros dos momentos, no desde el icono:
 
-El enlace **no se guarda en la base**: se calcula con la fecha de la cita y el
-lado de quien la recibe. Por eso, si la cita se mueve de día, el botón apunta
-solo al día nuevo.
+- Al **crear** una cita: después de guardarla, pregunta *"¿Quieres proponer el
+  atuendo de X?"*. Si dice sí, va a Lencería con la fecha y la persona
+  (`modo=proponer`), se arma la propuesta y se regresa a Citas.
+- Al **confirmar** o dar **"Enterado"**: la misma pregunta, apuntando a la otra
+  persona de la cita.
+
+Si dice que no, la cita sigue su curso normal.
+
+El enlace **no se guarda en la base**: se calcula con la fecha de la cita. Por
+eso, si la cita se mueve de día, el botón apunta solo al día nuevo. Y el
+**"‹ Volver"** regresa a la cita: se reemplaza el paso del historial para que no
+caiga en la pantalla principal de Lencería.
 
 ### Mover la fecha de la cita
 

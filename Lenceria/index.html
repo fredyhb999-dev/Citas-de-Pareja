@@ -2421,16 +2421,30 @@ function aplicarEntradaCita(){
   const p = new URLSearchParams(location.search);
   const fecha = String(p.get("fecha") || "").slice(0, 10);
   const lado = p.get("lado");
+  const modo = p.get("modo");   // "plan" | "proponer" (lo manda la hojita de Citas)
   if(fecha.length !== 10 || (lado !== "A" && lado !== "B")) return;
 
   tabActivo = lado;
   pintarPlanes();
+
+  // "ver": solo se muestra lo que hay ese día (no se abre el Vestidor).
+  if(modo === "ver") return;
 
   if(fecha < hoyTexto()) return;
 
   const plan = planes.find(x => x && x.fechaTexto === fecha
     && (x.duenoId ? x.duenoId === idDeLado(lado) : x.lado === lado));
 
+  if(modo === "plan" && lado === miLado){
+    abrirElegir("plan", plan || null, fecha, true);
+    return;
+  }
+  if(modo === "proponer" && lado === otroLado){
+    abrirElegir("propuesta", null, fecha, true);
+    return;
+  }
+
+  // Sin modo (o si algo no cuadra): mismo comportamiento de antes.
   if(lado === miLado){
     abrirElegir("plan", plan || null, fecha, true);
   }else if(!plan){

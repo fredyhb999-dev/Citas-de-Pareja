@@ -705,6 +705,18 @@ function nombreDeLado(lado){
   return (u && u.nombre) || ("Lado " + lado);
 }
 
+// El 👗 de una cita guardada muestra lo que hay ese día: el plan si existe, y si
+// no, la propuesta pendiente. Se abre la pestaña de quien recibe la cita.
+function verVestuarioDeLaCita(c){
+  const fecha = String(c.fechaCita || "").slice(0, 10);
+  if(fecha.length !== 10) return;
+  const uPara = usuarios.find(u => u && u.id === c.paraId);
+  if(!uPara) return;
+  const lado = uPara.admin ? "A" : "B";
+  location.href = "../Lenceria/?fecha=" + encodeURIComponent(fecha)
+    + "&lado=" + lado + "&modo=ver";
+}
+
 // Si la cita cambia de día, mueve los planes y las propuestas de ese día.
 // Devuelve false solo si el usuario decide no mover (y entonces no se guarda).
 async function moverVestuario(vieja, nueva, paraId){
@@ -830,6 +842,7 @@ btnGuardarCita.onclick = async ()=>{
   }
 
   try{
+    let nuevaPara = null;
     if(editandoId){
       // Modificar cita existente: se conserva el estado actual (no confirma)
       suprimir(editandoId);
@@ -865,8 +878,12 @@ btnGuardarCita.onclick = async ()=>{
         ultimaAccionPorNombre: miIdentidad.nombre
       });
       avisarTelegram("📅 Nueva cita de " + miIdentidad.nombre + " para " + paraUsuario.nombre + ": " + actividad + " (" + formatearFecha(fecha) + ")", APP_URL + "Citas/?cita=" + refNueva.id);
+      nuevaPara = paraUsuario;
     }
     cerrarFormulario();
+
+    // Al crear la cita, se ofrece proponer el atuendo del otro.
+    if(nuevaPara) await preguntarProponer(fecha, nuevaPara);
   }catch(e){
     formMsg.textContent = "Error al guardar. Revisa tu conexión.";
     console.error(e);
@@ -876,6 +893,29 @@ btnGuardarCita.onclick = async ()=>{
 };
 
 // ====== ACCIONES SOBRE UNA CITA ======
+// Lleva a Lencería a armar la propuesta del atuendo de la otra persona.
+function irAProponer(fecha, u){
+  if(!u) return;
+  const f = String(fecha || "").slice(0, 10);
+  if(f.length !== 10) return;
+  const lado = u.admin ? "A" : "B";
+  location.href = "../Lenceria/?fecha=" + encodeURIComponent(f)
+    + "&lado=" + lado + "&modo=proponer";
+}
+
+// La pregunta que sale después de guardar o confirmar una cita.
+async function preguntarProponer(fecha, u){
+  if(!u) return;
+  const f = String(fecha || "").slice(0, 10);
+  if(f.length !== 10 || f < hoyISO()) return;
+  const ok = await confirmar({
+    titulo: "¿Quieres proponer el atuendo de " + (u.nombre || "tu pareja") + "?",
+    texto: "Se abre Lencería para armar la propuesta y después regresas aquí.",
+    ok: "Sí, proponer"
+  });
+  if(ok) irAProponer(f, u);
+}
+
 async function confirmarCita(id){
   suprimir(id);
   await updateDoc(doc(db, "citas", id), {
@@ -886,6 +926,13 @@ async function confirmarCita(id){
   });
   const c = citasPorId[id];
   avisarTelegram("✅ " + miIdentidad.nombre + " confirmó la cita: " + (c ? nombreDeCita(c) : "") + (c ? " (" + formatearFecha(c.fechaCita) + ")" : ""), APP_URL + "Citas/?cita=" + id);
+
+  // Al confirmar, se ofrece proponer el atuendo del otro lado de la cita.
+  if(c){
+    const otroId = (c.paraId === miIdentidad.id) ? c.proponenteId : c.paraId;
+    const uOtro = usuarios.find(u => u && u.id === otroId);
+    await preguntarProponer(c.fechaCita, uOtro);
+  }
 }
 
 async function rechazarCita(id){
@@ -968,20 +1015,18 @@ function renderCitas(docsSnap){
     quienEl.textContent = "Propuesta por " + c.proponenteNombre + " para " + c.paraNombre;
     card.appendChild(quienEl);
 
-    // Botón de vestuario: lleva a Lencería con la fecha y la persona ya puestas.
-    // Es un icono para no gastar un renglón en la tarjeta.
+    // Botón de vestuario: muestra lo que hay ese día en Lencería (plan o
+    // propuesta pendiente). No sale en citas pasadas.
     const fechaVest = String(c.fechaCita || "").slice(0, 10);
-    if(fechaVest.length === 10){
-      const uPara = usuarios.find(u => u && u.id === c.paraId);
-      const ladoVest = (uPara && uPara.admin) ? "A" : "B";
+    const uParaVest = usuarios.find(u => u && u.id === c.paraId);
+    const vestPasada = fechaVest.length === 10 && fechaVest < hoyISO();
+    if(fechaVest.length === 10 && uParaVest && !vestPasada){
       const btnVest = document.createElement("button");
       btnVest.className = "btnVestuario";
       btnVest.textContent = "👗";
-      btnVest.title = "Vestuario de " + (c.paraNombre || "la pareja");
-      btnVest.setAttribute("aria-label", "Vestuario de " + (c.paraNombre || "la pareja"));
-      btnVest.onclick = ()=>{
-        location.href = "../Lenceria/?fecha=" + encodeURIComponent(fechaVest) + "&lado=" + ladoVest;
-      };
+      btnVest.title = "Ver el vestuario de " + (uParaVest.nombre || "la pareja");
+      btnVest.setAttribute("aria-label", "Ver el vestuario de " + (uParaVest.nombre || "la pareja"));
+      btnVest.onclick = ()=> verVestuarioDeLaCita(c);
       filaTop.appendChild(btnVest);
     }
 
