@@ -177,3 +177,4 @@ La conexión a internet solo se necesita la primera vez que se conecta a Firebas
 2. Asegúrate de que las reglas de Firestore permitan **read/write**.
 3. Verifica que los datos en `firebase-config.js` coincidan exactamente con los de tu proyecto Firebase.
 4. En GitHub, ve a Settings → Pages y confirma que está activado en la rama `main`.
+
