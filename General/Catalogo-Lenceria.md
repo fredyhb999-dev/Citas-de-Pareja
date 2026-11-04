@@ -393,6 +393,11 @@ la app de prueba a la personal), **no** una función para clientes.
 - **No borra** lo que sobre en la base destino: si allá existe algo que aquí ya
   no, se queda. Para igualar borrando haría falta otro modo, y no está hecho.
 
+> **PENDIENTE ANTES DE VENDER:** **quitar estos cuatro botones.** Son una
+> herramienta de mudanza entre la app de prueba y la personal, no una función de
+> cliente: alguien podría duplicar o pisar su base sin saber qué hace. Está
+> anotado también en `General/GUIA.md`, en *Otros pendientes*.
+
 ## Límites conocidos (no son bugs)
 
 | Límite | Por qué |

@@ -323,6 +323,10 @@ la tarjeta y la tienda lo desmarca. Sin que el cliente recargue nada.
 - Sesion de Encuentros en `sesionEncuentros/actual`: la lista de TODOS los
   participantes (incluidos invitados) vive en un solo documento. Confirmar en la
   consola que ese path no queda abierto a lectura ajena.
+- **Quitar los botones de Exportar/Importar de la lencería ANTES DE VENDER.** Son
+  una herramienta de mudanza entre la app de prueba y la personal; un cliente no
+  los necesita y podría duplicar o pisar su base. Hoy viven al final de
+  *Ajusta tus ilusiones y sueños*, sin candado. Ver `General/Catalogo-Lenceria.md`.
 
 > Invitado a media partida: acciones distintas -> ve General/Invitado-a-media-partida.md (regla vigente para invitado que entra con partida empezada)
 ### Limites conocidos (no bloquean)
