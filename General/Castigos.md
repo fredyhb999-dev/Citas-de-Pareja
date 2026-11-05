@@ -118,7 +118,7 @@ Cada N rondas (configurable, 1 o más) se asigna una imposición al azar al turn
 
 ## Navegación: «Volver», atrás del celular e historial
 
-El botón **«← Volver»** de la esquina superior derecha (`lnkInicio`) y el **atrás
+El botón **«‹ Volver»** de la esquina superior derecha (`lnkInicio`) y el **atrás
 del celular** hacen **lo mismo**: deshacen un paso del historial. Antes el botón
 solo pintaba otra vista sin tocar el historial y por eso los dos acababan en
 sitios distintos (quedaban pasos de más y había que pulsar atrás dos o tres
@@ -132,7 +132,7 @@ veces para salir). Corregido en nov-2026.
   del editor no quede debajo (si no, el atrás se quedaría en el mismo sitio).
 - **Partida en curso:** el botón no se ve y el atrás del celular se "reempuja"
   (`history.go(1)`). Igual para el **invitado**, en cualquier pantalla.
-- **Partida terminada:** el texto pasa a **"← Volver a lista"** y vuelve al inicio.
+- **Partida terminada:** el texto pasa a **"‹ Volver a lista"** y vuelve al inicio.
 - **Sala de espera / pantalla de bloqueo:** el botón no se intercepta y sale al menú.
 
 El **paso deshecho manda**: si apunta a Configuración se muestra Configuración; el

@@ -237,7 +237,7 @@
 </head>
 <body>
 
-<a class="back" id="lnkInicio" href="../index.html#juegos">← Volver</a>
+<a class="back" id="lnkInicio" href="../index.html#juegos">‹ Volver</a>
 <button id="btnCfg" aria-label="Configurar">⚙️</button>
 
 <div class="eyebrow">Ganar cumple tus deseos; perder<br>despierta la pasión.</div>
@@ -921,7 +921,7 @@ function pintarSalidas(){
     document.getElementById("btnCfg").style.display = (!esInvitadoFlag && (id==="vistaConfig"||id==="vistaInicio"))?"block":"none";
     const lnk = document.getElementById("lnkInicio");
     lnk.style.display = (enJuego || esInvitadoFlag) ? "none" : "";
-    lnk.textContent = (id==="vistaPartida" && finVisible()) ? "← Volver a lista" : "← Volver";
+    lnk.textContent = (id==="vistaPartida" && finVisible()) ? "‹ Volver a lista" : "‹ Volver";
   }catch(e){}
 }
 function ver(id, guardar){

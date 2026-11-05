@@ -428,10 +428,19 @@ puede depender del catálogo para que su botón aparezca.
 | Citas, Retos | derecha (en el header) | derecha |
 | **Tienda** (secciones Experiencias/Juegos/Extras) | enlace de **texto** arriba ("‹ Centro de Adquisiciones") y, en el Centro, `← Inicio` | **`‹ Volver` en la esquina superior derecha** (`#btnCasa` contextual), como toda la app. Se quitó el enlace de texto. En una sección vuelve al Centro; en el Centro, al menú |
 
-**Todos los «Volver» de las pantallas de juego y la Tienda quedan fijos**
-(nov-2026): no se van con el scroll, así que no hay que subir hasta arriba para
-salir. Es el mismo comportamiento que ya tenía `Castigos/`. Citas, Retos, Chat y
-Acompañante todavía lo llevan dentro del encabezado y se van con el scroll.
+**Todos los «Volver» de la app quedan fijos** (nov-2026): no se van con el
+scroll, así que no hay que subir hasta arriba para salir. Vale para los juegos,
+la Tienda, Citas, Retos, Panel y Autorizar. Todos dicen **«‹ Volver»**, van en la
+esquina superior derecha y llevan fondo y borde para que se lean cuando pasa
+contenido por debajo. En Citas y Retos salieron del encabezado para quedar
+flotando. En Chat y Acompañante el encabezado no se desplaza (solo la lista de
+mensajes), así que ya se quedaban quietos. En el Panel, «Entrar con Google» pasó
+a la izquierda, y en el Catálogo el «‹ Volver» es contextual: dentro de una
+sección regresa a la lista de secciones, y en la lista sale al menú del Panel.
+En ese Catálogo **el atrás del celular hace lo mismo que el «‹ Volver»**
+(nov-2026): cada sección es un paso real del historial, así que el gesto
+devuelve a la lista de secciones en vez de salirse de la página, y el gesto
+«adelante» vuelve a entrar. Es el mismo criterio de `Castigos/`.
 
 **Lo que se mueve a la izquierda** es el botón **contextual** de cada pantalla:
 el engrane, "Jugar", "Configurar". En Guiadas funcionan bien porque **nunca

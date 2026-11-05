@@ -81,7 +81,7 @@
   /* ---------- app principal ---------- */
   #app{ display:none; min-height:100dvh; flex-direction:column; }
   #encabezado{
-    padding:20px 20px 16px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:20px 104px 16px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px;
     border-bottom:1px solid var(--card-border);
   }
   #encabezado .saludo{ font-size:1.2rem; }
@@ -93,8 +93,10 @@
   #encabezado .derecha{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   #fechaHoy{ font-size:.82rem; color:var(--fg-muted); margin-top:2px; }
   #btnVolver{
-    background:none; color: var(--fg-muted); font-size:.75rem;
-    text-decoration:underline; padding:4px; font-weight:500; font-family:'Inter',sans-serif;
+    position:fixed; top:max(20px, env(safe-area-inset-top)); right:20px; z-index:50;
+    background:var(--bg-2); border:1px solid var(--card-border); border-radius:10px;
+    color: var(--fg-muted); font-size:.85rem; padding:6px 10px; text-decoration:none;
+    font-weight:500; font-family:'Chakra Petch',sans-serif;
   }
 
   /* ---------- pancarta de avisos ---------- */
@@ -253,13 +255,11 @@
 
 <!-- ================= APP PRINCIPAL ================= -->
 <div id="app">
+  <a href="../index.html#retos" id="btnVolver">‹ Volver</a>
   <div id="encabezado">
     <div>
       <div class="saludo grande">Hola, <span id="nombreActual"></span></div>
       <div id="fechaHoy"></div>
-    </div>
-    <div class="derecha">
-      <a href="../index.html#retos" id="btnVolver">← Volver</a>
     </div>
   </div>
 

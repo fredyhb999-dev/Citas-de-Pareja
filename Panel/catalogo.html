@@ -20,8 +20,9 @@
       radial-gradient(circle at 100% 30%, #1c1330, transparent 45%), var(--bg); }
   body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
     padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
-  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); left:20px;
-    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  .back{ position:fixed; top:max(20px, env(safe-area-inset-top)); right:20px; z-index:50;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none;
+    background:var(--bg-2); border:1px solid var(--card-border); border-radius:10px; padding:6px 10px; }
   .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
     text-transform:uppercase; color:var(--fg-muted); margin-bottom:10px; }
   h1{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.6rem; margin:0 0 8px; text-align:center;
@@ -60,15 +61,12 @@
   .card .chevron{ font-size:1.4rem; color:var(--fg-muted); }
   #msg{ min-height:20px; font-size:.85rem; color:var(--rojo); margin:6px 0; text-align:center; max-width:520px; }
   #msg.ok{ color:var(--teal); }
-  #btnVolverSec{ position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
-    background:none; border:none; color:var(--fg-muted); font-size:.85rem; cursor:pointer;
-    font-family:'Chakra Petch',sans-serif; padding:4px; }
 </style>
 </head>
 <body>
 
-<a class="back" href="index.html">‹ Panel</a>
-<button id="btnGoogle" type="button" style="position:absolute;top:max(52px, calc(env(safe-area-inset-top) + 32px));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">Entrar con Google</button>
+<a class="back" id="btnVolverCat" href="index.html">‹ Volver</a>
+<button id="btnGoogle" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));left:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">Entrar con Google</button>
 <p class="desc" id="quienGoogle" style="display:none"></p>
 <div class="eyebrow">Panel · Catálogo</div>
 <h1 id="tituloPag">Catálogo de Adquisiciones 🗂️</h1>
@@ -96,7 +94,6 @@
 </div>
 
 <div id="vistaCat" style="display:none;width:100%;max-width:520px;">
-<button id="btnVolverSec" type="button">‹ Secciones</button>
 <h2 id="tituloSec" style="margin-top:0;"></h2>
 
 <div class="caja">
@@ -190,11 +187,14 @@ function msg(t, ok){
   m.id = "msg";
 }
 let secActual = null;
+// Marca el «‹ Volver» mientras espera el popstate, para caer a la lista a mano
+// si no hubiera paso que deshacer (p. ej. la página se abrió directa).
+let volviendoALista = false;
 function nombreSec(id){
   const s = SECS.find(x=>x.id === id);
   return s ? s.nombre : id;
 }
-function entrarSec(id){
+function entrarSec(id, sinHistorial){
   secActual = id;
   document.getElementById("vistaSec").style.display = "none";
   document.getElementById("vistaCat").style.display = "block";
@@ -206,16 +206,44 @@ function entrarSec(id){
   msg("");
   cargar();
   window.scrollTo(0, 0);
+  // Cada sección es un paso real del historial, para que el atrás del celular
+  // regrese a la lista de secciones (igual que el «‹ Volver»).
+  if(!sinHistorial){ try{ history.pushState({ sec:id }, ""); }catch(e){} }
 }
 document.querySelectorAll("#vistaSec button").forEach(b=>{
   b.onclick = ()=>entrarSec(b.getAttribute("data-sec"));
 });
-document.getElementById("btnVolverSec").onclick = ()=>{
+// Vuelve a la lista de secciones sin tocar el historial (la usan el «‹ Volver»
+// y el atrás del celular).
+function volverALista(){
   secActual = null;
   document.getElementById("tituloPag").textContent = "Catálogo de Adquisiciones 🗂️";
   document.getElementById("vistaCat").style.display = "none";
   document.getElementById("vistaSec").style.display = "block";
+  window.scrollTo(0, 0);
+}
+
+// El «‹ Volver» es contextual, como en la Tienda: dentro de una sección deshace
+// el paso del historial (regresa a la lista); en la lista sale al menú del Panel
+// por el href.
+document.getElementById("btnVolverCat").onclick = (e)=>{
+  if(!secActual) return;
+  e.preventDefault();
+  volviendoALista = true;
+  try{ history.back(); }catch(err){ volviendoALista = false; volverALista(); }
+  setTimeout(()=>{
+    if(!volviendoALista) return;
+    volviendoALista = false;
+    volverALista();
+  }, 400);
 };
+try{ history.replaceState({ sec:null }, ""); }catch(e){}
+window.addEventListener("popstate", (ev)=>{
+  volviendoALista = false;
+  const id = ev && ev.state && ev.state.sec;
+  if(id && SECS.some(s=>s.id === id)){ entrarSec(id, true); return; }
+  volverALista();
+});
 const ICONOS_POR_SEC = {
   experiencias: ["💋","💑","🌙","🕯️","🍷","🍫","💐","💍","🌹","🎶","✨","🔥"],
   juegos: ["🎲","🎮","🃏","🎯","🎳","🧩","🎪","🏆","🎉","🪩","🎊","🍻"],
