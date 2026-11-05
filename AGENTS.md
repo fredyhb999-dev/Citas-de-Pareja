@@ -230,7 +230,9 @@ Toda pantalla nueva o tocada tiene que cumplir el contrato de
   `HIST`, se corrige antes de subir; `REGISTRO` y `FIJO` son avisos.
 - **Capa 3 pendiente (no urgente):** un `nav.js` mínimo con `marcarEntrada()` y
   `salirAlMenu()`. Se hace **después** de probar en el celular, en una sesión
-  aparte. Alcance y criterio en `General/Pantallas.md` → *Pendiente: capa 3*.
+  aparte. Incluye cómo conservar el flujo del invitado (base `vistaEspera`, sin
+  Configuración/editor). Alcance y criterio en `General/Pantallas.md` →
+  *Pendiente: capa 3*.
 
 ## La llave del `Panel/` — NUNCA al repo
 

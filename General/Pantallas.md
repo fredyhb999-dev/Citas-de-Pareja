@@ -268,21 +268,104 @@ requisito. Si se hace, va en una sesión aparte para no mezclar dos riesgos.
 
 **Qué sería:** un módulo mínimo `nav.js` (en la raíz, como `acceso.js`) con:
 
-- `marcarEntrada()`: pone `entrada:true` en el primer paso de la página.
-- `salirAlMenu(url)`: deshace los pasos de esa pantalla y sale; si se abrió
-  desde fuera, usa la dirección fija.
+- `marcarEntrada(estado)`: devuelve el estado con `entrada:true`, para el
+  `replaceState` inicial de la pantalla (sin perder sus otras claves).
+- `salirAlMenu(url)`: arranca la salida; deshace los pasos de esa pantalla y,
+  al llegar al primero, sale; si se abrió desde fuera, usa la dirección fija.
+- `procesarSalida(e)`: se llama **al inicio** del `popstate` de cada pantalla y
+  devuelve `true` si ese atrás era parte de la salida (para que la pantalla no
+  reabra una vista por el camino).
 
-**Qué NO haría:** no centraliza el `popstate` ni las vistas. Cada juego tiene
-reglas propias (partida, invitado, selección, editor) y meterlas en un módulo
-genérico lo volvería más difícil de entender que el código actual.
+**Por qué `procesarSalida`:** la salida camina varios pasos del historial, y eso
+solo se puede hacer desde el `popstate`. Si `nav.js` pone su propio listener,
+compite con el de la pantalla y el orden se vuelve frágil. Con el hook explícito,
+cada pantalla manda y el módulo no adivina.
 
-**Cómo se haría:** una pantalla primero (la más simple: Diablitos o Chat),
-probar en el celular, y luego las demás. Registrar `nav.js` en
-`herramientas/sintaxis/extract.py` y correr `revisar.py`. Se va quitando el
-bloque duplicado de cada pantalla.
+**Qué NO haría:** no centraliza el `popstate` ni las vistas, no inyecta HTML y
+no cambia el CSS del botón. El `.back` fijo y el `‹ Volver` se quedan en cada
+pantalla, como están hoy (y el chequeo ya los vigila).
 
-**Criterio de terminado:** todas las pantallas usan el helper, `revisar.py`
-sigue verde y la navegación se probó en el celular.
+**Invitados (no se puede perder):** en `Encuentros/`, `Opciones/`, `Roles/` y
+`Castigos/` el `popstate` no es solo navegación: también decide qué pantalla ve
+el invitado. Al migrar a `nav.js`:
+
+- La base del invitado sigue siendo `vistaEspera`; el helper **no** la cambia.
+- `salirAlMenu()` **no** se llama para un invitado (su «‹ Volver» está oculto);
+  si el enlace existe, el manejador conserva el guard `if(esInvitadoFlag) return`.
+- `procesarSalida(e)` solo actúa si la salida la empezó el propio helper; nunca
+  reabre Configuración ni el editor.
+- Los guards `&& !esInvitadoFlag` de Configuración/editor se quedan en la
+  pantalla; **no** se mudan al módulo.
+- `Guiadas/` no tiene invitados (no publica invitaciones), así que ahí no aplica.
+
+**Mapa del código que se movería:**
+
+- `Encuentros/`, `Guiadas/`, `Opciones/`, `Roles/`, `Acompañante/`, `Castigos/`:
+  hoy tienen `irAlMenu` + `salirAlMenu` + `saliendo` y el bloque de salida al
+  inicio de su `popstate`. Eso es lo que se va a `nav.js`.
+- `Diablitos/`: su salida (`volverSala`) y el paso de la configuración. Se
+  adapta al helper, sin mover la lógica de la sala.
+- `Citas/`, `Retos/`, `Chat/`: solo usan el caso simple (`history.back()` si se
+  llegó del sitio; si no, `location.replace`). Pueden usar `salirAlMenu` directo.
+- `Tienda/`: su `volverAtras()` es el mismo caso; se puede sumar.
+- `Lenceria/`, `Retos/centro.html`, `Citas/actividades.html`,
+  `Citas/accesorios.html`: tienen su propio historial; **no** se tocan en la
+  primera pasada, solo se revisa si el helper encaja.
+- `Panel/` y `Autorizar/`: enlaces simples; no aplica.
+
+**Cómo se haría (orden):**
+
+1. Crear `nav.js` con las tres funciones y registrarlo en
+   `herramientas/sintaxis/extract.py`.
+2. Migrar **una** pantalla con paso interno (Diablitos o Encuentros) y probar
+   el atrás/adelante en el celular. Si tiene invitados, probar **también como
+   invitado** (que caiga en la espera, que no abra Configuración/editor y que
+   al pausar/terminar vuelva a la sala).
+3. Migrar **una** simple (Chat o Citas) y probar la entrada desde el menú y
+   desde fuera.
+4. Seguir con las demás, de una en una, corriendo `revisar.py` y probando en el
+   celular.
+5. Al final, borrar el bloque duplicado de cada pantalla y correr `revisar.py`.
+
+**Si se complica:** se para y se deja el código actual. La capa 3 es opcional;
+no vale la pena cambiar navegación que ya funciona por elegancia.
+
+**Criterio de terminado:** las pantallas de la lista usan el helper,
+`revisar.py` sigue verde y la navegación se probó en el celular, **incluido el
+flujo del invitado** en Encuentros, Opciones, Roles y Castigos.
+
+**Contrato para quien lo haga (otro chat u otro modelo):**
+
+1. **No cambia el comportamiento.** Es un refactor: el código de referencia ya
+   está en esas pantallas (`irAlMenu`, `salirAlMenu`, `saliendo`, el arranque de
+   `popstate`). Se copia, no se reinventa. Si una pantalla se comporta distinto,
+   es un bug: se revierte esa pantalla y se deja el código viejo.
+2. **Una pantalla a la vez.** No migrar todas de golpe.
+3. **No tocar** las reglas de Firebase, el CSS ni el HTML del botón, ni el
+   `popstate` de cada pantalla (solo se le agrega `procesarSalida(e)` al inicio).
+4. **Verificar** con:
+
+   ```powershell
+   cd herramientas\sintaxis
+   python revisar.py
+   ```
+
+   Tiene que decir `Todo bien` y el bloque `navegacion` tiene que estar en `OK`.
+   Si se agregó `nav.js`, el conteo sube (de 33 a 34) y no es un error.
+5. **Probar en el celular** lo que el modelo no puede ver (lista de abajo).
+6. **Documentar** cualquier cambio de diseño en este mismo apartado; si el
+   helper termina con otra forma, se actualiza aquí.
+
+**Qué tiene que probar Fredy en el celular (por pantalla migrada):**
+
+- Menú → juego → «‹ Volver» → menú; y después el atrás del celular **no** debe
+  reabrir el juego.
+- Configuración → atrás → vista principal; y «adelante» → Configuración.
+- Durante la partida, el atrás **no** sale.
+- Invitado: cae en la espera, no ve Configuración/editor, y al pausar/terminar
+  vuelve a la sala.
+- Entrada desde fuera (Telegram o marcador): el «Volver» va al menú, no sale
+  del sitio.
 
 ## Degradado en los títulos
 
