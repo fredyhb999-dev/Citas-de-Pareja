@@ -444,7 +444,12 @@ function modalAbierto(){
 }
 window.addEventListener("popstate", (e)=>{
   if(modalAbierto()){ try{ history.go(1); }catch(err){} return; }
-  ver((e.state && e.state.v) || "vistaCatalogo", false);
+  const v = (e.state && e.state.v) || "vistaCatalogo";
+  // Si el paso deshecho lleva a la MISMA pantalla que ya se está viendo, quedó
+  // de más: se sigue deshaciendo para que el primer atrás no se sienta muerto.
+  const actual = document.querySelector(".vista.ver");
+  if(actual && actual.id === v){ try{ history.back(); return; }catch(err){} }
+  ver(v, false);
 });
 try{ history.replaceState({ v: "vistaCatalogo" }, ""); }catch(e){}
 

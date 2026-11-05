@@ -425,6 +425,9 @@ window.addEventListener("popstate", (e)=>{
     return;
   }
   const v = (e.state && e.state.v) || "vistaPlanes";
+  // Si el paso deshecho lleva a la MISMA pantalla que ya se está viendo, quedó
+  // de más: se sigue deshaciendo para que el primer atrás no se sienta muerto.
+  if(v === vistaActual){ try{ history.back(); return; }catch(err){} }
   ver(v, false);
 });
 

@@ -62,6 +62,10 @@ const ESTILO = `
 let estiloPuesto = false;
 let capa = null;
 let resolverActual = null;
+// La confirmación guarda un paso del historial mientras está abierta: así el
+// atrás la cierra y te deja donde estabas, en vez de salir de la pantalla.
+let pasoAbierto = false;
+let ignorarPop = false;
 
 function ponerEstilo(){
   if(estiloPuesto || typeof document === "undefined") return;
@@ -71,9 +75,28 @@ function ponerEstilo(){
   document.head.appendChild(e);
 }
 
-function cerrar(quanto){
+function resolverComo(quanto){
   if(resolverActual){ const r = resolverActual; resolverActual = null; r(quanto); }
+}
+function quitarCapa(){
   if(capa){ capa.remove(); capa = null; }
+}
+
+function cerrar(quanto){
+  resolverComo(quanto);
+  quitarCapa();
+  if(pasoAbierto){
+    // Solo se deshace si el paso actual sigue siendo el de la confirmación. Si
+    // la pantalla empujó otro encima, no se toca (sería deshacer algo ajeno).
+    const esNuestro = !!(history.state && history.state.cf);
+    pasoAbierto = false;
+    if(esNuestro){
+      ignorarPop = true;
+      try{ history.back(); }catch(e){ ignorarPop = false; }
+      // Si el back no llega (no había paso), no se queda tragándose el próximo.
+      setTimeout(()=>{ ignorarPop = false; }, 400);
+    }
+  }
 }
 
 export function confirmar(op){
@@ -90,8 +113,9 @@ export function aviso(op){
 
 function abrir(o, conCancelar){
   ponerEstilo();
-  // Nunca dos cajas encimadas: la que estaba abierta se cierra como "no".
-  cerrar(false);
+  // Nunca dos cajas encimadas: la que estaba abierta se cierra como "no" pero
+  // se REUTILIZA el paso del historial (no se hace back ni se empuja otro).
+  if(resolverActual){ resolverComo(false); quitarCapa(); }
 
   return new Promise((resolve)=>{
     resolverActual = resolve;
@@ -142,5 +166,30 @@ function abrir(o, conCancelar){
     c.appendChild(caja);
     document.body.appendChild(c);
     capa = c;
+    // Paso del historial: el atrás cierra esta ventana en vez de salir de la
+    // pantalla (nov-2026, lo reportó Fredy con el borrar de Citas).
+    if(!pasoAbierto){
+      try{ history.pushState({ cf:1 }, ""); pasoAbierto = true; }catch(e){ pasoAbierto = false; }
+    }
+  });
+}
+
+// El atrás cierra la confirmación y te deja donde estabas. Se registra al
+// importar el módulo, antes del resto de la pantalla, para que su `popstate` no
+// alcance a navegar la vista de abajo.
+if(typeof window !== "undefined"){
+  window.addEventListener("popstate", (e)=>{
+    // Viene del `history.back()` de un botón: la caja ya se cerró, no toca nada.
+    if(ignorarPop){
+      ignorarPop = false;
+      try{ e.stopImmediatePropagation(); }catch(x){}
+      return;
+    }
+    if(!pasoAbierto) return;
+    // El atrás ya deshizo el paso; solo hay que cerrar la caja como "no".
+    pasoAbierto = false;
+    resolverComo(false);
+    quitarCapa();
+    try{ e.stopImmediatePropagation(); }catch(x){}
   });
 }

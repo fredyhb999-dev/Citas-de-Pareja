@@ -254,7 +254,8 @@ Toda pantalla nueva o tocada tiene que cumplir esto. Si algo falla, **no está t
 - [ ] Cada vista interna es un **paso real del historial** (`history.pushState({v:id}, "")`) y la pantalla tiene **un solo** `popstate`.
 - [ ] El `popstate` obedece al estado: solo **Configuración** se reabre (y el editor si ya se cargó); la partida, la selección y los avisos **no**.
 - [ ] **Durante la partida el atrás no saca** (se devuelve con `history.go(1)`).
-- [ ] Una **ventana emergente** que no es paso del historial **no puede quedarse encima de otra vista**. O se cierra con el atrás (Usuarios, Citas y Retos) o el atrás se ignora mientras está abierta (modales de los juegos); nunca se navega la pantalla de abajo. `confirmar.js` cuenta como ventana abierta.
+- [ ] Si el paso deshecho lleva a la **misma pantalla** que ya se está viendo, se sigue deshaciendo (`history.back()`), para que el primer atrás no se sienta muerto (pasa al terminar una partida).
+- [ ] Una **ventana emergente** que no es paso del historial **no puede quedarse encima de otra vista**. O se cierra con el atrás (Usuarios, Citas, Retos y las confirmaciones de `confirmar.js`) o el atrás se ignora mientras está abierta (modales de los juegos); nunca se navega la pantalla de abajo.
 - [ ] El **invitado** cae siempre en `vistaEspera`; nunca ve Configuración ni el editor.
 - [ ] Al salir al menú se **deshacen los pasos de esa pantalla** (`salirAlMenu()`); si se abrió desde fuera, se va a la dirección fija. El Volver de la pantalla base **no** es un enlace normal.
 - [ ] El primer paso de la página se marca con `entrada:true` (para que `salirAlMenu()` sepa cuándo parar).
@@ -268,8 +269,9 @@ si hay un modal visible y, si lo hay, ignora el atrás (`history.go(1)`). El avi
 "¿Continuar?" de Encuentros/Opciones/Roles se cierra con el atrás porque no tiene
 botón de Cancelar. En `index.html` las ventanas de Usuarios se cierran con el
 atrás. En `Citas/` y `Retos/` el formulario guarda un paso al abrirse, así el
-atrás lo cierra. Las confirmaciones de `confirmar.js` cuentan como ventana
-abierta.
+atrás lo cierra. **`confirmar.js` también guarda un paso mientras la
+confirmación está abierta: el atrás la cierra y te deja donde estabas** (no sale
+de la pantalla).
 
 ## Pendiente de navegación: capa 3 (`nav.js`)
 

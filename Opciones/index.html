@@ -1520,6 +1520,11 @@ window.addEventListener("popstate", (e)=>{
   // Un invitado nunca la reabre: su base es la espera.
   const v = (e.state && e.state.v) || base;
   if(v === "vistaConfig" && configVista && !esInvitadoFlag){ ver("vistaConfig", false); return; }
+  // Si el paso deshecho no cambia la pantalla (misma vista o una vista
+  // transitoria como la partida), se sigue deshaciendo: al terminar una partida
+  // la lista ya está visible y el primer atrás no debe sentirse "muerto".
+  const actual = document.querySelector(".vista.ver");
+  if(actual && actual.id === base){ try{ history.back(); return; }catch(err){} }
   ver(base, false);
 });
 // El primer paso de esta página se marca `entrada`, para que el «‹ Volver»

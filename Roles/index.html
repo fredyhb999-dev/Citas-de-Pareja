@@ -4310,8 +4310,14 @@ window.addEventListener("popstate", (e)=>{
   // Solo Configuración se reabre desde el historial; la selección y la partida no.
   // Un invitado nunca la reabre: su base es la espera.
   const v = (e.state && e.state.v) || vistaDeInicio();
+  const base = vistaDeInicio();
   if(v === "vistaConfig" && configVista && !esInvitadoFlag){ ver("vistaConfig", false); return; }
-  ver(vistaDeInicio(), false);
+  // Si el paso deshecho no cambia la pantalla (misma vista o una vista
+  // transitoria como la partida), se sigue deshaciendo: al terminar una partida
+  // la lista ya está visible y el primer atrás no debe sentirse "muerto".
+  const actual = document.querySelector(".vista.ver");
+  if(actual && actual.id === base){ try{ history.back(); return; }catch(err){} }
+  ver(base, false);
 });
 // El primer paso de esta página se marca `entrada`, para que el «‹ Volver»
 // sepa cuándo ya no quedan pasos suyos que deshacer.
