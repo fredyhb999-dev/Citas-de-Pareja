@@ -256,22 +256,28 @@ Toda pantalla nueva o tocada tiene que cumplir esto. Si algo falla, **no está t
 - [ ] **Durante la partida el atrás no saca** (se devuelve con `history.go(1)`).
 - [ ] Si el paso deshecho lleva a la **misma pantalla** que ya se está viendo, se sigue deshaciendo (`history.back()`), para que el primer atrás no se sienta muerto (pasa al terminar una partida).
 - [ ] Una **ventana emergente** que no es paso del historial **no puede quedarse encima de otra vista**. O se cierra con el atrás (Usuarios, Citas, Retos y las confirmaciones de `confirmar.js`) o el atrás se ignora mientras está abierta (modales de los juegos); nunca se navega la pantalla de abajo.
+- [ ] La ventana está registrada en `General/Modales.md`.
 - [ ] El **invitado** cae siempre en `vistaEspera`; nunca ve Configuración ni el editor.
 - [ ] Al salir al menú se **deshacen los pasos de esa pantalla** (`salirAlMenu()`); si se abrió desde fuera, se va a la dirección fija. El Volver de la pantalla base **no** es un enlace normal.
 - [ ] El primer paso de la página se marca con `entrada:true` (para que `salirAlMenu()` sepa cuándo parar).
 - [ ] La pantalla está registrada en `herramientas/sintaxis/extract.py` (si no, `revisar.py` no la revisa nunca).
-- [ ] `python revisar.py` pasa, incluido el bloque **navegación** (GLIFO / HIST / REGISTRO / FIJO).
+- [ ] `python revisar.py` pasa, incluidos los bloques **navegación** y **modales**.
 
 **Modales y el atrás (nov-2026):** si hay una ventana abierta, el atrás **no
-cambia la vista de abajo**. En `Encuentros`, `Guiadas`, `Opciones`, `Roles`,
-`Castigos`, `Retos/centro`, `Citas/actividades` y `Lencería` el `popstate` revisa
-si hay un modal visible y, si lo hay, ignora el atrás (`history.go(1)`). El aviso
-"¿Continuar?" de Encuentros/Opciones/Roles se cierra con el atrás porque no tiene
-botón de Cancelar. En `index.html` las ventanas de Usuarios se cierran con el
-atrás. En `Citas/` y `Retos/` el formulario guarda un paso al abrirse, así el
-atrás lo cierra. **`confirmar.js` también guarda un paso mientras la
-confirmación está abierta: el atrás la cierra y te deja donde estabas** (no sale
-de la pantalla).
+cambia la vista de abajo**. Hay dos casos:
+
+- **Sobre una vista interna** (configuración, editor, partida, pestañas): el
+  `popstate` revisa si hay un modal visible y, si lo hay, ignora el atrás
+  (`history.go(1)`). Cubre Encuentros, Guiadas, Opciones, Roles, Castigos,
+  Retos/Centro, Citas/Actividades y Lencería.
+- **Sobre la pantalla base** (el primer paso del historial, donde el atrás sería
+  una salida de página): la ventana **guarda su propio paso** al abrirse y el
+  atrás la cierra sin salir. Es el caso de "¿Continuar?", los modos/multi/
+  invitación/gracia de los juegos, las ventanas de Usuarios, los formularios de
+  Citas/Retos, el modal de **tomas**, el Centro, Actividades y Panel/Castigos.
+
+**`confirmar.js`** guarda un paso mientras la confirmación está abierta: el atrás
+la cierra y te deja donde estabas (no sale de la pantalla).
 
 ## Pendiente de navegación: capa 3 (`nav.js`)
 

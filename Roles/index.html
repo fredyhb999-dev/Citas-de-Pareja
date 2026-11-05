@@ -864,8 +864,8 @@ function limpiarLocalGuardada(){
   try{ localStorage.removeItem(CLAVE_LOCAL_ROLES); }catch(e){}
 }
 
-function mostrarGracia(){ document.getElementById("modalGracia").style.display = "flex"; }
-document.getElementById("btnGraciaOk").onclick = ()=>{ document.getElementById("modalGracia").style.display = "none"; };
+function mostrarGracia(){ abrirModal("modalGracia"); }
+document.getElementById("btnGraciaOk").onclick = ()=>{ cerrarModal("modalGracia"); };
 
 document.getElementById("btnTienda").onclick = ()=>{ location.href = "../Tienda/?sec=juegos"; };
 document.getElementById("btnRevisar").onclick = async (e)=>{
@@ -3666,8 +3666,32 @@ async function salirModoInvitado(){
 }
 
 // ---------- engrane: personajes, contrapartes y especiales ----------
-function abrirModal(id){ document.getElementById(id).style.display = "flex"; }
-function cerrarModal(id){ document.getElementById(id).style.display = "none"; }
+// Ventanas sobre la PANTALLA BASE: guardan su paso para que el atrás las cierre
+// sin salir de la página. En las vistas internas el `popstate` ya las cubre.
+let pasoModalBase = false;
+let modalPasoId = null;
+function abrirModal(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = "flex";
+  const pv = document.querySelector(".vista.ver");
+  const enBase = !!(history.state && (history.state.entrada || history.state.mp)) ||
+    !!(pv && (pv.id === "vistaInicio" || pv.id === "vistaEspera"));
+  if(!pasoModalBase && enBase){
+    if(history.state && history.state.mp){
+      pasoModalBase = true; modalPasoId = id;
+    }else{
+      try{ history.pushState({ mp:1 }, ""); pasoModalBase = true; modalPasoId = id; }catch(e){}
+    }
+  }else if(pasoModalBase){
+    modalPasoId = id;
+  }
+}
+function cerrarModal(id){
+  const el = document.getElementById(id);
+  if(el) el.style.display = "none";
+  if(pasoModalBase && id === modalPasoId){ pasoModalBase = false; modalPasoId = null; }
+}
 
 // El engrane muestra SOLO el lado de quien lo está usando. El administrador
 // tiene un botón para ver el otro (así deja todo listo desde un solo celular);
@@ -4281,6 +4305,15 @@ function modalAbierto(){
   });
 }
 window.addEventListener("popstate", (e)=>{
+  // Ventana abierta sobre la pantalla base: el atrás la cierra y se queda.
+  if(pasoModalBase){
+    const id = modalPasoId;
+    pasoModalBase = false;
+    modalPasoId = null;
+    const el = id ? document.getElementById(id) : null;
+    if(el) el.style.display = "none";
+    return;
+  }
   if(modalAbierto()){
     // El aviso de "¿Continuar?" no tiene botón de Cancelar: el atrás lo cierra
     // y deja la partida guardada para después.

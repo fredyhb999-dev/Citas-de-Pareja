@@ -944,6 +944,35 @@ let reponiendo = false;
 // Vista de respaldo del "← Volver" cuando no hay paso que deshacer (p. ej. la
 // página se abrió directa y no hay nada antes).
 let volviendoA = null;
+// Ventanas sobre la PANTALLA BASE: guardan su paso para que el atrás las cierre
+// sin salir. En las vistas internas el `popstate` ya las cubre.
+let pasoModalBase = false;
+let modalPasoId = null;
+let cancelarPausaActual = null;
+function modalBasePaso(id, on){
+  if(on){
+    const pv = document.querySelector(".vista.ver");
+    const enBase = !!(history.state && (history.state.entrada || history.state.mp)) ||
+      !!(pv && pv.id === "vistaInicio");
+    if(!pasoModalBase && enBase){
+      if(history.state && history.state.mp){
+        pasoModalBase = true; modalPasoId = id;
+      }else{
+        try{ history.pushState({ mp:1 }, ""); pasoModalBase = true; modalPasoId = id; }catch(e){}
+      }
+    }else if(pasoModalBase){
+      modalPasoId = id;
+    }
+  }else if(pasoModalBase && id === modalPasoId){
+    pasoModalBase = false; modalPasoId = null;
+  }
+}
+function mostrarModalBase(id, mostrar){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = mostrar ? "flex" : "none";
+  modalBasePaso(id, mostrar);
+}
 
 // El "← Volver" deshace el paso del historial, igual que el atrás del celular.
 // Si no hay paso anterior, no llega ningún popstate: a los 400 ms se cae a la
@@ -991,6 +1020,16 @@ function modalAbierto(){
 }
 
 window.addEventListener("popstate", (ev)=>{
+  // Ventana abierta sobre la pantalla base: el atrás la cierra y se queda.
+  if(pasoModalBase){
+    const id = modalPasoId;
+    pasoModalBase = false;
+    modalPasoId = null;
+    if(cancelarPausaActual){ cancelarPausaActual(); }
+    const el = id ? document.getElementById(id) : null;
+    if(el) el.style.display = "none";
+    return;
+  }
   if(modalAbierto()){ try{ history.go(1); }catch(e){} return; }
   // Salida al menú: se deshacen los pasos nuestros y, al llegar al primero, un
   // atrás más sale. Por el camino no se reabre ninguna vista.
@@ -1987,11 +2026,17 @@ function preguntarPausa(p){
   return new Promise(resolve=>{
     const modal = document.getElementById("modalSeguir");
     document.getElementById("seguirDesc").textContent = descripcionPausa(p);
-    const cerrar = (val)=>{ modal.style.display = "none"; resolve(val); };
+    const cerrar = (val)=>{
+      mostrarModalBase("modalSeguir", false);
+      cancelarPausaActual = null;
+      resolve(val);
+    };
     document.getElementById("btnSeguirContinuar").onclick = ()=>cerrar("continuar");
     document.getElementById("btnSeguirNueva").onclick = ()=>cerrar("nueva");
     document.getElementById("btnSeguirCancelar").onclick = ()=>cerrar("cancelar");
-    modal.style.display = "flex";
+    // El atrás también cancela la pregunta.
+    cancelarPausaActual = ()=>cerrar("cancelar");
+    mostrarModalBase("modalSeguir", true);
   });
 }
 
@@ -2183,13 +2228,13 @@ function toggleMulti(c){
 document.getElementById("btnCombinarMulti").onclick = ()=>{
   if(multiSel.length !== 3) return;
   document.getElementById("multiResumen").textContent = multiCastigos.map(c=>c.nombre).join(" + ");
-  document.getElementById("modalMultiConf").style.display = "flex";
+  mostrarModalBase("modalMultiConf", true);
 };
 document.getElementById("btnMultiConfBack").onclick = ()=>{
-  document.getElementById("modalMultiConf").style.display = "none";
+  mostrarModalBase("modalMultiConf", false);
 };
 document.getElementById("btnMultiConfOk").onclick = async ()=>{
-  document.getElementById("modalMultiConf").style.display = "none";
+  mostrarModalBase("modalMultiConf", false);
   const pausa = await leerPausa();
   if(pausa){
     const r = await preguntarPausa(pausa);
@@ -2229,7 +2274,7 @@ document.getElementById("btnSorprendeme").onclick = ()=>{
   multiCastigos = tres;
   actualizarInicio();
   document.getElementById("multiResumen").textContent = tres.map(c=>c.nombre).join(" + ");
-  document.getElementById("modalMultiConf").style.display = "flex";
+  mostrarModalBase("modalMultiConf", true);
 };
 
 document.getElementById("quienA").onclick = ()=>{ ladoInicial="A"; document.getElementById("quienA").classList.add("activo"); document.getElementById("quienB").classList.remove("activo"); };
@@ -3073,7 +3118,7 @@ function escucharSesionCompartida(){
             entrarDirecto = false;
             entrarAlJuegoCompartida(d);
           }else{
-            document.getElementById("modalUnir").style.display = "flex";
+            mostrarModalBase("modalUnir", true);
           }
         }
       }catch(e){}
@@ -3120,7 +3165,7 @@ function entrarAlJuegoCompartida(d){
   cargarSesionEnMemoria(d);
   jugandoCompartido = true;
   soyHost = false;
-  document.getElementById("modalUnir").style.display = "none";
+  mostrarModalBase("modalUnir", false);
   ver("vistaPartida");
   pintarTurno();
 }
@@ -3142,7 +3187,7 @@ async function chequearPartidaEspera(){
       document.getElementById("unirDesc").textContent = d.reanudada
         ? ((d.hostNombre || "El anfitrión") + " retomó la partida. Puedes continuar donde van.")
         : ((d.hostNombre || "El anfitrión") + " inició una partida de El Precio del Placer.");
-      document.getElementById("modalUnir").style.display = "flex";
+      mostrarModalBase("modalUnir", true);
     }else{
       pon("Hay partida de " + (d.hostNombre || "el anfitrión") + ", pero no estás en la lista.");
     }
@@ -3186,11 +3231,11 @@ function pintarSala(){
 
 document.getElementById("btnUnirme").onclick = async ()=>{
   if(!sesionActual) return;
-  document.getElementById("modalUnir").style.display = "none";
+  mostrarModalBase("modalUnir", false);
   entrarAlJuegoCompartida(sesionActual);
 };
 document.getElementById("btnUnirNo").onclick = ()=>{
-  document.getElementById("modalUnir").style.display = "none";
+  mostrarModalBase("modalUnir", false);
 };
 document.getElementById("btnEsperaRefrescar").onclick = ()=>{ chequearPartidaEspera(); };
 
@@ -4016,7 +4061,7 @@ async function entrar(){
         }
         cargarSesionEnMemoria(d);
         jugandoCompartido = true;
-        try{ document.getElementById("modalUnir").style.display = "none"; }catch(e){}
+        try{ mostrarModalBase("modalUnir", false); }catch(e){}
         ver("vistaPartida");
         pintarTurno();
         if(d.pausada && !esAnfitrion){

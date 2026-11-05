@@ -39,6 +39,7 @@ Y los documentos aparte:
 | **Detalle de Favores Express (`favor.js`)** | **`General/Favores-Express.md`** |
 | **Detalle del juego de Castigos (`Castigos/`)** | **`General/Castigos.md`** |
 | **Detalle de pantallas, navegación, estándares y moldes A/B** | **`General/Pantallas.md`** |
+| **Registro de ventanas emergentes y cómo las cierra el atrás** | **`General/Modales.md`** |
 | **Detalle del modo invitado** | **`General/Modo-Invitado.md`** |
 | **Detalle de iconos SVG (Diablitos)** | **`General/Diablitos.md`** |
 | **Detalle del módulo `telegram.js`** | **`General/Telegram.md`** |
@@ -485,9 +486,9 @@ las 3 tarjetas, y de ahí al menú (`mostrarGear()` / `cerrarGear()`). Sus tres
 botones dicen **"‹ Volver"** (antes decían "Invitados" / "Atrás").
 
 **La Tienda (`Tienda/index.html`) también (oct-2026):** su `‹ Volver` usa
-`history.back()` cuando se llegó desde otra pantalla del sitio, y cae a la ruta
-fija si se entró directo (`volverAtras()`), para que el botón y el atrás del
-celular no se desincronicen.
+`history.back()` cuando se llegó desde otra pantalla del sitio, y **reemplaza la
+entrada** con la ruta fija si se entró directo (`volverAtras()`), para que el
+botón y el atrás del celular no se desincronicen y no quede un paso de más.
 
 | Pieza | Qué hace |
 |---|---|
@@ -626,6 +627,7 @@ Al agregar o quitar algo del JSON de fabrica hay que subir `VERSION_FABRICA` en
 | Documento | Que tiene | Cuando se lee |
 |---|---|---|
 | `General/Pantallas.md` | Decisiones específicas de cada pantalla (Citas, Encuentros, Guiadas, Retos, Roles, Opciones, Diablitos, Usuarios) | Solo si la tarea toca decisiones de una pantalla concreta |
+| `General/Modales.md` | Registro de ventanas emergentes: dónde abren y cómo las cierra el atrás | Solo si la tarea toca una ventana emergente |
 | `General/Modo-Invitado.md` | Modo invitado: sin salida, vuelve solo al abrir, registro por QR | Solo si la tarea toca el modo invitado |
 | `General/Diablitos.md` | Iconos dibujados (SVG) del juego Diablitos | Solo si la tarea toca el icono de Diablitos |
 | `General/Telegram.md` | `avisarTelegram()`: módulo central de avisos por Telegram | Solo si la tarea toca avisos por Telegram |

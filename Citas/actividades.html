@@ -775,6 +775,8 @@ function modalAbierto(){
   });
 }
 window.addEventListener("popstate", (e)=>{
+  // La ventana de cambiar nombre se abrió sobre la lista: el atrás la cierra.
+  if(renameHist){ renameHist = false; cerrarRenombrar(true); return; }
   if(modalAbierto()){ try{ history.go(1); }catch(err){} return; }
   const v = (e.state && e.state.v) || "lista";
   if(v === "editor" && e.state.act){ abrirEditor(e.state.act, false); return; }
@@ -857,14 +859,26 @@ function renAvisar(texto, ok){
   renMsg.textContent = texto;
   renMsg.className = ok ? "ok" : "";
 }
+let renameHist = false;
 function abrirRenombrar(){
   renAvisar("", false);
   modalRenombrar.style.display = "flex";
   inputRenombrar.focus();
+  // La ventana se abre sobre la lista (primer paso): guarda su paso para que el
+  // atrás la cierre sin salir de la pantalla.
+  const enBase = !!(history.state && (history.state.fijo || history.state.mp)) || !editorAbierto;
+  if(!renameHist && enBase){
+    if(history.state && history.state.mp){ renameHist = true; }
+    else { try{ history.pushState({ mp:1 }, ""); renameHist = true; }catch(e){} }
+  }
 }
-function cerrarRenombrar(){
+function cerrarRenombrar(sinHistorial){
   modalRenombrar.style.display = "none";
   inputRenombrar.value = "";
+  if(renameHist){
+    renameHist = false;
+    if(!sinHistorial){ try{ history.back(); }catch(e){} }
+  }
   renAvisar("", false);
 }
 
@@ -999,7 +1013,7 @@ btnRenombrar.onclick = ()=>{
   filaEliminar.classList.remove("ver");
   abrirRenombrar();
 };
-btnRenombrarNo.onclick = cerrarRenombrar;
+btnRenombrarNo.onclick = ()=> cerrarRenombrar();
 btnRenombrarOk.onclick = renombrarActividad;
 inputRenombrar.addEventListener("keydown", e=>{ if(e.key === "Enter") renombrarActividad(); });
 // El toque en el fondo oscuro cierra la ventana, como en el resto de la app.

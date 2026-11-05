@@ -443,6 +443,16 @@ function modalAbierto(){
   });
 }
 window.addEventListener("popstate", (e)=>{
+  // Ventana abierta sobre la pantalla base: el atrás la cierra y se queda.
+  if(pasoModalBase){
+    const id = modalPasoId;
+    pasoModalBase = false;
+    modalPasoId = null;
+    if(id === "modalDeseo") cerrarModal();
+    else if(id === "modalAdd") cerrarAddModal();
+    else if(id){ const m = document.getElementById(id); if(m) m.classList.remove("ver"); }
+    return;
+  }
   if(modalAbierto()){ try{ history.go(1); }catch(err){} return; }
   const v = (e.state && e.state.v) || "vistaCatalogo";
   // Si el paso deshecho lleva a la MISMA pantalla que ya se está viendo, quedó
@@ -451,7 +461,10 @@ window.addEventListener("popstate", (e)=>{
   if(actual && actual.id === v){ try{ history.back(); return; }catch(err){} }
   ver(v, false);
 });
-try{ history.replaceState({ v: "vistaCatalogo" }, ""); }catch(e){}
+try{
+  const previo = history.state;
+  history.replaceState({ v: "vistaCatalogo", entrada: !previo || !!previo.entrada }, "");
+}catch(e){}
 
 el("navDeseos").onclick  = ()=> ver("vistaDeseos");
 el("navDeseos2").onclick = ()=> ver("vistaDeseos");
@@ -632,6 +645,28 @@ el("tabComprados").onclick = ()=> pestana("comprados");
 el("tabRecibidos").onclick = ()=> pestana("recibidos");
 
 // ---------- ventana emergente de un deseo (activar / borrar) ----------
+// Ventanas sobre la PANTALLA BASE: guardan su paso para que el atrás las cierre
+// sin salir del Centro. En las pestañas internas el `popstate` ya las cubre.
+let pasoModalBase = false;
+let modalPasoId = null;
+function pasoBase(id, on){
+  if(on){
+    const pv = document.querySelector(".vista.ver");
+    const enBase = !!(history.state && (history.state.entrada || history.state.mp)) ||
+      !!(pv && pv.id === "vistaCatalogo");
+    if(!pasoModalBase && enBase){
+      if(history.state && history.state.mp){
+        pasoModalBase = true; modalPasoId = id;
+      }else{
+        try{ history.pushState({ mp:1 }, ""); pasoModalBase = true; modalPasoId = id; }catch(e){}
+      }
+    }else if(pasoModalBase){
+      modalPasoId = id;
+    }
+  }else if(pasoModalBase && id === modalPasoId){
+    pasoModalBase = false; modalPasoId = null;
+  }
+}
 function abrirModal(id){
   const d = deseos.find(x=> x.id === id);
   if(!d) return;
@@ -640,6 +675,7 @@ function abrirModal(id){
   el("mdTexto").textContent = d.descripcion || "(sin descripción)";
   pintarBotonesModal(d);
   el("modalDeseo").classList.add("ver");
+  pasoBase("modalDeseo", true);
 }
 function pintarBotonesModal(d){
   el("mdPrecio").textContent = d.enVenta
@@ -653,6 +689,7 @@ function pintarBotonesModal(d){
 function cerrarModal(){
   el("modalDeseo").classList.remove("ver");
   abiertoId = null;
+  pasoBase("modalDeseo", false);
 }
 el("mdCerrar").onclick = cerrarModal;
 el("modalDeseo").addEventListener("click", (e)=>{ if(e.target === el("modalDeseo")) cerrarModal(); });
@@ -764,9 +801,13 @@ function abrirAddModal(){
   el("altaAviso").style.visibility = "hidden";
   actualizarBtnAdd();
   el("modalAdd").classList.add("ver");
+  pasoBase("modalAdd", true);
   try{ el("inpDeseo").focus(); }catch(e){}
 }
-function cerrarAddModal(){ el("modalAdd").classList.remove("ver"); }
+function cerrarAddModal(){
+  el("modalAdd").classList.remove("ver");
+  pasoBase("modalAdd", false);
+}
 ["inpDeseo", "inpDeseoDesc"].forEach(id=> el(id).addEventListener("input", actualizarBtnAdd));
 el("altaAviso").style.visibility = "hidden";   // arranca oculto; solo sale al tocar
 actualizarBtnAdd();

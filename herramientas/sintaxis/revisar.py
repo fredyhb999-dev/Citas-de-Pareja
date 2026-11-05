@@ -39,6 +39,59 @@ def sin_comentarios(src):
     return "\n".join(l for l in src.splitlines() if not l.strip().startswith("//"))
 
 
+def revisar_modales():
+    """Toda ventana emergente del HTML tiene que estar en General/Modales.md.
+
+    ERROR: un `#modal...`/`#invOverlay...`/`#overlay...` o una etiqueta con
+    class="modal" que no esté registrada. AVISO: un registro que ya no existe
+    en el HTML (para limpiar la tabla).
+    """
+    errores = avisos = 0
+    doc = os.path.join(REPO, "General", "Modales.md")
+    try:
+        reg_src = io.open(doc, encoding="utf-8").read()
+    except Exception:
+        print("MODAL    falta General/Modales.md")
+        return 1, 0
+    regs = set(re.findall(r"`#([A-Za-z0-9_-]+)`", reg_src))
+    vistos = {}
+
+    for p in sorted(glob.glob(os.path.join(REPO, "**", "*.html"), recursive=True)):
+        rel = os.path.relpath(p, REPO).replace(os.sep, "/")
+        try:
+            src = io.open(p, encoding="utf-8-sig").read()
+        except Exception:
+            continue
+        ids = set()
+        for m in re.finditer(r'id="((?:modal|invOverlay|overlay)[A-Za-z0-9_-]*)"', src):
+            ids.add(m.group(1))
+        for tag in re.findall(r'<[^>]*class="[^"]*\bmodal\b[^"]*"[^>]*>', src):
+            m = re.search(r'id="([A-Za-z0-9_-]+)"', tag)
+            if m:
+                ids.add(m.group(1))
+            else:
+                print("MODAL    %s: una ventana class=\"modal\" no tiene id" % rel)
+                errores += 1
+        for legado in ("lupa", "datos", "pantallaCfg"):
+            if re.search(r'id="' + legado + r'"', src):
+                ids.add(legado)
+        for i in ids:
+            vistos.setdefault(i, set()).add(rel)
+
+    for i, files in sorted(vistos.items()):
+        if i not in regs:
+            print("MODAL    #%s no esta registrada en General/Modales.md (%s)"
+                  % (i, ", ".join(sorted(files))))
+            errores += 1
+    for i in sorted(regs):
+        if i not in vistos:
+            print("REGISTRO #%s esta en Modales.md pero no aparece en el HTML" % i)
+            avisos += 1
+    if not errores and not avisos:
+        print("OK: todas las ventanas del HTML registradas.")
+    return errores, avisos
+
+
 def revisar_navegacion():
     """Que una pantalla nueva no vuelva al patron viejo de navegacion.
 
@@ -133,6 +186,14 @@ if err_nav:
     malos += 1
 if avis_nav:
     print("Avisos: %d (no detienen la revision)." % avis_nav)
+
+# 4) modales: toda ventana del HTML tiene que estar registrada.
+print("\n== modales ==")
+err_mod, avis_mod = revisar_modales()
+if err_mod:
+    malos += 1
+if avis_mod:
+    print("Avisos: %d (no detienen la revision)." % avis_mod)
 
 if malos:
     print("\n%d revision(es) con problemas." % malos)

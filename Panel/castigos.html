@@ -307,6 +307,7 @@ function pintarNiveles(){
 }
 
 let detNivel="", detLado="", detIdx=-1;
+let detalleHist = false;
 function abrirDetalle(nv, lado, idx){
   detNivel = nv; detLado = lado; detIdx = idx;
   const acc = niveles[nv][lado][idx];
@@ -327,6 +328,18 @@ function abrirDetalle(nv, lado, idx){
     };
   });
   modal.style.display = "flex";
+  // La ventana se abre sobre la pantalla base: guarda un paso para que el atrás
+  // la cierre sin salir del Panel.
+  if(!detalleHist){
+    try{ history.pushState({ mp:1 }, ""); detalleHist = true; }catch(e){ detalleHist = false; }
+  }
+}
+function cerrarDetalle(){
+  document.getElementById("modalDetalle").style.display = "none";
+  if(detalleHist){
+    detalleHist = false;
+    try{ history.back(); }catch(e){}
+  }
 }
 // Modal detalle
 const modalDetalleHTML = `
@@ -354,7 +367,7 @@ const modalDetalleHTML = `
 document.body.insertAdjacentHTML("beforeend", modalDetalleHTML);
 
 document.getElementById("btnDetCancelar").onclick = ()=>{
-  document.getElementById("modalDetalle").style.display = "none";
+  cerrarDetalle();
 };
 document.getElementById("btnDetGuardar").onclick = ()=>{
   const texto = document.getElementById("detTexto").value.trim();
@@ -366,9 +379,15 @@ document.getElementById("btnDetGuardar").onclick = ()=>{
     texto: texto,
     medida: { tipo: tipo, valor: (tipo === "libre") ? 0 : val }
   };
-  document.getElementById("modalDetalle").style.display = "none";
+  cerrarDetalle();
   pintarNiveles();
 };
+// El atrás cierra el detalle y se queda en el Panel.
+window.addEventListener("popstate", ()=>{
+  if(!detalleHist) return;
+  detalleHist = false;
+  document.getElementById("modalDetalle").style.display = "none";
+});
 
 function pintarTomas(vals){
   const g = document.getElementById("tomasGrid");

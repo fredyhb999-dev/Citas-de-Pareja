@@ -17,6 +17,7 @@ tenia el contexto a la mano.
 |---|---|---|
 | `AGENTS.md` | Como trabajar en este repo | **Siempre**, es lo primero |
 | `General/GUIA.md` | **Lo que es cierto HOY** y aplica a toda la app | Cuando la tarea toca codigo |
+| `General/Modales.md` | Registro de ventanas emergentes y cómo las cierra el atrás | Solo si la tarea toca un modal o una ventana emergente |
 | `General/Centro-Adquisiciones.md` | El Centro: deseos, tienda y pedidos | Solo si la tarea toca `Retos/centro.html` |
 | `General/IA-Acompanante.md` | `Acompanante/`: el tono de la IA, los ajustes y los retos que propone | Solo si la tarea toca `Acompanante/` o los retos de la IA |
 | `General/Campana-Pestana.md` | `pestana.js`: campana, bip y cartelito (Chat y Retos) | Solo si la tarea toca los avisos de la campana |
@@ -226,8 +227,12 @@ Toda pantalla nueva o tocada tiene que cumplir el contrato de
 - Al salir al menú se **deshacen los pasos de la pantalla** (`salirAlMenu()`); si
   se abrió desde fuera, se usa la dirección fija.
 - Una pantalla con JavaScript se registra en `herramientas/sintaxis/extract.py`.
+- Toda **ventana emergente** se registra en `General/Modales.md`: sobre la
+  pantalla base guarda su paso; sobre una vista interna el atrás se ignora.
 - `python revisar.py` tiene un bloque **navegación**: si marca `GLIFO` o
-  `HIST`, se corrige antes de subir; `REGISTRO` y `FIJO` son avisos.
+  `HIST`, se corrige antes de subir; `REGISTRO` y `FIJO` son avisos. También hay
+  un bloque **modales**: **falla** si una ventana del HTML no está registrada en
+  `General/Modales.md`.
 - **Capa 3 pendiente (no urgente):** un `nav.js` mínimo con `marcarEntrada()` y
   `salirAlMenu()`. Se hace **después** de probar en el celular, en una sesión
   aparte. Incluye cómo conservar el flujo del invitado (base `vistaEspera`, sin

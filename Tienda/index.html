@@ -119,7 +119,8 @@ function volverAtras(fallbackUrl){
   let mismoSitio = false;
   try{ mismoSitio = !!document.referrer && document.referrer.indexOf(location.origin) === 0; }catch(e){}
   if(mismoSitio){ try{ history.back(); return; }catch(e){} }
-  location.href = fallbackUrl;
+  // Entrada directa: se reemplaza la entrada para no dejar un paso de más.
+  location.replace(fallbackUrl);
 }
 const btnCasa = document.getElementById("btnCasa");
 btnCasa.textContent = "‹ Volver";

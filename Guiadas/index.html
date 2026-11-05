@@ -317,10 +317,10 @@ const ITEM_ID = "guiadas";
 // NOTA: la busqueda de la cortesia (mas abajo) sigue con su propia consulta
 // porque necesita ESCRIBIR graciaUsada en el documento; ver Problemas 2.txt.
 function mostrarGracia(){
-  document.getElementById("modalGracia").style.display = "flex";
+  mostrarModalBase("modalGracia", true);
 }
 document.getElementById("btnGraciaOk").onclick = ()=>{
-  document.getElementById("modalGracia").style.display = "none";
+  mostrarModalBase("modalGracia", false);
 };
 async function entrar(){
   let ok = false;
@@ -603,7 +603,7 @@ function escucharSesion(){
             document.getElementById("unirDesc").textContent = d.reanudada
               ? ((d.hostNombre || "Tu pareja") + " retomó la cita. Puedes continuar donde van.")
               : ((d.hostNombre || "Tu pareja") + " inició una cita de Citas Guiadas.");
-            document.getElementById("modalUnir").style.display = "flex";
+            mostrarModalBase("modalUnir", true);
           }
         }else if(jugandoCompartido){
           jugandoCompartido = false;
@@ -676,6 +676,24 @@ function modalAbierto(){
   });
 }
 window.addEventListener("popstate", (e)=>{
+  // Ventana abierta sobre la pantalla base: el atrás la cierra y se queda.
+  if(pasoModalBase){
+    const id = modalPasoId;
+    pasoModalBase = false;
+    modalPasoId = null;
+    const el = id ? document.getElementById(id) : null;
+    if(el) el.style.display = "none";
+    return;
+  }
+  // El modal de tomas se abrió sobre la lista: el atrás lo cierra y se queda
+  // ahí (su paso del historial ya se deshizo solo).
+  if(tomasHist){
+    tomasHist = false;
+    document.getElementById("modalTomas").style.display = "none";
+    tomasActGuia = null;
+    ver("vistaLista", false);
+    return;
+  }
   if(modalAbierto()){ try{ history.go(1); }catch(err){} return; }
   if(saliendo){
     const esEntrada = !!(e.state && e.state.entrada);
@@ -1001,6 +1019,7 @@ function leerProg(){
 
 // ---------- paso de tomas normal (Guiadas, igual que Encuentros) ----------
 let tomasActGuia = null;
+let tomasHist = false;
 function abrirTomasGuia(nombre){
   tomasActGuia = nombre;
   const g = document.getElementById("tomasGridGuia");
@@ -1018,11 +1037,22 @@ function abrirTomasGuia(nombre){
     g.appendChild(lab);
   });
   document.getElementById("modalTomas").style.display = "flex";
+  // Paso del historial: el atrás cierra el modal y deja la lista donde está
+  // (sin esto, el atrás salía de la página; bug nov-2026).
+  if(!tomasHist){
+    try{ history.pushState({ tomas:1 }, ""); tomasHist = true; }catch(e){ tomasHist = false; }
+  }
 }
-document.getElementById("btnTomasBackGuia").onclick = ()=>{
+// Se cierra sin deshacer el paso: queda como transitorio y el salto de pasos
+// repetidos lo limpia. Así el atrás nunca navega la lista de abajo.
+function cerrarTomasGuia(){
   document.getElementById("modalTomas").style.display = "none";
   tomasActGuia = null;
-  ver("vistaLista");
+  tomasHist = false;
+  ver("vistaLista", false);
+}
+document.getElementById("btnTomasBackGuia").onclick = ()=>{
+  cerrarTomasGuia();
 };
 document.getElementById("btnTomasOkGuia").onclick = async ()=>{
   const tomas = {};
@@ -1037,8 +1067,7 @@ document.getElementById("btnTomasOkGuia").onclick = async ()=>{
   multiModo = false; multiSel = [];
   try{ multiRefrescar(); }catch(e){}
   await guardarTomasEnBase(docActual, tomas);
-  document.getElementById("modalTomas").style.display = "none";
-  tomasActGuia = null;
+  cerrarTomasGuia();
   empezarNuevo();
 };
 let multiActs = [];
@@ -1165,9 +1194,36 @@ document.getElementById("btnNueva").onclick = async ()=>{
 // ---------- MultiActividades (3 obligadas, ciegas, mismo acceso, selección inline) ----------
 let multiSel = [];
 let multiModo = false;
-function multiMostrar(id, mostrar){
+// Ventanas sobre la PANTALLA BASE: guardan su paso para que el atrás las cierre
+// sin salir de la página. En las vistas internas el `popstate` ya las cubre.
+let pasoModalBase = false;
+let modalPasoId = null;
+function modalBasePaso(id, on){
+  if(on){
+  const pv = document.querySelector(".vista.ver");
+  const enBase = !!(history.state && (history.state.entrada || history.state.mp)) ||
+    !!(pv && pv.id === "vistaLista");
+    if(!pasoModalBase && enBase){
+      if(history.state && history.state.mp){
+        pasoModalBase = true; modalPasoId = id;
+      }else{
+        try{ history.pushState({ mp:1 }, ""); pasoModalBase = true; modalPasoId = id; }catch(e){}
+      }
+    }else if(pasoModalBase){
+      modalPasoId = id;
+    }
+  }else if(pasoModalBase && id === modalPasoId){
+    pasoModalBase = false; modalPasoId = null;
+  }
+}
+function mostrarModalBase(id, mostrar){
   const el = document.getElementById(id);
+  if(!el) return;
   el.style.display = mostrar ? "flex" : "none";
+  modalBasePaso(id, mostrar);
+}
+function multiMostrar(id, mostrar){
+  mostrarModalBase(id, mostrar);
 }
 function multiRefrescar(){
   document.getElementById("tituloLista").textContent = multiModo ? "Selecciona 3 para combinar" : "Elige actividad";
@@ -1878,7 +1934,7 @@ document.querySelectorAll('input[name="modoJuego"]').forEach(r=>{
 modoJuego = (document.querySelector('input[name="modoJuego"]:checked') || {}).value || "local";
 document.getElementById("btnUnirme").onclick = ()=>{
   const d = sesionActual;
-  document.getElementById("modalUnir").style.display = "none";
+  mostrarModalBase("modalUnir", false);
   if(!d || !d.activa) return;
   // En pausa no se puede entrar (la misma regla de `Encuentros/`): la cita sigue
   // viva, pero quien tiene que reanudarla es quien la pausó. Si no, el que llega
@@ -1892,7 +1948,7 @@ document.getElementById("btnUnirme").onclick = ()=>{
   ver("vistaPlayer");
 };
 document.getElementById("btnUnirNo").onclick = ()=>{
-  document.getElementById("modalUnir").style.display = "none";
+  mostrarModalBase("modalUnir", false);
 };
 
 (async ()=>{

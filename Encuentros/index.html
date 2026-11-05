@@ -379,10 +379,10 @@ const ITEM_ID = "encuentros";
 // miProyecto, leerLicencias, tengoAcceso, quitarLicencia, oficialesAprobados
 // y escucharItem ahora vienen de ../acceso.js (logica compartida).
 function mostrarGracia(){
-  document.getElementById("modalGracia").style.display = "flex";
+  abrirModal("modalGracia");
 }
 document.getElementById("btnGraciaOk").onclick = ()=>{
-  document.getElementById("modalGracia").style.display = "none";
+  cerrarModal("modalGracia");
 };
 // Aviso de pausa: el INVITADO vuelve a la SALA DE ESPERA. La partida esta
 // PAUSADA, no terminada, asi que no se le expulsa: la invitacion sigue viva y
@@ -737,7 +737,7 @@ function escucharSesion(){
             document.getElementById("unirDesc").textContent = d.reanudada
               ? ((d.hostNombre || "El anfitrión") + " retomó el encuentro. Puedes continuar donde van.")
               : ((d.hostNombre || "El anfitrión") + " inició un Encuentro Guiado.");
-            document.getElementById("modalUnir").style.display = "flex";
+            abrirModal("modalUnir");
           }
         }else{
           // Partida en un solo celular: nada de sesión compartida la toca.
@@ -946,6 +946,22 @@ function modalAbierto(){
   });
 }
 window.addEventListener("popstate", (e)=>{
+  // Ventana abierta sobre la pantalla base: el atrás la cierra y se queda.
+  if(pasoModalBase){
+    const id = modalPasoId;
+    pasoModalBase = false;
+    modalPasoId = null;
+    const el = id ? document.getElementById(id) : null;
+    if(el) el.style.display = "none";
+    return;
+  }
+  // El modal de tomas se abrió sobre la lista: el atrás lo cierra y se queda
+  // ahí (su paso del historial ya se deshizo solo).
+  if(tomasHist){
+    tomasHist = false;
+    cerrarModal("modalTomas");
+    return;
+  }
   if(modalAbierto()){
     // El aviso de "¿Continuar?" no tiene botón de Cancelar: el atrás lo cierra
     // y deja la partida guardada para después.
@@ -1476,8 +1492,37 @@ document.getElementById("btnJugarEd").onclick = async ()=>{
 document.getElementById("buscarCfg").addEventListener("input", (e)=>filtrar("listaActsCfg", e.target.value));
 
 // ---------- tomas ----------
-function abrirModal(id){ document.getElementById(id).style.display = "flex"; }
-function cerrarModal(id){ document.getElementById(id).style.display = "none"; }
+// Ventanas que se abren sobre la PANTALLA BASE (primer paso del historial).
+// Ahí el atrás es una salida de página, así que el modal guarda su propio paso.
+// En las vistas internas no hace falta: ya hay pasos y el `popstate` las cierra.
+let pasoModalBase = false;
+let modalPasoId = null;
+function abrirModal(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.display = "flex";
+  // El modal de tomas maneja su propio paso (abajo); no lo toca el envoltorio.
+  if(id === "modalTomas") return;
+  const pv = document.querySelector(".vista.ver");
+  const enBase = !!(history.state && (history.state.entrada || history.state.mp)) ||
+    !!(pv && (pv.id === "vistaLista" || pv.id === "vistaEspera"));
+  if(id !== "modalTomas" && !pasoModalBase && enBase){
+    if(history.state && history.state.mp){
+      // Ya quedó un paso transitorio de otra ventana: se reutiliza.
+      pasoModalBase = true; modalPasoId = id;
+    }else{
+      try{ history.pushState({ mp:1 }, ""); pasoModalBase = true; modalPasoId = id; }catch(e){}
+    }
+  }else if(pasoModalBase){
+    modalPasoId = id;
+  }
+}
+function cerrarModal(id){
+  const el = document.getElementById(id);
+  if(el) el.style.display = "none";
+  if(pasoModalBase && id === modalPasoId){ pasoModalBase = false; modalPasoId = null; }
+}
+let tomasHist = false;
 function abrirTomas(activities){
   pedidosTomas = activities.slice();
   const g = document.getElementById("tomasGridEncuentros");
@@ -1499,9 +1544,21 @@ function abrirTomas(activities){
   document.getElementById("tomasAviso").innerHTML = "Anote cuántas acciones de cada nivel<br>para su partida, considere a sus invitados";
   document.getElementById("btnTomasOk").textContent = "Aceptar y jugar ▶";
   abrirModal("modalTomas");
+  // Paso del historial: el atrás cierra el modal y deja la lista donde está
+  // (el modal se abre sobre el primer paso y sin esto el atrás salía de la
+  // página; bug nov-2026).
+  if(!tomasHist){
+    try{ history.pushState({ tomas:1 }, ""); tomasHist = true; }catch(e){ tomasHist = false; }
+  }
+}
+// Se cierra sin deshacer el paso: queda como transitorio y el salto de pasos
+// repetidos lo limpia. Así el atrás nunca navega la lista de abajo.
+function cerrarTomas(){
+  cerrarModal("modalTomas");
+  tomasHist = false;
 }
 document.getElementById("btnTomasBack").onclick = ()=>{
-  cerrarModal("modalTomas");
+  cerrarTomas();
   if(pedidosTomas && pedidosTomas.length > 1){ abrirModal("modalMulti2"); }
 };
 document.getElementById("btnTomasOk").onclick = async ()=>{
@@ -1511,7 +1568,7 @@ document.getElementById("btnTomasOk").onclick = async ()=>{
     tomas[nv.id] = Math.max(0, Math.min(50, parseInt(el.value, 10) || 0));
   });
   const acts = (pedidosTomas || []).slice();
-  cerrarModal("modalTomas");
+  cerrarTomas();
   if(acts.length) await generarYIniciar(acts, tomas);
 };
 

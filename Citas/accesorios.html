@@ -469,7 +469,7 @@ tabLista.onclick = ()=>{
 document.getElementById("lnkInicio").addEventListener("click", (e)=>{
   e.preventDefault();
   if(history.length > 1){ history.back(); return; }
-  location.href = "../index.html";
+  location.replace("../index.html");
 });
 
 cargar();
