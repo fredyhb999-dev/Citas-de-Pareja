@@ -24,8 +24,9 @@
   body{ min-height:100dvh; display:flex; flex-direction:column; align-items:center;
     padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom)); }
 
-  .back{ position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
-    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none; }
+  .back{ position:fixed; top:max(20px, env(safe-area-inset-top)); right:20px; z-index:50;
+    font-family:'Chakra Petch',sans-serif; font-size:.85rem; color:var(--fg-muted); text-decoration:none;
+    background:var(--bg-2); border:1px solid var(--card-border); border-radius:10px; padding:6px 10px; }
   .back:active{ color:var(--teal); }
 
   .eyebrow{ font-family:'Chakra Petch',sans-serif; font-size:.8rem; letter-spacing:.3em;
