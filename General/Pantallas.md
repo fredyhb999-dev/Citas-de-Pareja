@@ -254,12 +254,22 @@ Toda pantalla nueva o tocada tiene que cumplir esto. Si algo falla, **no está t
 - [ ] Cada vista interna es un **paso real del historial** (`history.pushState({v:id}, "")`) y la pantalla tiene **un solo** `popstate`.
 - [ ] El `popstate` obedece al estado: solo **Configuración** se reabre (y el editor si ya se cargó); la partida, la selección y los avisos **no**.
 - [ ] **Durante la partida el atrás no saca** (se devuelve con `history.go(1)`).
-- [ ] Las **ventanas emergentes** que no son pasos del historial se cierran con el atrás y al cambiar de vista; nunca se quedan con `display:flex` (si no, reaparecen solas al volver a la pantalla).
+- [ ] Una **ventana emergente** que no es paso del historial **no puede quedarse encima de otra vista**. O se cierra con el atrás (Usuarios, Citas y Retos) o el atrás se ignora mientras está abierta (modales de los juegos); nunca se navega la pantalla de abajo. `confirmar.js` cuenta como ventana abierta.
 - [ ] El **invitado** cae siempre en `vistaEspera`; nunca ve Configuración ni el editor.
 - [ ] Al salir al menú se **deshacen los pasos de esa pantalla** (`salirAlMenu()`); si se abrió desde fuera, se va a la dirección fija. El Volver de la pantalla base **no** es un enlace normal.
 - [ ] El primer paso de la página se marca con `entrada:true` (para que `salirAlMenu()` sepa cuándo parar).
 - [ ] La pantalla está registrada en `herramientas/sintaxis/extract.py` (si no, `revisar.py` no la revisa nunca).
 - [ ] `python revisar.py` pasa, incluido el bloque **navegación** (GLIFO / HIST / REGISTRO / FIJO).
+
+**Modales y el atrás (nov-2026):** si hay una ventana abierta, el atrás **no
+cambia la vista de abajo**. En `Encuentros`, `Guiadas`, `Opciones`, `Roles`,
+`Castigos`, `Retos/centro`, `Citas/actividades` y `Lencería` el `popstate` revisa
+si hay un modal visible y, si lo hay, ignora el atrás (`history.go(1)`). El aviso
+"¿Continuar?" de Encuentros/Opciones/Roles se cierra con el atrás porque no tiene
+botón de Cancelar. En `index.html` las ventanas de Usuarios se cierran con el
+atrás. En `Citas/` y `Retos/` el formulario guarda un paso al abrirse, así el
+atrás lo cierra. Las confirmaciones de `confirmar.js` cuentan como ventana
+abierta.
 
 ## Pendiente de navegación: capa 3 (`nav.js`)
 

@@ -707,6 +707,8 @@ function resumenHtml(reto){
   );
 }
 
+let formHist = false;
+let recompensaHist = false;
 function abrirFormulario(modo, reto, id){
   formMsg.textContent = "";
   modoForm = modo;
@@ -764,19 +766,34 @@ function abrirFormulario(modo, reto, id){
   }
 
   overlay.style.display = "flex";
+  // El formulario es un paso del historial: el atrás lo cierra en vez de salir
+  // de Retos (nov-2026).
+  if(!formHist){
+    try{ history.pushState({ form:1 }, ""); formHist = true; }catch(e){ formHist = false; }
+  }
 }
 
-function cerrarFormulario(){
+function cerrarFormulario(sinHistorial){
   overlay.style.display = "none";
   modoForm = null;
   retoEnEdicion = null;
   retoActual = null;
   campoRecompensa.style.display = "none";
   infoResumen.style.display = "none";
+  if(formHist){
+    formHist = false;
+    if(!sinHistorial){ try{ history.back(); }catch(e){} }
+  }
 }
 
-btnCancelarForm.onclick = cerrarFormulario;
+btnCancelarForm.onclick = ()=> cerrarFormulario();
 btnProponerReto.onclick = ()=> abrirFormulario("nueva", null, null);
+
+// El atrás cierra el formulario o la recompensa y deja la pantalla donde estaba.
+window.addEventListener("popstate", ()=>{
+  if(recompensaHist){ recompensaHist = false; cerrarRecompensa(true); return; }
+  if(formHist){ formHist = false; cerrarFormulario(true); }
+});
 
 function leerFormulario(){
   return {
@@ -931,12 +948,21 @@ function abrirOverlayRecompensa(reto, id){
   recompensaResumen.innerHTML = resumenHtml(reto);
   fRecompensaOverlay.value = reto.recompensa || "";
   overlayRecompensa.style.display = "flex";
+  if(!recompensaHist){
+    try{ history.pushState({ recompensa:1 }, ""); recompensaHist = true; }catch(e){ recompensaHist = false; }
+  }
 }
 
-btnCancelarRecompensa.onclick = ()=>{
+function cerrarRecompensa(sinHistorial){
   overlayRecompensa.style.display = "none";
   retoRecompensaId = null;
-};
+  if(recompensaHist){
+    recompensaHist = false;
+    if(!sinHistorial){ try{ history.back(); }catch(e){} }
+  }
+}
+
+btnCancelarRecompensa.onclick = ()=> cerrarRecompensa();
 
 btnGuardarRecompensa.onclick = async ()=>{
   const recompensa = fRecompensaOverlay.value.trim();
@@ -946,8 +972,7 @@ btnGuardarRecompensa.onclick = async ()=>{
     suprimir(retoRecompensaId);
     await updateDoc(doc(db, "retos", retoRecompensaId), { recompensa: recompensa });
     avisarTelegram("🎁 " + miIdentidad.nombre + " definió recompensa en " + ((retoActual && retoActual.actividad) || "un reto") + ": " + recompensa, APP_URL + "Retos/?reto=" + retoRecompensaId);
-    overlayRecompensa.style.display = "none";
-    retoRecompensaId = null;
+    cerrarRecompensa();
   }catch(e){
     recompensaMsg.textContent = "Error al guardar. Revisa tu conexión.";
     console.error(e);

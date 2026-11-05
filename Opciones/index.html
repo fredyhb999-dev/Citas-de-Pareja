@@ -1485,7 +1485,22 @@ function salirAlMenu(url){
   // atorado; se va a la dirección fija.
   setTimeout(()=>{ if(saliendo){ saliendo = false; location.replace(url); } }, 900);
 }
+// Con una ventana abierta (modal o confirmación), el atrás NO cambia la vista
+// que hay debajo: la ventana se cierra con su botón.
+function modalAbierto(){
+  return Array.from(document.querySelectorAll(".modal, .cfCapa")).some(el=>{
+    try{ return getComputedStyle(el).display !== "none"; }catch(e){ return false; }
+  });
+}
 window.addEventListener("popstate", (e)=>{
+  if(modalAbierto()){
+    // El aviso de "¿Continuar?" no tiene botón de Cancelar: el atrás lo cierra
+    // y deja la partida guardada para después.
+    const seg = document.getElementById("vistaSeguir");
+    if(seg) seg.style.display = "none";
+    try{ history.go(1); }catch(err){}
+    return;
+  }
   if(saliendo){
     const esEntrada = !!(e.state && e.state.entrada);
     if(esEntrada || !e.state){

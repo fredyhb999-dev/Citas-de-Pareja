@@ -1134,6 +1134,9 @@ cambiarPestana(SEC_ACTIVA);
   window.cerrarCfg = cerrarCfg;
   window.elCfg = elCfg;
   window.addEventListener('popstate', function(){
+    // Una confirmación se cierra con sus botones: el atrás no cierra la
+    // configuración por debajo.
+    if(document.querySelector(".cfCapa")){ try{ history.go(1); }catch(e){} return; }
     if(cfgAbierto) cerrarCfg(true);
   });
 

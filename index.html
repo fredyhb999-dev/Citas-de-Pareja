@@ -619,6 +619,9 @@ function mostrarMenu(nombre){
 // diga el historial. Antes solo se miraba el "#", y por eso el botón atrás se
 // saltaba el submenú y luego lo reabría solo (oct-2026).
 window.addEventListener("popstate", (e)=>{
+  // Una confirmación (confirmar.js) se cierra con sus botones: el atrás no
+  // navega el engrane por debajo.
+  if(document.querySelector(".cfCapa")){ try{ history.go(1); }catch(err){} return; }
   // Una ventana encima de Usuarios (tienda, editar, clave o historial) se cierra
   // con el atrás y el engrane NO navega por debajo (si no, quedaba pegada y
   // reaparecía al reabrir el engrane; bug nov-2026).

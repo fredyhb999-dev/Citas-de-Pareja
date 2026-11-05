@@ -405,7 +405,15 @@ function salirAlMenu(url){
   setTimeout(()=>{ if(saliendo){ saliendo = false; location.replace(url); } }, 900);
 }
 
+// Con una ventana abierta (lupa, datos o confirmación), el atrás NO cambia la
+// vista que hay debajo: la ventana se cierra con su botón.
+function modalAbierto(){
+  return Array.from(document.querySelectorAll("#lupa, #datos, .cfCapa")).some(el=>{
+    try{ return getComputedStyle(el).display !== "none"; }catch(e){ return false; }
+  });
+}
 window.addEventListener("popstate", (e)=>{
+  if(modalAbierto()){ try{ history.go(1); }catch(err){} return; }
   if(saliendo){
     const esEntrada = !!(e.state && e.state.entrada);
     if(esEntrada || !e.state){

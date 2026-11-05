@@ -240,6 +240,9 @@ function salirAlMenu(url){
 // cuando el paso guardado es el nuestro: `cerrarCfg` ya apago la bandera antes
 // de deshacer, asi que aqui no hace nada y el chat sigue donde estaba.
 window.addEventListener("popstate", (e)=>{
+  // Una confirmación se cierra con sus botones: el atrás no cierra la caja de
+  // ajustes por debajo.
+  if(document.querySelector(".cfCapa")){ try{ history.go(1); }catch(err){} return; }
   if(saliendo){
     const esEntrada = !!(e.state && e.state.entrada);
     if(esEntrada || !e.state){

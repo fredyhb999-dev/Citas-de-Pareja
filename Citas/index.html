@@ -639,6 +639,7 @@ function ponerMinimoFecha(){
   fCampoFecha.min = d.toISOString().slice(0, 16);
 }
 
+let formHist = false;
 async function abrirFormulario(modo, citaExistente){
   formMsg.textContent = "";
   llenarSelectActividades();
@@ -671,16 +672,30 @@ async function abrirFormulario(modo, citaExistente){
   overlay.style.display = "flex";
   // Con el cuadro abierto, la página de atrás no se mueve.
   document.body.classList.add("modalAbierto");
+  // El formulario es un paso del historial: el atrás lo cierra en vez de salir
+  // de Citas (nov-2026).
+  if(!formHist){
+    try{ history.pushState({ form:1 }, ""); formHist = true; }catch(e){ formHist = false; }
+  }
 }
 
-function cerrarFormulario(){
+function cerrarFormulario(sinHistorial){
   overlay.style.display = "none";
   editandoId = null;
   document.body.classList.remove("modalAbierto");
+  if(formHist){
+    formHist = false;
+    if(!sinHistorial){ try{ history.back(); }catch(e){} }
+  }
 }
 
-btnCancelarForm.onclick = cerrarFormulario;
+btnCancelarForm.onclick = ()=> cerrarFormulario();
 btnNuevaCita.onclick = ()=> abrirFormulario("nueva", null);
+
+// El atrás cierra el formulario y deja la pantalla donde estaba.
+window.addEventListener("popstate", ()=>{
+  if(formHist){ formHist = false; cerrarFormulario(true); }
+});
 
 fCampoActividad.addEventListener("change", async ()=>{
   await aplicarAccesoriosDeActividad(fCampoActividad.value, "reemplazar");

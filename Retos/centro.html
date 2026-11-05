@@ -437,7 +437,15 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
   // entraba a una vista que ya se había cerrado (oct-2026).
   try{ history.replaceState({ v:id || "vistaCatalogo" }, ""); }catch(e){}
 });
-window.addEventListener("popstate", (e)=> ver((e.state && e.state.v) || "vistaCatalogo", false));
+function modalAbierto(){
+  return Array.from(document.querySelectorAll(".modal, .cfCapa")).some(el=>{
+    try{ return getComputedStyle(el).display !== "none"; }catch(e){ return false; }
+  });
+}
+window.addEventListener("popstate", (e)=>{
+  if(modalAbierto()){ try{ history.go(1); }catch(err){} return; }
+  ver((e.state && e.state.v) || "vistaCatalogo", false);
+});
 try{ history.replaceState({ v: "vistaCatalogo" }, ""); }catch(e){}
 
 el("navDeseos").onclick  = ()=> ver("vistaDeseos");

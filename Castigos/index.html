@@ -982,8 +982,16 @@ function salirAlMenu(url){
   try{ history.back(); }catch(e){ saliendo = false; irAlMenu(url); return; }
   setTimeout(()=>{ if(saliendo){ saliendo = false; location.replace(url); } }, 900);
 }
+// Con una ventana abierta (modal, pausa o confirmación), el atrás NO cambia la
+// vista que hay debajo: la ventana se cierra con su botón.
+function modalAbierto(){
+  return Array.from(document.querySelectorAll(".modal, #overlayPausa, .cfCapa")).some(el=>{
+    try{ return getComputedStyle(el).display !== "none"; }catch(e){ return false; }
+  });
+}
 
 window.addEventListener("popstate", (ev)=>{
+  if(modalAbierto()){ try{ history.go(1); }catch(e){} return; }
   // Salida al menú: se deshacen los pasos nuestros y, al llegar al primero, un
   // atrás más sale. Por el camino no se reabre ninguna vista.
   if(saliendo){

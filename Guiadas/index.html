@@ -668,7 +668,15 @@ function salirAlMenu(url){
 // partida NO saca (igual que Encuentros/Opciones/Roles); en Configuración y el
 // editor regresa a la pantalla anterior; fuera de ahí, a la lista.
 let reponiendo = false;
+// Con una ventana abierta (modal o confirmación), el atrás NO cambia la vista
+// que hay debajo: la ventana se cierra con su botón.
+function modalAbierto(){
+  return Array.from(document.querySelectorAll('[id^="modal"], .cfCapa')).some(el=>{
+    try{ return getComputedStyle(el).display !== "none"; }catch(e){ return false; }
+  });
+}
 window.addEventListener("popstate", (e)=>{
+  if(modalAbierto()){ try{ history.go(1); }catch(err){} return; }
   if(saliendo){
     const esEntrada = !!(e.state && e.state.entrada);
     if(esEntrada || !e.state){
