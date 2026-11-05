@@ -511,6 +511,14 @@ sin el `false`), y al salir por el enlace "← Volver" se hace
 `replaceState` con la vista que se está viendo. Sin eso, al volver con atrás se
 entraba a una vista que ya se había cerrado.
 
+**Sin parpadeo al entrar/salir de un submenú (nov-2026):** no se vuelve a
+dibujar el menú (`renderPacks()`) en cada transición. Las tarjetas ya están
+dibujadas y redibujarlas vaciaba la lista visible mientras se consultaba
+Firestore; en el atrás se llamaba dos veces (`popstate` + `hashchange`) y por eso
+parpadeaba doble. Ahora solo se actualiza el puntito del carrito
+(`actualizarPuntoCarrito()`), que no toca las tarjetas. El menú se redibuja al
+arrancar y cuando cambia el catálogo (`escucharCatalogo`).
+
 **Regla que queda:** **una pantalla que se apaga y enciende sin cambiar la
 dirección es invisible para el historial.** Si el botón atrás del celular tiene que
 hacer algo, hay que guardar el paso (`pushState`) — y si la pantalla llega por un

@@ -396,6 +396,11 @@ El estándar está arriba, en las decisiones de navegación, y también en `AGEN
 
 En `index.html` los submenús se abren con funciones (`abrirJuegos()`, `cerrarExp()`, …) y **no** con `onclick` en línea. Razón: al arrancar se comprueba `location.hash` y se llama a la misma función. Si fueran `onclick` en línea, esa llamada del arranque podría no encontrar el manejador todavía.
 
+El **punto rojo del carrito** (`conNuevo`) es solo del 🛒. En Experiencias ese
+mismo botón (`#menuBtn`) se convierte en ⚙️, así que el punto se quita al entrar
+y se restaura al volver al menú (`iconoMenu()`): el engrane no debe salir con un
+punto que no le corresponde.
+
 Con `#juegos` el submenú de Juegos se abre directo al volver de un juego, sin pasar por la pantalla inicial.
 
 ---

@@ -556,8 +556,11 @@ function verPaso(n){
 function leerGuardado(){
   try{ return JSON.parse(localStorage.getItem(CLAVE_LOCAL)); }catch(e){ return null; }
 }
+let menuBtnModo = "menu";
+let hayNuevosCarrito = false;
 function iconoMenu(modo){
   const b = document.getElementById("menuBtn");
+  menuBtnModo = (modo === "exp") ? "exp" : "menu";
   if(modo === "exp"){
     b.textContent = "⚙️";
     b.href = "Citas/actividades.html";
@@ -567,12 +570,16 @@ function iconoMenu(modo){
     // "Volver" ocupa la derecha (y lo tapaba: Fredy no lo veía, oct-2026).
     b.style.left = "18px";
     b.style.right = "auto";
+    // El punto rojo es del carrito, no del engrane: no debe pasar con él.
+    b.classList.remove("conNuevo");
   }else{
     b.textContent = "🛒";
     b.href = "Tienda/";
     b.setAttribute("aria-label", "Centro de Adquisiciones");
     b.style.left = "";
     b.style.right = "";
+    // De vuelta al carrito, se restaura el punto si seguía habiendo novedades.
+    b.classList.toggle("conNuevo", hayNuevosCarrito);
   }
 }
 function mostrarMenu(nombre){
@@ -634,12 +641,16 @@ window.addEventListener("popstate", (e)=>{
   else if(e.state && e.state.gear === "cambiar") abrirCambiarUsu();
   else if(e.state && e.state.gear) mostrarGear(e.state.gear);
   else { cerrarGear(); verMenu(); }
-  renderPacks();
+  // Solo el puntito del carrito: las tarjetas ya están dibujadas y redibujarlas
+  // aquí vaciaba la lista visible (parpadeo).
+  actualizarPuntoCarrito();
 });
 window.addEventListener("hashchange", ()=>{
   abrirSegunHash(hashActual());
-  renderPacks();
 });
+// Al volver de la Tienda desde la caché del navegador, refresca el puntito sin
+// redibujar el menú.
+window.addEventListener("pageshow", ()=>{ actualizarPuntoCarrito(); });
 
 // Icono dibujado de Diablitos: diablito malo con risita maligna.
   // Se mide en "em" para que crezca y se encoja con el tamano de letra del
@@ -700,6 +711,7 @@ window.addEventListener("hashchange", ()=>{
 // las tarjetas. Si llega una mientras se dibuja, se anota y se repite al final.
 let renderizando = false;
 let renderPendiente = false;
+let ultimosPacks = null;
 async function renderPacks(){
   if(renderizando){ renderPendiente = true; return; }
   renderizando = true;
@@ -832,9 +844,24 @@ async function renderPacksDeVerdad(){
   if(retos) btnX.style.display = "";
   // Punto rojo en el carrito: avisa que adentro hay algo NUEVO sin pedir
   // (fecha "Nuevo" viva Y sin solicitud). El criterio vive en acceso.js.
+  ultimosPacks = packs;
+  await actualizarPuntoCarrito();
+}
+// Solo el puntito del carrito: NO redibuja las tarjetas. Se usa al navegar
+// (atrás/adelante) y al volver de la Tienda, para no vaciar la lista visible
+// y provocar el parpadeo (bug nov-2026).
+async function actualizarPuntoCarrito(){
+  if(!ultimosPacks) return;
   try{
-    const nuevos = await nuevosSinPedir(packs);
-    document.getElementById("menuBtn").classList.toggle("conNuevo", Object.keys(nuevos).length > 0);
+    const nuevos = await nuevosSinPedir(ultimosPacks);
+    const hay = Object.keys(nuevos).length > 0;
+    hayNuevosCarrito = hay;
+    const b = document.getElementById("menuBtn");
+    if(b){
+      // Solo el carrito lleva el punto; en Experiencias ese botón es el engrane.
+      if(menuBtnModo === "menu") b.classList.toggle("conNuevo", hay);
+      else b.classList.remove("conNuevo");
+    }
   }catch(e){}
 }
 // Quita del menú en ese momento si revocan. La escucha vive en acceso.js;
@@ -1175,7 +1202,6 @@ function abrirSub(h){
   if(!id) return;
   try{ history.pushState({ sub:id }, "", "#" + id); }catch(e){}
   abrirSegunHash(id);
-  renderPacks();
 }
 // El "‹ Volver" del submenú: deshace el paso que guardamos nosotros. Si se llegó
 // por un enlace (el "Volver" de un juego, o la dirección escrita a mano) ese paso
@@ -1187,7 +1213,6 @@ function cerrarSub(){
   }
   verMenu();
   try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
-  renderPacks();
 }
 function abrirExp(){
   document.getElementById("vistaMenu").style.display = "none";
