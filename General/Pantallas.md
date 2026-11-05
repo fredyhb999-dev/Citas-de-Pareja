@@ -254,6 +254,7 @@ Toda pantalla nueva o tocada tiene que cumplir esto. Si algo falla, **no está t
 - [ ] Cada vista interna es un **paso real del historial** (`history.pushState({v:id}, "")`) y la pantalla tiene **un solo** `popstate`.
 - [ ] El `popstate` obedece al estado: solo **Configuración** se reabre (y el editor si ya se cargó); la partida, la selección y los avisos **no**.
 - [ ] **Durante la partida el atrás no saca** (se devuelve con `history.go(1)`).
+- [ ] Las **ventanas emergentes** que no son pasos del historial se cierran con el atrás y al cambiar de vista; nunca se quedan con `display:flex` (si no, reaparecen solas al volver a la pantalla).
 - [ ] El **invitado** cae siempre en `vistaEspera`; nunca ve Configuración ni el editor.
 - [ ] Al salir al menú se **deshacen los pasos de esa pantalla** (`salirAlMenu()`); si se abrió desde fuera, se va a la dirección fija. El Volver de la pantalla base **no** es un enlace normal.
 - [ ] El primer paso de la página se marca con `entrada:true` (para que `salirAlMenu()` sepa cuándo parar).

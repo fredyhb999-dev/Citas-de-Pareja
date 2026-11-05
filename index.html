@@ -619,6 +619,14 @@ function mostrarMenu(nombre){
 // diga el historial. Antes solo se miraba el "#", y por eso el botón atrás se
 // saltaba el submenú y luego lo reabría solo (oct-2026).
 window.addEventListener("popstate", (e)=>{
+  // Una ventana encima de Usuarios (tienda, editar, clave o historial) se cierra
+  // con el atrás y el engrane NO navega por debajo (si no, quedaba pegada y
+  // reaparecía al reabrir el engrane; bug nov-2026).
+  if(overlayInvAbierto()){
+    cerrarOverlaysInv();
+    try{ history.go(1); }catch(err){}
+    return;
+  }
   if(e.state && e.state.sub) abrirSegunHash(e.state.sub);
   else if(e.state && e.state.gear === "cambiar") abrirCambiarUsu();
   else if(e.state && e.state.gear) mostrarGear(e.state.gear);
@@ -1481,6 +1489,8 @@ async function hashTexto(t){
 }
 // Pide la clave en una ventana de la app (nada de prompt() del sistema).
 // Devuelve true solo si es la correcta; false si se cancela.
+let cancelarPinActual = null;
+let edUsuariosToken = 0;
 function pedirPin(){
   return new Promise((resolver)=>{
     const ov = document.getElementById("invOverlayPin");
@@ -1495,8 +1505,11 @@ function pedirPin(){
     const cerrar = (resultado)=>{
       ok.onclick = null; cancelar.onclick = null; inp.onkeydown = null;
       ov.style.display = "none";
+      cancelarPinActual = null;
       resolver(resultado);
     };
+    // El atrás del celular también cancela esta ventana.
+    cancelarPinActual = ()=>{ try{ cerrar(false); }catch(e){} };
     const probar = async ()=>{
       const t = (inp.value || "").trim();
       if(!t){ msgEl.textContent = "Escribe la clave."; return; }
@@ -1523,6 +1536,9 @@ function pedirPin(){
 async function abrirEdUsuarios(){
   if(soyInvitado()) return;
   if(!(await pedirPin())) return;
+  // Si la ventana se cierra mientras carga (p. ej. con el atrás), no se vuelve
+  // a abrir cuando lleguen los datos.
+  const miToken = ++edUsuariosToken;
   const db = dbActual();
   (async ()=>{
     const us = db ? await usuariosEfectivos(db) : (leerUsuariosLocal() || []);
@@ -1541,8 +1557,7 @@ async function abrirEdUsuarios(){
     document.getElementById("invEdMsg").textContent = "";
     if(!todos.length){
       document.getElementById("invEdMsg").textContent = "No hay usuarios para editar.";
-    }
-    todos.forEach(u=>{
+    }    todos.forEach(u=>{
       const esBase = !u.invitado;
       const fila = document.createElement("div");
       fila.className = "edFila";
@@ -1598,10 +1613,12 @@ async function abrirEdUsuarios(){
       fila.appendChild(abajo);
       box.appendChild(fila);
     });
+    if(miToken !== edUsuariosToken) return;
     document.getElementById("invOverlayUsu").style.display = "flex";
   })();
 }
 function cerrarEdUsuarios(){
+  edUsuariosToken++;
   document.getElementById("invOverlayUsu").style.display = "none";
 }
 document.getElementById("invEditar").onclick = abrirEdUsuarios;
@@ -1724,7 +1741,28 @@ function invVer(cual){
 //   { gear:"root" }            -> las 3 tarjetas (Invitados / Usuarios / Telegram)
 //   { gear:"inv"|"usu"|"tg" }  -> una de las tres
 //   { gear:"cambiar" }         -> "Cambiar usuario" (dentro de Usuarios)
+// Ventanas que viven ENCIMA de Usuarios y no son pasos del historial: tienda
+// (🛒), editar, clave e historial. El atrás las cierra y se queda en Usuarios;
+// si no, el engrane navegaba por debajo y al reabrirlo reaparecían (bug nov-2026).
+// Se buscan por el prefijo `invOverlay`: una ventana nueva con ese id queda
+// cubierta sola, sin tener que agregarla a una lista.
+function overlaysInv(){
+  return Array.from(document.querySelectorAll('[id^="invOverlay"]'));
+}
+function overlayInvAbierto(){
+  return overlaysInv().some(el=> !!(el.style.display && el.style.display !== "none"));
+}
+function cerrarOverlaysInv(){
+  try{ if(cancelarPinActual) cancelarPinActual(); }catch(e){}
+  try{ cerrarPuntos(); }catch(e){}
+  try{ cerrarEdUsuarios(); }catch(e){}
+  try{ cerrarHistorial(); }catch(e){}
+  // Red de seguridad: cualquier ventana nueva se oculta aunque todavía no
+  // tenga su función de cierre propia.
+  overlaysInv().forEach(el=>{ try{ el.style.display = "none"; }catch(e){} });
+}
 function mostrarGear(cual){
+  cerrarOverlaysInv();
   asistenteEl.style.display = "none";
   pantallaEl.style.display = "none";
   menuEl.style.display = "none";
@@ -1736,6 +1774,7 @@ function mostrarGear(cual){
   if(cual === "root" || cual === "usu") pintarInvUsuarios();
 }
 function cerrarGear(){
+  cerrarOverlaysInv();
   pantallaEl.style.display = "none";
   invEl.style.display = "none";
   menuEl.style.display = "flex";
@@ -1919,6 +1958,7 @@ document.getElementById("tgGuardar").onclick = ()=>{
 let modoCambiar = false;
 const CLAVE_IR_USU = "ir_a_usuarios";
 function abrirPanelUsuarios(){
+  cerrarOverlaysInv();
   menuEl.style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
   document.getElementById("gearBtn").style.display = "none";

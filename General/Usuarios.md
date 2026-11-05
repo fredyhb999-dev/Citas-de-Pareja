@@ -57,6 +57,20 @@ una ventana de la app (`#invOverlayPin`, nada de `prompt()` del sistema).
   público y la base está abierta, así que quien lea el código o la base puede
   saltárselo. La protección de verdad es el login (rediseño de arquitectura).
 
+**El atrás del celular cierra esas ventanas (nov-2026).** La Tienda (🛒),
+Editar, la clave y el Historial no son pasos del historial: viven *encima* de
+Usuarios. El `popstate` de `index.html` los cierra primero y se queda en Usuarios
+(`history.go(1)`); si no, el engrane navegaba por debajo y la ventana quedaba con
+`display:flex`, así que al reabrir el engrane reaparecía sola. Además,
+`mostrarGear()`, `cerrarGear()` y `abrirPanelUsuarios()` llaman a
+`cerrarOverlaysInv()`, y `abrirEdUsuarios()` usa un token para no reabrirse si
+los datos llegan después de cerrarla.
+
+**Convención para ventanas nuevas:** cualquier ventana que se abra encima de
+`#pantallaInvitado` debe llevar un `id` que empiece con `invOverlay`. Así el
+atrás la detecta y la cierra sola (`overlaysInv()`), sin tener que agregarla a
+una lista.
+
 - **Los dos perfiles base** (admin y pareja, o sea `!invitado`): campo de nombre
   **editable** y un **radio "Admin"**. **Solo hay un administrador.**
 - **Los invitados**: solo salen para editarles los puntos; su nombre se muestra

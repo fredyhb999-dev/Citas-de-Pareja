@@ -383,7 +383,39 @@ function ver(id, guardar = true){
   window.scrollTo(0, 0);
 }
 
+// Salida al menú sin dejar pasos fantasma (mismo criterio que Encuentros/).
+// Con un enlace normal se agregaba un paso y el atrás del celular, desde el
+// menú, volvía a abrir Lencería (bug reportado nov-2026, intermitente).
+const URL_MENU = "../index.html#experiencias";
+let saliendo = false;
+function irAlMenu(url){
+  let mismoSitio = false;
+  try{ mismoSitio = !!document.referrer && document.referrer.indexOf(location.origin) === 0; }catch(e){}
+  if(!mismoSitio){ location.replace(url); return; }
+  try{ history.back(); }catch(e){ location.replace(url); return; }
+  setTimeout(()=>{ location.replace(url); }, 400);
+}
+function salirAlMenu(url){
+  if(saliendo) return;
+  let enEntrada = false;
+  try{ enEntrada = !!(history.state && history.state.entrada); }catch(e){}
+  if(enEntrada){ irAlMenu(url); return; }
+  saliendo = true;
+  try{ history.back(); }catch(e){ saliendo = false; irAlMenu(url); return; }
+  setTimeout(()=>{ if(saliendo){ saliendo = false; location.replace(url); } }, 900);
+}
+
 window.addEventListener("popstate", (e)=>{
+  if(saliendo){
+    const esEntrada = !!(e.state && e.state.entrada);
+    if(esEntrada || !e.state){
+      saliendo = false;
+      irAlMenu(URL_MENU);
+      return;
+    }
+    try{ history.back(); }catch(err){ saliendo = false; location.replace(URL_MENU); }
+    return;
+  }
   const v = (e.state && e.state.v) || "vistaPlanes";
   ver(v, false);
 });
@@ -395,7 +427,11 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
     history.back();
     return;
   }
-  // Desde la vista principal sin cita: deja ir a ../index.html#experiencias.
+  // Desde la vista principal sin cita: salir al menú deshaciendo los pasos de
+  // esta pantalla. Antes era un enlace normal y dejaba un paso fantasma: al
+  // volver del menú con el atrás del celular, se regresaba a Lencería.
+  e.preventDefault();
+  salirAlMenu(URL_MENU);
 });
 
 ["btnCancelarPrenda", "eCancelar", "pVolver"].forEach((id)=>{
@@ -405,7 +441,12 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
 
 document.getElementById("btnCfg").addEventListener("click", ()=> ver("vistaConfig"));
 
-history.replaceState({ v: "vistaPlanes" }, "");
+// El primer paso de esta página se marca `entrada`, para que «‹ Volver» sepa
+// cuándo ya no quedan pasos suyos que deshacer.
+try{
+  const previo = history.state;
+  history.replaceState({ v: "vistaPlanes", entrada: !previo || !!previo.entrada }, "");
+}catch(e){}
 // Arranque: deja la vista principal como paso actual y ENCIENDE el engrane.
 // Sin esta llamada el botón se quedaba oculto hasta entrar y salir de otra vista.
 ver("vistaPlanes", false);

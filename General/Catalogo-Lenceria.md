@@ -30,6 +30,12 @@ Cada vista es un paso del historial (`pushState` + `popstate`), y el
 **‹ Volver** es contextual. El ⚙️ **nace oculto** y solo se enciende en
 `vistaPlanes`.
 
+Desde `vistaPlanes` sin venir de una cita, el **‹ Volver** sale a
+`../index.html#experiencias` deshaciendo los pasos de la pantalla
+(`salirAlMenu()`), no con un enlace normal. Antes el enlace agregaba un paso y,
+al volver del menú con el atrás del celular, se regresaba a Lencería (nov-2026).
+Si se llegó desde una cita (`esEntradaCita`), el «‹ Volver» regresa a la cita.
+
 El invitado no entra: el menú no le muestra la tarjeta y la pantalla lo
 devuelve con un aviso.
 
