@@ -11,9 +11,11 @@ Movido de `General/GUIA.md`. Contiene el detalle de la pantalla de Usuarios: flu
 1. En Usuarios, arriba a la izquierda, "Cambiar usuario".
 2. Abre la lista de usuarios en la misma pantalla, con **"‹ Volver"** arriba a
    la derecha. Ahí se puede salir sin cambiar nada.
-3. Al escoger, recarga (para que la app entera tome la identidad nueva) pero
-   deja una marca en `sessionStorage` (`ir_a_usuarios`) y **aterriza de vuelta
-   en Usuarios**, no en el menú.
+3. Al escoger, **deshace el paso "Cambiar usuario"** y recarga (para que la app
+   entera tome la identidad nueva); deja una marca en `sessionStorage`
+   (`ir_a_usuarios`) y **aterriza de vuelta en Usuarios**, no en el menú. Así el
+   «‹ Volver» de esa lista (y el atrás del celular) ya no repiten una pantalla
+   antes de salir (nov-2026).
 
 **Lo que estaba mal y por qué importa (hallazgo de Fredy, oct-2026):**
 

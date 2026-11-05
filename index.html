@@ -842,7 +842,17 @@ function mostrarIdentidad(usuarios){
         // Se recarga para que la app entera tome la identidad nueva, pero se
         // deja marcado para volver a la pantalla de Usuarios al arrancar.
         try{ sessionStorage.setItem(CLAVE_IR_USU, "1"); }catch(e){}
-        location.reload();
+        // El paso "Cambiar usuario" ya cumplió: se deshace antes de recargar y
+        // la recarga cae en el paso de Usuarios. Si no, ese paso quedaba de más
+        // y el «‹ Volver» de la lista de Usuarios (y el atrás del celular)
+        // volvían a la misma pantalla una vez antes de salir.
+        let yaRecargo = false;
+        const recargar = ()=>{ if(yaRecargo) return; yaRecargo = true; location.reload(); };
+        try{
+          window.addEventListener("popstate", recargar, { once:true });
+          history.back();
+          setTimeout(recargar, 400);
+        }catch(e){ recargar(); }
         return;
       }
       mostrarMenu(u.nombre);

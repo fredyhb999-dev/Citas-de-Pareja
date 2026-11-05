@@ -517,6 +517,30 @@ enlace, hay que distinguir ese paso de los que se guardaron a mano (`fijo`).
 Lo mismo aplicaba a `Opciones/index.html`, que tenia la misma forma: **ya quedo
 arreglado** (oct-2026) y hoy usa `pushState` igual que los demas.
 
+**Repaso de toda la app normal (nov-2026).** Se revisaron las pantallas que usan
+historial y se dejó la misma regla en todas: **el atrás del celular y el
+«‹ Volver» hacen lo mismo**.
+
+- **Solo Configuración se reabre desde el historial.** El editor de actividades
+  (Encuentros/Guiadas) no se reabre con atrás/adelante: mostraría datos viejos.
+  Y si el paso deshecho es la misma pantalla que ya se está viendo, se sigue
+  deshaciendo (no se queda "atorado").
+- **Durante la partida no se sale con el atrás** en Encuentros, Guiadas,
+  Opciones, Roles ni Castigos. En Guiadas faltaba: era la única que dejaba salir
+  a medias de una cita compartida.
+- **El invitado nunca ve la pantalla del anfitrión con el atrás.** En Encuentros
+  y Opciones faltaba: después de una partida, el atrás mostraba la lista/inicio.
+  Ahora cae en la sala de espera, como ya hacía Roles.
+- **Diablitos:** la configuración (⚙️) ahora es un paso del historial, así que el
+  atrás la cierra en vez de sacarte del juego.
+- **El «‹ Volver» que sale al menú deshace los pasos de esa pantalla**
+  (`salirAlMenu()`), en vez de abrir otra copia del menú. Antes, con un enlace,
+  quedaba un paso fantasma y el atrás del celular volvía a abrir la pantalla que
+  acababas de dejar. Si la pantalla se abrió directa (sin paso anterior), cae a
+  su dirección fija.
+- **Menú → Cambiar usuario:** el paso "cambiar" se deshace antes de recargar la
+  app. Sin eso, el «‹ Volver» de la lista de Usuarios no respondía a la primera.
+
 > Flujo de Cambiar usuario y editar nombres/puntos -> ve General/Usuarios.md (detalle de la pantalla de Usuarios)
 ### Degradado en los títulos
 

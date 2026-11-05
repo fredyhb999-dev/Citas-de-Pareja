@@ -637,10 +637,72 @@ function ver(id, guardar){
   }
   window.scrollTo(0, 0);
 }
+// El editor solo se puede reabrir desde el historial si en esta carga se abrió
+// alguna vez (si no, mostraría la caja vacía, p. ej. después de recargar).
+let editorVigente = false;
+// Salida al menú sin dejar pasos fantasma (mismo criterio que Encuentros/).
+const URL_MENU = "../index.html#experiencias";
+let saliendo = false;
+function irAlMenu(url){
+  // Último paso: se deshace el paso de entrada si se llegó desde otra pantalla
+  // del sitio. Si se abrió directa (enlace de fuera, marcador), se va a la
+  // dirección fija para no salir de la app.
+  let mismoSitio = false;
+  try{ mismoSitio = !!document.referrer && document.referrer.indexOf(location.origin) === 0; }catch(err){}
+  if(!mismoSitio){ location.replace(url); return; }
+  try{ history.back(); }catch(err){ location.replace(url); return; }
+  setTimeout(()=>{ location.replace(url); }, 400);
+}
+function salirAlMenu(url){
+  if(saliendo) return;
+  let enEntrada = false;
+  try{ enEntrada = !!(history.state && history.state.entrada); }catch(err){}
+  if(enEntrada){ irAlMenu(url); return; }
+  saliendo = true;
+  try{ history.back(); }catch(err){ saliendo = false; irAlMenu(url); return; }
+  // Red de seguridad: si por lo que sea no llega el popstate, no se queda
+  // atorado; se va a la dirección fija.
+  setTimeout(()=>{ if(saliendo){ saliendo = false; location.replace(url); } }, 900);
+}
+// El gesto de atrás del celular hace lo mismo que el «‹ Volver»: durante la
+// partida NO saca (igual que Encuentros/Opciones/Roles); en Configuración y el
+// editor regresa a la pantalla anterior; fuera de ahí, a la lista.
+let reponiendo = false;
 window.addEventListener("popstate", (e)=>{
+  if(saliendo){
+    const esEntrada = !!(e.state && e.state.entrada);
+    if(esEntrada || !e.state){
+      saliendo = false;
+      irAlMenu(URL_MENU);
+      return;
+    }
+    try{ history.back(); }catch(err){ saliendo = false; location.replace(URL_MENU); }
+    return;
+  }
+  if(reponiendo){ reponiendo = false; return; }
+  const enJuego = document.getElementById("vistaPlayer").classList.contains("ver");
+  if(enJuego){
+    reponiendo = true;
+    try{ history.go(1); }catch(err){ reponiendo = false; }
+    return;
+  }
+  // Solo Configuración y el editor se reabren desde el historial; la partida y
+  // la ventana de "continuar" no (mostrarían datos viejos).
+  const v = (e.state && e.state.v) || "vistaLista";
+  if(v === "vistaConfig"){
+    if(!document.querySelectorAll("#listaActsCfg .btnAct").length){ try{ pintarLista("listaActsCfg", "editar"); }catch(err){} }
+    ver("vistaConfig", false);
+    return;
+  }
+  if(v === "vistaEditar" && editorVigente){ ver("vistaEditar", false); return; }
   ver("vistaLista", false);
 });
-try{ history.replaceState({ v: "vistaLista", act: null }, ""); }catch(e){}
+// El primer paso de esta página se marca `entrada`, para que el «‹ Volver»
+// sepa cuándo ya no quedan pasos suyos que deshacer.
+try{
+  const previo = history.state;
+  history.replaceState({ v: "vistaLista", act: null, entrada: !previo || !!previo.entrada }, "");
+}catch(e){}
 document.getElementById("btnCfg").onclick = ()=>{
   pintarLista("listaActsCfg", "editar");
   ver("vistaConfig");
@@ -653,6 +715,9 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
   const id = v ? v.id : "";
   if(id === "vistaEditar"){ e.preventDefault(); pintarLista("listaActsCfg", "editar"); ver("vistaConfig"); return; }
   if(id === "vistaConfig"){ e.preventDefault(); entrar(); return; }
+  // Pantalla base: salir al menú deshaciendo los pasos de esta página.
+  e.preventDefault();
+  salirAlMenu(URL_MENU);
 });
 function filtrar(boxId, texto){
   const t = (texto || "").trim().toLowerCase();
@@ -1355,6 +1420,7 @@ async function abrirEditor(nombre, empujar){
     cargarTomasDoc(docActual, data, nombre);
   }catch(e){}
   pintarEditor();
+  editorVigente = true;
   ver("vistaEditar", empujar !== false);
 }
 function pintarEditor(){

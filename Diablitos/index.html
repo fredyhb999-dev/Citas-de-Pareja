@@ -935,6 +935,9 @@ h1{
 
   var elEngrane = document.getElementById('engrane');
   var elCfg = document.getElementById('pantallaCfg');
+  // La configuración es un paso del historial (como en Acompañante/): así el
+  // atrás del celular la cierra en vez de sacarte del juego.
+  var cfgAbierto = false;
   var SEC = {
     msg: {
       clave: CLAVE_MSG,
@@ -1100,6 +1103,8 @@ h1{
   }
 
   function abrirCfg(){
+    if(cfgAbierto) return;
+    cfgAbierto = true;
 cambiarPestana(SEC_ACTIVA);
       elCfg.style.display = 'block';
       // El engrane ahora vive arriba a la izquierda, donde esta el "Volver" de
@@ -1109,20 +1114,28 @@ cambiarPestana(SEC_ACTIVA);
       parar();
     SEC.msg.nuevo.value = '';
     SEC.aviso.nuevo.value = '';
+    try{ history.pushState({ cfg:1 }, ""); }catch(e){}
     window.scrollTo(0, 0);
     elCfg.scrollTop = 0;
   }
 
-  function cerrarCfg(){
+  // `sinHistorial` lo usa el atrás del celular: ya deshizo el paso él mismo.
+  function cerrarCfg(sinHistorial){
+    if(!cfgAbierto) return;
+    cfgAbierto = false;
     elCfg.style.display = 'none';
       if(!esInvitado && hayAlmacen) elEngrane.style.display = 'block';
       FRASES = leerLista(CLAVE_MSG) || FRASES_FABRICA.slice();
     AVISOS = leerLista(CLAVE_AVISO) || AVISOS_FABRICA.slice();
     if(pausaCfg) correr();
     pausaCfg = false;
+    if(!sinHistorial){ try{ history.back(); }catch(e){} }
   }
   window.cerrarCfg = cerrarCfg;
   window.elCfg = elCfg;
+  window.addEventListener('popstate', function(){
+    if(cfgAbierto) cerrarCfg(true);
+  });
 
   function escribiendo(e){
     var t = e.target;
@@ -1281,8 +1294,11 @@ function arrancar(){
 }
 
 document.getElementById("volverSala").addEventListener("click", ()=>{
-  if(window.elCfg && window.elCfg.style.display !== "none") cerrarCfg();
-  else location.href = "../index.html#juegos";
+  if(window.elCfg && window.elCfg.style.display !== "none"){ window.cerrarCfg(); return; }
+  // Salir al menú deshaciendo el paso (como el atrás del celular). Si no hay a
+  // dónde atrás (se abrió directa), se cae a la dirección fija.
+  try{ history.back(); }catch(e){ location.replace("../index.html#juegos"); return; }
+  setTimeout(()=>{ location.replace("../index.html#juegos"); }, 400);
 });
 
 btnIr.addEventListener("click", ()=>{

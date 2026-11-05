@@ -240,6 +240,17 @@ btnInvitar.onclick = async ()=>{
   btnInvitar.disabled = false;
 };
 
+// El «‹ Volver» deshace el paso, igual que el atrás del celular, en vez de
+// abrir otra copia del menú (si no, el atrás volvía a entrar al Chat). Si la
+// pantalla se abrió directa y no hay paso anterior, cae a la dirección fija.
+document.getElementById("btnVolver").addEventListener("click", (e)=>{
+  e.preventDefault();
+  let mismoSitio = false;
+  try{ mismoSitio = !!document.referrer && document.referrer.indexOf(location.origin) === 0; }catch(err){}
+  if(mismoSitio){ try{ history.back(); return; }catch(err){} }
+  location.replace("../index.html#com");
+});
+
 // La campana de la pestaña. Se enciende sola con lo que escriba el otro.
 // `esChat` porque AQUI es donde la campana se apaga al entrar: en el resto de
 // pantallas, entrar a la pestaña saca un cartelito en vez de apagarla.

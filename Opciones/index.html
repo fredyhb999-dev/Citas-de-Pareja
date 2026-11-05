@@ -1440,6 +1440,7 @@ async function abrirCfg(){
   document.getElementById("pegarTa").value = "";
   document.getElementById("inpNueva").value = "";
   pintarCfg();
+  configVista = true;
   ver("vistaConfig");
 }
 document.getElementById("btnCfg").onclick = ()=>{ abrirCfg(); };
@@ -1457,17 +1458,68 @@ function ver(id, guardar){
   window.scrollTo(0, 0);
 }
 let reponiendo = false;
-window.addEventListener("popstate", ()=>{
+// ¿Ya se pintó Configuración en esta carga? Solo entonces se puede reabrir
+// desde el historial (si no, se vería vacía después de recargar).
+let configVista = false;
+// Salida al menú sin dejar pasos fantasma (mismo criterio que Encuentros/).
+const URL_MENU = "../index.html#juegos";
+let saliendo = false;
+function irAlMenu(url){
+  // Último paso: se deshace el paso de entrada si se llegó desde otra pantalla
+  // del sitio. Si se abrió directa (enlace de fuera, marcador), se va a la
+  // dirección fija para no salir de la app.
+  let mismoSitio = false;
+  try{ mismoSitio = !!document.referrer && document.referrer.indexOf(location.origin) === 0; }catch(err){}
+  if(!mismoSitio){ location.replace(url); return; }
+  try{ history.back(); }catch(err){ location.replace(url); return; }
+  setTimeout(()=>{ location.replace(url); }, 400);
+}
+function salirAlMenu(url){
+  if(saliendo) return;
+  let enEntrada = false;
+  try{ enEntrada = !!(history.state && history.state.entrada); }catch(err){}
+  if(enEntrada){ irAlMenu(url); return; }
+  saliendo = true;
+  try{ history.back(); }catch(err){ saliendo = false; irAlMenu(url); return; }
+  // Red de seguridad: si por lo que sea no llega el popstate, no se queda
+  // atorado; se va a la dirección fija.
+  setTimeout(()=>{ if(saliendo){ saliendo = false; location.replace(url); } }, 900);
+}
+window.addEventListener("popstate", (e)=>{
+  if(saliendo){
+    const esEntrada = !!(e.state && e.state.entrada);
+    if(esEntrada || !e.state){
+      saliendo = false;
+      irAlMenu(URL_MENU);
+      return;
+    }
+    try{ history.back(); }catch(err){ saliendo = false; location.replace(URL_MENU); }
+    return;
+  }
   if(reponiendo){ reponiendo = false; return; }
   const enJuego = jugando && document.getElementById("vistaPlayer").classList.contains("ver");
   if(enJuego){ reponiendo = true; try{ history.go(1); }catch(e){ reponiendo = false; } return; }
-  ver("vistaInicio", false);
+  // El invitado no tiene pantalla de inicio: su base es la sala de espera.
+  const base = esInvitadoFlag ? "vistaEspera" : "vistaInicio";
+  // Solo Configuración se reabre desde el historial; la partida no.
+  // Un invitado nunca la reabre: su base es la espera.
+  const v = (e.state && e.state.v) || base;
+  if(v === "vistaConfig" && configVista && !esInvitadoFlag){ ver("vistaConfig", false); return; }
+  ver(base, false);
 });
-try{ history.replaceState({ v: "vistaInicio" }, ""); }catch(e){}
+// El primer paso de esta página se marca `entrada`, para que el «‹ Volver»
+// sepa cuándo ya no quedan pasos suyos que deshacer.
+try{
+  const previo = history.state;
+  history.replaceState({ v: "vistaInicio", entrada: !previo || !!previo.entrada }, "");
+}catch(e){}
 document.getElementById("lnkInicio").addEventListener("click", (e)=>{
   const v = document.querySelector(".vista.ver");
   const id = v ? v.id : "";
   if(id === "vistaConfig"){ e.preventDefault(); entrar(); return; }
+  // Pantalla base: salir al menú deshaciendo los pasos de esta página.
+  e.preventDefault();
+  salirAlMenu(URL_MENU);
 });
 document.getElementById("btnEsperaRefrescar").onclick = ()=>{ entrar(); };
 

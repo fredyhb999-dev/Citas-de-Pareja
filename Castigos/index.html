@@ -958,7 +958,44 @@ function volverConHistorial(respaldo){
   }, 400);
 }
 
+// Salida al menú: el «‹ Volver» de la pantalla base deshace los pasos de ESTA
+// página antes de salir, para no dejar un paso fantasma (con un enlace normal,
+// el atrás del celular volvía a abrir Castigos).
+const URL_MENU = "../index.html#juegos";
+let saliendo = false;
+function irAlMenu(url){
+  // Último paso: se deshace el paso de entrada si se llegó desde otra pantalla
+  // del sitio. Si se abrió directa (enlace de fuera, marcador), se va a la
+  // dirección fija para no salir de la app.
+  let mismoSitio = false;
+  try{ mismoSitio = !!document.referrer && document.referrer.indexOf(location.origin) === 0; }catch(e){}
+  if(!mismoSitio){ location.replace(url); return; }
+  try{ history.back(); }catch(e){ location.replace(url); return; }
+  setTimeout(()=>{ location.replace(url); }, 400);
+}
+function salirAlMenu(url){
+  if(saliendo) return;
+  let enEntrada = false;
+  try{ enEntrada = !!(history.state && history.state.entrada); }catch(e){}
+  if(enEntrada){ irAlMenu(url); return; }
+  saliendo = true;
+  try{ history.back(); }catch(e){ saliendo = false; irAlMenu(url); return; }
+  setTimeout(()=>{ if(saliendo){ saliendo = false; location.replace(url); } }, 900);
+}
+
 window.addEventListener("popstate", (ev)=>{
+  // Salida al menú: se deshacen los pasos nuestros y, al llegar al primero, un
+  // atrás más sale. Por el camino no se reabre ninguna vista.
+  if(saliendo){
+    const esEntrada = !!(ev.state && ev.state.entrada);
+    if(esEntrada || !ev.state){
+      saliendo = false;
+      irAlMenu(URL_MENU);
+      return;
+    }
+    try{ history.back(); }catch(e){ saliendo = false; location.replace(URL_MENU); }
+    return;
+  }
   if(reponiendo){ reponiendo = false; return; }
   volviendoA = null;
   const actual = vistaActual();
@@ -987,7 +1024,12 @@ window.addEventListener("popstate", (ev)=>{
   if(destino === actual){ try{ history.back(); return; }catch(e){} }
   ver(destino, false);
 });
-try{ history.replaceState({ v:"vistaInicio" }, ""); }catch(e){}
+// El primer paso de esta página se marca `entrada`, para que el «‹ Volver»
+// sepa cuándo ya no quedan pasos suyos que deshacer.
+try{
+  const previo = history.state;
+  history.replaceState({ v:"vistaInicio", entrada: !previo || !!previo.entrada }, "");
+}catch(e){}
 document.getElementById("btnCfg").onclick = ()=>{
   pintarCastigos();
   ver("vistaConfig");
@@ -1009,6 +1051,9 @@ document.getElementById("lnkInicio").addEventListener("click", async (e)=>{
   if(v==="vistaConfig"){ e.preventDefault(); volverConHistorial("vistaInicio"); return; }
   if(v==="vistaTomas"){ e.preventDefault(); volverConHistorial("vistaInicio"); return; }
   if(v==="vistaPartida"){ e.preventDefault(); if(finVisible()) await volverDePartida(); return; }
+  // Pantalla base: salir al menú deshaciendo los pasos de esta página.
+  e.preventDefault();
+  salirAlMenu(URL_MENU);
 });
 
 function msg(t){ const el=document.getElementById("msg"); el.textContent = t||""; }

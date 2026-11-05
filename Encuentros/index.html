@@ -908,7 +908,48 @@ function ver(id, guardar){
 // El gesto de atras del celular tampoco saca de la partida: se devuelve al
 // estado del juego en vez de dejarlo en la pantalla anterior.
 let reponiendo = false;
+// El editor solo se puede reabrir desde el historial si en esta carga se abrió
+// alguna vez (si no, mostraría la caja vacía, p. ej. después de recargar).
+let editorVigente = false;
+// Salida al menú: el «‹ Volver» de la pantalla base deshace los pasos de ESTA
+// página antes de salir. Con un enlace normal se agregaba un paso y el atrás del
+// celular volvía a abrir la pantalla (paso fantasma).
+const URL_MENU = "../index.html#experiencias";
+let saliendo = false;
+function irAlMenu(url){
+  // Último paso: se deshace el paso de entrada si se llegó desde otra pantalla
+  // del sitio. Si se abrió directa (enlace de fuera, marcador), se va a la
+  // dirección fija para no salir de la app.
+  let mismoSitio = false;
+  try{ mismoSitio = !!document.referrer && document.referrer.indexOf(location.origin) === 0; }catch(err){}
+  if(!mismoSitio){ location.replace(url); return; }
+  try{ history.back(); }catch(err){ location.replace(url); return; }
+  setTimeout(()=>{ location.replace(url); }, 400);
+}
+function salirAlMenu(url){
+  if(saliendo) return;
+  let enEntrada = false;
+  try{ enEntrada = !!(history.state && history.state.entrada); }catch(err){}
+  if(enEntrada){ irAlMenu(url); return; }
+  saliendo = true;
+  try{ history.back(); }catch(err){ saliendo = false; irAlMenu(url); return; }
+  // Red de seguridad: si por lo que sea no llega el popstate, no se queda
+  // atorado; se va a la dirección fija.
+  setTimeout(()=>{ if(saliendo){ saliendo = false; location.replace(url); } }, 900);
+}
 window.addEventListener("popstate", (e)=>{
+  // Salida al menú: se deshacen los pasos nuestros y, al llegar al primero, un
+  // atrás más sale. Por el camino no se reabre ninguna vista.
+  if(saliendo){
+    const esEntrada = !!(e.state && e.state.entrada);
+    if(esEntrada || !e.state){
+      saliendo = false;
+      irAlMenu(URL_MENU);
+      return;
+    }
+    try{ history.back(); }catch(err){ saliendo = false; location.replace(URL_MENU); }
+    return;
+  }
   if(reponiendo){ reponiendo = false; return; }
   const enJuego = jugando && document.getElementById("vistaPlayer").classList.contains("ver");
   if(enJuego){
@@ -916,9 +957,26 @@ window.addEventListener("popstate", (e)=>{
     try{ history.go(1); }catch(e){ reponiendo = false; }
     return;
   }
-  ver("vistaLista", false);
+  // El invitado no tiene pantalla de inicio: su base es la sala de espera.
+  const base = esInvitadoFlag ? "vistaEspera" : "vistaLista";
+  // Solo Configuración y el editor se reabren desde el historial; la partida y
+  // los avisos no (mostrarían datos viejos).
+  const v = (e.state && e.state.v) || base;
+  // Un invitado nunca reabre Configuración ni el editor: su base es la espera.
+  if(v === "vistaConfig" && !esInvitadoFlag){
+    if(!document.querySelectorAll("#listaActsCfg .btnAct").length){ try{ pintarListaCfg(); }catch(err){} }
+    ver("vistaConfig", false);
+    return;
+  }
+  if(v === "vistaEditar" && editorVigente && !esInvitadoFlag){ ver("vistaEditar", false); return; }
+  ver(base, false);
 });
-try{ history.replaceState({ v: "vistaLista" }, ""); }catch(e){}
+// El primer paso de esta página se marca `entrada`, para que el «‹ Volver»
+// sepa cuándo ya no quedan pasos suyos que deshacer.
+try{
+  const previo = history.state;
+  history.replaceState({ v: "vistaLista", entrada: !previo || !!previo.entrada }, "");
+}catch(e){}
 document.getElementById("btnEsperaRefrescar").onclick = ()=>{ entrar(); };
 
 // ---------- lista de actividades (banco compartido con Guiadas) ----------
@@ -1260,6 +1318,7 @@ async function abrirEditor(nombre, empujar){
     cargarTomasDoc(docActualEd, data, nombre);
   }catch(e){}
   pintarEditor();
+  editorVigente = true;
   ver("vistaEditar", empujar !== false);
 }
 function pintarEditor(){
@@ -1381,6 +1440,9 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
   const id = v ? v.id : "";
   if(id === "vistaEditar"){ e.preventDefault(); pintarListaCfg(); ver("vistaConfig"); return; }
   if(id === "vistaConfig"){ e.preventDefault(); entrar(); return; }
+  // Pantalla base: salir al menú deshaciendo los pasos de esta página.
+  e.preventDefault();
+  salirAlMenu(URL_MENU);
 });
 document.getElementById("btnJugarEd").onclick = async ()=>{
   const tomas = leerTomasEd();
