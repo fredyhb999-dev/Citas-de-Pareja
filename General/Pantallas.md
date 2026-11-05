@@ -127,7 +127,7 @@ Varias vistas en la misma pantalla, una visible a la vez. **Este es el molde de 
 
 ```html
 <body>                                  <!-- una columna, centrada -->
-  <a class="back" id="lnkInicio" href="../index.html#submenu">← Volver</a>
+  <a class="back" id="lnkInicio" href="../index.html#submenu">‹ Volver</a>
   <div class="eyebrow">Nombre de la sección</div>
   <div class="vista ver" id="vistaX">
     <h1>Título</h1>
@@ -142,7 +142,7 @@ Se copia tal cual:
 | Qué | Medida / clase |
 |---|---|
 | `body` | `display:flex; flex-direction:column; align-items:center; padding:max(66px, calc(env(safe-area-inset-top) + 30px)) 20px max(28px, env(safe-area-inset-bottom));` |
-| **"Volver"** | clase `.back`, `position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px` |
+| **"Volver"** | clase `.back`, **`position:fixed`** (no se va con el scroll), `top:max(20px, env(safe-area-inset-top)); right:20px; z-index:50`, con fondo `var(--bg-2)`, `border:1px solid var(--card-border)`, `border-radius:10px`, `padding:6px 10px`. Texto **`‹ Volver`** |
 | `.eyebrow` | `.8rem`, mayúsculas, `letter-spacing:.3em`, apagado |
 | `h1` | `1.8rem`, Chakra Petch, **centrado y con degradado coral→turquesa** |
 | `p.desc` | `.88rem`, apagado, `max-width:360px`, centrado |
@@ -153,7 +153,7 @@ Se copia tal cual:
 | Recuadro con scroll | `.caja` — `max-height:55dvh; overflow-y:auto; border-radius:16px; background:var(--bg-2)` |
 | Tarjeta | `.ficha` — `background:var(--card); border-radius:16px; padding:16px` |
 
-**Navegación:** se cambian las clases con una función `ver(id)` que quita `.ver` a todas y se la pone a una, y el **"Volver" es contextual** con `preventDefault()`: regresa a la pantalla anterior, y solo desde la vista principal sale al menú (`../index.html#submenu`). Con `history.pushState` + `popstate` para que el botón atrás del celular no se salga de la pantalla.
+**Navegación:** se cambian las clases con una función `ver(id, guardar)` que quita `.ver` a todas y se la pone a una. Cada vista que se guarda es un **paso real del historial** (`history.pushState`); el `popstate` obedece al estado y **solo Configuración se reabre** (el editor solo si ya se cargó en esta sesión; la partida, la selección y los avisos no, para no mostrar datos viejos). El **«Volver» es contextual**: del editor a Configuración, de Configuración a la vista principal; y desde la vista principal sale al menú con `salirAlMenu()`, que deshace primero los pasos de esa pantalla. **Durante la partida el atrás no saca** y el **invitado siempre cae en `vistaEspera`**. El primer paso se marca con `entrada:true`. Detalle y checklist: *Estándar de navegación*.
 
 ### El estilo de las LISTAS: el del engrane de `Opciones/`
 
@@ -230,7 +230,7 @@ Una sola vista, con `#app` + `#encabezado` (saludo con degradado + fecha) + `#co
 
 **1f. "Volver" SIEMPRE arriba a la DERECHA** en toda la app: submenús del menú y pantallas de juego (Encuentros, Guiadas, Diablitos, Citas, Retos, **Chat y Acompañante**, que van a `#com`). Lo que vive en la esquina **izquierda** es el botón contextual de esa pantalla (el engrane), y **jamás hay dos en el mismo lado a la vez**: en cada pantalla se muestra solo uno.
 
-En Guiadas y Encuentros el "← Volver" de arriba a la derecha es **contextual**: regresa a la pantalla anterior (del editor a la lista de configurar; de ahí a la lista de actividades/jugar). Solo desde la lista de actividades sale al menú. El único botón de arriba a la izquierda es el engrane ⚙️, y solo en la lista de actividades (oct-2026: se quitaron los "← Jugar"/"← Configurar").
+En Guiadas y Encuentros el "‹ Volver" de arriba a la derecha es **contextual**: regresa a la pantalla anterior (del editor a la lista de configurar; de ahí a la lista de actividades/jugar). Solo desde la lista de actividades sale al menú. El único botón de arriba a la izquierda es el engrane ⚙️, y solo en la lista de actividades (oct-2026: se quitaron los "← Jugar"/"← Configurar").
 
 **2. Los botones de la esquina (el ⚙️ de invitados y el 🛒 de adquisiciones) son del MENÚ PRINCIPAL.** En un submenú no se muestran: ahí solo vive el `‹ Volver`. El ⚙️ va arriba a la **izquierda** (a la derecha se encimaba con el 🛒 en el celular).
 
@@ -242,7 +242,47 @@ En Guiadas y Encuentros el "← Volver" de arriba a la derecha es **contextual**
 
 **4c. Al agregar o mover un bloque de `<div>` en el HTML: contar que el número de `<div>` y de `</div>` cuadre.** Pasó dos veces: un `</div>` de más cerró el contenedor `#menu` antes de tiempo y todo se amontonó a la izquierda, y un `packsRetos` quedó duplicado (los ids duplicados no dan error, solo hacen cosas raras). Se revisa con un conteo de `<div` / `</div>` por página, y buscando ids repetidos.
 
-**5. El guardado de cada pantalla es `position:fixed` o `absolute` con `top:max(18px, env(safe-area-inset-top))`.** Nunca sin esa protección: en celulares con notch los botones se esconden bajo la barra.
+**5. El «Volver» de cada pantalla es `position:fixed`** con `top:max(20px, env(safe-area-inset-top))`. Nunca sin esa protección: en celulares con notch los botones se esconden bajo la barra. **La única excepción es un encabezado que NO se desplaza** (hoy: Chat y Acompañante, donde solo scrollea la lista de mensajes); si el encabezado se mueve, el Volver va fijo.
+
+## Checklist de navegación (antes de decir "listo")
+
+Toda pantalla nueva o tocada tiene que cumplir esto. Si algo falla, **no está terminada**:
+
+- [ ] El «Volver» dice **`‹ Volver`** (glifo corto, no `←`).
+- [ ] Va **fijo arriba a la derecha**, **fuera de cualquier encabezado que haga scroll**: `position:fixed`, `top:max(20px, env(safe-area-inset-top))`, `right:20px`, `z-index:50`, con fondo `var(--bg-2)`, borde `1px solid var(--card-border)` y `border-radius:10px`.
+- [ ] A la **izquierda** va solo el botón **contextual** de esa pantalla (engrane, carrito, etc.); nunca dos Volver en el mismo lado.
+- [ ] Cada vista interna es un **paso real del historial** (`history.pushState({v:id}, "")`) y la pantalla tiene **un solo** `popstate`.
+- [ ] El `popstate` obedece al estado: solo **Configuración** se reabre (y el editor si ya se cargó); la partida, la selección y los avisos **no**.
+- [ ] **Durante la partida el atrás no saca** (se devuelve con `history.go(1)`).
+- [ ] El **invitado** cae siempre en `vistaEspera`; nunca ve Configuración ni el editor.
+- [ ] Al salir al menú se **deshacen los pasos de esa pantalla** (`salirAlMenu()`); si se abrió desde fuera, se va a la dirección fija. El Volver de la pantalla base **no** es un enlace normal.
+- [ ] El primer paso de la página se marca con `entrada:true` (para que `salirAlMenu()` sepa cuándo parar).
+- [ ] La pantalla está registrada en `herramientas/sintaxis/extract.py` (si no, `revisar.py` no la revisa nunca).
+- [ ] `python revisar.py` pasa, incluido el bloque **navegación** (GLIFO / HIST / REGISTRO / FIJO).
+
+## Pendiente de navegación: capa 3 (`nav.js`)
+
+**No se hace todavía.** Primero Fredy prueba en el celular las correcciones de
+nov-2026. Si la navegación ya se siente bien, esto es una mejora, no un
+requisito. Si se hace, va en una sesión aparte para no mezclar dos riesgos.
+
+**Qué sería:** un módulo mínimo `nav.js` (en la raíz, como `acceso.js`) con:
+
+- `marcarEntrada()`: pone `entrada:true` en el primer paso de la página.
+- `salirAlMenu(url)`: deshace los pasos de esa pantalla y sale; si se abrió
+  desde fuera, usa la dirección fija.
+
+**Qué NO haría:** no centraliza el `popstate` ni las vistas. Cada juego tiene
+reglas propias (partida, invitado, selección, editor) y meterlas en un módulo
+genérico lo volvería más difícil de entender que el código actual.
+
+**Cómo se haría:** una pantalla primero (la más simple: Diablitos o Chat),
+probar en el celular, y luego las demás. Registrar `nav.js` en
+`herramientas/sintaxis/extract.py` y correr `revisar.py`. Se va quitando el
+bloque duplicado de cada pantalla.
+
+**Criterio de terminado:** todas las pantallas usan el helper, `revisar.py`
+sigue verde y la navegación se probó en el celular.
 
 ## Degradado en los títulos
 

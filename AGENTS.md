@@ -208,6 +208,30 @@ inicio de `GUIA.md`). **Que no vuelva a pasar:**
    y no está claro cuál es la llave, se pregunta antes de escribir. Ver
    `General/GUIA.md`, sección *La llave es el id, no el nombre*.
 
+## Navegación (regla dura)
+
+Toda pantalla nueva o tocada tiene que cumplir el contrato de
+`General/Pantallas.md` → *Estándar de navegación* y pasar su *Checklist*. Si no,
+**no está terminada**. En resumen:
+
+- El «Volver» se llama **`‹ Volver`** y va **fijo arriba a la derecha** (clase
+  `.back`, `position:fixed`, `top:max(20px, env(safe-area-inset-top))`), **fuera
+  de cualquier encabezado que haga scroll**. A la izquierda va solo el botón
+  contextual de esa pantalla.
+- Cada vista interna es un **paso real del historial** (`pushState`) y el
+  `popstate` obedece al estado. Solo Configuración (y el editor si ya se cargó)
+  se reabre; la partida, la selección y los avisos no.
+- Durante la partida el atrás **no saca**. El invitado cae siempre en la espera
+  y nunca ve Configuración ni el editor.
+- Al salir al menú se **deshacen los pasos de la pantalla** (`salirAlMenu()`); si
+  se abrió desde fuera, se usa la dirección fija.
+- Una pantalla con JavaScript se registra en `herramientas/sintaxis/extract.py`.
+- `python revisar.py` tiene un bloque **navegación**: si marca `GLIFO` o
+  `HIST`, se corrige antes de subir; `REGISTRO` y `FIJO` son avisos.
+- **Capa 3 pendiente (no urgente):** un `nav.js` mínimo con `marcarEntrada()` y
+  `salirAlMenu()`. Se hace **después** de probar en el celular, en una sesión
+  aparte. Alcance y criterio en `General/Pantallas.md` → *Pendiente: capa 3*.
+
 ## La llave del `Panel/` — NUNCA al repo
 
 `Panel/` y `Autorizar/` piden una **llave privada JWK** (`{"kty":"EC",...}`).

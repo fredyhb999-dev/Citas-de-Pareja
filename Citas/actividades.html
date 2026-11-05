@@ -43,10 +43,12 @@
      IZQUIERDA justamente para dejarle este lado libre (`index.html`, `iconoMenu`),
      y con el "Volver" a la izquierda se tapaban los dos. */
   .back{
-    position:absolute; top:max(20px, env(safe-area-inset-top)); right:20px;
+    position:fixed; top:max(20px, env(safe-area-inset-top)); right:20px; z-index:50;
     font-family:'Chakra Petch', sans-serif;
     font-size:.85rem; font-weight:500;
     color: var(--fg-muted); text-decoration:none;
+    background:var(--bg-2); border:1px solid var(--card-border); border-radius:10px;
+    padding:6px 10px;
   }
   .back:hover{ color: var(--fg); }
 
