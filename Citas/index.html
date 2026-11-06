@@ -692,13 +692,21 @@ async function abrirFormulario(modo, citaExistente){
   }
 }
 
-function cerrarFormulario(sinHistorial){
+function cerrarFormulario(sinHistorial, reemplazar){
   overlay.style.display = "none";
   editandoId = null;
   document.body.classList.remove("modalAbierto");
   if(formHist){
     formHist = false;
-    if(!sinHistorial){ try{ history.back(); }catch(e){} }
+    if(!sinHistorial){
+      // Al guardar se REEMPLAZA el paso del formulario en vez de hacer back:
+      // el back pendiente cerraba la ventana de "¿proponer?" que sale enseguida.
+      if(reemplazar){
+        try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+      }else{
+        try{ history.back(); }catch(e){}
+      }
+    }
   }
 }
 
@@ -920,10 +928,13 @@ btnGuardarCita.onclick = async ()=>{
       avisarTelegram("📅 Nueva cita de " + miIdentidad.nombre + " para " + paraUsuario.nombre + ": " + actividad + " (" + formatearFecha(fecha) + ")", APP_URL + "Citas/?cita=" + refNueva.id);
       nuevaPara = paraUsuario;
     }
-    cerrarFormulario();
+    cerrarFormulario(false, true);
 
     // Al crear la cita, se ofrece proponer el atuendo del otro.
-    if(nuevaPara) await preguntarProponer(fecha, nuevaPara);
+    let seFueAProponer = false;
+    if(nuevaPara) seFueAProponer = await preguntarProponer(fecha, nuevaPara);
+    // Si no se fue a Lencería, se deshace el paso duplicado del formulario.
+    if(!seFueAProponer){ try{ history.back(); }catch(e){} }
   }catch(e){
     formMsg.textContent = "Error al guardar. Revisa tu conexión.";
     console.error(e);
@@ -945,15 +956,16 @@ function irAProponer(fecha, u){
 
 // La pregunta que sale después de guardar o confirmar una cita.
 async function preguntarProponer(fecha, u){
-  if(!u) return;
+  if(!u) return false;
   const f = String(fecha || "").slice(0, 10);
-  if(f.length !== 10 || f < hoyISO()) return;
+  if(f.length !== 10 || f < hoyISO()) return false;
   const ok = await confirmar({
     titulo: "¿Quieres proponer el atuendo de " + (u.nombre || "tu pareja") + "?",
     texto: "Se abre Lencería para armar la propuesta y después regresas aquí.",
     ok: "Sí, proponer"
   });
-  if(ok) irAProponer(f, u);
+  if(ok){ irAProponer(f, u); return true; }
+  return false;
 }
 
 async function confirmarCita(id){

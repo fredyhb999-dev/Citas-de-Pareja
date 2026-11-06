@@ -1959,7 +1959,11 @@ async function borrarPlan(plan){
 
 // ====== 8) Pedidos ======
 async function mandarPropuesta(fechaTexto){
-  const mio = planDePersona(otroId, fechaTexto);
+  // Se propone a la PERSONA que se está viendo, no al "otro lado": con los dos
+  // en la misma anatomía, el lado no distingue a nadie.
+  const paraId = personaElegir || otroId;
+  const paraLado = ladoDePersona(paraId);
+  const mio = planDePersona(paraId, fechaTexto);
   if(mio && mio.fijo){
     aviso("Ese día está fijo. No se le puede proponer."); return;
   }
@@ -1970,22 +1974,22 @@ async function mandarPropuesta(fechaTexto){
   }
 
   try{
-    await setDoc(doc(db, "lenceriaPedidos", otroId), {
-      deId: miId, deLado: miLado, paraId: otroId, paraLado: otroLado,
+    await setDoc(doc(db, "lenceriaPedidos", paraId), {
+      deId: miId, deLado: miLado, paraId, paraLado,
       prendas: seleccion, fechaTexto, fechaUso: fechaAObjeto(fechaTexto),
       congelado: !!document.getElementById("eCongelar").checked,
       estado: "pendiente", creadoEn: serverTimestamp(), respondidoEn: null,
       prendasFinales: null, fechaFinalTexto: null, modificado: false
     });
 
-    await escribirAviso(otroId, miId, "pendiente",
+    await escribirAviso(paraId, miId, "pendiente",
       miNombre + " te propone un vestuario",
       "Para el " + fechaLarga(fechaTexto) + ". Ve a Lencería para ajustarlo y aceptarlo.");
 
     avisarTelegram("👗 " + miNombre + " te propuso un vestuario para el " + fechaLarga(fechaTexto) + ".",
       baseUrl() + "Lenceria/");
 
-    await aviso("Mandado. " + nombrePersona(otroId) + " lo va a ver.");
+    await aviso("Mandado. " + nombrePersona(paraId) + " lo va a ver.");
     await cargarPedidos();
     pintarPlanes();
     history.back();
@@ -2577,7 +2581,8 @@ function aplicarEntradaCita(){
     abrirElegir("plan", plan || null, fecha, true, personaId);
     return;
   }
-  if(modo === "proponer" && personaId === otroId){
+  // Se propone a la persona del enlace, aunque el "otro lado" no coincida.
+  if(modo === "proponer" && personaId && personaId !== miId){
     abrirElegir("propuesta", null, fecha, true, personaId);
     return;
   }

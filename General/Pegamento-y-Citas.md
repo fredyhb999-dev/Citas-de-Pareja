@@ -209,6 +209,12 @@ y **la persona que la recibe** (`persona`, su id). El enlace **no se guarda**: s
 calcula, así que si la cita cambia de día el botón apunta solo al día nuevo. Los
 planes se guardan e identifican **por persona**, no por lado (nov-2026).
 
+**Al guardar una cita** el formulario **reemplaza** su paso del historial en vez
+de hacer `history.back()`. Si se hiciera back, el `popstate` pendiente cerraba la
+ventana de **«¿Quieres proponer el atuendo?»** que sale justo después. Esa ventana
+lleva a Lencería con `persona` y `fecha`; la propuesta se manda a **esa persona**,
+no al «otro lado».
+
 **Si la cita se mueve de fecha**, al guardar el cambio la app revisa el día viejo
 y ofrece mover el vestuario: los planes de las dos personas y las propuestas
 pendientes, avisando qué se va a reemplazar. Si el día viejo ya pasó, no se mueve
