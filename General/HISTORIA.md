@@ -163,6 +163,10 @@ se muestra.
 Ojo: el mismo patrón está en `Guiadas/index.html:171`. Si algún día se quiere
 mostrar, hay que quitar el `hidden` o poner `tag.hidden = false`.
 
+> **nov-2026:** el nombre del turno ya **no** depende de ese tag. En Encuentros
+> se agregó un renglón propio (`#turnoDe`) para "Acciones en un Celular", así
+> que el `#nivelTag` se puede seguir dejando oculto sin perder el nombre.
+
 #### 3.2 Se podía salir de la partida sin querer — **ARREGLADO**
 
 Había **tres** salidas automáticas y solo dos eran las oficiales

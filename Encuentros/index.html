@@ -88,6 +88,13 @@
     border-radius:18px; padding:22px 20px; text-align:center; }
   /* player */
   #progreso{ color:var(--fg-muted); font-size:.85rem; margin-bottom:6px; }
+  /* De quién es el turno (nov-2026, lo reportó Fredy). En "Acciones en un
+     Celular" se juega todo en un solo teléfono, así que el nombre tiene que
+     verse: el tag del nivel está oculto a propósito y no sirve para esto. */
+  #turnoDe{ font-family:'Chakra Petch',sans-serif; font-size:.85rem; font-weight:600;
+    text-align:center; margin-bottom:10px; color:var(--fg-muted); }
+  #turnoDe.a{ color:var(--teal); }
+  #turnoDe.b{ color:var(--coral); }
   #nivelTag{ font-size:.75rem; color:var(--teal); border:1px solid var(--teal); border-radius:8px;
     padding:3px 10px; margin-bottom:16px; text-transform:uppercase; letter-spacing:.15em;
     font-family:'Chakra Petch',sans-serif; }
@@ -205,6 +212,7 @@
 <div class="vista" id="vistaPlayer">
   <h1 id="plTitulo">Encuentro</h1>
   <div id="progreso"></div>
+  <div id="turnoDe" style="display:none"></div>
   <div id="nivelTag" hidden></div>
   <div id="actividadAhora"></div>
   <div id="finMsg" style="display:none">¡Gracias por jugar!</div>
@@ -1811,6 +1819,26 @@ function pintarSala(){
   llenar("juegoLista", enJuego);
   llenar("esperaLista", enEspera);
 }
+// De quién es el turno en "Acciones en un Celular". Ahí se juega todo en el
+// teléfono del anfitrión, así que el nombre tiene que estar a la vista. En
+// "Cada quien en el suyo" no hace falta: el cuadro de la acción ya dice
+// "Turno de …" cuando no es tuyo, y cuando sí lo es estás en tu celular.
+// (La versión anterior escribía el nombre en `#nivelTag`, que nace `hidden` y
+// por eso nunca se veía; nov-2026, lo reportó Fredy.)
+function pintarTurnoDe(){
+  const el = document.getElementById("turnoDe");
+  if(!el) return;
+  if(jugandoCompartido || !jugando || ronda >= largo || !orden.length){
+    el.textContent = "";
+    el.style.display = "none";
+    return;
+  }
+  const actualId = orden[turno] || "";
+  const cabe = cabezas.find(c=>c.id === actualId) || {};
+  el.textContent = "Turno de " + nombreCabeza(actualId);
+  el.className = (cabe.lado === "A") ? "a" : (cabe.lado === "B" ? "b" : "");
+  el.style.display = "";
+}
 function pintarPaso(){
   const total = largo;
   const elAct = document.getElementById("actividadAhora");
@@ -1837,6 +1865,7 @@ function pintarPaso(){
     fin.style.display = "block";
     mostrarBotonesAdmin();
     try{ btnSaltar.style.display = "none"; }catch(e){}
+    try{ pintarTurnoDe(); }catch(e){}
     return;
   }
   fin.style.display = "none";
@@ -1876,6 +1905,7 @@ function pintarPaso(){
       btnSaltar.textContent = "Saltar turno de " + nombreCabeza(actualId);
     }catch(e){}
   }
+  try{ pintarTurnoDe(); }catch(e){}
 }
 try{ document.getElementById("btnSaltar").onclick = ()=>{ saltarTurno(); }; }catch(e){}
 document.getElementById("btnSig").onclick = async ()=>{
