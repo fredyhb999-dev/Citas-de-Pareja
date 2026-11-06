@@ -269,7 +269,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, updateDoc, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, migrarActividadesAId, leerDocActividad } from "../config.js";
+import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, migrarActividadesAId, leerDocActividad, nombrePorId } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
@@ -601,8 +601,8 @@ function escucharSesion(){
               (d.titulo || "Cita") + ": ibas en la " + ((d.paso || 0) + 1) + " de " + (d.lista || []).length + ".");
           }else{
             document.getElementById("unirDesc").textContent = d.reanudada
-              ? ((d.hostNombre || "Tu pareja") + " retomó la cita. Puedes continuar donde van.")
-              : ((d.hostNombre || "Tu pareja") + " inició una cita de Citas Guiadas.");
+              ? ((nombrePorId(d.hostUid, d.hostNombre) || "Tu pareja") + " retomó la cita. Puedes continuar donde van.")
+              : ((nombrePorId(d.hostUid, d.hostNombre) || "Tu pareja") + " inició una cita de Citas Guiadas.");
             mostrarModalBase("modalUnir", true);
           }
         }else if(jugandoCompartido){
@@ -1438,7 +1438,8 @@ function cargarTomasDoc(id, data, nombreRespaldo){
 // celular, de antes de que se pasaran a la base, se suben y se borran del celular.
 // Despues de eso ya no hay copia local, asi que no puede volver a correr.
 //
-// `nombreRespaldo` (agregado al pasar a buscar por id, ver Modelo-Datos.md): la
+// `nombreRespaldo` (agregado al pasar a buscar por id, ver GUIA.md, *La llave es
+// el id, no el nombre*): la
 // llave de este celular se escribio hace tiempo con el NOMBRE de la actividad,
 // de cuando nivelesActividad tambien se guardaba por nombre. Si no se encuentra
 // nada bajo el id (lo normal hoy), se intenta bajo el nombre antes de rendirse,

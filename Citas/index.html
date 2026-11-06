@@ -272,7 +272,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, baseUrl, cargarUsuarios, asegurarFabrica, unirConFabrica, leerDocActividad } from "../config.js";
+import { resolverFirebase, baseUrl, cargarUsuarios, asegurarFabrica, unirConFabrica, leerDocActividad, nombrePorId, fijarUsuarios } from "../config.js";
 import { confirmar, aviso } from "../confirmar.js";
 import { soyInvitado } from "../invitado.js";
 import { avisarTelegram } from "../telegram.js";
@@ -289,6 +289,11 @@ const actsExtraRef = collection(db, "actividadesExtra");
 // ====== ESTADO LOCAL ======
 const CLAVE_LOCAL = "appPareja_quienSoy";
 let usuarios = [];
+// Firma id:nombre de la lista de usuarios, para no repintar de mas cuando
+// `config/ajustes` cambia por puntos u otra cosa que no sea un nombre.
+let firmaUsuarios = "";
+// Ultimo snapshot de citas: al cambiar un nombre se vuelve a pintar con esto.
+let ultimasCitas = [];
 let actividades = [];
 // Nombre -> id de actividadesExtra, y al reves. Cada cita guarda el id
 // (actividadId) junto con el nombre; para MOSTRAR la actividad se usa el nombre
@@ -299,6 +304,13 @@ let nombresPorId = {};
 // (cita vieja sin id, o actividad ya eliminada), el que quedo guardado.
 function nombreDeCita(c){
   return (c.actividadId && nombresPorId[c.actividadId]) || c.actividad || "";
+}
+// Firma de la lista de usuarios. Solo cambia si cambia un id o un nombre; así
+// editar puntos no obliga a repintar las citas.
+function firmaDeUsuarios(lista){
+  return (Array.isArray(lista) ? lista : [])
+    .map(u=> ((u && u.id) || "") + ":" + ((u && u.nombre) || ""))
+    .join("|");
 }
 // Para guardar: el campo solo se escribe si se encontro el id. Al modificar una
 // cita se borra si ya no hay, para que no quede un id de otra actividad.
@@ -429,6 +441,7 @@ async function cargarCatalogos(){
     fetch("accesorios.json")
   ]);
   usuarios = await cargarUsuarios(db, getDoc, doc, await rUsuarios.json());
+  firmaUsuarios = firmaDeUsuarios(usuarios);
   let fabricaActs = await rActividades.json();
   if(!Array.isArray(fabricaActs)) fabricaActs = [];
   let fabricaAccs = await rAccesorios.json();
@@ -1038,7 +1051,7 @@ function renderCitas(docsSnap){
 
     const quienEl = document.createElement("div");
     quienEl.className = "quien";
-    quienEl.textContent = "Propuesta por " + c.proponenteNombre + " para " + c.paraNombre;
+    quienEl.textContent = "Propuesta por " + nombrePorId(c.proponenteId, c.proponenteNombre) + " para " + nombrePorId(c.paraId, c.paraNombre);
     card.appendChild(quienEl);
 
     // Botón de vestuario: muestra lo que hay ese día en Lencería (plan o
@@ -1116,13 +1129,13 @@ function renderCitas(docsSnap){
       }else if(soyProponente){
         const espera = document.createElement("div");
         espera.className = "espera";
-        espera.textContent = "Esperando respuesta de " + c.paraNombre + "...";
+        espera.textContent = "Esperando respuesta de " + nombrePorId(c.paraId, c.paraNombre) + "...";
         card.appendChild(espera);
       }
-    }else if(c.ultimaAccionPorNombre){
+    }else if(c.ultimaAccionPorId || c.ultimaAccionPorNombre){
       const nota = document.createElement("div");
       nota.className = "espera";
-      nota.textContent = (c.estado === "confirmada" ? "Confirmada" : "Rechazada") + " por " + c.ultimaAccionPorNombre;
+      nota.textContent = (c.estado === "confirmada" ? "Confirmada" : "Rechazada") + " por " + nombrePorId(c.ultimaAccionPorId, c.ultimaAccionPorNombre);
       card.appendChild(nota);
     }
 
@@ -1165,6 +1178,7 @@ function esRelevanteCita(c){
 function escucharCitas(){
   const q = query(citasRef, orderBy("creadoEn", "desc"));
   onSnapshot(q, (snapshot)=>{
+    ultimasCitas = snapshot.docs;
     if(!vistosCitas){
       vistosCitas = {};
       snapshot.docs.forEach(d=>{ vistosCitas[d.id] = firmaCita(d.data()); });
@@ -1180,13 +1194,14 @@ function escucharCitas(){
       const antes = vistosCitas[id];
       if(antes === undefined){
         if(esRelevanteCita(c) && c.proponenteId !== yo){
-          notificar("📅 Nueva cita de " + c.proponenteNombre + " para " + c.paraNombre + ": " + nombreDeCita(c), "cita-" + id);
+          notificar("📅 Nueva cita de " + nombrePorId(c.proponenteId, c.proponenteNombre) + " para " + nombrePorId(c.paraId, c.paraNombre) + ": " + nombreDeCita(c), "cita-" + id);
         }
       }else if(antes !== ahora[id]){
         if(esRelevanteCita(c) && c.ultimaAccionPorId !== yo){
-          if(c.estado === "confirmada") notificar("✅ " + (c.ultimaAccionPorNombre || "Alguien") + " confirmó: " + nombreDeCita(c), "cita-" + id);
-          else if(c.estado === "rechazada") notificar("❌ " + (c.ultimaAccionPorNombre || "Alguien") + " rechazó: " + nombreDeCita(c), "cita-" + id);
-          else notificar("✏️ Cita modificada por " + (c.ultimaAccionPorNombre || "alguien") + ": " + nombreDeCita(c), "cita-" + id);
+          const quien = nombrePorId(c.ultimaAccionPorId, c.ultimaAccionPorNombre);
+          if(c.estado === "confirmada") notificar("✅ " + (quien || "Alguien") + " confirmó: " + nombreDeCita(c), "cita-" + id);
+          else if(c.estado === "rechazada") notificar("❌ " + (quien || "Alguien") + " rechazó: " + nombreDeCita(c), "cita-" + id);
+          else notificar("✏️ Cita modificada por " + (quien || "alguien") + ": " + nombreDeCita(c), "cita-" + id);
         }
       }
     });
@@ -1201,6 +1216,24 @@ function escucharCitas(){
   }, (error)=>{
     console.error("Error escuchando citas:", error);
   });
+}
+
+// Si alguien se renombra mientras esta pantalla esta abierta, se refresca el
+// nombre que se muestra. Solo se actualiza la lista de usuarios: las citas
+// guardadas no se tocan.
+function escucharUsuarios(){
+  onSnapshot(doc(db, "config", "ajustes"), (snap)=>{
+    try{
+      const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+      if(!arr.length) return;
+      usuarios = arr;
+      fijarUsuarios(arr);
+      const firma = firmaDeUsuarios(arr);
+      if(firma === firmaUsuarios) return;
+      firmaUsuarios = firma;
+      if(miIdentidad && ultimasCitas.length) renderCitas(ultimasCitas);
+    }catch(e){}
+  }, ()=>{});
 }
 
 // ====== INICIO ======
@@ -1224,6 +1257,7 @@ function escucharCitas(){
   }
 
   escucharCitas();
+  escucharUsuarios();
 
   // El «‹ Volver» deshace el paso, igual que el atrás del celular, en vez de
   // abrir otra copia del menú (si no, el atrás volvía a entrar a Citas). Si la

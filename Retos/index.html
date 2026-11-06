@@ -367,7 +367,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, baseUrl, cargarUsuarios, finDeUltimoDia } from "../config.js";
+import { resolverFirebase, baseUrl, cargarUsuarios, finDeUltimoDia, nombrePorId, fijarUsuarios } from "../config.js";
 import { confirmar, aviso } from "../confirmar.js";
 import { avisarTelegram } from "../telegram.js";
 import { vigilarRetos } from "../pestana.js";
@@ -383,6 +383,9 @@ const puntosUsuariosRef = collection(db, "puntosUsuarios");
 // ====== ESTADO LOCAL ======
 const CLAVE_LOCAL = "appPareja_quienSoy";
 let usuarios = [];
+// Firma id:nombre de la lista de usuarios, para no repintar de mas cuando
+// `config/ajustes` cambia por puntos u otra cosa que no sea un nombre.
+let firmaUsuarios = "";
 let miIdentidad = null;
 let balances = {};
 let retos = [];
@@ -692,8 +695,21 @@ fAsignado.onchange = actualizarVisibilidadRecompensa;
 fVeces.oninput = calcularMeta;
 fDias.oninput = calcularMeta;
 
+// Nombre actual de una persona guardada como {id,nombre}. Si su id ya no existe
+// (invitado borrado o reto viejo sin id), se usa el nombre guardado.
+function nombrePersona(u){
+  return nombrePorId(u && u.id, u && u.nombre) || "—";
+}
+// Firma de la lista de usuarios: solo cambia si cambia un id o un nombre; así
+// editar puntos no obliga a repintar los retos.
+function firmaDeUsuarios(lista){
+  return (Array.isArray(lista) ? lista : [])
+    .map(u=> ((u && u.id) || "") + ":" + ((u && u.nombre) || ""))
+    .join("|");
+}
+
 function resumenHtml(reto){
-  const nom = u=> (u && u.nombre) || "—";
+  const nom = u=> nombrePersona(u);
   return (
     '<div class="r-act">' + esc(reto.actividad) + '</div>' +
     '<div><span class="k">Propuesto por</span><span class="v">' + esc(nom(reto.asignadoPor)) + '</span></div>' +
@@ -1116,7 +1132,7 @@ async function eliminarReto(reto, id){
 
 async function marcarCumplida(reto, id){
   const confirmado = await confirmar({
-    titulo: "¿Le das un punto a " + reto.asignadoA.nombre + "?",
+    titulo: "¿Le das un punto a " + nombrePersona(reto.asignadoA) + "?",
     ok: "Dar el punto"
   });
   if(!confirmado) return;
@@ -1164,7 +1180,7 @@ async function marcarCumplida(reto, id){
     });
     const nuevoConteo = (reto.conteo || 0) + 1;
     const metaAlcanzada = nuevoConteo >= (reto.puntosMeta || 0);
-    let msg = "⭐ " + miIdentidad.nombre + " dio +1 punto a " + reto.asignadoA.nombre + " en " + reto.actividad + " (" + nuevoConteo + "/" + (reto.puntosMeta || 0) + ")";
+    let msg = "⭐ " + miIdentidad.nombre + " dio +1 punto a " + nombrePersona(reto.asignadoA) + " en " + reto.actividad + " (" + nuevoConteo + "/" + (reto.puntosMeta || 0) + ")";
     if(metaAlcanzada) msg += "\n🎉 ¡Meta cumplida! Ya puede cobrar" + (reto.recompensa ? ": " + reto.recompensa : ".");
     avisarTelegram(msg, APP_URL + "Retos/?reto=" + id);
   }catch(e){
@@ -1181,7 +1197,7 @@ async function cobrarRecompensaVisual(reto, id){
   try{
     suprimir(id);
     await updateDoc(doc(db, "retos", id), { recompensaCobrada: true });
-    avisarTelegram("💰 " + reto.asignadoA.nombre + " cobró su recompensa: " + (reto.recompensa || "") + " (" + reto.actividad + ")", APP_URL + "Retos/?reto=" + id);
+    avisarTelegram("💰 " + nombrePersona(reto.asignadoA) + " cobró su recompensa: " + (reto.recompensa || "") + " (" + reto.actividad + ")", APP_URL + "Retos/?reto=" + id);
   }catch(e){
     console.error(e);
     aviso("Error al cobrar la recompensa. Revisa tu conexión.");
@@ -1198,7 +1214,7 @@ async function aplicarCastigoVisual(reto, id){
   try{
     suprimir(id);
     await updateDoc(doc(db, "retos", id), { castigoAplicado: true });
-    avisarTelegram("⚠️ Castigo para " + reto.asignadoA.nombre + ": " + (reto.castigo || "") + " (" + reto.actividad + ")", APP_URL + "Retos/?reto=" + id);
+    avisarTelegram("⚠️ Castigo para " + nombrePersona(reto.asignadoA) + ": " + (reto.castigo || "") + " (" + reto.actividad + ")", APP_URL + "Retos/?reto=" + id);
   }catch(e){
     console.error(e);
     aviso("Error al aplicar el castigo. Revisa tu conexión.");
@@ -1345,9 +1361,9 @@ function renderRetos(){
     // Quien lo mando: en un reto de la IA no fue la pareja, fue la IA. Se muestra
     // el nombre que la pareja le puso en el chat (ya viene guardado en el reto).
     if(c.ia){
-      html += '<div class="quien">' + esc((c.iaNombre || "IA") + " IA") + ' le mandó el reto para ' + esc(c.asignadoA.nombre) + '</div>';
+      html += '<div class="quien">' + esc((c.iaNombre || "IA") + " IA") + ' le mandó el reto para ' + esc(nombrePersona(c.asignadoA)) + '</div>';
     }else{
-      html += '<div class="quien">' + esc(c.asignadoPor.nombre) + ' propuso para ' + esc(c.asignadoA.nombre) + '</div>';
+      html += '<div class="quien">' + esc(nombrePersona(c.asignadoPor)) + ' propuso para ' + esc(nombrePersona(c.asignadoA)) + '</div>';
     }
 
     if(estado === "enCurso" || estado === "cumplido" || estado === "cobrada" || estado === "noCumplido" || estado === "propuesta"){
@@ -1358,7 +1374,7 @@ function renderRetos(){
         html += '<div class="metaNum">' + conteo + ' / ' + meta + '</div></div>';
       }
       if(c.ia){
-        html += '<div class="meta"><div class="metaNum">Vale ' + esc(meta) + ' pts para ' + esc(c.asignadoA.nombre) + '</div></div>';
+        html += '<div class="meta"><div class="metaNum">Vale ' + esc(meta) + ' pts para ' + esc(nombrePersona(c.asignadoA)) + '</div></div>';
       }
 
       html += '<div class="lienzo">';
@@ -1397,7 +1413,7 @@ function renderRetos(){
     if(estado === "noCumplido"){
       if(c.ia){
         const mitad = Math.floor(meta / 2);
-        html += '<div class="nota mal">No se cumplió · ' + esc(c.asignadoA.nombre) + ' perdió ' + mitad + ' pts y tú te quedaste con ' + (meta - mitad) + ' pts · Castigo: ' + esc(c.castigo || "—") + '</div>';
+        html += '<div class="nota mal">No se cumplió · ' + esc(nombrePersona(c.asignadoA)) + ' perdió ' + mitad + ' pts y tú te quedaste con ' + (meta - mitad) + ' pts · Castigo: ' + esc(c.castigo || "—") + '</div>';
       }else{
         html += '<div class="nota mal">No se cumplió la meta · Se descontaron ' + esc(c.penalizacionPuntos) + ' puntos · Castigo: ' + esc(c.castigo || "—") + '</div>';
       }
@@ -1550,12 +1566,12 @@ function escucharRetos(){
         if(esRelevanteReto(c) && !(c.asignadoPor && c.asignadoPor.id === yo)){
           notificar(c.ia
             ? "😏 " + miIdentidad.nombre + " te mandó un reto: " + c.actividad
-            : "🏆 Nuevo reto para " + (c.asignadoA && c.asignadoA.nombre) + ": " + c.actividad, "reto-" + id);
+            : "🏆 Nuevo reto para " + nombrePersona(c.asignadoA) + ": " + c.actividad, "reto-" + id);
         }
       }else if(antes.f !== ahora[id].f){
         if(!esRelevanteReto(c)) return;
         const a = ahora[id];
-        const asig = c.asignadoA && c.asignadoA.nombre;
+        const asig = nombrePersona(c.asignadoA);
         if(a.e !== antes.e && a.e === "cobrada") notificar("🎉 ¡Meta cumplida en " + c.actividad + "! " + asig + " ya puede cobrar.", "reto-" + id);
         else if(a.e !== antes.e && a.e === "noCumplido") notificar("⚠️ No se cumplió " + c.actividad + ". Castigo: " + (c.castigo || ""), "reto-" + id);
         else if(a.e !== antes.e && a.e === "rechazada") notificar("❌ Reto rechazado: " + c.actividad, "reto-" + id);
@@ -1581,6 +1597,24 @@ function escucharRetos(){
   });
 }
 
+// Si alguien se renombra mientras esta pantalla esta abierta, se refresca el
+// nombre que se muestra. Solo se actualiza la lista de usuarios: los retos
+// guardados no se tocan.
+function escucharUsuarios(){
+  onSnapshot(doc(db, "config", "ajustes"), (snap)=>{
+    try{
+      const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+      if(!arr.length) return;
+      usuarios = arr;
+      fijarUsuarios(arr);
+      const firma = firmaDeUsuarios(arr);
+      if(firma === firmaUsuarios) return;
+      firmaUsuarios = firma;
+      if(miIdentidad){ renderRetos(); renderBalances(); }
+    }catch(e){}
+  }, ()=>{});
+}
+
 function escucharBalances(){
   onSnapshot(puntosUsuariosRef, (snapshot)=>{
     balances = {};
@@ -1597,6 +1631,7 @@ function escucharBalances(){
 (async function iniciar(){
   const r = await fetch("../Citas/usuarios.json");
   usuarios = await cargarUsuarios(db, getDoc, doc, await r.json());
+  firmaUsuarios = firmaDeUsuarios(usuarios);
 
   const guardado = cargarIdentidadGuardada();
   if(guardado && usuarios.some(u=>u.id === guardado.id)){
@@ -1609,6 +1644,7 @@ function escucharBalances(){
 
   escucharBalances();
   escucharRetos();
+  escucharUsuarios();
 
   // El «‹ Volver» deshace el paso, igual que el atrás del celular, en vez de
   // abrir otra copia del menú (si no, el atrás volvía a entrar a Retos). Si la

@@ -1166,3 +1166,161 @@ leyendo el error real en la consola del navegador, y desde entonces
 **Límite que se aceptó a conciencia:** el contador mide **planes**, no usos
 confirmados. Si se planeó y la fecha pasó, cuenta. La app da la pauta; no pone
 policía.
+
+---
+
+## Duelo de seducción: el plan se borró al quedar probado (oct-2026)
+
+Se construyó el **cuarto modo de `Roles/`** el 17-oct-2026 y Fredy lo probó en
+vivo: la **matriz de las ocho combinaciones** (Pareja/Multi × Turnos/Juntos × un
+celular/cada quien) y los casos límite. El plan de desarrollo
+(`General/Plan-Duelo.md`) **ya se borró**: cumplió su propósito y había empezado a
+ser un segundo relato de lo mismo. **Lo que rige hoy está en `General/Roles.md`**,
+en la sección *Duelo de seducción: detalle*.
+
+**Qué se apartó del plan** (manda el código, no el plan):
+
+- `selModo` **no** se renombró a `selModoJuego`: se dejó para no tocar la
+  selección normal. El documento de la selección sí guarda `modo:"duelo"`.
+- Los nombres de lado caen a **"Lado A" / "Lado B"** (`nombreLado()`), no a
+  "Usuario 1" / "Usuario 2" como decía el plan. Lo importante —no mostrar
+  "U1"/"U2"— sí se cumple.
+- `arrancarSeleccion` (rama duelo) **no repite** el chequeo de que las parejas
+  sean R: el `for` de arriba ya avisa en cuanto un personaje no tiene
+  contraparte, así que ese segundo chequeo no podía fallar nunca.
+- `selFuente()`, `selMarcosDe()` y `selPoolDe()` **no se usan** en la rama de
+  duelo.
+- `prepararDuelo()` **devuelve en silencio** si le llegan un lado o una modalidad
+  que no existen: es un caso que solo puede dar el código, no la pantalla.
+- **Adición que el plan no pedía:** al apagarse el documento de selección se
+  limpian las banderas del duelo. Sin eso, un teléfono que vio una selección de
+  duelo y luego entraba a un "agregar" se pintaba con la lista del duelo.
+
+**Decisiones que cambiaron sobre la marcha:**
+
+- Se llegó a implementar **"el Duelo solo lo arma el usuario `admin` de la app"**,
+  y el mismo día se revirtió: manda **"quien inicia manda"**, como en los otros
+  modos. `esAdminFlag` se quedó solo para el engrane y el contenido.
+- **"Pausar y Salir" en un solo celular no guardaba nada.** Ahora se guarda en el
+  propio teléfono (`localStorage`, clave `roles_partida_local`) y al volver
+  ofrece **Continuar / Partida nueva**. Es local: no manda invitación ni se
+  expone.
+- Se agregó **"Tentación sin distinciones"**, un segundo atajo junto a
+  "Sorpréndeme", y "Sorpréndeme" se extendió al modo **Seleccionar**.
+- **Candado de ronda** en `siguienteDueloJuntos()` (`rondaEsperada`): el candado
+  anterior evitaba dos transacciones a la vez, pero no dos toques seguidos, y eso
+  podía **saltarse una pareja**.
+
+**El bug que se corrigió al probar:** quien aceptaba la invitación **después** de
+que la partida ya había arrancado caía en la **selección muerta** y quedaba
+atrapado marcando cartas de una partida que ya existía. Ahora entra directo al
+juego.
+
+**Dos ajustes de comodidad que salieron de jugarlo:** la carta bajó de alto
+(`max-height:min(56dvh,520px)`, foto en banner 16/9) para que "Siguiente" quedara
+cerca, y la pantalla de selección ganó **buscador** (sin mayúsculas ni acentos),
+que sirve igual a la selección normal y a la del Duelo.
+
+**Nota de método:** mientras el Duelo no se había ejecutado en un celular, se
+escribió **"construido, pendiente de prueba en vivo"** y no "ya existe". En este
+repo **"probado" significa que se ejecutó**, no que se leyó. La prueba en vivo es
+la que convirtió ese texto en "probado".
+
+---
+
+## Castigos ("El Precio del Placer"): el plan también se borró (nov-2026)
+
+Se construyó en **siete etapas** con un plan de desarrollo y un prompt por etapa,
+y quedó **implementado y probado en vivo** (oct-2026). En nov-2026 se borraron
+`General/Plan-Castigos.md` y los prompts `01` a `07` de `General/Plan-Castigos/`:
+las etapas se ejecutaron y el código existe, así que repetirlas solo servía para
+reescribir lo que ya está. **Lo que rige hoy está en `General/Castigos.md`.**
+
+Lo que valía la pena del plan ya se pasó a `Castigos.md`:
+
+- **La forma de una acción** (`{ texto, accesorio, medida }`) y que al pegar JSON
+  también se acepte como texto suelto.
+- **"Sorpréndeme"**, que es solo de Multi: elige 3 castigos al azar sin repetir y
+  deja **Reelegir**.
+
+**Lo que sí costó y quedó como regla:** los castigos se creaban **con el nombre
+como id**, y renombrar movía el documento y **borraba las acciones guardadas**.
+Se corrigió en oct-2026 igual que en `Citas/actividades.html`: el id lo pone
+Firestore (`addDoc`) y el nombre es solo una etiqueta. Los castigos viejos los
+convierte `migrarCastigosAId()` (`config.js`) al abrir el juego, y las partidas
+pausadas traducen el id viejo con el mapa de `config/migracionCastigos`.
+
+**Nota:** el plan se guardó demasiado tiempo. La lección es la misma del Duelo:
+cuando algo ya se construyó y se probó, el plan deja de ser instrucción y empieza
+a competir con la documentación que sí rige.
+
+---
+
+## La normalización de la base: qué se hizo y qué quedó (oct–nov 2026)
+
+En oct-2026 se hizo un análisis de la base **leyendo el código** (no se pudo
+entrar a la consola de Firebase). Salió `General/Modelo-Datos.md`, de 552 líneas:
+siete problemas de modelo y cuatro fallas concretas con número de línea.
+
+**Lo que se aplicó después** (y el documento tardó en enterarse):
+
+- **Actividades por id (nov-2026).** `nivelesActividad` y `presetsActividad`
+  dejaron de usar el nombre como llave y usan el id de `actividadesExtra`; cada
+  cita guarda `actividadId`. Renombrar pasó de mover cinco cosas a cambiar un
+  campo. Lo migra `migrarActividadesAId()` con la bandera
+  `config/migracionActividades` (versión 2).
+- **Castigos por id (oct-2026).** Mismo arreglo, y ahí sí había pérdida real:
+  renombrar un castigo **borraba sus acciones**.
+- **Historial de puntos (nov-2026).** `puntos/{uid}/movimientos`. El saldo quedó
+  como caché. Antes no había forma de saber de dónde venía un descuento.
+- **B1** (el invitado no volvía solo), **B2** (borrar un reto cobrado descontaba
+  de más), **B3** («Cumplida +1» podía dar doble premio) y **B4** (dos invitados
+  con el mismo id) quedaron corregidas.
+
+**Por qué se descartó "relacional puro":** en Firestore no hay `JOIN`, y la app
+**tiene que funcionar sin internet**. Sin red no se puede resolver una referencia,
+así que habría que reimplementar la base en `localStorage`. Se eligió normalizar
+la identidad y desnormalizar solo el estado de una partida, que es lo que se
+necesita leer al instante.
+
+**Lo que quedó** vive ahora en `Modelo-Datos.md`, ya recortado: las sesiones con
+tres esquemas (P4/P5), los tipos mezclados (P6) y la identidad con el login
+(Fase 5). P2 —los nombres copiados— se cerró después; se cuenta abajo.
+
+**La lección:** el documento seguía contando como pendiente lo que ya estaba
+hecho. Marcaba B3 como «sigue sin tocarse» cuando el código ya usaba
+`runTransaction`. Es lo mismo que pasó con los planes: **lo ejecutado se saca del
+documento vivo y se cuenta aquí**.
+
+---
+
+## Los nombres se resuelven por id (nov-2026)
+
+**El problema.** Cada cita, reto y partida guardaba el **nombre** de la persona
+copiado dentro del documento. Desde oct-2026 los dos perfiles base se pueden
+renombrar, y al guardar solo se actualizaba `config/ajustes`: lo viejo se quedaba
+con la foto del nombre de ese día. No rompía nada, pero una cita de «Ana» seguía
+diciendo «Ana» después de pasar a llamarse «María».
+
+**Lo que se decidió.** Mostrar **el nombre actual**. La alternativa era dejarlo
+como foto histórica (como una carta impresa), y se descartó para citas, retos y
+partidas. El chat y la presencia **sí** se quedan con el nombre del momento, a
+propósito.
+
+**Cómo quedó.** `nombrePorId(id, respaldo)` en `config.js`, con el mismo patrón
+de `leerDocActividad()`: busca el nombre de hoy en `config/ajustes` y, si el id
+ya no existe (dato viejo o invitado borrado), cae al nombre guardado.
+`cargarUsuarios()` llena el mapa; las pantallas que escuchan `config/ajustes` lo
+rehacen con `fijarUsuarios()`. **No se migró ni se reescribió ningún dato**: el
+campo `nombre` se sigue guardando como respaldo y no se borra.
+
+**Dos cosas que se aprendieron al revisar:**
+
+- Los cuatro `onSnapshot` de `config/ajustes` comparaban **solo la lista de
+  ids**. Un renombrado no cambia ids, así que el manejador salía sin repintar.
+  Ahora la firma incluye `id:nombre`.
+- Había campos de nombre que se escribían y **nadie leía**: `deNombre` en
+  `favor.js`, `Chat` y `Lenceria`, y `anfitrionNombre` en `Roles`. No se tocaron;
+  son candidatos a limpieza cuando se pase por ahí. El aviso de la sala de
+  espera de Diablitos se dejó con el nombre guardado: es un aviso pasajero, de
+  las excepciones que permite `GUIA.md`.

@@ -587,7 +587,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, leerConfigGuardada, migrarCastigosAId } from "../config.js";
+import { resolverFirebase, cargarUsuarios, leerConfigGuardada, migrarCastigosAId, nombrePorId, fijarUsuarios } from "../config.js";
 import { confirmar, aviso } from "../confirmar.js";
 import { encenderFuegos, apagarFuegos } from "../fuegos.js";
 // Invitados: este juego solo publica y retira su invitación. No sabe nada de la sala.
@@ -699,11 +699,17 @@ function escucharGrupo(){
       try{
         const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
         if(!Array.isArray(arr) || !arr.length) return;
-        const antes = usuariosLista.map(u=>u && u.id).join(",");
+        const firma = lista => (Array.isArray(lista) ? lista : [])
+          .map(u=> ((u && u.id) || "") + ":" + ((u && u.nombre) || "")).join("|");
+        const antes = firma(usuariosLista);
         usuariosLista = arr;
-        if(antes === arr.map(u=>u && u.id).join(",")) return;
+        fijarUsuarios(arr);
+        if(antes === firma(arr)) return;
         if(vistaActual()==="vistaInicio") actualizarInicio();
         try{ pintarSala(); }catch(e){}
+        if(jugandoCompartido && sesionActual){
+          try{ cargarSesionEnMemoria(sesionActual); pintarTurno(); }catch(e){}
+        }
       }catch(e){}
     }, ()=>{});
   }catch(e){}
@@ -1943,7 +1949,11 @@ function restaurarPartidaLocal(p){
   imposicionesPor3 = Number(p.imposicionesPor3)||0;
   imposicionesActivas = !!p.imposicionesActivas && imposicionesPor3 > 0;
   ladoInicial = p.ladoInicial || "A";
-  cabezas = Array.isArray(p.cabezas) ? p.cabezas : [];
+  // El nombre se resuelve por id al mostrar (si la persona se renombro, se ve
+  // el nuevo). Se copia cada cabeza para no escribir ese nombre en la sesion.
+  cabezas = (Array.isArray(p.cabezas) ? p.cabezas : []).map(c=>
+    c ? Object.assign({}, c, { nombre: nombrePorId(c.id, c.nombre) }) : c
+  );
   orden = Array.isArray(p.orden) ? p.orden : [];
   turnos = Array.isArray(p.turnos) ? p.turnos : [];
   turnoIdx = Number(p.turnoIdx)||0;
@@ -3115,8 +3125,8 @@ function escucharSesionCompartida(){
         if(d.hostUid !== miId && !jugandoCompartido && soyCabeza(d)){
           // invitado o pareja recibe invitación para unirse
           document.getElementById("unirDesc").textContent = d.reanudada
-            ? ((d.hostNombre || "El anfitrión") + " retomó la partida. Puedes continuar donde van.")
-            : ((d.hostNombre || "El anfitrión") + " inició una partida de El Precio del Placer.");
+            ? ((nombrePorId(d.hostUid, d.hostNombre) || "El anfitrión") + " retomó la partida. Puedes continuar donde van.")
+            : ((nombrePorId(d.hostUid, d.hostNombre) || "El anfitrión") + " inició una partida de El Precio del Placer.");
           if(entrarDirecto){
             entrarDirecto = false;
             entrarAlJuegoCompartida(d);
@@ -3130,7 +3140,9 @@ function escucharSesionCompartida(){
 }
 
 function cargarSesionEnMemoria(d){
-  cabezas = Array.isArray(d.cabezas) ? d.cabezas : [];
+  cabezas = (Array.isArray(d.cabezas) ? d.cabezas : []).map(c=>
+    c ? Object.assign({}, c, { nombre: nombrePorId(c.id, c.nombre) }) : c
+  );
   orden = Array.isArray(d.orden) ? d.orden.slice() : [];
   turnos = Array.isArray(d.turnos) ? d.turnos.slice() : [];
   const nuevoTurno = Math.min(d.turno || 0, turnos.length);
@@ -3188,11 +3200,11 @@ async function chequearPartidaEspera(){
     if(d.hostUid === miId) return;
     if(soyCabeza(d)){
       document.getElementById("unirDesc").textContent = d.reanudada
-        ? ((d.hostNombre || "El anfitrión") + " retomó la partida. Puedes continuar donde van.")
-        : ((d.hostNombre || "El anfitrión") + " inició una partida de El Precio del Placer.");
+        ? ((nombrePorId(d.hostUid, d.hostNombre) || "El anfitrión") + " retomó la partida. Puedes continuar donde van.")
+        : ((nombrePorId(d.hostUid, d.hostNombre) || "El anfitrión") + " inició una partida de El Precio del Placer.");
       mostrarModalBase("modalUnir", true);
     }else{
-      pon("Hay partida de " + (d.hostNombre || "el anfitrión") + ", pero no estás en la lista.");
+      pon("Hay partida de " + (nombrePorId(d.hostUid, d.hostNombre) || "el anfitrión") + ", pero no estás en la lista.");
     }
   }catch(e){}
 }

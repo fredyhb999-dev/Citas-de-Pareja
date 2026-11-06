@@ -97,6 +97,29 @@ export function leerUsuariosLocal(){
   return Array.isArray(u) && u.length ? u : null;
 }
 
+// ====== NOMBRES POR ID ======
+// El nombre de una persona se guarda copiado en citas, retos y partidas para
+// que el registro se entienda sin conexion. Esa copia es la foto del dia en que
+// se creo: si la persona se renombra, se queda vieja.
+// `nombrePorId()` devuelve el nombre de HOY (de config/ajustes) y, si el id no
+// esta (dato viejo o invitado borrado), cae al nombre guardado.
+// Es el mismo patron de `leerDocActividad()`: el id manda, el nombre respalda.
+const NOMBRES_POR_ID = new Map();
+
+/** Rehace el mapa id -> nombre. Se llama al cargar usuarios y al escuchar ajustes. */
+export function fijarUsuarios(lista){
+  NOMBRES_POR_ID.clear();
+  (Array.isArray(lista) ? lista : []).forEach(u=>{
+    if(u && u.id && u.nombre) NOMBRES_POR_ID.set(String(u.id), u.nombre);
+  });
+}
+
+/** Nombre actual de una persona; si su id ya no existe, el nombre guardado. */
+export function nombrePorId(id, respaldo){
+  const n = id ? NOMBRES_POR_ID.get(String(id)) : "";
+  return n || respaldo || "";
+}
+
 /** Lee usuarios en orden: Firestore ajustes > local > JSON dado. Nunca revienta. */
 export async function cargarUsuarios(db, getDocFn, docFn, respaldoJSON){
   // 1) Firestore (con tope para no colgar sin config)
@@ -105,13 +128,15 @@ export async function cargarUsuarios(db, getDocFn, docFn, respaldoJSON){
     const arr = snap.exists() ? snap.data().usuarios : null;
     if(Array.isArray(arr) && arr.length){
       guardarUsuariosLocal(arr);
+      fijarUsuarios(arr);
       return arr;
     }
   }catch(e){}
   // 2) copia local del asistente
   const loc = leerUsuariosLocal();
-  if(loc) return loc;
+  if(loc){ fijarUsuarios(loc); return loc; }
   // 3) JSON del repo
+  fijarUsuarios(respaldoJSON);
   return respaldoJSON;
 }
 

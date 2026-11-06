@@ -70,6 +70,17 @@ las acciones o guardar las tomas. Los oficiales (`ofc_...`) no se tocan.
 
 Niveles: `basico`, `medio`, `avanzado`, `experto`, `alucinado`. Lados: `A` y `B`. Tomas por defecto: `{basico:2, medio:2, avanzado:1, experto:1, alucinado:1}`. Texto de acción: máx. 75 caracteres; el campo del editor crece solo y el texto baja de renglón. Medida: `libre` / `tiempo` / `veces` + valor.
 
+Cada acción es un **objeto**, no un texto suelto:
+
+```js
+{ texto, accesorio, medida: { tipo, valor } }
+```
+
+`accesorio` es el nombre de un accesorio de `accesoriosCastigo`, o `null`.
+`medida.tipo` es `libre` / `tiempo` / `veces` y `valor` son los minutos o las
+veces (`0` si es libre). Al pegar JSON también se acepta una acción escrita como
+texto suelto: se convierte a esa forma con `accesorio:null` y medida libre.
+
 ## Licencias
 
 - Item `castigos` (ver `acceso.js`, `tengoAcceso("castigos")`).
@@ -93,6 +104,10 @@ Niveles: `basico`, `medio`, `avanzado`, `experto`, `alucinado`. Lados: `A` y `B`
 |---|---|
 | Normal | Tomas por nivel/lado, reparto de acciones entre jugadores |
 | Multi | Se eligen 3 castigos, reparto en rueda (una acción de cada castigo por turno hasta juntar las tomas; el castigo con menos acciones aporta todo lo que tiene). Las tomas son de la partida, no se guardan en los castigos. |
+
+**Sorpréndeme (solo Multi):** el botón `#btnSorprendeme` elige **3 castigos al
+azar sin repetir** y abre la misma ventana de confirmación de Multi ("son X, Y +
+Z") con **Reelegir**, que vuelve a sortear. Después sigue el paso de tomas.
 
 ## Placer extremo (switch)
 
@@ -159,5 +174,4 @@ Al arrancar: pinta la vista de inicio inmediatamente (no queda en blanco si Fire
 
 ## Archivos relacionados
 
-- `Panel/castigos.html` — pantalla del Panel para crear/editar/eliminar castigos oficiales (`ofc_…`), activar, ver tarjeta en el Centro.
-- `General/Plan-Castigos/` — plan de desarrollo (8 etapas + pruebas en vivo).
+- `Panel/castigos.html` — pantalla del Panel para crear/editar/eliminar castigos oficiales (`ofc_…`), activar, ver tarjeta en el Centro, y Pegar/Exportar un castigo en JSON.

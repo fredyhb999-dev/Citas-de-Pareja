@@ -42,7 +42,7 @@ es común. **El orden de la pantalla de inicio (decisión de Fredy, oct-2026;
     renglón—. Abajo de todo el remate del engrane y, **debajo de él**, el botón
     del QR (el orden de esos dos se invirtió el 17-oct-2026: antes el QR iba
     primero). El detalle del modelo y de las tres
-    colecciones está en **`General/Modelo-Datos.md`**, sección **1b**.
+    colecciones está en **`General/Modelo-Datos.md`**, sección **1**, *Juegos y sesiones*.
 
   - **El rediseño de la pantalla de inicio de `Roles/` (17-oct-2026, aprobado por
     Fredy):** se armó primero en **una maqueta suelta fuera del repo** (una sola
@@ -163,18 +163,302 @@ ver con el nombre de los modos.
   (quien inicia la partida): la pareja y los invitados ven la lista y el
   contador, pero no marcan. Cualquiera de los dos puede iniciar, también el
   Duelo; el que inicia es el anfitrión. "Saltar
-  turno" **no existe** en duelo. **El detalle completo de las cuatro ramas, el
-  modelo de datos y las cuatro funciones del reparto están en
-  `General/duelos.md`** — ese es el archivo que se lee, no esta nota. Cómo se
-  construyó está en **`General/Plan-Duelo.md`**.
+  turno" **no existe** en duelo. **El detalle completo de las cuatro ramas y del
+  reparto está en la sección *Duelo de seducción: detalle*, más abajo en este
+  mismo archivo.**
 
   **PROBADO EN VIVO (Fredy, oct-2026):** las **ocho combinaciones de la matriz** y
   los casos límite **ya se ejecutaron en el celular**. El Duelo **no** es solo
   código escrito: está verificado. Lo que se fue encontrando al probar está anotado
-  como reglas más abajo y en `General/duelos.md`.
+  como reglas más abajo.
 
-  **Y estas son las reglas del juego en sí (Clásico, Cambia de Bando, Seleccionar y
-  Duelo) que salieron de las pruebas en vivo (oct-2026) — no romper:**
+---
+
+## Duelo de seducción: detalle
+
+### Qué es
+
+Es un **cuarto modo de juego**, hermano de Clásico, Cambia de Bando y
+Seleccionar, en la misma caja de los otros tres y en **2x2** (dos pestañas
+arriba, dos abajo). La pestaña larga ("Duelo de seducción", 17 letras) sí cabe:
+cada pestaña mide lo mismo, como ~150 puntos de ancho.
+
+**En una frase:** se reparten R personajes de un solo lado y **de cada uno se
+toma su contraparte cruzada** — el del médico contra la paciente, de verdad, no
+dos cartas al azar.
+
+**Los modos siguen siendo de uno en uno.** Solo uno puede estar activo: la
+función que decide qué lista ve cada jugador los revisa uno por uno, y con dos
+activos solo aplicaría el primero.
+
+### El reparto
+
+1. Se pregunta **de quién son las cartas**: un desplegable, **usuario 1 o
+   usuario 2**.
+2. Se reparten **R tarjetas** de esa lista.
+3. De cada una se busca **su contraparte cruzada**: si se tomó de U1, su
+   contraparte está en **C2**; si se tomó de U2, está en **C1**. Las dos colas
+   se arman **en el mismo orden** de selección.
+4. **Quien es dueño de la lista original juega los originales, y el otro juega
+   las contrapartes.**
+
+> **Recuerdo de las contrapartes:** cada personaje de U1 tiene su contraparte en
+> **C2**, y cada uno de U2 en **C1**. Ejemplo: el Doctor en U1, la Paciente en
+> C2. Consecuencia de la línea cruzada: **la contraparte de un personaje tuyo se
+> edita en la pestaña del otro.**
+
+### Sin contraparte no cuenta (ni se ve)
+
+Los personajes **sin contraparte asignada no entran al Duelo**: no salen en el
+reparto **ni en la pantalla de selección**, simplemente no se ven. No se avisa
+ni se bloquea la partida (decisión de Fredy, oct-2026).
+
+Para que no parezca un error, al pie de la selección va una **nota discreta**:
+*"¿No ves un personaje? Puede que todavía no tenga contraparte."*
+
+La caja **"REVISAR CONTRAPARTES"** del engrane sigue siendo el lugar para verlos
+y arreglarlos.
+
+### El emparejamiento por ronda no lo controla la app
+
+En **Pareja** el reparto conserva el mismo orden en los dos lados, así que la
+carta original k y su contraparte k caen en la misma ronda.
+
+En **Multijugador** la app solo reparte las cartas de cada lado entre sus
+jugadores: **quién hace duelo con quién en cada ronda es dinámica del grupo, no
+una regla de la app** (decisión de Fredy, oct-2026).
+
+### El anfitrión arma y marca
+
+El que **inicia la partida** es el anfitrión y es el que marca las tarjetas,
+también en "cada quien en su celular", aunque el lado elegido sea el de la
+pareja. Los demás solo ven. **Cualquiera de los dos usuarios puede iniciar** (no
+es cosa solo del usuario `admin` de la app): el que inicia manda en esa partida.
+(Decisión de Fredy, 17-oct-2026.)
+
+### Siempre hay pantalla de escogimiento
+
+Al elegir Duelo se pasa **siempre** por una pantalla de selección, como con
+Seleccionar, pero es una distinta:
+
+- La lista es **solo del lado elegido**, y **filtrada**: fuera los que no tienen
+  contraparte.
+- El anfitrión marca **tantas como rondas** haya.
+- **Al marcar una, su contraparte se busca sola y el CONTADOR DEL OTRO LADO
+  también sube.** Por eso los dos contadores **siempre van iguales** y nunca
+  queda un "0" colgado.
+- El otro lado **ve la lista entera y puede opinar** ("esa no, esa"), pero **no
+  marca**.
+- Se prende **"Jugar"** cuando el contador llega a R.
+
+> **Los contadores no son dos números: son el mismo número.** Salen de la misma
+> lista de R personajes escogidos, así que no se pueden desincronizar. Esa es
+> también la regla de "todos listos": basta con que el contador llegue a R.
+
+### "Tentación sin distinciones" (reparto alterno)
+
+Además de marcar parejas a mano o con **"Sorpréndeme"**, la selección trae un
+segundo atajo (decisión de Fredy, 17-oct-2026):
+
+- **Ignora por completo** lo que se haya marcado.
+- A **cada persona** (usuario 1 y sus invitados; usuario 2 y los suyos) le toca
+  su propia mano de **R cartas al azar** tomadas de las de **su lado**: `U1+C1`
+  para el lado 1, `U2+C2` para el lado 2.
+- Las manos salen **distintas** entre compañeros de lado si alcanzan las cartas;
+  si no alcanzan, **se permite repetir**.
+- **No hay parejas** original/contraparte: por eso en este modo la carta **no
+  muestra "contra ..."**.
+- Sirve en **todas las combinaciones** menos **Multijugador + un celular**, donde
+  el botón no se muestra.
+- En **Juntos un celular** (solo Pareja) la carta de dos caras muestra **la de
+  cada quien**: una cara es tu carta y la otra la del otro.
+- En la sesión se guarda `dueloTentacion:true` y **no** se guarda `dueloPares`.
+
+### Esperar a la pareja antes de arrancar
+
+En **"cada quien en su celular"** el Duelo **no arranca** hasta que la otra parte
+**entre**; mientras tanto, quien marca ve *"Esperando a que entre …"*. Si la
+pareja no entra, al intentar arrancar se pregunta y el anfitrión puede
+**"Comenzar igual"**. Se espera **solo a la pareja** (no a los invitados), y en
+**"un solo celular"** no se espera a nadie.
+
+Si alguien acepta **después** de que ya arrancó, entra **a la partida**, no a la
+selección (arreglado el 17-oct-2026: antes caía en la pantalla de selección ya
+muerta y quedaba atrapado).
+
+### Las dos modalidades
+
+Se pregunta **en la misma pantalla**, una debajo de otra, para que no se sienta
+como dos pasos. Aparte del desplegable de usuario 1 / usuario 2.
+
+**TURNOS — es el motor que ya existe.** Idéntico al juego de hoy: se sortea de
+quién es el turno, esa persona ve su carta, la voltea, lee, actúa y aprieta
+"Siguiente"; se vuelve a sortear entre los que quedan; así hasta acabar la ronda
+y el juego. **No se escribió nada nuevo**: lo único que cambia es **qué lista se
+reparte**.
+
+**JUNTOS — este sí es nuevo.** La unidad ya no es el turno: **es la pareja**. Los
+dos voltean, los dos juegan al mismo tiempo y **el anfitrión aprieta
+"Siguiente"**. Por eso el "Siguiente" **no está bloqueado**: lo aprieta cuando
+quiera.
+
+**El indicador es de FASE, no de turno.** Tres estados, iguales en un celular y
+en compartida:
+
+| Fase | Lo que se ve |
+|---|---|
+| 1 | La carta tapada: **"Voltea tu carta"** |
+| 2 | Ya se ve: **"Jugando"**, y el anfitrión tiene **"Siguiente"** |
+| 3 | Los demás ven: **"Esperando a que el anfitrión avance"** |
+
+Arriba va el progreso: **"Ronda 1 de 3"**.
+
+> **La fase 1 no aplica en Juntos un solo celular.** La carta de dos caras no
+> tiene tapa (ver *Rama 1*): abre mostrando una cara y se voltea para ver la
+> contraparte.
+
+> **Nadie mide si los demás ya voltearon.** El anfitrión avanza cuando le
+> parece; instrumentarlo sería un contador extra que no hace falta.
+
+**"Saltar turno" no existe en Duelo**, en ninguna de las dos modalidades
+(decisión de Fredy, oct-2026): el botón se esconde, sin reemplazo. Si alguien
+pierde la conexión, al anfitrión solo le queda **Terminar Partida**.
+
+### Las cuatro ramas
+
+| | **Un celular** | **Cada quien en su celular** |
+|---|---|---|
+| **Turnos** | Una carta, la del que está en turno. **Es el motor de siempre** | Una carta por persona, tapada, por turnos. **Es el motor de siempre** |
+| **Juntos** | **Carta de dos caras.** Nuevo | Una carta por persona, todas se voltean al tiempo, avanza el anfitrión. **Nuevo** |
+
+> **La carta de dos caras solo hace falta en UNA combinación:** Juntos en un solo
+> celular. En todo lo demás el duelo se reduce a cambiar la lista que se reparte.
+
+#### Rama 1 — Jugar con pareja, un solo celular
+
+- **Cabezas:** solo usuario 1 y usuario 2. Sin invitados.
+- **Preparación:** el anfitrión elige el lado (U1/U2) y la modalidad, y marca
+  las R tarjetas en la pantalla de escogimiento.
+- **Reparto:** los originales van al dueño del lado elegido; las contrapartes,
+  al otro.
+- **SIN** QR, **SIN** "Agregar invitado", **SIN** panel de sala: en Pareja no hay
+  a quién meter ni a quién esperar.
+
+**Juntos:**
+
+- Una **carta de dos caras**: de un lado el original (U1 o U2), y al voltearla
+  aparece su **contraparte cruzada** (C2 o C1). Es **un solo objeto** que se
+  voltea; no son dos cartas ni las dos caras a la vez.
+- Cada quien lee **su** cara: se ve el original, se juega, se voltea y se ve la
+  contraparte del otro.
+- **No hay reverso de misterio** (el de la marca): las dos caras son contenido.
+  Por eso "sin tapa": aquí no hay nada que ocultar, ya se sabe que la
+  contraparte es la del otro.
+- El anfitrión aprieta **"Siguiente"** y viene la pareja siguiente.
+
+**Turnos:**
+
+- Arranca el anfitrión y se sortea el turno de los demás.
+- Al que le toca se le muestra **su** cara de la carta; la voltea, lee, actúa y
+  aprieta "Siguiente".
+- Se vuelve a sortear entre los que quedan, hasta acabar la ronda.
+- **Sin "Saltar turno"**, como en todas las ramas del Duelo.
+
+#### Rama 2 — Jugar con pareja, cada quien en su celular
+
+- **Cabezas:** usuario 1 y usuario 2.
+- Se escribe la sesión en Firebase y se publica la invitación apuntando a
+  **`sesionRoles/actual`**.
+- **Cada quien recibe UNA sola carta normal y tapada**, la que le toca. No hay
+  carta de dos caras: en compartida cada persona solo tiene un personaje.
+
+**Turnos:** es **exactamente el juego de hoy** (sorteo, cada quien voltea su
+carta, lee, actúa y aprieta "Siguiente"). No se toca nada.
+
+**Juntos:** todos voltean **al mismo tiempo** y juegan; **el anfitrión aprieta
+"Siguiente"** y en los dos teléfonos aparece la pareja siguiente. Los que no son
+anfitriones ven "Esperando a que el anfitrión avance".
+
+#### Rama 3 — Multijugador, un solo celular
+
+- **Cabezas:** todos los usuarios, invitados incluidos.
+- Cada invitado **pertenece** a usuario 1 o a usuario 2 (por `conQuien`), así que
+  su carta sale de la lista del lado de su anfitrión.
+- **Reparto:** los originales les tocan al dueño del lado elegido **y a sus
+  invitados**; las contrapartes, al otro lado **y a los suyos**.
+- **Aquí sí:** el anfitrión tiene **QR** y **"Agregar invitado"**, y sale el
+  **panel de sala**.
+
+**Juntos:** es una **sola carta de dos caras que ve todo el grupo**: aparece un
+personaje, se muestra a todos; se voltea y aparece su contraparte, y también la
+ven todos (decisión de Fredy, oct-2026). **No hay una carta por persona.** El
+anfitrión aprieta "Siguiente".
+
+**Turnos:** se sortea entre **todas** las cabezas; al que le toca se le muestra
+su cara, la voltea, lee, actúa y aprieta "Siguiente". Cada quien actúa **una vez
+por ronda**.
+
+#### Rama 4 — Multijugador, cada quien en su celular
+
+- **Cabezas:** todos, invitados incluidos; la invitación apunta a
+  **`sesionRoles/actual`**.
+- Un invitado que entra a media partida entra a partir de la ronda siguiente y
+  se le agregan **las tarjetas que le falten del lado del usuario que lo
+  invitó** (decisión de Fredy, oct-2026).
+
+**Turnos:** **exactamente el juego de hoy**, entre todas las cabezas.
+
+**Juntos:** cada persona recibe **una sola carta tapada**, la suya. Todos
+voltean al mismo tiempo y juegan; **el anfitrión** aprieta "Siguiente" y a todos
+les llega la pareja siguiente.
+
+### Las variantes picantes
+
+Entran como en los otros modos: se sortean **una sola vez al arrancar** entre
+todos (usuarios e invitados), máximo una por ronda, y **solo le afectan a una
+persona** (decisión de Fredy, oct-2026). La variante vive dentro de la carta de
+esa persona: se ve en **su** cara. En la carta de dos caras (Juntos un celular)
+sale en la cara de quien la tenga.
+
+### Lo que se tocó, y lo que no
+
+El Duelo **no reescribió el juego**: reutiliza el motor, el sorteo, las rondas,
+las transacciones de Firebase, las invitaciones, la sala, el volteo de una carta
+normal y el final con fuegos. Lo que hubo que construir fue:
+
+1. **La pestaña y el 2x2.** Con un estilo nuevo (`tabs tabsModos`) que se le pone
+   **solo** a la fila de modos: el estilo general de las pestañas se usa también
+   en la selección, donde puede haber tres o cuatro jugadores y se verían
+   torcidos.
+2. **El reparto del Duelo**, una función propia: reparte una lista, busca la
+   contraparte de cada carta y conserva el mismo orden en los dos lados (así la
+   carta k y su contraparte k caen en la misma ronda).
+3. **La pantalla de escogimiento del Duelo** (filtrada, con contadores derivados
+   y solo el anfitrión marcando).
+4. **La modalidad Juntos** (avance por parejas y el indicador de tres fases).
+5. **La carta de dos caras**, solo para Juntos en un celular.
+
+El botón de **"Saltar turno" solo se esconde** en Duelo: su código no se toca.
+
+### El panel de sala (nota de mantenimiento)
+
+El **panel de sala** (quién está en la espera y quién ya está jugando) sale en
+**multijugador**, y **da igual si se juega en un solo celular o cada quien en el
+suyo**. Eso viene de `modoAdmiteInvitados()`, que solo mira si el modo es `multi`,
+y es la regla de la casa: en Pareja no se muestra.
+
+Había un comentario en `Roles/index.html` que decía que el panel salía "solo en
+partida compartida". **Ese comentario estaba viejo**: no era lo que hacía el
+código y contradecía la regla. Ya se corrigió (oct-2026); solo era el texto, no
+se cambió ningún comportamiento.
+
+---
+
+### Las reglas del juego que salieron de las pruebas en vivo
+
+**Valen para los cuatro modos (Clásico, Cambia de Bando, Seleccionar y Duelo).
+No romper:**
+
   - **Saltar turno QUEMA la tarjeta** de esa persona: pierde el turno *con*
     tarjeta. Si solo se le saltara el turno, la partida pediría turnos de más, la
     ronda se pasaría de R y **no terminaría**. Usa el mismo `avanzarTarjeta()` que

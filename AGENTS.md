@@ -28,9 +28,8 @@ tenia el contexto a la mano.
 | `General/Autorizar.md` | Detalle de `Autorizar/` (aprobar y revocar licencias, login, llave privada) | Solo si la tarea toca la pantalla de licencias |
 | `General/Favores-Express.md` | Detalle del módulo `favor.js` (favores expresos, precios del 🛒, reglas) | Solo si la tarea toca favores |
 | `General/Castigos.md` | Detalle del juego `Castigos/` ("El Precio del Placer", editor, partida, multi) | Solo si la tarea toca el juego de castigos |
-| `General/duelos.md` | El cuarto modo de `Roles/` (Duelo de seducción): las 4 ramas y sus 2 modalidades. **Construido y probado en vivo (oct-2026)** | Solo si la tarea toca el modo de duelo |
-| `General/Plan-Duelo.md` | El plan de desarrollo del Duelo: fases, funciones, modelo de datos y pruebas | Solo si la tarea es **construir** el duelo |
-| `General/Modelo-Datos.md` | Como esta guardada la base y como normalizarla | Antes de migrar datos |
+| `General/Roles.md` | `Roles/`: los cuatro modos (Clásico, Cambia de Bando, Seleccionar y **Duelo de seducción**), las 4 ramas del duelo, el modelo de la sesión y la tarjeta. **El duelo está construido y probado en vivo (oct-2026)** | Solo si la tarea toca `Roles/` |
+| `General/Modelo-Datos.md` | Inventario de la base y **lo que falta normalizar** (propuesta; lo ya hecho está en `HISTORIA.md`) | Antes de migrar datos |
 | `General/Puntos.md` | El sistema de puntos: saldos, historial de movimientos (`puntos/{id}/movimientos`) y qué registra cada módulo | Solo si la tarea toca puntos, favores, retos o el Centro |
 | `General/HISTORIA.md` | **El por que**: relato con fecha de cada arreglo | **Solo** en los casos de abajo |
 
@@ -44,10 +43,11 @@ de detalle **va directamente a su propio archivo en `General/`**, nunca a
 que falta el archivo de detalle de una pantalla, se crea en `General/` y se
 agrega la línea de apunte en `GUIA.md` y en esta tabla de `AGENTS.md`.
 
-**Los cuatro del medio se partieron del `GUIA.md` el oct-2026** (pasó de 2,274
-a 1,417 líneas). Son **detalle de una sola pantalla o un solo modulo**: se leen
-enteros o no se leen, y estorban al leer lo de todos los dias. **Si la tarea no
-los toca, no se abren** — y su regla general esta resumida en `GUIA.md`.
+**Los cuatro del medio se partieron del `GUIA.md` el oct-2026** (entonces pasó
+de 2,274 a 1,417 líneas; hoy tiene 661). Son **detalle de una sola pantalla o un
+solo modulo**: se leen enteros o no se leen, y estorban al leer lo de todos los
+dias. **Si la tarea no los toca, no se abren** — y su regla general esta resumida
+en `GUIA.md`.
 
 **`General/HISTORIA.md` es un diario, NO son instrucciones vigentes.** Antes
 estaba todo junto en `GUIA.md` (3,000 lineas) y el problema no era el tamano:
@@ -70,7 +70,7 @@ submenus, el Chat, la campana de la pestana, `confirmar.js`, `fuegos.js`,
 
 **Criterio honesto:** si tienes duda de si algo aplica, **no lo leas**. Casi todo
 el trabajo diario cae en la lista de "NO lo necesitas", y `GUIA.md` tiene
-1,417 lineas (se leen enteras).
+661 líneas (se leen enteras).
 
 ## Como trabajar en este repo
 

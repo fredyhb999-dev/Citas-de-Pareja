@@ -11,7 +11,8 @@
   `balance`. Es el número que leen Retos, el Centro de Adquisiciones y `favor.js`.
 - El **historial** vive en la subcolección `puntos/{id}/movimientos/{movId}`.
   Cada movimiento registra de dónde vino y a dónde fue un cambio de saldo, para
-  que ya no sea un número "ciego" (era el problema P3 de `Modelo-Datos.md`).
+  que ya no sea un número "ciego" (era el problema P3 del análisis de oct-2026,
+  ya resuelto; el relato está en `HISTORIA.md`).
 
 ## El historial de movimientos (`puntos/{id}/movimientos`)
 

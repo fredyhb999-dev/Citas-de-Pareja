@@ -42,6 +42,12 @@ Movido de `General/GUIA.md`. Contiene el detalle del módulo de favores expresos
 1. **Si el 🛒 debe avisar del precio cuando se acepta un favor**, como pasa al comprar en el Centro.
 2. **Si se avisa cuando el 🛒 cambia con una negociación viva.** El precio del favor **ya quedó congelado** en su documento, así que **no la afecta**: lo único por decidir es si además se dice algo.
 
-**El registro NO se borra** (y esto importa): los puntos se mueven con `increment()` y **no hay de dónde vinieron** (es el P3 de `Modelo-Datos.md`). Por eso **el documento de cada favor se queda siempre**. Lo que sí se puede es **esconder** los resueltos de la lista, y en el Centro hay un **"Borrar descartados"** que borra **solo los rechazados y cancelados** (esos no movieron puntos) y siempre pregunta antes.
+**El registro NO se borra** (y esto importa): los puntos se mueven con
+`increment()` y el historial (`puntos/{id}/movimientos`, ver `Puntos.md`) apunta
+al favor con `referenciaId`. Por eso **el documento de cada favor se queda
+siempre**: si se borrara, el movimiento quedaría apuntando a algo que ya no
+existe. Lo que sí se puede es **esconder** los resueltos de la lista, y en el
+Centro hay un **"Borrar descartados"** que borra **solo los rechazados y
+cancelados** (esos no movieron puntos) y siempre pregunta antes.
 
 > **El botón flotante es una EXCEPCIÓN a la regla de las esquinas, y es decisión, no descuido.** La regla dice que los botones viven en las esquinas y que jamás hay dos en el mismo lado; el 🛎️ va fijo abajo a la derecha, encima de cualquier pantalla, porque el favor se pide sin entrar a buscarlo. Va en **Z60**, debajo de las ventanas (`confirmar.js` 95, el aviso de fin 80, los fuegos 70) para no tapar el "Aceptar". **No lo muevas a una esquina "para cumplir la regla".** **No sale** si eres invitado, si todavía no hay identidad, ni en `Panel/`, `Tienda/`, `Privacidad/` ni `Terminos/`.

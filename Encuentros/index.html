@@ -332,7 +332,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, leerConfigGuardada, migrarActividadesAId, leerDocActividad } from "../config.js";
+import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, leerConfigGuardada, migrarActividadesAId, leerDocActividad, nombrePorId, fijarUsuarios } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
@@ -548,7 +548,11 @@ const entrarDirecto = (()=>{
 })();
 
 function cargarEnMemoria(d){
-  cabezas = Array.isArray(d.cabezas) ? d.cabezas : [];
+  // El nombre del jugador se resuelve por id al mostrar: si se renombro, se ve
+  // el nuevo. Se copia cada cabeza para no escribir ese nombre en la sesion.
+  cabezas = (Array.isArray(d.cabezas) ? d.cabezas : []).map(c=>
+    c ? Object.assign({}, c, { nombre: nombrePorId(c.id, c.nombre) }) : c
+  );
   listas = d.listas || {};
   largo = d.largo || 0;
   ronda = d.ronda || 0;
@@ -594,7 +598,7 @@ function sanearSesion(d){
 }
 function nombreCabeza(id){
   const c = cabezas.find(x=>x.id === id) || (sesionActual && (sesionActual.cabezas || []).find(x=>x.id === id));
-  return (c && c.nombre) || "alguien";
+  return nombrePorId(c && c.id, c && c.nombre) || "alguien";
 }
 // Decide si ofrecer "Continuar o Nueva".
 // En una sola actividad solo se ofrece si la partida a medias es DE ESA
@@ -692,12 +696,12 @@ async function chequearPartidaEspera(){
     if(d.hostUid === miId) return;
     if(soyCabeza(d)){
       document.getElementById("unirDesc").textContent = d.reanudada
-        ? ((d.hostNombre || "El anfitrión") + " retomó el encuentro. Puedes continuar donde van.")
-        : ((d.hostNombre || "El anfitrión") + " inició un Encuentro Guiado.");
+        ? ((nombrePorId(d.hostUid, d.hostNombre) || "El anfitrión") + " retomó el encuentro. Puedes continuar donde van.")
+        : ((nombrePorId(d.hostUid, d.hostNombre) || "El anfitrión") + " inició un Encuentro Guiado.");
       abrirModal("modalUnir");
     }else{
-      const nombres = (d.cabezas || []).map(c=>c.nombre).join(", ");
-      pon("Hay partida de " + (d.hostNombre || "el anfitrión") + ", pero no estás en la lista. Participantes: " + nombres + ". Tú: " + yo + ".");
+      const nombres = (d.cabezas || []).map(c=>nombrePorId(c.id, c.nombre)).join(", ");
+      pon("Hay partida de " + (nombrePorId(d.hostUid, d.hostNombre) || "el anfitrión") + ", pero no estás en la lista. Participantes: " + nombres + ". Tú: " + yo + ".");
     }
   }catch(e){
     pon("No se pudo revisar la partida. (" + (e && e.message ? e.message : "error") + ")");
@@ -735,8 +739,8 @@ function escucharSesion(){
             // preguntarle dos veces lo mismo (en la sala ya acepto entrar).
             if(entrarDirecto && soyCabeza(d)){ entrarAlJuego(d); return; }
             document.getElementById("unirDesc").textContent = d.reanudada
-              ? ((d.hostNombre || "El anfitrión") + " retomó el encuentro. Puedes continuar donde van.")
-              : ((d.hostNombre || "El anfitrión") + " inició un Encuentro Guiado.");
+              ? ((nombrePorId(d.hostUid, d.hostNombre) || "El anfitrión") + " retomó el encuentro. Puedes continuar donde van.")
+              : ((nombrePorId(d.hostUid, d.hostNombre) || "El anfitrión") + " inició un Encuentro Guiado.");
             abrirModal("modalUnir");
           }
         }else{
@@ -1270,7 +1274,8 @@ function cargarTomasDoc(id, data, nombreRespaldo){
 // celular, de antes de que se pasaran a la base, se suben y se borran del celular.
 // Despues de eso ya no hay copia local, asi que no puede volver a correr.
 //
-// `nombreRespaldo` (agregado al pasar a buscar por id, ver Modelo-Datos.md): la
+// `nombreRespaldo` (agregado al pasar a buscar por id, ver GUIA.md, *La llave es
+// el id, no el nombre*): la
 // llave de este celular se escribio hace tiempo con el NOMBRE de la actividad,
 // de cuando nivelesActividad tambien se guardaba por nombre. Si no se encuentra
 // nada bajo el id (lo normal hoy), se intenta bajo el nombre antes de rendirse,
@@ -2211,9 +2216,12 @@ function escucharGrupo(){
       try{
         const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
         if(!Array.isArray(arr) || !arr.length) return;
-        const antes = usuariosLista.map(u=>u && u.id).join(",");
+        const firma = lista => (Array.isArray(lista) ? lista : [])
+          .map(u=> ((u && u.id) || "") + ":" + ((u && u.nombre) || "")).join("|");
+        const antes = firma(usuariosLista);
         usuariosLista = arr;
-        if(antes === arr.map(u=>u && u.id).join(",")) return;
+        fijarUsuarios(arr);
+        if(antes === firma(arr)) return;
         if(jugandoCompartido && sesionActual && sesionActual.activa && jugando){
           sanearSesion(sesionActual);
           cargarEnMemoria(sesionActual);

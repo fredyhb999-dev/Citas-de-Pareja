@@ -262,7 +262,8 @@ deseos, compras y retos, porque quedan huérfanos.
 
 **Los puntos se descuentan con `runTransaction`**, que relee el saldo dentro de la
 transacción: dos celulares apretando "Comprar" al mismo tiempo no pueden gastar dos
-veces lo que no hay (el bug B3 de `Modelo-Datos.md`, pero aquí sí prevenido).
+veces lo que no hay (el mismo doble gasto que se corrigió en los retos, pero aquí
+prevenido desde el principio).
 **Verificado:** sintaxis OK en los 3 archivos; `<div>` cuadrados (33/33), sin ids
 repetidos y sin ids de JS inexistentes en `centro.html`. **PROBADO EN VIVO
 (Fredy, oct-2026)**, en Pages y con los dos celulares.

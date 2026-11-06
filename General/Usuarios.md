@@ -81,6 +81,12 @@ ya usaban el asistente y "agregar invitado"— con `setDoc(..., {merge:true})` y
 `guardarUsuariosLocal()`. Si alguien se renombra a sí mismo (o le cambia el
 admin), su copia local (`CLAVE_LOCAL`, `appPareja_quienSoy`) también se actualiza.
 
+**Al renombrar no se reescribe nada más.** Las citas, retos y partidas guardan el
+nombre de ese día solo como respaldo; al mostrarlos se resuelve el nombre actual
+por el id (`nombrePorId()`, ver `GUIA.md`). Por eso una cita vieja pasa a decir
+el nombre nuevo sin migrar ningún documento. El chat y la presencia son la
+excepción: conservan el nombre del momento.
+
 **Los puntos** se escriben **directos** (el número exacto) en el campo **`balance`
 de `puntosUsuarios/{id}`**, que es donde viven (no en `config/ajustes`, y **no**
 son los precios del 🛒). Se leen de una sola vez con `getDocs` y, si el documento

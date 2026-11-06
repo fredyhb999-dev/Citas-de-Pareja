@@ -32,7 +32,7 @@ Y los documentos aparte:
 | Si quieres... | Lee |
 |---|---|
 | **El detalle de una pantalla concreta** | **El archivo de esa pantalla**, en la tabla del final |
-| **Cómo se está guardada la base, qué está mal y cómo normalizarla** | **`Modelo-Datos.md`** |
+| **Cómo está guardada la base y qué falta normalizar** | **`Modelo-Datos.md`** |
 | **Por qué se hizo cada cosa** (el porqué de un arreglo viejo) | **`HISTORIA.md`**, solo si la tarea toca esas áreas |
 | **Detalle del módulo `acceso.js` (licencias)** | **`General/Modulo-Acceso.md`** |
 | **Detalle de `Autorizar/` (aprobar y revocar licencias)** | **`General/Autorizar.md`** |
@@ -113,10 +113,12 @@ cambia, así que **nunca** sirve para enlazar datos.
 - **Para mostrar, se resuelve por id;** si el id no se encuentra (dato viejo, o
   borrado), se cae al nombre guardado. El patrón es `leerDocActividad()`
   (`config.js`) y `nombreDeCita()` (`Citas/index.html`).
-- **Las excepciones son dos, y hay que decir cuál se está usando:**
+- **Las excepciones son tres, y hay que decir cuál se está usando:**
   - Texto libre que escribe la pareja y no apunta a nada: `retos.actividad`.
   - Copia del nombre **solo** para el texto de un aviso pasajero
-    (`invitosFavor`, `invitosLenceria`).
+    (`invitosFavor`, `invitosLenceria`, la sala de espera de `Diablitos`).
+  - Historial de mensajes: `chat.autorNombre` y `presencia.nombre` guardan el
+    nombre del momento a propósito (en el chat, quién lo dijo entonces).
 - **Si una pantalla nueva guarda datos y no se puede decir cuál es la llave, se
   pregunta antes de escribir.**
 
@@ -156,11 +158,11 @@ Partes 1 y 2.
 > Autorizar/: aprobar y revocar licencias -> ve General/Autorizar.md (detalle de la pantalla de licencias, login de Google y llave privada)
 > **Decisiones tomadas por pantalla** → ve `General/Pantallas.md` (detalle de decisiones específicas de cada pantalla: Citas, Encuentros, Guiadas, Retos, Roles, Opciones, Diablitos, Usuarios)
 
-> oct-2026: el estado de la base de datos (que colecciones hay, que campos, que
-> esta duplicado, que esta mal y cual es el plan para normalizarlo) esta en
-> **`General/Modelo-Datos.md`**. Es una **propuesta, no un cambio aplicado.**
-> Ahi tambien estan 3 fallas verificadas con numero de linea que conviene mirar
-> antes de tocar Retos o el modo invitado.
+> nov-2026: el inventario de la base (qué colecciones hay y qué campos usa la app)
+> y **lo que falta normalizar** están en **`General/Modelo-Datos.md`**. Es una
+> **propuesta, no un cambio aplicado**. Lo que ya se normalizó (actividades por
+> id, castigos por id, historial de puntos) y las fallas que se corrigieron **no
+> se repiten ahí**: están en `HISTORIA.md`.
 
 **Que hay en esta seccion, y en que orden leerla:**
 
@@ -293,7 +295,6 @@ la tarjeta y la tienda lo desmarca. Sin que el cliente recargue nada.
 ### Otros pendientes
 
 - **Reparto parejo en Multi (IMPLEMENTADO oct-2026, pendiente prueba en vivo):** el reparto **en rueda** (tomar una acción de cada actividad por turnos hasta juntar las tomas, sin repetir hasta agotar el pool; la actividad con menos acciones aporta todo lo que tiene) ya lo usa el juego nuevo, y **Guiadas y Encuentros ya tienen el código** (reemplaza el mínimo de Guiadas y el pool proporcional de Encuentros) y Guiadas ya tiene el paso de tomas de Encuentros. **Falta probarlo en vivo** en los tres.
-- **Juego “El Precio del Placer” (castigos) — IMPLEMENTADO (oct-2026), pendiente solo la prueba en vivo:** juego independiente, con colecciones propias (`castigosExtra`, `nivelesCastigo`, `accesoriosCastigo`, `imposicionesCastigo` por lado y su sesión). Incluye una **pantalla nueva en `Panel/`** para crear los **castigos oficiales** (`ofc_...`, pack/licencia propio como los `of_...` de actividades): acciones por nivel y lado, tomas sugeridas y medidas sugeridas; **sin accesorios** (los asigna cada pareja). Los oficiales salen como **tarjeta en el Centro**, como las actividades oficiales. Checklist de pruebas en **`General/Plan-Castigos/08-Pruebas-En-Vivo.md`**.
 - ~~Rotar la llave expuesta~~ **REVISADO oct-2026: no hay ninguna llave
   expuesta.** Lo que decía esto era el marcador `PON_AQUI_TU_KEY` de
   `Default Project\General\README.md`: un espacio reservado, no una llave real, así
@@ -649,9 +650,8 @@ Al agregar o quitar algo del JSON de fabrica hay que subir `VERSION_FABRICA` en
 | `General/fuegos.md` | `fuegos.js`: fuegos artificiales al final de la partida | Solo si la tarea toca fuegos artificiales |
 | `General/confirmar.md` | `confirmar.js`: cuadros modales de confirmar() y aviso() | Solo si la tarea toca los cuadros de confirmación |
 | `General/Opciones.md` | `Opciones/`: Elecciones Peligrosas, modos, reparto, lista de opciones | Solo si la tarea toca el juego de opciones |
-| `General/Roles.md` | `Roles/`: Juego de Roles, modos, duelo, personajes | Solo si la tarea toca el juego de Roles |
+| `General/Roles.md` | `Roles/`: Juego de Roles, los cuatro modos (incluido el Duelo de seducción), personajes | Solo si la tarea toca el juego de Roles |
 | `General/Catalogo-Lenceria.md` | `Lenceria/`: catálogo, planes, pedidos y fotos | Solo si la tarea toca la lencería |
-| `General/duelos.md` | El cuarto modo de `Roles/` (Duelo de seducción): las 4 ramas y sus 2 modalidades | Solo si la tarea toca el modo de duelo |
 | `General/Puntos.md` | El sistema de puntos: saldos, historial de movimientos y qué registra cada módulo | Solo si la tarea toca puntos, favores, retos o el Centro |
 
 ---

@@ -1,552 +1,204 @@
-# Modelo de datos — propuesta de normalizacion
+# Modelo de datos — lo que falta normalizar
 
-> oct-2026 · repo `Documents\GitHub\Citas-de-Pareja`
-> **Esto es una PROPUESTA, no un cambio aplicado.** Ningun archivo de codigo fue
-> tocado. Fredy decide que fases se hacen.
+> **nov-2026.** Esto sigue siendo una **propuesta**: no se aplica sola, y lo que
+> rige es el código. Antes era el análisis completo de oct-2026 (552 líneas);
+> **casi todo se aplicó** y lo que queda es esto. El relato de lo que se hizo y
+> por qué está en **`HISTORIA.md`** → *La normalización de la base*.
+
+**Regla de este documento:** aquí solo va **lo que falta**. Lo que ya se hizo no
+se repite con detalle, porque volver a "arreglarlo" es romperlo.
 
 ---
 
-## ACTUALIZACION (oct-2026) — leer antes que el resto
+## 0. Lo que ya se hizo (no volver a proponerlo)
 
-Este analisis se hizo con un recorrido del codigo. **Cuatro cosas ya no
-coinciden** y hay que tenerlas presentes:
-
-| # | Que paso |
+| Qué | Cómo quedó |
 |---|---|
-| **B2 ya no aplica** | El borrado de un reto **ya cobrado** no descuenta de mas: `eliminarReto()` solo revierte puntos si el reto sigue `"enCurso"`, y al llegar a la meta pasa a `"cobrada"`. El fallo que se describe aqui era de la logica **anterior** (la que liquidaba con `delta = 1 - meta`), que ya se cambio en oct-2026. **Se puede borrar de la lista de fallas** |
-| **B3 sigue, pero cambio de efecto** | Ya no es "doble penalizacion": la liquidacion antigua (`delta = 1 - meta`) tambien cambio. Hoy `marcarCumplida()` **no descuenta nada**, asi que el riesgo real es **doble premio** (+2 en vez de +1) y el aviso de Telegram duplicado |
-| **Faltan rutas en el inventario** | La seccion 1 se quedo corta. Ya se le agregaron **`deseos`** y **`comprasDeseos`** (el Centro) e **`invitosChat/actual`**. Y en oct-2026 se creo **`invitosRetos`**, que es **una coleccion con un documento POR QUIEN MANDA** (no uno solo: ver `Campana-Pestana.md`). El conteo real es **16 colecciones + 8 documentos sueltos**, no "17 + 3". **Y en oct-2026 se agregaron 3 documentos mas del juego de Roles** (`personajesJuego/actual`, `sesionRoles/actual`, `seleccionRoles/actual`): son **16 colecciones + 11 documentos sueltos**. Ver la seccion 1b |
-| **Los numeros de linea ya no coinciden** | `eliminarReto` esta en `Retos/index.html:1034` (no 935) y `marcarCumplida` en la 1060 (no 951). Sirven para orientarse, no para buscar. En `index.html`, `volverSiInvitadoSinPartida` esta en la 948 |
+| **Actividades por id** (nov-2026) | `nivelesActividad` y `presetsActividad` se guardan con el id de `actividadesExtra`, no con el nombre. Cada cita lleva `actividadId` junto al nombre. Migra `migrarActividadesAId()` (`config.js`, bandera `config/migracionActividades` versión 2). Renombrar solo cambia el campo `nombre`. |
+| **Castigos por id** (oct-2026) | `castigosExtra` y `accesoriosCastigo` usan id automático; `migrarCastigosAId()` convierte lo viejo. Antes renombrar **borraba las acciones**. |
+| **Nombres de usuario por id** (nov-2026) | `citas`, `retos`, las sesiones (`cabezas[]`), `invitaciones` y los avisos resuelven el nombre al **mostrar** con `nombrePorId(id, nombreGuardado)` (`config.js`): se ve el nombre de HOY y, si el id ya no existe (dato viejo o invitado borrado), el que quedó guardado. El campo `nombre` se sigue guardando como respaldo y **no se borra**. `chat.autorNombre` y `presencia.nombre` se quedan a propósito: son el nombre del momento. |
+| **Historial de puntos** (nov-2026) | Cada movimiento va a `puntos/{uid}/movimientos`; el saldo de `puntosUsuarios` es la caché. Arranca en nov-2026: lo anterior no se puede reconstruir. |
+| **B1 — el invitado no volvía solo** | Corregida la ruta (`sesionEncuentros/actual`). Documentado en `GUIA.md`. |
+| **B2 — borrar un reto cobrado descontaba** | `eliminarReto()` solo revierte puntos si el reto sigue `enCurso`. |
+| **B3 — «Cumplida +1» sin transacción** | Ahora va en `runTransaction`, relee el reto, corta si ya no está `enCurso` y **no descuenta nada al llegar a la meta**. Se registra en el historial. |
+| **B4 — dos invitados con el mismo id** | El registro por QR va en transacción, el id lleva hora y azar, y si la ficha sigue viva se reusa. |
 
-**B1 quedo ARREGLADO** (oct-2026): la ruta mal escrita se corrigio y ya se
-documento en `GUIA.md`, *El invitado vuelve solo al abrir la app*.
-
-**B4 quedo ARREGLADO** (oct-2026), y de paso se encontro **un problema mas grave
-que no estaba en esta lista**: el registro por QR era un leer-calcular-guardar
-sin transaccion, asi que **dos personas registrandose al mismo tiempo se
-borraban entre ellas** (la segunda escritura reemplazaba la lista entera).
-Ahora va dentro de una transaccion, el identificador lleva hora y azar, y si la
-ficha **todavia existe** (el invitado escanea, espera y vuelve a escanear sin
-haber jugado) se reusa en vez de duplicar. Ojo: **si ya juego y lo expulsaron,
-su ficha se borro de la lista**, asi que la siguiente vez es una ficha nueva en
-0. Ver `GUIA.md`, *Registrarse por QR otra vez*.
-
-**B3 sigue sin tocarse**, pero es de **riesgo bajo**: el boton "Cumplida +1"
-solo lo ve quien propuso el reto, asi que el doble toque simultaneo requiere que
-el mismo apriete desde dos lugares a la vez.
+> **Números de línea:** los que tenía este documento ya no sirven. Para ubicar
+> algo, buscar por nombre de función.
 
 ---
 
-## 0. Alcance: que se pudo leer y que no
+## 1. Inventario actual (lo que usa la app)
 
-**No se pudo entrar a la consola de Firebase.** El unico servidor MCP de este
-entorno es el de dispositivos Tuya; no hay cliente de Firebase disponible. Asi
-que **el proyecto `pareja-test` no se pudo abrir directamente** y este documento
-NO describe lo que hay guardado ahora mismo en esa base.
+**Dos bases:** la de la pareja (todo menos la taquilla) y la de la taquilla
+(`packs`, `solicitudes`, `config/permisos`).
 
-Lo que si se hizo: **recorrer las 48 fuentes del repo y extraer, literalmente,
-cada `doc()`, `collection()`, lectura y escritura.** Eso da el esquema que la app
-*usa*, que es lo relevante: si un campo no aparece en el codigo, nadie lo
-consulta.
+**Antes había aquí un conteo ("17 colecciones + 3 documentos").** Se quitó: cambió
+tres veces y nunca fue exacto. Lo que importa son las rutas.
 
-**Lo que falta para cerrar el analisis:** confirmar en la consola que el esquema
-de `pareja-test` coincide con el del codigo (sobre todo documentos viejos de
-sesiones anteriores y datos de prueba). Eso es manual, lo hace Fredy.
-
-**Aviso de seguridad:** `firebase-config.js` tiene los valores de ejemplo
-(`TU_PROYECTO`). Los datos reales de cada pareja viajan en `localStorage`. Quien
-tiene la config puede leer y escribir la base entera. Es a proposito y esta
-documentado en `AGENTS.md`; no se toca aqui.
-
----
-
-## 1. Inventario actual (lo que hay)
-
-**Dos bases:** la de la pareja (todo lo de abajo) y la de la taquilla
-(`packs`, `solicitudes`).
-
-| Ruta | Forma | Campos |
+### Configuración
+| Ruta | Forma | Qué guarda |
 |---|---|---|
 | `config/ajustes` | doc | `usuarios[]`, `actualizadoEn` |
 | `config/fabrica` | doc | `version`, `fecha`, `actividades[]`, `accesorios[]` |
-| `config/permisos` | doc (taquilla) | `correos[]`, `actualizadoEn` |
-| `actividadesExtra` | col | `nombre`, `creadoEn`, `origen` |
+| `config/fabricaLenceria` | doc | la siembra del catálogo de lencería |
+| `config/migracionActividades` | doc | ids ya migrados (versión 2) |
+| `config/migracionCastigos` | doc | mapa de castigos viejos → nuevos |
+
+### Actividades y citas
+| Ruta | Forma | Qué guarda |
+|---|---|---|
+| `actividadesExtra` | col | `nombre`, `creadoEn`, `origen` — id automático |
 | `accesoriosExtra` | col | `nombre`, `creadoEn`, `origen` |
-| `nivelesActividad` | col (id = el de `actividadesExtra`; ver nota abajo) | `n{[nivel]:{A[],B[]}}`, `actualizadoEn`, `titulo?`, `oficial?` |
-| `presetsActividad` | col (id = el de `actividadesExtra`; ver nota abajo) | `accesorios[]`, `actualizadoEn` |
-| `citas` | col | `proponenteId/Nombre`, `paraId/Nombre`, `fechaCita`(str), `actividad`, `actividadId?`, `descripcion`, `accesorios[]`(nombres), `estado`, `creadoEn`, `actualizadoEn`, `ultimaAccionPorId/Nombre` |
-| `retos` | col | `actividad`, `asignadoPor{}`, `asignadoA{}`, `vecesAlDia`, `duracionDias`, `puntosMeta`, `penalizacionPuntos`, `castigo`, `recompensa`, `conteo`, `estado`, `creadoEn`, `fechaInicio?`, `fechaFin?`, `autorizadaPor?`, `ultimaAccionPor?`, `cumplidaEn?`, `liquidadoEn?`, `recompensaCobrada?`, `castigoAplicado?` |
+| `nivelesActividad` | col (id = id de la actividad) | `n{[nivel]:{A[],B[]}}`, `titulo?`, `oficial?`, `actualizadoEn` |
+| `presetsActividad` | col (id = id de la actividad) | `accesorios[]`, `actualizadoEn` |
+| `citas` | col | `proponenteId/Nombre`, `paraId/Nombre`, `fechaCita` (texto), `actividad`, `actividadId?`, `descripcion`, `accesorios[]`, `estado`, `creadoEn`, `actualizadoEn`, `ultimaAccionPorId/Nombre` |
+
+### Retos y puntos
+| Ruta | Forma | Qué guarda |
+|---|---|---|
+| `retos` | col | `actividad`, `asignadoPor{}`, `asignadoA{}`, `vecesAlDia`, `duracionDias`, `puntosMeta`, `penalizacionPuntos`, `castigo`, `recompensa`, `conteo`, `estado`, `fechaInicio?`, `fechaFin?`, `cumplidaEn?`, `liquidadoEn?` |
+| `puntosUsuarios` | col (id = usuario) | `balance` — caché del saldo |
+| `puntos/{uid}/movimientos` | subcol | `monto`, `motivo`, `origen`, `referenciaId`, `referenciaTexto`, `saldoDespues`, `fecha` |
+
+### Chat y avisos
+| Ruta | Forma | Qué guarda |
+|---|---|---|
 | `chat` | col | `texto`, `autorId`, `autorNombre`, `creadoEn` |
 | `presencia` | col (id = usuario) | `nombre`, `visto` |
-| `puntosUsuarios` | col (id = usuario) | `balance` |
-| `puntos/{uid}/movimientos` | subcol (id = usuario) | `monto`, `motivo`, `origen`, `referenciaId`, `referenciaTexto`, `saldoDespues`, `fecha` — el historial de puntos (nov-2026) |
-| `opcionesJuego/actual` | doc | `A[]`, `B[]`, `actualizadoEn` |
-| `sesionEncuentros/actual` | doc | `activa`, `pausada`, `terminada`, `porAdmin`, `sid`, `hostUid`, `hostNombre`, `modo`, `actividades[]`, `titulo`, `cabezas[]`, `listas{}`, `largo`, `ronda`, `turno`, `orden[]`, `empezadaEn`, `actualizadaEn` |
-| `sesionGuiada/actual` | doc | `activa`, `sid`, `hostUid`, `hostNombre`, `modo`, `titulo`, `actividades[]`, `lista[]`, `paso`, `terminada`, `reanudada`, `empezadaEn`, `actualizadaEn` |
-| `sesionOpciones/actual` | doc | `cabezas[]`, `listas{}`, `pares{}`, `eliminadas{}`, `orden[]`, `turno`, `ronda`, `terminada`, `activa`, `pausada`, `porAdmin`, `sid`, `hostUid`, `hostNombre`, `modo`, `unCelular`, `rondas`, `ladoSolo`, `reanudada`, `empezadaEn`, `actualizadaEn` |
-| `personajesJuego/actual` | doc | `U1[]`, `U2[]`, `C1[]`, `C2[]`, `ESP[]`, `actualizadoEn` — el contenido del juego de Roles (oct-2026) |
-| `sesionRoles/actual` | doc | `cabezas[]`, `listas{}`, `orden[]`, `turno`, `ronda`, `rondas`, `terminada`, `activa`, `pausada`, `porAdmin`, `sid`, `hostUid`, `hostNombre`, `modoJuego`, `modoBase`, `especial`, `especialK`, `especiales[]`, `unCelular`, `ladoSolo`, `reanudada`, `empezadaEn`, `actualizadaEn` |
-| `seleccionRoles/actual` | doc | `activa`, `modo`, `sid`, `hostUid`, `hostNombre`, `rondas`, `cabezas[]`, `sel{}`, `agregar?`, `anfitrionUid?`, `anfitrionNombre?`, `actualizadaEn` |
-| `invitaciones` | col (id = juego) | `juego`, `titulo`, `icono`, `ruta`, `hostUid`, `hostNombre`, `participantes[]`, `sesion`, `activa`, `pausada`, `sid`, `actualizadaEn` |
-| `invitosChat/actual` | doc | `para`, `creadoEn`, `visto`, `vistoEn?` — la campana de la pestaña (ver `Campana-Pestana.md`) |
-| `invitosRetos/{idDeQuienManda}` | col (un doc por persona) | `para`, `titulo`, `creadoEn`, `visto`, `vistoEn?` — lo mismo, pero **por quien manda** (oct-2026). Antes era un doc solo y se pisaban entre los dos |
-| `packs` | col (taquilla) | `titulo`, `icono`, `desc`, `ruta`, `seccion`, `orden`, `activo`, `actualizadoEn`, `nuevoHasta`, `oficial?`, `niveles?`, `tomasSugeridas?` |
-| `solicitudes` | col (taquilla) | `para`, `item`, `quien`, `email`, `estado`, `fecha`, `intentos`, `pideDesrevocar`, `codigo?`, `vence?`, `dias?`, `aprobadoEn?`, `revocadoEn?`, `graciaUsada?`, `graciaFecha?` |
-
-**17 colecciones + 3 documentos sueltos. Tres bases de datos distintas
-(Encuentros, Guiadas, Opciones) con el MISMO nombre de campo `listas` y
-estructuras incompatibles.**
-
----
-
-## 1b. Lo que agrego `Roles/` (oct-2026)
-
-> Juego de Roles. **Sus tres documentos son de contenido íntimo y viven en la
-> base de la pareja, no en un JSON del repo** (decisión de Fredy). Se agregaron
-> después del inventario, así que el conteo de arriba no los incluye.
-
-### `personajesJuego/actual` — el contenido
-
-```
-{
-  U1: [personaje, ...],   // normales que personifica el usuario 1
-  U2: [personaje, ...],   // normales que personifica el usuario 2
-  C1: [personaje, ...],   // CONTRAPARTES DE LOS PERSONAJES DEL USUARIO 2
-  C2: [personaje, ...],   // CONTRAPARTES DE LOS PERSONAJES DEL USUARIO 1
-  ESP: [ "texto", ... ],  // variantes especiales, COMUNES a los dos
-  actualizadoEn
-}
-```
-
-Un `personaje` (`gancho` y `si_quieres` son nombres internos: en la carta se
-leen **ATTRACTIVO** y **ACCIÓN**, y no se renombran):
-
-| Campo | Qué es |
-|---|---|
-| `id` | Número. **Único en las cuatro listas**, no solo dentro de una. Se asigna solo, no se teclea |
-| `personaje` | El nombre. No se repiten (sin distinguir mayúsculas) |
-| `situacion` | → **SITUACIÓN** |
-| `gancho` | → **ATRACTIVO** |
-| `derechos` | → **DERECHOS** |
-| `si_quieres` | → **ACCIÓN** |
-| `imagen` | **URL**, opcional. Nunca base64 ni bytes |
-| `par` | **Solo en `C1`/`C2`.** El `id` del personaje normal al que corresponde, **del OTRO usuario**: las contrapartes van **cruzadas** (decisión de Fredy, oct-2026). O sea, el `par` de un `C1` apunta a un `U2`, y el de un `C2` a un `U1` |
-
-### `sesionRoles/actual` — la partida
-
-Casi la misma forma que `sesionOpciones/actual`, con **tres diferencias**:
-
-| | |
-|---|---|
-| **No existen `pares{}` ni `eliminadas{}`** | En Roles no se escoge nada: se lee la tarjeta y se pasa. `listas{id}` es la **cola de tarjetas que le faltan** a ese jugador, y cada elemento es un **objeto `personaje` completo**, no un texto |
-| **`modoJuego` y `modoBase` son dos campos distintos** | `modoJuego` es **quiénes juega** (`solo`/`pareja`/`multi`) y es el `modo` del juego anterior. `modoBase` es el modo del juego: `normal` / `espejo` / `seleccionar`. **No se reutilizó el nombre `modo`** porque ya significaba otra cosa |
-| **`especiales[]`** | `[{ ronda, jugador, texto }]`, **sorteado una sola vez al arrancar** y guardado aquí para que todos los celulares vean lo mismo. Máximo uno por ronda |
-
-**Ojo con el tamaño (es el problema P4 de este mismo documento):** ahora cada
-tarjeta es un objeto con texto largo, y van todas en un solo documento. Con la
-pareja y rondas normales son unas decenas y cabe de sobra; **si algún día se
-juega con muchos invitados y muchas rondas, hay que revisar el límite de 1 MiB
-por documento** (ver P4).
-
-### `seleccionRoles/actual` — la selección (solo modo "seleccionar")
-
-Sirve para **dos cosas distintas**, y el campo `modo` dice cuál:
-
-| `modo` | Qué es |
-|---|---|
-| (sin `modo`, o `"elegir"`) | La selección **de antes de empezar**. Cada quien marca R tarjetas de su lista y el anfitrión aprieta "Jugar" |
-| `"agregar"` | Un invitado que entra **con la partida ya andando**: él marca sus `R − ronda` tarjetas y el anfitrión aprieta "Meterlo a la partida" |
-
-| Campo | Qué es |
-|---|---|
-| `activa` | While `true`. Al terminar (o cancelar) se apaga a `false` para que nadie se quede pegado |
-| `rondas` | R |
-| `cabezas[]` | Quién tiene que escoger |
-| `sel{}` | `{ idJugador: [idPersonaje, ...] }`. **Cada teléfono escribe solo su llave**; el anfitrión nunca escribe las de los demás |
-| `agregar` | Solo en `modo:"agregar"`: `{ id, nombre, lado, necesidad }` |
-| `anfitrionUid`, `anfitrionNombre` | Quién pidió la selección |
-
-**Patrón que se respetó en los dos casos:** el documento se apaga (`activa:false`)
-**antes** de escribir la partida. Así, si la escritura falla, nadie se queda
-viendo una pantalla que nadie va a contestar.
-
----
-
-## 2. Diagnostico: los 7 problemas
-
-### P1. El nombre de una actividad es llave en 5 sitios — RESUELTO (nov-2026)
-
-**Antes** `presetsActividad` y `nivelesActividad` guardaban el nombre como id del
-documento, y las citas solo tenían el nombre. Renombrar obligaba a mover
-documentos de un lado a otro, y si un paso fallaba la actividad quedaba a medias.
-
-**Ahora la llave es el id:** las dos colecciones se guardan con el id de
-`actividadesExtra`, cada cita lleva `actividadId` junto al nombre, y renombrar
-solo cambia el campo `nombre`. La migración de lo que ya estaba guardado está más
-abajo, en *Actividades por id*. `retos.actividad` no era una llave: es texto
-libre que escribe la pareja.
-
-### P2. El nombre de un usuario esta copiado en 22 campos
-
-En `usuarios[]`, `citas` (x4), `retos` (x4, dentro de objetos `{id,nombre}`),
-`chat`, `presencia`, las 3 sesiones (`cabezas[]`, `hostNombre`),
-`invitaciones`, `nivelesActividad.titulo`, `packs.titulo`.
-
-No se nota porque **la app no tiene forma de renombrar a un usuario.** Si se
-agrega, quedan 22 lugares desincronizados y el chatDiría un nombre que el chat ya
-no tiene.
-
-### P3. El saldo de puntos no tiene historial — RESUELTO (nov-2026)
-
-`puntosUsuarios/{id}` tiene **un solo campo**: `balance`, y siempre escrito con
-`increment()`. **Antes** no había de dónde vino ni a dónde fue.
-
-**Ahora sí hay historial:** cada movimiento se registra en
-`puntos/{uid}/movimientos/{movId}` (ver `General/Puntos.md`), con el monto, el
-motivo, el origen, la referencia y el saldo que quedó. Con eso se puede auditar
-y corregir un descuento mal hecho sin perder el rastro.
-
-> Nota: el historial arranca en nov-2026; los movimientos de antes no se pueden
-> reconstruir (no quedaron guardados). El saldo actual de cada quien es el punto
-> de partida.
-
-### P4. Las partidas son un solo documento que crece
-
-`sesionEncuentros/actual` guarda `cabezas[]` + `orden[]` + `listas{}` (las
-acciones de cada jugador). Con 8 personas x 5 rondas x 15 acciones son ~600
-objetos.
-
-Dos consecuencias medibles:
-
-1. **Techo duro de 1 MiB por documento** de Firestore.
-2. **Amplificacion de lectura:** `onSnapshot` esta suscrito al documento
-   COMPLETO (`Encuentros:702`). Cuando cambia `turno`, **baja otra vez todas las
-   acciones de todos los jugadores**, a cada telefono, en cada turno.
-
-Aclaracion importante: **la escritura de cada turno es barata** (son 4 campos:
-`ronda`, `turno`, `orden`, `actualizadaEn`, en `Encuentros:802`). El costo esta
-en la lectura repetida, no en la escritura. La escritura grande ocurre **una
-vez**, al crear la partida.
-
-### P5. Tres bases de datos con el mismo nombre de campo y estructuras distintas
-
-| | `sesionGuiada` | `sesionEncuentros` | `sesionOpciones` |
-|---|---|---|---|
-| las acciones | `lista[]: {nivel,lado,texto}` | `listas{}: {id: [...]}` | `listas{}: {id: string[]}` |
-| el turno | `paso` (indice) | `turno` + `orden[]` | `turno` + `orden[]` |
-| participantes | **no tiene** | `cabezas[]` | `cabezas[]` |
-| publica invitacion | **no** | si | si |
-
-Son el mismo concepto con tres esquemas. Por eso `invitado.js` existe como
-modulo aparte (bien hecho), pero `publicarInvitacion()` se sigue copiando a mano
-en cada juego nuevo, y el bug del "aviso pegado" (ya documentado y corregido en
-`invitado.js:193`) es consecuencia directa de que el aviso viva **separado** de
-la partida y necesite un `getDoc` cruzado para validité.
-
-### P6. Tipos mezclados y campos con tres valores
-
-- `citas.fechaCita` es **string**; `retos.fechaFin` es **`Date` nativo**. Dos
-  Representation del mismo concepto, dos funciones para leerlo.
-- `solicitudes.graciaUsada` se escribe con **tres valores**: `true` (4 pantallas),
-  `false` (solo siFinite) y `null` (si la licencia es infinita). La logica busca
-  exactamente `=== false`. Funciona, pero es una bomba de tiempo: cualquier
-  `if(d.graciaUsada)` mal escrito da el resultado opuesto.
-- `retos.estado` tiene **cinco valores en dos vocabularios**: `"cobrada"` en
-  `retos` significa lo mismo que `terminada` en las sesiones.
-- `usuarios[].id` tiene **dos formatos**: `"u1","u2"` (secuencial) y
-  `"u"+base36(fecha)` (aleatorio, el que crea el engrane).
-
-### P7. Ya hay JOINs manuales, y por eso existen workarounds
-
-`Citas/actividades.html:730` recorre **todas las citas buscando las de una
-actividad** (`where("actividad","==",viejo)`) solo para poder renombrarla. Eso es
-un JOIN hecho a mano. Y `invitado.js:196` hace un `getDoc` a la sesion desde el
-aviso. Y `Opciones` resuelve los nombres de las listas "contra Quien" porque
-`conQuien` es una copia que nunca se actualiza.
-
----
-
-## 3. Decision de arquitectura
-
-### Las tres opciones y por que se descartan dos
-
-**Opcion A — Relacional puro (3FN, cero duplicacion).** Descartada.
-Todo por id, el nombre se consulta una vez. Suena correcto y aqui no funciona:
-para pintar la lista de citas habria que leer citas + usuarios + actividades +
-accesorios. En Firestore **no hay joins**, eso son N lecturas por pantalla. Y
-peor: **la app tiene que funcionar sin internet** (esta escrito en varios
-sitios: `modoLocal`, `conTiempo()`, el respaldo de fabrica). Sin red no se puede
-resolver ninguna referencia, asi que habria que construir un espejo local
-completo — o sea, reimplementar la base de datos en `localStorage`. Es mas caro
-y mas fragile que lo que hay.
-
-**Opcion B — Snowflake puro.** Descartado como forma total.
-Nombres centralizados en una tabla de dimensiones y todo apuntando por id. Es la
-tecnica correcta para un atributo que casi no cambia... pero tiene el mismo
-problema: sin red no se resuelve la referencia, y la app necesita **leer rapido**
-y leer sin conexion. Ademas, las partidas necesitan *literalmente* los textos de
-las acciones en memoria para pintar la pantalla; un modelo que obliga a
-resolverlos uno por uno rompe el caso de uso principal.
-
-**Opcion C — Nucleo normalizado + vistas de partida desechables. RECOMENDADA.**
-
-La idea, en una frase: **normalizar todo lo que es identidad, y desnormalizar
-unicamente lo que es "estado de una partida", que es temporal y se puede tirar y
-reconstruir.**
-
-Regla que gobierna el diseno:
-
-> **La desnormalizacion en Firestore no es un defecto: es el precio de la
-> velocidad de lectura y del modo sin conexion. Pero solo se paga donde compra
-> algo. En todas partes es deuda.**
-
-Donde si compra: las acciones de una partida (hay que verlas al instante, sin
-red, N veces por turno). Donde no compra: el nombre de un usuario, el nombre de
-una actividad, el saldo de puntos. Ahi es deuda pura.
-
-Consecuencia practica: **`invitaciones` deja de necesitar el `getDoc` cruzado.**
-Si el aviso guarda `partidaId` y la partida es un doc con su id, la sala puede
-preguntarle a la partida por su id. Se va el bug del "aviso pegado" por
-construccion, no por una comprobacion defensiva.
-
-Es "relacional" en el diseno (ids y referencias, sin duplicar) y "documental"
-en la materializacion (subcolecciones que traen lo necesario junto). No es una
-sola de las dos: es la unica que sobrevive a Firestore + offline.
-
----
-
-## 4. El modelo propuesto
-
-### Base de la pareja
-
-```
-usuarios/{uid}
-  { nombre, rol, invitadoDe|null, creadoEn, actualizadoEn, activo }
-  rol: "admin" | "pareja" | "invitado"      <- reemplaza admin:bool + invitado:bool
-  invitadoDe: uid|null                       <- reemplaza conQuien:string
-
-actividades/{actId}                         actId = id automatico, estable
-  { nombre, origen, creadoEn, actualizadoEn, activa }
-  actividades/{actId}/accesorios/{accId}     { nombre, creadoEn }
-  actividades/{actId}/acciones/{accId}       { nivel, lado, texto, creadoEn }
-  actividades/{actId}/tomas/{nivelId}        { valor:number }
-
-citas/{citaId}
-  { propuestaPor:uid, para:uid, fecha:Timestamp, actividadId, descripcion,
-    accesoriosIds[], estado, creadoEn, actualizadoEn, ultimaAccionPor:uid }
-
-retos/{retoId}
-  { titulo, actividadId, asignadoPor:uid, asignadoA:uid, vecesAlDia, duracionDias,
-    puntosMeta, penalizacionPuntos, castigo, recompensa, estado, creadoEn, fechaFin }
-  retos/{retoId}/cumplimientos/{cId}         { por:uid, cuando:Timestamp }
-  retos/{retoId}/liquidaciones/{lqId}        { por:uid, delta, motivo, cuando }
-
-puntos/{uid}                                { saldo }        <- cache, se recalcula
-  puntos/{uid}/movimientos/{movId}           { delta, motivo, ref, cuando }  <- verdad
-
-chat/{msgId}                                 { autorId, texto, creadoEn }
-presencia/{uid}                              { visto }
-
-partidas/{partidaId}
-  { juego, estado, hostId, modo, unCelular, params:{...}, sid,
-    empezadaEn, actualizadaEn, participantesIds[] }
-  partidas/{partidaId}/turnos/{tid}          { indice, jugadorId, estado }
-  partidas/{partidaId}/acciones/{aid}        { jugadorId, nivel, lado, texto, ronda }
-
-invitaciones/{juego}                         { partidaId, participantesIds[], estado, pausada }
-```
-
-### Base de la taquilla
-
-```
-packs/{packId}                     { titulo, icono, desc, ruta, seccion, orden,
-                                     activo, actualizadoEn, nuevoHasta, oficial?,
-                                     niveles?, tomasSugeridas? }
-
-solicitudes/{solId}                { clienteId, packId, estado, intentos,
-                                     pideDesrevocar, fecha, ... }
-clientes/{clienteId}               { email, nombre }      <- SEPARADO (ver abajo)
-```
-
-### Que cambia y por que
-
-| Hoy | Propuesto | Por que |
+| `invitosChat/actual` | doc | `para`, `creadoEn`, `visto`, `vistoEn?` |
+| `invitosRetos/{idDeQuienManda}` | col | `para`, `titulo`, `creadoEn`, `visto` |
+| `invitosFavor/{idDeQuienManda}` | col | el aviso de un favor |
+| `invitosLenceria` | col | el aviso de un plan de lencería |
+
+### Juegos y sesiones
+| Ruta | Forma | Qué guarda |
 |---|---|---|
-| `actividadesExtra` con nombre como llave | `actividades/{actId}` con `nombre` como atributo | **Renombrar pasa de 5 escrituras a 1.** Se va la tabla de la guia. |
-| `nivelesActividad` con `n{}` anidado | `actividades/{id}/acciones/` — 1 doc por accion | Se puede editar y borrar una accion suelta; hoy hay que reescribir las 10 claves. |
-| `presetsActividad/{nombre}` | `actividades/{id}/accesorios/` | Se va la segunda llave por nombre. |
-| `citas.actividad` (string) | `citas.actividadId` | Se va el `where` de `actividades.html` y el renombrado deja de tocar citas. |
-| `citas.fechaCita` (string) | `fecha:Timestamp` | Ordenar y comparar de verdad. |
-| `citas.proponenteNombre` etc. | solo ids | 4 campos menos por cita. |
-| `retos.asignadoPor{id,nombre}` | `asignadoPor:uid` | 8 objetos `{id,nombre}` en la coleccion. |
-| `puntosUsuarios.balance` | `puntos/{uid}/movimientos/` + saldo como cache | **Se puede auditar y corregir.** Es el problema P3. |
-| 3 documentos `sesion*` | 1 coleccion `partidas/` con subcolecciones | P5: un solo esquema, tres juegos encima. |
-| `invitaciones.sesion` (string) | `invitaciones.partidaId` | Se va el `getDoc` cruzado y el aviso pegado. |
-| `config/ajustes.usuarios[]` | `usuarios/{uid}` | **Fase 5, la mas riesgosa.** Ver abajo. |
-| `solicitudes.email` | `clientes/{id}.email` | Es el problema que ya esta documentado: el correo del cliente es legible sin sesion. Separarlo lo hace atacable con reglas. |
+| `opcionesJuego/actual` | doc | `A[]`, `B[]` |
+| `sesionGuiada/actual` | doc | `lista[]`, `paso`, `terminada`, … |
+| `sesionEncuentros/actual` | doc | `cabezas[]`, `listas{}`, `orden[]`, `turno`, `ronda`, … |
+| `sesionOpciones/actual` | doc | `cabezas[]`, `listas{}`, `pares{}`, `eliminadas{}`, … |
+| `personajesJuego/actual` | doc | `U1[]`, `U2[]`, `C1[]`, `C2[]`, `ESP[]` |
+| `sesionRoles/actual` | doc | `listas{}`, `modoJuego`, `modoBase`, `especiales[]`, … |
+| `seleccionRoles/actual` | doc | `sel{}`, `cabezas[]`, `agregar?` |
+| `sesionCastigos/actual` | doc | sesión compartida de Castigos |
+| `invitaciones` | col (id = juego) | `juego`, `titulo`, `ruta`, `hostUid`, `participantes[]`, `sesion`, `activa`, `pausada`, `sid` |
 
-### Lo que NO se toca (a proposito)
+### Castigos
+| Ruta | Forma | Qué guarda |
+|---|---|---|
+| `castigosExtra` | col | `nombre`, `creadoEn` |
+| `nivelesCastigo` | col (id = castigo) | `n`, `titulo`, `oficial?`, `tomas` |
+| `accesoriosCastigo` | col | `nombre`, `creadoEn` |
+| `imposicionesCastigo/actual` | doc | `{ A:[…], B:[…] }` |
 
-- **`rol` no es una tabla de permisos.** Sigue sin haber login, y sin login las
-  reglas siguen abiertas. Esto **no cambia la seguridad de nada**; solo deja el
-  dato en un lugar donde, cuando llegue el login, ya esta donde debe.
-- **`presencia.nombre` y `chat.autorNombre` se pueden quitar, pero no hace falta.**
-  En un registro de mensajes es correcto guardar el nombre como foto: si el
-  usuario se borra, el historial sigue siendo legible. Eso es snowflake
-  **intencional**, no deuda. Se documenta como decision para que nadie lo
-  "arregle" despues.
+### Centro, favores y lencería
+| Ruta | Forma | Qué guarda |
+|---|---|---|
+| `deseos` | col | los deseos del Centro |
+| `comprasDeseos` | col | los pedidos del Centro |
+| `favoresExpress` | col | los favores (precio, estado, reloj) |
+| `lenceriaPrendas` | col | el catálogo de la pareja |
+| `lenceriaPedidos` | col | los planes pedidos |
+| `lenceriaVestuarios` | col | lo que tiene cada lado |
 
----
-
-**Actividades por id (oct-2026).** `nivelesActividad` y `presetsActividad` se
-guardan con el id de `actividadesExtra`, no con el nombre; cada cita guarda
-`actividadId` junto al nombre (solo si se encontró el id). `migrarActividadesAId()`
-(`config.js`) mueve lo que hubiera bajo el nombre: si el del id no existe, copia;
-si ya existe, **mezcla** (el del id manda campo por campo y las acciones del
-nombre que le falten se le suman). El documento viejo se borra solo después de
-volver a leer el del id y confirmar que quedó. Si algo falla, esa actividad no
-se marca como migrada y se reintenta en la siguiente carga. La bandera
-`config/migracionActividades` (versión 2) guarda los ids ya revisados (`ids`) y
-los que la versión 1 ya había copiado (`copiadasV1`; a esos no se les mezcla,
-para no resucitar lo que la pareja borró después). Una marca en `localStorage`
-evita releerla en cada carga. Corre siempre que la lista de actividades se leyó,
-no depende de la siembra de fábrica. Mientras algo no se mueva,
-`leerDocActividad()` lo lee por nombre, así que la actividad no se ve vacía. Las
-citas muestran el nombre actual de su `actividadId`; si no lo tienen, el
-`actividad` guardado.
-
-## 5. Orden de migracion (de menor a mayor riesgo)
-
-**No hay git en este entorno.** Cualquier migracion tiene que ser *aditiva*
-(escribir el dato nuevo junto al viejo) y reversible a mano, porque no hay
-`git revert`. Fredy prueba en vivo antes de continuar.
-
-### Fase 1 — Arreglos puntuales. Riesgo bajo. **Empezar aqui.**
-- Corregir la ruta mal escrita de `sesionEncuentros/actual` (ver B1)
-- Arreglar la fuga de puntos al eliminar un reto (ver B2)
-- Poner `marcarCumplida` en transaccion (ver B3)
-- Unificar los tipos de fecha y `graciaUsada`
-
-Ninguna de estas cambia el esquema. Se pueden hacer y probar por separado.
-
-### Fase 2 — Id estable en actividades. Riesgo medio. **El mayor beneficio.**
-`actividades/{actId}` + ids en `citas` y `retos`. **Elimina la tabla de "mover
-cinco cosas"** de la guia, que es la fuente de advertencias que ya existem.
-Requiere migrar los docs que ya estan en `pareja-test`.
-
-### Fase 3 — Historial de puntos. Riesgo medio.
-`puntos/{uid}/movimientos/`. El saldo pasa a ser una cache recalculable. Se
-puede hacer **en paralelo** con la 2 (no se tocan).
-
-### Fase 4 — Partidas unificadas. Riesgo alto.
-Un solo esquema para los tres juegos + `partidaId` en `invitaciones`. Es la que
-mas codigo toca (tres juegos completos) y la que mas riesgo de romper turnos.
-
-### Fase 5 — Identidad. Riesgo alto. **Va al final, con el login.**
-`config/ajustes` → `usuarios/`. Toca el modo invitado, el respaldo, y el
-`localStorage` de respaldo. **Es parte del "rediseño de arquitectura" que ya
-esta planeado**, y no se puede hacer antes: sin login no cambia la seguridad y
-solo agrega riesgo.
+### Taquilla
+| Ruta | Forma | Qué guarda |
+|---|---|---|
+| `packs` | col | `titulo`, `icono`, `ruta`, `seccion`, `oficial?`, `niveles?`, `tomasSugeridas?` |
+| `solicitudes` | col | `para`, `item`, `email`, `estado`, `fecha`, `codigo?`, `vence?`, … |
+| `config/permisos` | doc | la lista de correos que publican |
 
 ---
 
-## 6. Fallas verificadas durante el analisis
+## 2. Lo que falta
 
-No son hipotesis: estan en el codigo, con linea.
+### P4 y P5. Las partidas son un documento que crece, con tres esquemas
 
-### B1. La expulsion automatica del invitado NUNCA se ejecuta
+`sesionEncuentros/actual`, `sesionGuiada/actual` y `sesionOpciones/actual` son el
+mismo concepto con tres formas distintas, y a eso se le sumaron Roles y Castigos.
 
-`index.html:870`
-```js
-const sd = await conTiempo(getDoc(doc(db, "sesionEncuentros/actual")), 8000);
-```
-Un solo segmento de ruta. `doc()` con un numero impar de segmentos devuelve una
-**coleccion**, no un documento; `getDoc()` sobre una coleccion lanza error, y el
-`catch` de la linea 874 se lo come. `leido` se queda en `false`, y la linea 876
-sale temprano **siempre**.
+Dos consecuencias:
 
-Efecto: la funcion `volverSiInvitadoSinPartida()` **no puede devolver `true`
-nunca**. El invitado nunca vuelve solo a su base. Es exactamente el criterio A de
-`GUIA.md` §5.2, que aparece como *"probado por Fredy, funciona bien"*.
+1. **Techo de 1 MiB por documento.** Con pareja y rondas normales sobra; con
+   muchos invitados y muchas rondas hay que mirarlo.
+2. **Amplificación de lectura:** el `onSnapshot` está suscrito al documento
+   completo. Cuando cambia el turno, **baja otra vez todas las acciones de todos
+   los jugadores** a cada teléfono. La escritura sí es barata.
 
-El modo correcto, como en el resto del archivo, son dos segmentos:
-`doc(db, "sesionEncuentros", "actual")`.
+**Propuesta (Fase 4):** `partidas/{partidaId}` con subcolecciones
+(`turnos/`, `acciones/`) e `invitaciones.partidaId`. Se va también el `getDoc`
+cruzado que causaba el aviso pegado.
 
-> A confirmar a mano: abrir la consola del navegador en el celular con un
-> invitado registrado y ver si aparece el error silenciado.
+### P6. Tipos mezclados
 
-### B2. Eliminar un reto ya cobrado descuenta puntos de mas
+- `citas.fechaCita` es **texto**; `retos.fechaFin` es **`Date`**. Dos formas de
+  leer una fecha.
+- `solicitudes.graciaUsada` se escribe `true`, `false` o `null` y la lógica busca
+  exactamente `=== false`. Funciona, pero un `if(d.graciaUsada)` mal escrito da lo
+  contrario.
+- `retos.estado` usa cinco valores en dos vocabularios (`"cobrada"` aquí,
+  `terminada` en las sesiones).
+- `usuarios[].id` tiene dos formatos: `"u1"`, `"u2"` y `"u" + base36(fecha)`.
 
-`Retos/index.html:935-943`
-```js
-const conteo = (reto.estado === "enCurso") ? (reto.conteo || 0) : 0;
-if(conteo > 0){ ... increment(-conteo) ... }
-```
-Cuando se alcanza la meta, `marcarCumplida` liquida con `delta = 1 - puntosMeta`
-(por ejemplo meta 5: acumula +4 y liquida -4, **quedando en 0**). Pero al
-eliminar ese mismo reto, `eliminarReto` revierte `-conteo` = **-5**, dejando el
-saldo en **-5**.
+### Fase 5. La identidad (`config/ajustes` → `usuarios/`)
 
-Y como ademas hace `batch.delete` del reto, **no queda registro de por que se
-desconto nada**. El arreglo del P3 (historial de movimientos) vuelve este error
-imposible de cometer en silencio.
-
-Ademas `eliminarReto` no revisa el estado, mientras que
-`finalizarRetosVencidos` si lo hace (`data.estado !== "enCurso"`).
-
-### B3. Marcar cumplida no esta en transaccion: doble penalizacion
-
-`Retos/index.html:951-976`
-
-`conteo` usa `increment()` (atomico, bien), pero **`metaAlcanzada` y `delta` se
-calculan del `reto` que se tiene en memoria**, no del documento. Dos celulares
-tocando "cumplida" al mismo tiempo, con `conteo` en `meta-1`:
-
-- A calcula `nuevoConteo = meta`, `delta = 1 - meta`
-- B calcula lo mismo (leyo el mismo dato viejo)
-
-Los dos escriben. `conteo` queda en `meta+1` y el saldo recibe **dos veces la
-penalizacion**. El guardado local (`suprimir(id)`) solo protege a un dispositivo.
-
-El mismo archivo ya tiene el patron correcto en `finalizarRetosVencidos`
-(linea 1012), que **si** usa `runTransaction` y vuelve a leer el documento
-dentro. `marcarCumplida` deberia hacer lo mismo.
-
-### B4. Dos invitados pueden terminar con el mismo id
-
-`index.html:1424-1426`
-```js
-arr.forEach(u=>{ const m = /^u(\d+)$/.exec(u.id || ""); if(m) n = Math.max(n, +m[1] + 1); });
-const yo = { id: "u" + n, ... };
-```
-El id que crea el engrane es `"u" + Date.now().toString(36)` (linea 1081), que
-lleva **letras**, asi que no cumple el patron y no cuenta para el maximo. Si la
-base tiene un invitado del engrane y ningun `uN` numerico, el siguiente
-registrado por QR recibe `u1`, que puede estar ocupado.
-
-### B5. Como se dispersa el modelo de partida
-
-Ya descrito en P4. No es una falla Today's: es el techo de 1 MiB y la
-amplificacion de lectura de `onSnapshot` sobre el documento completo. Vale la
-pena verlo antes de que haya partidas grandes de verdad.
+Va **con el login**, no antes: sin login las reglas siguen abiertas y mover la
+identidad solo agrega riesgo. Es parte del rediseño de arquitectura que ya está
+planeado. Ver `GUIA.md`, *Pendientes de licencias*.
 
 ---
 
-## 7. Lo que este documento NO hace
+## 3. Orden de migración (solo quedan dos)
 
-- **No cambia reglas de Firebase.** `solicitudes` y las reglas de la pareja
-  siguen como estan, por decision de Fredy (ver `AGENTS.md`).
-- **No propone login ni autenticacion.** Eso es el rediseño de arquitectura, ya
-  planeado aparte.
+**No hay `git` en el entorno de trabajo.** Cualquier migración tiene que ser
+**aditiva** (escribir lo nuevo junto a lo viejo) y reversible a mano. Fredy prueba
+en vivo antes de seguir.
+
+| Fase | Qué | Riesgo |
+|---|---|---|
+| **4** | Partidas unificadas + `partidaId` en `invitaciones` | **Alto.** Toca los juegos completos y los turnos |
+| **5** | Identidad por usuario | **Alto.** Va con el login, al final |
+
+**No se empieza la Fase 4 sin un problema real.** Hoy las partidas caben; si
+alguna vez se juega con mucha gente y muchas rondas, se hace entonces.
+
+---
+
+## 4. La decisión de diseño que se mantiene
+
+**Normalizar la identidad; desnormalizar solo el estado de una partida.**
+
+> La desnormalización en Firestore no es un defecto: es el precio de la velocidad
+> de lectura y del modo sin conexión. Pero solo se paga donde compra algo. En
+> todas partes es deuda.
+
+- **Se paga** en las acciones de una partida: hay que verlas al instante y sin
+  red, muchas veces por turno.
+- **No se paga** en el nombre de un usuario, el nombre de una actividad o el
+  saldo de puntos.
+
+Se descartaron dos extremos, y conviene no volver a proponerlos:
+
+- **Relacional puro:** en Firestore no hay `JOIN`, y sin red no se puede resolver
+  ninguna referencia. Habría que reimplementar la base en `localStorage`.
+- **Snowflake puro:** mismo problema de fondo; además la partida necesita los
+  textos de las acciones en memoria para pintar la pantalla.
+
+**Sí se queda a propósito** (no es deuda): `chat.autorNombre` y `presencia.nombre`.
+En un historial de mensajes es correcto guardar el nombre del momento.
+
+---
+
+## 5. Lo que este documento NO hace
+
+- **No cambia reglas de Firebase.** `solicitudes` y la base de cada pareja siguen
+  como están, por decisión de Fredy (ver `AGENTS.md`).
+- **No propone login.** Eso es el rediseño de arquitectura, aparte.
 - **No toca la llave de `taquilla.js`.**
-- **No se aplica nada.** Las fases son propuesta; cada una se prueba en vivo
-  antes de la siguiente.
+- **No se aplica solo.** Cada fase se prueba en vivo antes de la siguiente.
 
-### Pendiente de Fredy (no se puede hacer desde aqui)
+### Pendiente de Fredy (manual, no se puede hacer desde aquí)
 
-1. Abrir `pareja-test` en la consola y **comparar con la seccion 1** de este
-   documento: confirmar que no hay colecciones o campos viejos que el codigo ya
-   no usa.
-2. **Probar B1** en el celular (invitado registrado, abrir la app sin partida).
-3. **Probar B2** con un reto de meta 5 y ver el saldo antes y despues de
-   eliminarlo.
+Abrir `pareja-test` en la consola y comparar con el inventario de la sección 1:
+confirmar que no quedan colecciones o campos viejos que el código ya no usa.

@@ -785,7 +785,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, leerConfigGuardada } from "../config.js";
+import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, escucharItem } from "../acceso.js";
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
@@ -935,7 +935,7 @@ function nombreLado(lado){
 }
 function nombreCabeza(id){
   const c = (estado && estado.cabezas || []).find(x=>x.id === id) || (sesionActual && (sesionActual.cabezas || []).find(x=>x.id === id));
-  return (c && c.nombre) || "alguien";
+  return nombrePorId(c && c.id, c && c.nombre) || "alguien";
 }
 function construirCabezas(){
   const adm = usuariosLista.find(u=>u.admin);
@@ -1377,7 +1377,9 @@ function repartirEspeciales(cabezasIn, R, K){
 }
 function cargarEstado(d){
   estado = {
-    cabezas: Array.isArray(d.cabezas) ? d.cabezas : [],
+    cabezas: (Array.isArray(d.cabezas) ? d.cabezas : []).map(c=>
+      c ? Object.assign({}, c, { nombre: nombrePorId(c.id, c.nombre) }) : c
+    ),
     listas: d.listas || {},
     orden: Array.isArray(d.orden) ? d.orden.slice() : [],
     turno: d.turno || 0,
@@ -1456,7 +1458,7 @@ async function chequearPartidaEspera(){
         : ((d.hostNombre || "El anfitrión") + " inició Juego de Roles.");
       abrirModal("modalUnir");
     }else{
-      const nombres = (d.cabezas || []).map(c=>c.nombre).join(", ");
+      const nombres = (d.cabezas || []).map(c=>nombrePorId(c.id, c.nombre)).join(", ");
       pon("Hay partida de " + (d.hostNombre || "el anfitrión") + ", pero no estás en la lista. Participantes: " + nombres + ". Tú: " + yo + ".");
     }
   }catch(e){
@@ -3127,7 +3129,7 @@ function pintarSeleccion(){
     const c = selCabezas[i];
     const b = document.createElement("button");
     b.className = "tab" + (i === selTab ? " activo" : "");
-    b.textContent = c.nombre || "Invitado";
+    b.textContent = nombrePorId(c.id, c.nombre) || "Invitado";
     b.onclick = ()=>{ selTab = i; pintarSeleccion(); };
     tabs.appendChild(b);
   });
@@ -3174,7 +3176,7 @@ function pintarSeleccion(){
     const b = document.createElement("b");
     const n = selMarcosDe(c.id).length;
     b.style.color = (n === selR) ? "var(--teal)" : "var(--coral)";
-    b.textContent = (c.nombre || "Invitado") + " " + n + "/" + selR;
+    b.textContent = (nombrePorId(c.id, c.nombre) || "Invitado") + " " + n + "/" + selR;
     cuenta.appendChild(b);
   });
 
@@ -4380,9 +4382,12 @@ function escucharGrupo(){
       try{
         const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
         if(!Array.isArray(arr) || !arr.length) return;
-        const antes = usuariosLista.map(u=>u && u.id).join(",");
+        const firma = lista => (Array.isArray(lista) ? lista : [])
+          .map(u=> ((u && u.id) || "") + ":" + ((u && u.nombre) || "")).join("|");
+        const antes = firma(usuariosLista);
         usuariosLista = arr;
-        if(antes === arr.map(u=>u && u.id).join(",")) return;
+        fijarUsuarios(arr);
+        if(antes === firma(arr)) return;
         if(jugandoCompartido && sesionActual && sesionActual.activa && jugando){
           sanearSesion(sesionActual);
           cargarEstado(sesionActual);
