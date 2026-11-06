@@ -785,7 +785,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios } from "../config.js";
+import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, escucharItem } from "../acceso.js";
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
@@ -925,27 +925,23 @@ function nombreAdmin(){
   const a = usuariosLista.find(u=>u.admin);
   return (a && a.nombre) || "el anfitrión";
 }
-// A = administrador, B = pareja (el primer usuario que no es admin ni invitado).
+// El nombre visible de un lado son las personas base que lo usan. Con los dos
+// en el mismo lado se muestran los dos nombres; si no hay nadie, "Sin usar".
 function nombreLado(lado){
-  try{
-    const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
-    if(u && u.nombre) return u.nombre;
-  }catch(e){}
-  return "Lado " + lado;
+  try{ return nombresDeLado(usuariosLista, lado); }catch(e){}
+  return "Sin usar";
 }
 function nombreCabeza(id){
   const c = (estado && estado.cabezas || []).find(x=>x.id === id) || (sesionActual && (sesionActual.cabezas || []).find(x=>x.id === id));
   return nombrePorId(c && c.id, c && c.nombre) || "alguien";
 }
 function construirCabezas(){
-  const adm = usuariosLista.find(u=>u.admin);
   const out = [];
   usuariosLista.forEach(u=>{
     if(u.invitado){
-      const lado = (adm && u.conQuien === adm.id) ? "A" : "B";
-      out.push({ id: u.id, nombre: u.nombre || "Invitado", lado, admin: false, invitado: true, conQuien: u.conQuien || null });
+      out.push({ id: u.id, nombre: u.nombre || "Invitado", lado: ladoDeInvitado(u, usuariosLista), admin: false, invitado: true, conQuien: u.conQuien || null });
     }else{
-      out.push({ id: u.id, nombre: u.nombre || "", lado: u.admin ? "A" : "B", admin: !!u.admin, invitado: false });
+      out.push({ id: u.id, nombre: u.nombre || "", lado: ladoDeUsuario(u), admin: !!u.admin, invitado: false });
     }
   });
   return out;
@@ -1030,6 +1026,10 @@ function listaDeLado(lado, modoBase){
 // U2, en C1. Es el mismo cruce con el que trabaja el modo Espejo: el dueño de la
 // lista juega los originales y el otro, las contrapartes.
 function otroLadoDuelo(l){ return (l === "A") ? "B" : "A"; }
+// Con los dos en el mismo lado, la contraparte sale del MISMO lado (U1→C1,
+// U2→C2), no del cruzado. El admin juega los originales y el otro las
+// contrapartes de la misma anatomía.
+let dueloMismoLado = false;
 // Busca un personaje por id en las CUATRO listas de personajes.
 function buscarPersonaje(id){
   if(id == null) return null;
@@ -1053,18 +1053,20 @@ function buscarPersonaje(id){
 }
 // La contraparte cruzada de un original. Tiene que ser EXACTAMENTE UNA: si hay 0
 // o hay más de 1 (es ambiguo), el personaje NO cuenta y tampoco se ve.
-function contraparteDe(idOriginal, ladoOriginal){
+function contraparteDe(idOriginal, ladoOriginal, mismo){
   const n = (ladoOriginal === "A") ? "1" : "2";
-  const lista = listaSegura("C" + (n === "1" ? "2" : "1"));
+  const clave = mismo ? ("C" + n) : ("C" + (n === "1" ? "2" : "1"));
+  const lista = listaSegura(clave);
   const hits = lista.filter(c=> c && c.par === idOriginal);
   return (hits.length === 1) ? hits[0] : null;
 }
 // Los personajes de un lado que SÍ tienen contraparte: es la lista de la pantalla
 // de escogimiento. Los que no la tienen, ni salen ni se cuentan.
-function paresDisponibles(lado){
+function paresDisponibles(lado, mismo){
+  if(mismo === undefined) mismo = dueloMismoLado;
   const n = (lado === "A") ? "1" : "2";
   return listaSegura("U" + n)
-    .map(p=> ({ o: p, c: contraparteDe(p && p.id, lado) }))
+    .map(p=> ({ o: p, c: contraparteDe(p && p.id, lado, !!mismo) }))
     .filter(x=> x.o && x.c);
 }
 // Reparte las PAREJAS ya escogidas: cada cabeza recibe las R tarjetas de SU lado,
@@ -1074,11 +1076,20 @@ function paresDisponibles(lado){
 // Si hay varias cabezas del mismo lado, TODAS reciben la misma secuencia. Son
 // copias independientes a propósito: es lo que hace que la ronda k de un lado
 // coincida con la k del otro.
-function poolsDuelo(cabezasIn, pares, lado){
+function poolsDuelo(cabezasIn, pares, lado, mismo){
+  const pools = {};
+  if(mismo){
+    // Todos en el mismo lado: el admin lleva los originales y el resto, las
+    // contrapartes de ESA misma anatomía.
+    const adminId = adminDe(cabezasIn).id;
+    const originales = pares.map(x=> buscarPersonaje(x.o)).filter(Boolean);
+    const contrarios = pares.map(x=> buscarPersonaje(x.c)).filter(Boolean);
+    cabezasIn.forEach(c=>{ pools[c.id] = (c.id === adminId ? originales : contrarios).slice(); });
+    return pools;
+  }
   const porLado = {};
   porLado[lado] = pares.map(x=> buscarPersonaje(x.o)).filter(Boolean);
   porLado[otroLadoDuelo(lado)] = pares.map(x=> buscarPersonaje(x.c)).filter(Boolean);
-  const pools = {};
   cabezasIn.forEach(c=>{ pools[c.id] = (porLado[c.lado] || []).slice(); });
   return pools;
 }
@@ -1252,6 +1263,13 @@ function pintarModalDuelo(){
   // Los nombres son los de la app (no "U1"/"U2", que choca con las listas).
   const a = document.getElementById("dueloLadoA");
   const b = document.getElementById("dueloLadoB");
+  // Con los dos en la misma anatomía no hay dos lados entre los que elegir:
+  // se deja solo el que usan y se oculta el otro.
+  const cabezasD = construirCabezasModo(modoPendiente);
+  const mismos = mismosLados(cabezasD);
+  if(mismos && cabezasD.length) dueloLadoPendiente = cabezasD[0].lado;
+  a.style.display = mismos ? (dueloLadoPendiente === "A" ? "" : "none") : "";
+  b.style.display = mismos ? (dueloLadoPendiente === "B" ? "" : "none") : "";
   a.textContent = nombreLado("A");
   b.textContent = nombreLado("B");
   a.classList.toggle("activo", dueloLadoPendiente === "A");
@@ -2588,6 +2606,37 @@ function construirCabezasModo(modo){
   if(modo === "pareja") return construirCabezas().filter(c=>!c.invitado);
   return construirCabezas();
 }
+function mismosLados(cabezasIn){
+  return !!(Array.isArray(cabezasIn) && cabezasIn.length > 1 && cabezasIn.every(c=> c && c.lado === cabezasIn[0].lado));
+}
+function adminDe(cabezasIn){
+  return (cabezasIn || []).find(c=> c && c.admin) || (cabezasIn || [])[0] || {};
+}
+// "Cambia de Bando" con todos en el mismo lado: el admin juega los originales
+// de esa anatomía y el resto, las contrapartes de la MISMA anatomía.
+function poolsEspejoMismo(cabezasIn, R){
+  const lado = (cabezasIn[0] && cabezasIn[0].lado) || "A";
+  const n = (lado === "A") ? "1" : "2";
+  const adminId = adminDe(cabezasIn).id;
+  const originales = mezclar(listaSegura("U" + n));
+  const contrarios = mezclar(listaSegura("C" + n));
+  const pools = {};
+  cabezasIn.forEach(c=>{
+    const deck = (c.id === adminId) ? originales : contrarios;
+    const out = [];
+    for(let i = 0; i < R && deck.length; i++) out.push(deck[i % deck.length]);
+    pools[c.id] = out;
+  });
+  return pools;
+}
+// La lista que le toca a una cabeza en el modo actual. En Espejo con todos en
+// el mismo lado, el admin usa U y los demás C de esa misma anatomía.
+function listaDeCabezaPara(c, mb, mismos, adminId){
+  if(mb === MODO_ESPEJO && mismos && c.id === adminId){
+    return listaSegura((c.lado === "A") ? "U1" : "U2");
+  }
+  return listaDeLado(c.lado, mb);
+}
 // Reparte R tarjetas por jugador desde su lista. Sin repetir si alcanza; si no,
 // se permite repetir (lo más parejo posible entre los del mismo lado).
 function repartirTarjetas(cabezasIn, fuente, R){
@@ -2631,10 +2680,13 @@ async function preparar(modo, opcionesDuelo, unCelularFlag){
   // cruzada), y SIEMPRE pasa por una pantalla de escogimiento, como "Seleccionar".
   if(mb === MODO_DUELO){ await prepararDuelo(modo, opcionesDuelo, unCelularFlag, R); return; }
   const cabezasIn = construirCabezasModo(modo);
-  const faltan = cabezasIn.filter(c=> listaDeLado(c.lado, mb).length < 2);
+  const mismos = mismosLados(cabezasIn);
+  const adminId = adminDe(cabezasIn).id;
+  const listaPara = c => listaDeCabezaPara(c, mb, mismos, adminId);
+  const faltan = cabezasIn.filter(c=> listaPara(c).length < 2);
   if(faltan.length){ aviso("Cada lista necesita al menos 2 personajes. Configúralos en el engrane ⚙️."); return; }
   let maxR = 50;
-  new Set(cabezasIn.map(c=>c.lado)).forEach(l=>{ maxR = Math.min(maxR, listaDeLado(l, mb).length); });
+  cabezasIn.forEach(c=>{ maxR = Math.min(maxR, listaPara(c).length); });
   if(R > maxR){ aviso("El número de rondas no puede pasar de " + maxR + " (lo que tiene la lista más corta)."); return; }
   if(!revisarEspecial(R)) return;
   if(mb === MODO_SELECCIONAR){
@@ -2656,6 +2708,7 @@ async function prepararDuelo(modo, opcionesDuelo, unCelularFlag, R){
   // haya pares suficientes. El modo normal seguirá pidiendo sus R marcas.
   if(!revisarEspecial(R)) return;
   const cabezasIn = construirCabezasModo(modo);
+  dueloMismoLado = mismosLados(cabezasIn);
   if(unCelularFlag) abrirSeleccionDueloLocal(cabezasIn, R, lado, modalidad, modo);
   else abrirSeleccionDueloCompartida(cabezasIn, R, lado, modalidad, modo);
 }
@@ -2693,13 +2746,16 @@ async function iniciar(modo, ladoSoloElegido, unCelularFlag, poolsListos, dueloC
   // Ojo: en duelo el modo de la partida NO sale de la pestaña (`modoBaseCfg`), que
   // se puede haber cambiado al cargar o al venir de otra pantalla.
   const mb = esDuelo ? MODO_DUELO : modoBaseCfg;
+  const mismos = mismosLados(cabezasIn);
+  const adminId = adminDe(cabezasIn).id;
+  const listaPara = c => listaDeCabezaPara(c, mb, mismos, adminId);
   // Con el reparto ya hecho (modos seleccionar y duelo) no hay nada que revisar:
   // la pantalla de selección ya dejó R tarjetas a cada quien.
   if(!poolsListos){
-    const faltan = cabezasIn.filter(c=> listaDeLado(c.lado, mb).length < 2);
+    const faltan = cabezasIn.filter(c=> listaPara(c).length < 2);
     if(faltan.length){ aviso("Cada lista necesita al menos 2 personajes. Configúralos en el engrane ⚙️."); return; }
     let maxR = 50;
-    new Set(cabezasIn.map(c=>c.lado)).forEach(l=>{ maxR = Math.min(maxR, listaDeLado(l, mb).length); });
+    cabezasIn.forEach(c=>{ maxR = Math.min(maxR, listaPara(c).length); });
     if(R > maxR){ aviso("El número de rondas no puede pasar de " + maxR + " (lo que tiene la lista más corta)."); return; }
   }
   const quiereCompartido = !unCelularFlag;
@@ -2709,8 +2765,10 @@ async function iniciar(modo, ladoSoloElegido, unCelularFlag, poolsListos, dueloC
   // En duelo el reparto sale de las parejas escogidas. Si no las mandaras hechas,
   // se arman aquí de las mismas parejas: nunca se reparte por `listaDeLado`.
   const pools = poolsListos || (esDuelo
-    ? poolsDuelo(cabezasIn, dueloCfg.pares || [], dueloCfg.lado)
-    : repartirTarjetas(cabezasIn, { A: listaDeLado("A", mb), B: listaDeLado("B", mb) }, R));
+    ? poolsDuelo(cabezasIn, dueloCfg.pares || [], dueloCfg.lado, dueloMismoLado)
+    : ((mb === MODO_ESPEJO && mismos)
+        ? poolsEspejoMismo(cabezasIn, R)
+        : repartirTarjetas(cabezasIn, { A: listaDeLado("A", mb), B: listaDeLado("B", mb) }, R)));
   const d = iniciarEstado(cabezasIn, pools);
   const sid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
   // El Especial se sortea UNA vez, al arrancar, y se guarda en la sesión: así
@@ -2887,10 +2945,11 @@ function pintarSeleccionDuelo(){
   tabs.innerHTML = "";
   tabs.style.display = "none";   // en duelo no hay pestañas: la lista es una sola
   const otro = otroLadoDuelo(selLadoDuelo);
+  const nombreContrario = dueloMismoLado ? "La otra persona" : nombreLado(otro);
   document.getElementById("selDesc").textContent =
     (selSoyHost ? "Marca" : (nombreHostSeleccion() + " marca")) + " exactamente " +
     selR + " tarjetas de " + nombreLado(selLadoDuelo) + ". " +
-    nombreLado(otro) + " juega las contrapartes.";
+    nombreContrario + " juega las contrapartes.";
 
   const box = document.getElementById("selBox");
   box.innerHTML = "";
@@ -2926,7 +2985,7 @@ function pintarSeleccionDuelo(){
   const cuenta = document.getElementById("selCuenta");
   cuenta.innerHTML = "";
   const n = selDueloIds.length;
-  [[selLadoDuelo, nombreLado(selLadoDuelo)], [otro, nombreLado(otro)]].forEach((par, i)=>{
+  [[selLadoDuelo, nombreLado(selLadoDuelo)], [otro, dueloMismoLado ? "Contrapartes" : nombreLado(otro)]].forEach((par, i)=>{
     if(i) cuenta.appendChild(document.createTextNode(" · "));
     const b = document.createElement("b");
     b.style.color = (n === selR) ? "var(--teal)" : "var(--coral)";
@@ -3293,12 +3352,12 @@ async function arrancarSeleccion(){
     for(let i = 0; i < selDueloIds.length; i++){
       const id = selDueloIds[i];
       const o = buscarPersonaje(id);
-      const c = contraparteDe(id, selLadoDuelo);   // tiene que ser exactamente una
+      const c = contraparteDe(id, selLadoDuelo, dueloMismoLado);   // tiene que ser exactamente una
       if(!o || !c){ aviso("Algún personaje ya no tiene contraparte."); return; }
       pares.push({ o: o.id, c: c.id });            // en el orden en que se marcó
     }
     // Cada cabeza recibe las R tarjetas de SU lado, en el mismo orden que el otro.
-    const pools = poolsDuelo(selCabezas, pares, selLadoDuelo);
+    const pools = poolsDuelo(selCabezas, pares, selLadoDuelo, dueloMismoLado);
     if(selEsCompartida()){
       try{ await setDoc(seleccionRef(), { activa: false, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
     }
@@ -3698,13 +3757,16 @@ function cerrarModal(id){
 // El engrane muestra SOLO el lado de quien lo está usando. El administrador
 // tiene un botón para ver el otro (así deja todo listo desde un solo celular);
 // los demás usuarios del grupo no lo ven y no tocan el contenido del otro.
-let ladoCfg = "1";     // "1" = usuario 1 (administrador), "2" = usuario 2
+let ladoCfg = "1";     // "1" = lado A (masculino), "2" = lado B (femenino)
 let subCfg = "U";      // "U" = personajes, "C" = contrapartes
 let enEspeciales = false;
 let filtroCfg = "";
 
 function puedeVerOtroLado(){ return !!esAdminFlag; }
-function miLado(){ return puedeVerOtroLado() ? ((ladoCfg === "2") ? "2" : "1") : "2"; }
+// El editor abre en el lado de la ANATOMÍA de quien lo usa, no en el del admin.
+// El administrador puede cambiar de lado para dejar listo el contenido del otro.
+function ladoAnatomiaCfg(){ return ladoDeUsuario(miUsuario) === "A" ? "1" : "2"; }
+function miLado(){ return puedeVerOtroLado() ? ((ladoCfg === "2") ? "2" : "1") : ladoAnatomiaCfg(); }
 function nombreDeLado(n){ return nombreLado(n === "1" ? "A" : "B"); }
 // La lista que se está viendo ahora mismo: "U1","U2","C1","C2" o "ESP".
 function claveCfg(){ return enEspeciales ? "ESP" : (subCfg + miLado()); }
@@ -4245,7 +4307,7 @@ async function abrirCfg(){
   // todo el rato que tardara Firebase en contestar (lo reporto Fredy, oct-2026).
   // Al arrancar la app ya se cargó el contenido, asi que casi siempre la
   // primera pintada ya sale completa.
-  ladoCfg = esAdminFlag ? "1" : "2";
+  ladoCfg = ladoAnatomiaCfg();
   subCfg = "U";
   enEspeciales = false;
   limpiarFiltro();

@@ -90,6 +90,12 @@ se respetan juntas:
 3. El nombre se compara **sin mayúsculas y sin acentos**: "Jose" y "José" son la
    misma persona (`normalizaNombre()`).
 
+**Anatomía (nov-2026):** al registrarse **siempre se pregunta** si es Masculino o
+Femenino. Se guarda en su ficha (`anatomia`) y define el contenido que usa en los
+juegos. Queda fija; si se equivocó, sale y vuelve a entrar, y al reutilizar su
+ficha se actualiza la anatomía elegida. En Usuarios se muestra, pero no se edita
+ahí.
+
 **Lo que estaba roto (dos cosas, de la misma causa):**
 
 | | |

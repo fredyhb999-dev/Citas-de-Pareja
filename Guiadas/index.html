@@ -269,7 +269,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, updateDoc, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, migrarActividadesAId, leerDocActividad, nombrePorId } from "../config.js";
+import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, migrarActividadesAId, leerDocActividad, nombrePorId, ladoDeUsuario, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
@@ -459,24 +459,49 @@ async function cargarIdentidad(){
   if(!Array.isArray(usuariosLista)) usuariosLista = [];
   const yo = leerQuienSoy();
   miUsuario = (yo && usuariosLista.find(u=>u.id === yo.id)) || yo || null;
-  const admin = usuariosLista.find(u=>u.admin);
-  if(miUsuario && typeof miUsuario.admin === "boolean") miLado = miUsuario.admin ? "A" : "B";
-  else if(admin && miUsuario) miLado = (miUsuario.id === admin.id) ? "A" : "B";
-  else miLado = "A";
+  miLado = ladoDeUsuario(miUsuario);
 }
-function esAdmin(){ return miLado === "A"; }
-function nombreDe(lado){
-  const u = usuariosLista.find(x=> (lado === "A") ? x.admin : !x.admin);
-  return (u && u.nombre) || (lado === "A" ? "el administrador" : "tu pareja");
-}
-// Para el editor: se muestra el NOMBRE de cada lado (A = administrador,
-// B = pareja). Si no hay nombre, se deja "Lado A"/"Lado B".
-function nombreLado(lado){
+// El lado se puede cambiar desde Usuarios; se recalcula con la lista fresca.
+function refrescarMiLado(){
   try{
-    const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
-    if(u && u.nombre) return u.nombre;
+    const u = usuariosLista.find(x=> x && miUsuario && x.id === miUsuario.id);
+    if(u) miUsuario = u;
+    miLado = ladoDeUsuario(miUsuario);
   }catch(e){}
-  return "Lado " + lado;
+}
+function esAdmin(){ return !!(miUsuario && miUsuario.admin); }
+function nombreAdmin(){
+  const a = usuariosLista.find(u=>u && u.admin);
+  return (a && a.nombre) || "el administrador";
+}
+// Etiqueta de un lado: los nombres de los perfiles base que lo usan.
+function nombreDe(lado){
+  try{ return nombresDeLado(usuariosLista, lado); }catch(e){}
+  return "Sin usar";
+}
+// Nombre de la PERSONA de un paso. El lado solo dice qué contenido usa.
+function nombreDePaso(p){
+  if(!p) return "";
+  if(p.paraId){
+    const u = usuariosLista.find(x=> x && x.id === p.paraId);
+    return (u && u.nombre) || nombrePorId(p.paraId, "alguien");
+  }
+  return nombreDe(p.lado);
+}
+function mismoPaso(p){
+  if(!p) return false;
+  if(p.paraId) return p.paraId === miIdSesion();
+  return p.lado === miLado;
+}
+function nombreLado(lado){
+  try{ return nombresDeLado(usuariosLista, lado); }catch(e){}
+  return "Sin usar";
+}
+function etiquetaLados(){
+  const a = nombreLado("A"), b = nombreLado("B");
+  if(a === "Sin usar") return b;
+  if(b === "Sin usar") return a;
+  return a + " y " + b;
 }
 function miIdSesion(){ return (miUsuario && miUsuario.id) || "anon"; }
 function sesionRef(){ return doc(db, "sesionGuiada", "actual"); }
@@ -485,6 +510,7 @@ function marcarRadio(v){
   document.querySelectorAll('input[name="modoJuego"]').forEach(r=>{ r.checked = (r.value === v); });
 }
 async function avanzarSesion(){
+  refrescarMiLado();
   try{
     await runTransaction(db, async (tx)=>{
       const ref = sesionRef();
@@ -494,7 +520,7 @@ async function avanzarSesion(){
       if(!d.activa) return;
       const lista = d.lista || [];
       const p = d.paso || 0;
-      if(!lista[p] || lista[p].lado !== miLado) return;
+      if(!lista[p] || !mismoPaso(lista[p])) return;
       const np = p + 1;
       // `terminada` distingue "se acabo la cita" de una pausa o de un Terminar:
       // solo el final natural marca la bandera y prende los fuegos.
@@ -503,16 +529,18 @@ async function avanzarSesion(){
   }catch(e){}
 }
 async function iniciarSesionCompartida(datosSesion){
-  if(!esAdmin()){ aviso("En 'Cada quien en el suyo' la inicia " + nombreDe("A") + " (administrador)."); return; }
+  refrescarMiLado();
+  if(!esAdmin()){ aviso("En 'Cada quien en el suyo' la inicia " + nombreAdmin() + " (administrador)."); return; }
   jugandoCompartido = true;
   const lista = datosSesion.lista || [];
+  // Se empieza en el paso 0, sea de quien sea: con turnos por persona, saltar
+  // hasta el paso del anfitrión se comería las acciones del otro.
   let p = Math.max(0, Math.min(datosSesion.paso || 0, Math.max(0, lista.length - 1)));
-  while(p < lista.length - 1 && lista[p].lado !== miLado) p++;
   const nueva = {
     activa: true,
     sid: String(Date.now()) + Math.random().toString(36).slice(2, 6),
     hostUid: miIdSesion(),
-    hostNombre: (miUsuario && miUsuario.nombre) || nombreDe("A"),
+    hostNombre: (miUsuario && miUsuario.nombre) || nombreAdmin(),
     modo: datosSesion.modo || "normal",
     titulo: datosSesion.titulo || "Citas Guiadas",
     actividades: (datosSesion.actividades || []).slice(),
@@ -554,7 +582,7 @@ async function saltarTurno(){
   if(!de) return;
   const ok = await confirmar({
     aviso: true,
-    titulo: "¿Saltar el turno de " + nombreDe(de.lado) + "?",
+    titulo: "¿Saltar el turno de " + nombreDePaso(de) + "?",
     texto: "Esa acción no se va a jugar nunca.",
     ok: "Saltar"
   });
@@ -1081,20 +1109,51 @@ function guardarProg(){
 function borrarProg(){
   try{ localStorage.removeItem("guia_prog"); }catch(e){}
 }
+function jugadoresBase(){
+  const base = usuariosLista
+    .filter(u=>u && !u.invitado)
+    .map(u=>({ id:u.id, nombre:u.nombre || "", lado:ladoDeUsuario(u) }));
+  // Si la identidad local no está en la lista (dato viejo), se agrega igual:
+  // si no, el juego armaría la cita solo para la otra persona.
+  if(miUsuario && !base.some(j=>j.id === miUsuario.id)){
+    base.push({ id:miUsuario.id, nombre:miUsuario.nombre || "", lado:ladoDeUsuario(miUsuario) });
+  }
+  if(base.length) return base;
+  return [];
+}
+// Asigna cada paso a una PERSONA. El lado solo elige el contenido; con dos
+// personas en el mismo lado, los pasos se alternan entre las dos.
+function asignarParaId(lista){
+  const jugadores = jugadoresBase();
+  const porLado = { A: jugadores.filter(j=>j.lado === "A"), B: jugadores.filter(j=>j.lado === "B") };
+  const idx = { A: 0, B: 0 };
+  (lista || []).forEach(p=>{
+    const grupo = porLado[p.lado] || [];
+    if(!grupo.length){ p.paraId = ""; return; }
+    p.paraId = grupo[idx[p.lado] % grupo.length].id;
+    idx[p.lado]++;
+  });
+  return lista;
+}
 function armarListaLados(fuentePorNivel, tomas){
+  const jugadores = jugadoresBase();
+  const porLado = { A: jugadores.filter(j=>j.lado === "A"), B: jugadores.filter(j=>j.lado === "B") };
   const lista = [];
   NIVELES.forEach(nv=>{
     const lados = normLados(fuentePorNivel[nv.id]);
-    const dA = mezclar(lados.A);
-    const dB = mezclar(lados.B);
+    const decks = { A: mezclar(lados.A), B: mezclar(lados.B) };
     const n = Math.max(0, (tomas && tomas[nv.id]) || 0);
-    const nA = Math.min(n, dA.length);
-    const nB = Math.min(n, dB.length);
-    const max = Math.max(nA, nB);
-    for(let i = 0; i < max; i++){
-      if(i < nA) lista.push({ nivel: nv.nombre, lado: "A", texto: dA[i] });
-      if(i < nB) lista.push({ nivel: nv.nombre, lado: "B", texto: dB[i] });
-    }
+    ["A", "B"].forEach(lado=>{
+      const grupo = porLado[lado];
+      const deck = decks[lado];
+      if(!grupo.length || !deck.length) return;
+      // Cada PERSONA de ese lado recibe n acciones. Si no alcanza el contenido,
+      // se repite, igual que en el resto de la app.
+      const need = n * grupo.length;
+      for(let i = 0; i < need; i++){
+        lista.push({ nivel: nv.nombre, lado, texto: deck[i % deck.length], paraId: grupo[i % grupo.length].id });
+      }
+    });
   });
   return lista;
 }
@@ -1114,6 +1173,7 @@ async function empezarNuevo(){
   mostrarPlayer();
 }
 function mostrarPlayer(){
+  refrescarMiLado();
   document.getElementById("plTitulo").textContent = actividad;
   document.getElementById("finMsg").style.display = "none";
   document.getElementById("nivelTag").style.display = "";
@@ -1174,7 +1234,7 @@ document.getElementById("btnNueva").onclick = async ()=>{
   let titMulti = eraMulti ? p.actividades.join(" + ") : "";
   if(pendienteSrc === "sesion"){
     pendienteSrc = "local";
-    if(!esAdmin()){ aviso("En 'Cada quien en el suyo' quien inicia o renueva la cita es " + nombreDe("A") + " (administrador)."); return; }
+    if(!esAdmin()){ aviso("En 'Cada quien en el suyo' quien inicia o renueva la cita es " + nombreAdmin() + " (administrador)."); return; }
     const s = sesionActual;
     await cerrarSesion();
     jugandoCompartido = false;
@@ -1304,7 +1364,7 @@ document.getElementById("btnMulti2Ok").onclick = ()=>{
   g.innerHTML = "";
   NIVELES.forEach(nv=>{
     const lab = document.createElement("label");
-    lab.textContent = nv.nombre + " (" + nombreLado("A") + " y " + nombreLado("B") + ")";
+    lab.textContent = nv.nombre + " (" + etiquetaLados() + ")";
     const inp = document.createElement("input");
     inp.type = "number"; inp.min = "0"; inp.max = "20";
     inp.value = TOMAS_DEF[nv.id] || 0;
@@ -1347,14 +1407,19 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
   actividad = "MultiActividades";
   docActual = null;
   listaJuego = [];
+  const jugadores = jugadoresBase();
+  const grupos = { A: jugadores.filter(j=>j.lado === "A"), B: jugadores.filter(j=>j.lado === "B") };
   NIVELES.forEach(nv=>{
     const k = Math.max(0, tomas[nv.id] || 0);
     const porLado = {};
     ["A", "B"].forEach(lado=>{
+      // Cada PERSONA de ese lado recibe k acciones. Si no hay nadie en el lado,
+      // ese contenido no entra (con los dos en el mismo lado, el otro sobra).
+      if(!grupos[lado].length){ porLado[lado] = []; return; }
       // Reparto en rueda (regla oficial del juego nuevo, plan 6.2):
       // una acción de cada actividad por vuelta, saltando vacías, hasta `k` o agotar.
       const bolsasLado = multiSel.map(nombre=>mezclar(((bolsas[nv.id] && bolsas[nv.id][nombre]) || { A: [], B: [] })[lado] || []));
-      porLado[lado] = repartirRuedaGuia(bolsasLado, k);
+      porLado[lado] = repartirRuedaGuia(bolsasLado, k * grupos[lado].length);
     });
     const max = Math.max(porLado.A.length, porLado.B.length);
     for(let i = 0; i < max; i++){
@@ -1362,6 +1427,7 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
       if(i < porLado.B.length) listaJuego.push({ nivel: nv.nombre, lado: "B", texto: porLado.B[i] });
     }
   });
+  asignarParaId(listaJuego);
   multiMostrar("modalMulti3", false);
   if(!listaJuego.length){
     aviso("Sin acciones en esas 3. Elige otras o alimenta en ⚙️.");
@@ -1553,7 +1619,7 @@ function pintarEditor(){
   const tomas = tomasGuardadas(docActual || actividad);
   NIVELES.forEach(nv=>{
     const lab = document.createElement("label");
-    lab.textContent = nv.nombre + " (" + nombreLado("A") + " y " + nombreLado("B") + ")";
+    lab.textContent = nv.nombre + " (" + etiquetaLados() + ")";
     const inp = document.createElement("input");
     inp.type = "number";
     inp.min = "0"; inp.max = "20";
@@ -1782,7 +1848,7 @@ function pintarTurnoDe(){
   if(!el) return;
   const de = Array.isArray(listaJuego) ? listaJuego[paso] : null;
   if(!de){ el.textContent = ""; return; }
-  el.textContent = "Turno de " + nombreDe(de.lado);
+  el.textContent = "Turno de " + nombreDePaso(de);
   el.className = (de.lado === "A") ? "a" : (de.lado === "B" ? "b" : "");
 }
 
@@ -1842,7 +1908,7 @@ function pintarPaso(){
     return;
   }
 
-  const mia = !jugandoCompartido || p.lado === miLado;
+  const mia = !jugandoCompartido || mismoPaso(p);
   if(mia){
     elAct.textContent = p.texto;
     elAct.style.color = p.lado === "A" ? "var(--teal)" : (p.lado === "B" ? "var(--coral)" : "");
@@ -1852,7 +1918,7 @@ function pintarPaso(){
     btnSig.textContent = (paso + 1 >= total) ? "Terminar 🔥" : "Siguiente →";
     btnSaltar.style.display = "none";
   }else{
-    elAct.textContent = "Turno de " + nombreDe(p.lado) + "…";
+    elAct.textContent = "Turno de " + nombreDePaso(p) + "…";
     elAct.style.color = "var(--fg-muted)";
     btnSig.style.display = "";
     btnSig.disabled = true;
@@ -1861,10 +1927,10 @@ function pintarPaso(){
     // Brincar al que no está: lo pueden los DOS (decisión de Fredy), por eso aquí
     // no se pregunta quién es el anfitrión como en `Encuentros/`.
     btnSaltar.style.display = "";
-    btnSaltar.textContent = "Saltar turno de " + nombreDe(p.lado);
+    btnSaltar.textContent = "Saltar turno de " + nombreDePaso(p);
   }
   pintarTurnoDe();
-  tag.textContent = p.nivel + (p.lado ? " · Lado " + p.lado : "");
+  tag.textContent = p.nivel;
 }
 document.getElementById("btnSig").onclick = ()=>{
   if(jugandoCompartido){ avanzarSesion(); return; }
@@ -1895,7 +1961,7 @@ document.getElementById("btnTerminar").onclick = async ()=>{
   //     este celular en cada paso (`guardarProg()`), así que al volver a la misma
   //     actividad sale "¿Continuar?" y sigue donde iba.
   if(jugandoCompartido){
-    try{ await setDoc(sesionRef(), { pausada: true, pausadaPor: nombreDe(miLado), actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
+    try{ await setDoc(sesionRef(), { pausada: true, pausadaPor: (miUsuario && miUsuario.nombre) || "Tu pareja", actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
     jugandoCompartido = false;
   }
   entrar();
@@ -1914,7 +1980,7 @@ document.getElementById("btnTerminarPartida").onclick = async ()=>{
   if(jugandoCompartido){
     try{
       await setDoc(sesionRef(), {
-        activa: false, terminada: true, porNombre: nombreDe(miLado), pausada: false,
+        activa: false, terminada: true, porNombre: (miUsuario && miUsuario.nombre) || "Tu pareja", pausada: false,
         actualizadaEn: serverTimestamp()
       }, { merge: true });
     }catch(e){}

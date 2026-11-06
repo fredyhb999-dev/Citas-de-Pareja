@@ -140,6 +140,10 @@ cruzado que causaba el aviso pegado.
 - `retos.estado` usa cinco valores en dos vocabularios (`"cobrada"` aquí,
   `terminada` en las sesiones).
 - `usuarios[].id` tiene dos formatos: `"u1"`, `"u2"` y `"u" + base36(fecha)`.
+- `usuarios[].anatomia` es opcional: `"masculino"` o `"femenino"`. Si falta, se
+  usa el comportamiento viejo (admin = masculino/A, pareja = femenino/B). Los
+  invitados nuevos la eligen al registrarse; los viejos heredan la de quien los
+  invitó.
 
 ### Fase 5. La identidad (`config/ajustes` → `usuarios/`)
 

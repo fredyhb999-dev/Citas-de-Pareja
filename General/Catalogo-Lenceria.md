@@ -19,7 +19,7 @@ La tarjeta se agrega en el arreglo `packs` de `renderPacksDeVerdad()`
 
 | Vista | Para qué |
 |---|---|
-| `vistaPlanes` | Principal, **"Ilusiones y sueños"**: pestañas de lado afuera y recuadro con los planes; el botón de acción va debajo |
+| `vistaPlanes` | Principal, **"Ilusiones y sueños"**: pestañas **por persona** afuera y recuadro con los planes; el botón de acción va debajo |
 | `vistaElegir` | El Vestidor: elegir prendas y fecha, con la cuadrícula en recuadro y el botón abajo |
 | `vistaPedido` | Ajustar y aceptar/rechazar el vestuario que le propusieron, igual que el Vestidor |
 | `vistaConfig` | **"Ajusta tus ilusiones y sueños"**: prendas y las cuatro clasificaciones, con las pestañas fuera del recuadro |
@@ -58,9 +58,10 @@ se va**.
 ### Principal: "Ilusiones y sueños"
 
 Título **Ilusiones y sueños** y subtítulo **"Planifica y da vida a tu ilusión."**
-Pestañas de lado afuera (`A`/`B`, el de uno primero), recuadro con las tarjetas
+Pestañas **por persona** afuera (el de uno primero), recuadro con las tarjetas
 de plan, la del pedido recibido y la del estado del enviado, y **debajo del
-recuadro** el botón **Nuevo plan** / **Proponer**.
+recuadro** el botón **Nuevo plan** / **Proponer**. Cada pestaña muestra la ropa y
+los planes de esa persona, aunque los dos compartan anatomía.
 
 Los planes van en **dos secciones**:
 
@@ -86,10 +87,10 @@ scroll y el **"agregar" queda fijo abajo**, siempre a la mano.
 lleva tipo, y los tipos se amplían). Zonas, colores y estilos son casi fijos:
 las zonas del cuerpo y los colores no cambian. Decidido con Fredy (nov-2026).
 
-**Prendas** conserva dentro sus propias pestañas de lado (el de uno primero) y
-sus **chips por tipo**. Las dos pestañas de persona y el botón **"Nueva prenda"**
-van **en el mismo renglón**, para no gastar alto: la cuadrícula gana ese espacio
-(lo pidió Mary: en su celular se veían muy pocas prendas).
+**Prendas** conserva dentro sus propias pestañas **por persona** (el de uno
+primero) y sus **chips por tipo**. Las dos pestañas de persona y el botón
+**"Nueva prenda"** van **en el mismo renglón**, para no gastar alto: la cuadrícula
+gana ese espacio (lo pidió Mary: en su celular se veían muy pocas prendas).
 
 **En Tipos** (la pestaña de al lado) cada tipo tiene una casilla **"Ocupa todo
 el cuerpo (vestido, mono)"**. Sirve para que el "Sorpréndeme" y la selección
@@ -180,9 +181,10 @@ Se puso ahí y no en el detalle de la prenda porque el momento en que importa es
   solo el campo `nombre` y no toca ninguna prenda.
 - Las **prendas** apuntan a `zonaId`, `estiloId`, `tipoId`, `colorId`.
 - Las **prendas** y los **planes** guardan **`duenoId`** (el id del usuario),
-  además de `lado`. El lado (`A`/`B`) es para las pestañas y para el id del
-  plan; de quién es el contenido lo dice `duenoId`. Si cambia quién es el
-  administrador, el contenido sigue con su dueño.
+  además de `lado`. El lado (`A`/`B`) sale de la **anatomía** (A = masculino,
+  B = femenino) y es solo el contenido; de quién es la ropa y el plan lo dice
+  `duenoId`. Las pestañas y los ids de plan son **por persona**. Cambiar quién
+  administra no mueve nada.
 
 ## Colecciones
 
@@ -222,9 +224,11 @@ esquema en las cuatro:
 
 No tiene campo `nombre` ni campo `id`: el id del documento ya existe.
 
-### `lenceriaVestuarios/{lado}_{YYYY-MM-DD}`
+### `lenceriaVestuarios/{duenoId}_{YYYY-MM-DD}`
 
-Ejemplo: `A_2026-11-07`. **El id fijo es lo que garantiza un plan por día.**
+Ejemplo: `u1_2026-11-07`. **El id fijo es lo que garantiza un plan por día y por
+persona.** Los planes viejos con id `A_...` o `B_...` se siguen leyendo por
+`lado`/`duenoId`; al moverlos o volver a guardarlos se pasan al id por persona.
 
 | Campo | Tipo | Qué es |
 |---|---|---|
@@ -232,7 +236,7 @@ Ejemplo: `A_2026-11-07`. **El id fijo es lo que garantiza un plan por día.**
 | `duenoId` | string | Dueño del plan |
 | `fechaTexto` | string | `"YYYY-MM-DD"`: **la fuente de verdad** para comparar |
 | `fechaUso` | timestamp | Medianoche local de ese día |
-| `prendas` | array de string | Ids de prendas del mismo lado |
+| `prendas` | array de string | Ids de prendas del mismo dueño |
 | `fijo` | boolean | Si está fijo, no se aceptan pedidos para ese día |
 | `contado` | boolean | `false` al crear; `true` cuando ya se liquidó el uso |
 | `creadoEn`, `actualizadoEn` | timestamp | |
@@ -442,7 +446,7 @@ con **cinco toques seguidos en el rótulo "LENCERÍA"**, arriba de la pantalla.
   Conserva los **ids**, así las prendas siguen apuntando a su zona, estilo, tipo y
   color, y los planes a sus prendas. En las prendas además **traduce el dueño**:
   el `duenoId` que venía de la otra base se reemplaza por el usuario de esta que
-  corresponde al lado A (administrador) o B (pareja).
+  corresponde a la misma **anatomía** (A = masculino, B = femenino).
 - **No copia pedidos ni avisos**: son pasajeros.
 - Si alguna clasificación usada no existe en esta base, avisa al terminar: es la
   señal de que las listas no quedaron iguales.

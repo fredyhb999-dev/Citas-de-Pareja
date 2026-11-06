@@ -265,9 +265,15 @@
     <div id="invMsg" style="min-height:20px;font-size:.85rem;color:var(--rojo);margin:4px 0 12px;"></div>
     <div id="invForm" style="display:none;width:100%;">
       <p id="invSolicitando" style="font-family:'Chakra Petch',sans-serif;font-size:1.05rem;font-weight:700;color:var(--teal);text-align:center;margin:0 0 4px;letter-spacing:.04em;">Solicitando Acceso</p>
-      <p style="font-size:.78rem;color:var(--fg-muted);text-align:center;margin:0 0 14px;">Completa los dos datos para entrar. Si te sales, se restaura tu base.</p>
+      <p style="font-size:.78rem;color:var(--fg-muted);text-align:center;margin:0 0 14px;">Completa los datos para entrar. Si te sales, se restaura tu base.</p>
       <label for="invNombre" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:0 0 6px;">Escribe tu nombre</label>
       <input type="text" id="invNombre" placeholder="Ej. Tío Beto" maxlength="30" autocomplete="off" style="font-size:1rem;padding:16px;">
+      <label for="invAnatomia" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:4px 0 6px;">Anatomía</label>
+      <select id="invAnatomia" style="width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:16px;font-size:1rem;font-family:'Inter',sans-serif;margin-bottom:6px;">
+        <option value="">Elige…</option>
+        <option value="masculino">Masculino</option>
+        <option value="femenino">Femenino</option>
+      </select>
       <label for="invConQuien" style="display:block;text-align:left;font-size:.85rem;color:var(--fg);margin:4px 0 6px;">Selecciona de quién eres invitado (elige uno)</label>
       <select id="invConQuien" style="width:100%;border-radius:12px;border:1px solid var(--card-border);background:var(--card);color:var(--fg);padding:16px;font-size:1rem;font-family:'Inter',sans-serif;margin-bottom:6px;"></select>
       <p id="invVista" style="font-size:.85rem;color:var(--teal);min-height:20px;margin:0 0 8px;"></p>
@@ -494,11 +500,12 @@ import firebaseConfigBase from "./firebase-config.js";
 import { verificarCodigo, verificarFirma } from "./taquilla.js";
 import {
   CLAVE_CONFIG, leerConfigGuardada, guardarConfig,
-  resolverFirebase, guardarUsuariosLocal, leerUsuariosLocal, cargarUsuarios
+  resolverFirebase, guardarUsuariosLocal, leerUsuariosLocal, cargarUsuarios,
+  ladoDeUsuario, ladoDeInvitado
 } from "./config.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, graciasDisponibles, escucharCatalogo, nuevosSinPedir } from "./acceso.js";
-import { confirmar } from "./confirmar.js";
+import { confirmar, aviso } from "./confirmar.js";
 // Chorro de pegamento: cae en el submenú de Experiencias si alguien se queda
 // mirando la pantalla sin hacer nada. Va en su propio modulo (y no metido en el
 // codigo del submenú) para que, si algo falla, la pantalla siga igual.
@@ -1293,6 +1300,37 @@ function invRefrescar(){
   }catch(e){}
   tgTarjeta();
 }
+function etiquetaAnatomia(u, lista){
+  if(u && u.anatomia === "masculino") return "Masculino";
+  if(u && u.anatomia === "femenino") return "Femenino";
+  const lado = (u && u.invitado) ? ladoDeInvitado(u, lista) : ladoDeUsuario(u);
+  return lado === "A" ? "Masculino" : "Femenino";
+}
+async function guardarAnatomiaUsuario(id, anatomia, listaActual){
+  if(anatomia !== "masculino" && anatomia !== "femenino") return;
+  const db = dbActual();
+  if(!db) return;
+  try{
+    const ref = doc(db, "config", "ajustes");
+    const snap = await getDoc(ref);
+    const arr = (snap.exists() && Array.isArray(snap.data().usuarios))
+      ? snap.data().usuarios.slice()
+      : (Array.isArray(listaActual) ? listaActual.slice() : []);
+    const i = arr.findIndex(u=> u && u.id === id);
+    if(i < 0) return;
+    arr[i] = Object.assign({}, arr[i], { anatomia });
+    await setDoc(ref, { usuarios: arr, actualizadoEn: serverTimestamp() }, { merge: true });
+    guardarUsuariosLocal(arr);
+    // Si es la persona que está usando la app, su copia local también cambia.
+    try{
+      const yo = leerGuardado();
+      if(yo && yo.id === id) localStorage.setItem(CLAVE_LOCAL, JSON.stringify(arr[i]));
+    }catch(e){}
+    try{ await pintarInvUsuarios(); }catch(e){}
+  }catch(e){
+    try{ aviso("No se pudo guardar la anatomía."); }catch(x){}
+  }
+}
 async function pintarInvUsuarios(){
   const box = document.getElementById("invUsuarios");
   box.innerHTML = "";
@@ -1307,7 +1345,7 @@ async function pintarInvUsuarios(){
   }catch(e){}
   us.forEach(u=>{
     const fila = document.createElement("div");
-    fila.style.cssText = "display:flex;gap:8px;align-items:center;";
+    fila.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap;";
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = u.nombre + (u.admin ? " (admin)" : "") + (u.invitado ? " (invitado)" : "");
@@ -1347,6 +1385,34 @@ async function pintarInvUsuarios(){
       h.onclick = ()=> abrirHistorial(u);
       fila.appendChild(h);
     }
+    // Anatomía: es un ajuste de contenido, no una etiqueta para identificar a
+    // la persona. Va aquí, en Usuarios, y no en la ventana de editar.
+    const anatLine = document.createElement("div");
+    anatLine.style.cssText = "flex-basis:100%;display:flex;align-items:center;gap:8px;margin-top:6px;font-size:.8rem;color:var(--fg-muted);";
+    const anatLab = document.createElement("span");
+    anatLab.textContent = "Anatomía";
+    anatLine.appendChild(anatLab);
+    if(u.invitado){
+      // El invitado la eligió al registrarse. Si se equivocó, sale y vuelve a
+      // entrar; no se edita desde aquí.
+      const anatVal = document.createElement("span");
+      anatVal.textContent = etiquetaAnatomia(u, us);
+      anatVal.style.color = "var(--fg)";
+      anatLine.appendChild(anatVal);
+    }else{
+      const anatSel = document.createElement("select");
+      anatSel.style.cssText = "border-radius:10px;border:1px solid var(--card-border);background:var(--bg);color:var(--fg);padding:6px 8px;font-size:.85rem;font-family:'Inter',sans-serif;";
+      [["masculino","Masculino"],["femenino","Femenino"]].forEach(([v, txt])=>{
+        const o = document.createElement("option");
+        o.value = v;
+        o.textContent = txt;
+        anatSel.appendChild(o);
+      });
+      anatSel.value = u.anatomia || (u.admin ? "masculino" : "femenino");
+      anatSel.onchange = ()=> guardarAnatomiaUsuario(u.id, anatSel.value, us);
+      anatLine.appendChild(anatSel);
+    }
+    fila.appendChild(anatLine);
     box.appendChild(fila);
   });
   // El boton "Editar nombres y administrador" y "Cambiar usuario" son SOLO para
@@ -2095,6 +2161,7 @@ document.getElementById("invEntrar").onclick = async ()=>{
             o.textContent = u.nombre;
             sel.appendChild(o);
           });
+          document.getElementById("invAnatomia").value = "";
           document.getElementById("invForm").style.display = "block";
           document.getElementById("invConQuien").onchange();
           document.getElementById("invNombre").focus();
@@ -2124,7 +2191,9 @@ document.getElementById("invConfirmar").onclick = async (e)=>{
   const nombre = document.getElementById("invNombre").value.trim();
   const sel = document.getElementById("invConQuien");
   const conQuien = sel.value;
+  const anatomia = document.getElementById("invAnatomia").value;
   if(!nombre){ invMsg("Escribe tu nombre."); return; }
+  if(anatomia !== "masculino" && anatomia !== "femenino"){ invMsg("Elige tu anatomía."); return; }
   if(!dbInvitado){ invMsg("Lee primero un código QR."); return; }
   invMsg("");
   const btn = e.target;
@@ -2149,16 +2218,22 @@ document.getElementById("invConfirmar").onclick = async (e)=>{
       const yaEsta = lista.filter(u => u && u.invitado === true
         && (u.conQuien || null) === (conQuien || null)
         && normalizaNombre(u.nombre || "") === claveNombre);
+      let guardar = false;
       if(yaEsta.length === 1){
+        // Se reutiliza su ficha, pero se actualiza la anatomía: si se equivocó,
+        // sale y vuelve a entrar, y así queda corregida.
         yo = yaEsta[0];
+        if(yo.anatomia !== anatomia){ yo.anatomia = anatomia; guardar = true; }
       }else{
         // El id lleva hora y azar, como el que crea el engrane: dos registros en
         // el mismo instante no pueden salir con el mismo nombre interno.
         yo = { id: "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-               nombre, admin: false, invitado: true, conQuien: conQuien || null };
+               nombre, admin: false, invitado: true, conQuien: conQuien || null,
+               anatomia };
         lista.push(yo);
-        t.set(ref, { usuarios: lista, actualizadoEn: serverTimestamp() }, { merge: true });
+        guardar = true;
       }
+      if(guardar) t.set(ref, { usuarios: lista, actualizadoEn: serverTimestamp() }, { merge: true });
       arr = lista;
     }), 10000);
     if(!yo) throw new Error("no se armo el registro");

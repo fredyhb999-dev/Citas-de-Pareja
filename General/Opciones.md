@@ -42,9 +42,10 @@ anfitrion ahi, entonces si aplica la regla de nacer oculto.**
   "Juego Opciones". Es el "esto o aquello": se muestran 2 opciones y al elegir
   una se elimina (la otra sigue), hasta que a cada quien le queda 1. Los datos
   viven en **Firebase** (`opcionesJuego/actual` = `{A:[...], B:[...]}`), **nunca**
-  en un JSON del repo (contenido íntimo + repo público). Listas por lado: A =
-  administrador, B = pareja; los invitados heredan la lista de quien los invitó
-  (`conQuien`). **Número de rondas** (campo principal): cada quien recibe esa
+  en un JSON del repo (contenido íntimo + repo público). Listas por **anatomía**:
+  **A = masculino, B = femenino**. El administrador ya no define el lado (nov-2026).
+  Los invitados usan **su propia anatomía**; los viejos sin el dato heredan la de
+  quien los invitó (`conQuien`). **Número de rondas** (campo principal): cada quien recibe esa
   cantidad de opciones al azar de su lista (sin repetir si alcanza; se permite
   repetir si no). Una ronda = cada jugador pasa una vez, en orden aleatorio. Se
   juegan **exactamente R rondas** (cada opción se consume; no queda nada y no se

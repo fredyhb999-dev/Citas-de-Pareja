@@ -92,9 +92,9 @@ texto suelto: se convierte a esa forma con `accesorio:null` y medida libre.
 
 | Modo | Qué implica |
 |---|---|
-| Solo | Un solo jugador, un lado |
-| Pareja | Admin (lado A) + pareja (lado B) |
-| Invitados | Pareja + invitados registrados (lado de quien los invitó) |
+| Solo | Un solo jugador, con el contenido de su anatomía |
+| Pareja | Los dos perfiles base, cada uno con el contenido de su anatomía |
+| Invitados | Pareja + invitados registrados; cada invitado usa su propia anatomía (los viejos, la de quien los invitó) |
 | Un celular | Todo local, sin sesión compartida |
 | Cada quien el Suyo | Sesión compartida en `sesionCastigos/actual`, turnos sincronizados |
 

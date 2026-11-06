@@ -1328,3 +1328,25 @@ campo `nombre` se sigue guardando como respaldo y no se borra.
   son candidatos a limpieza cuando se pase por ahí. El aviso de la sala de
   espera de Diablitos se dejó con el nombre guardado: es un aviso pasajero, de
   las excepciones que permite `GUIA.md`.
+
+
+---
+
+## La anatomía reemplaza al admin como dueño del contenido (nov-2026)
+
+**El problema.** Toda la app tenía una sola regla: **el administrador era el lado
+A y la pareja el lado B**. El contenido (acciones, castigos, opciones, personajes,
+ropa) está guardado por lado, así que al cambiar quién administraba se
+intercambiaba el contenido. En una pareja donde la mujer es la administradora, el
+contenido masculino le tocaba a ella y el femenino a él.
+
+**La decisión.** Separar **quién administra** de **qué contenido usa cada quien**.
+Cada perfil base tiene ahora `anatomia`: masculino = A, femenino = B. El admin
+solo administra. Los dos pueden quedar en el mismo lado; en ese caso los turnos y
+los planes van por persona (Guiadas, Lencería y Citas). Los invitados eligen su
+anatomía al registrarse y queda fija. Las etiquetas usan nombres, nunca la
+anatomía para identificar a una persona.
+
+**Compatibilidad.** Los usuarios sin `anatomia` se leen como antes (admin = A,
+pareja = B); los invitados viejos heredan la de quien los invitó; las partidas
+pausadas conservan sus lados. El contenido no se migra ni se mueve.

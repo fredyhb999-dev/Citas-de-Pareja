@@ -587,7 +587,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, leerConfigGuardada, migrarCastigosAId, nombrePorId, fijarUsuarios } from "../config.js";
+import { resolverFirebase, cargarUsuarios, leerConfigGuardada, migrarCastigosAId, nombrePorId, fijarUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { confirmar, aviso } from "../confirmar.js";
 import { encenderFuegos, apagarFuegos } from "../fuegos.js";
 // Invitados: este juego solo publica y retira su invitación. No sabe nada de la sala.
@@ -715,8 +715,14 @@ function escucharGrupo(){
   }catch(e){}
 }
 function nombreDeLado(lado){
-  const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
-  return (u && u.nombre) || (lado === "A" ? "Usuario 1" : "Usuario 2");
+  try{ return nombresDeLado(usuariosLista, lado); }catch(e){}
+  return "Sin usar";
+}
+function etiquetaLados(){
+  const a = nombreDeLado("A"), b = nombreDeLado("B");
+  if(a === "Sin usar") return b;
+  if(b === "Sin usar") return a;
+  return a + " y " + b;
 }
 
 // ---------- carga ----------
@@ -1372,7 +1378,7 @@ function pintarTomas(){
   const g = document.getElementById("tomasGrid");
   g.innerHTML = "";
   const tt = document.getElementById("tomasTitulo");
-  if(tt) tt.textContent = "Tomas por nivel (compartidas " + nombreDeLado("A") + " y " + nombreDeLado("B") + ")";
+  if(tt) tt.textContent = "Tomas por nivel (compartidas " + etiquetaLados() + ")";
   NIVELES.forEach(nv=>{
     const lab = document.createElement("label");
     lab.textContent = nv.charAt(0).toUpperCase()+nv.slice(1);
@@ -2534,28 +2540,21 @@ let jugandoCompartido = false;
 let soyHost = false;
 
 // ---------- generación de listas (normal) ----------
-function ladoDeInvitador(id){
-  const u = usuariosLista.find(x=>x && x.id===id);
-  if(!u) return "A";
-  if(u.admin) return "A";
-  if(!u.invitado) return "B";
-  return "A";
-}
 function generarJugadores(){
   cabezas = [];
   const admin = usuariosLista.find(u=>u && u.admin);
   const pareja = usuariosLista.find(u=>u && !u.admin && !u.invitado);
   const yo = (miUsuario && usuariosLista.find(u=>u && u.id===miId)) || miUsuario || admin || pareja || { id:"anon", nombre:"Tú", admin:true };
   if(modoJuego==="solo"){
-    const lado = yo.admin ? "A" : "B";
+    const lado = ladoDeUsuario(yo);
     cabezas.push({ id: yo.id || "anon", nombre: yo.nombre || "Tú", lado, admin:!!yo.admin, invitado:false, conQuien:null });
     ladoInicial = lado;
   }else{
-    if(admin) cabezas.push({ id: admin.id, nombre: admin.nombre || "Usuario 1", lado:"A", admin:true, invitado:false, conQuien:null });
-    if(pareja) cabezas.push({ id: pareja.id, nombre: pareja.nombre || "Usuario 2", lado:"B", admin:false, invitado:false, conQuien:null });
+    if(admin) cabezas.push({ id: admin.id, nombre: admin.nombre || "Usuario 1", lado: ladoDeUsuario(admin), admin:true, invitado:false, conQuien:null });
+    if(pareja) cabezas.push({ id: pareja.id, nombre: pareja.nombre || "Usuario 2", lado: ladoDeUsuario(pareja), admin:false, invitado:false, conQuien:null });
     if(modoJuego==="invitados"){
       usuariosLista.filter(u=>u && u.invitado).forEach(u=>{
-        cabezas.push({ id:u.id, nombre:u.nombre || "Invitado", lado:ladoDeInvitador(u.conQuien), admin:false, invitado:true, conQuien:u.conQuien || null });
+        cabezas.push({ id:u.id, nombre:u.nombre || "Invitado", lado: ladoDeInvitado(u, usuariosLista), admin:false, invitado:true, conQuien:u.conQuien || null });
       });
     }
     if(!cabezas.length) cabezas.push({ id:"u1", nombre:"Usuario 1", lado:"A", admin:true, invitado:false, conQuien:null });
@@ -3007,7 +3006,7 @@ async function publicarSesion(){
     porAdmin: false,
     sid: String(Date.now()) + Math.random().toString(36).slice(2, 6),
     hostUid: miId,
-    hostNombre: (miUsuario && miUsuario.nombre) || nombreDeLado("A"),
+    hostNombre: (miUsuario && miUsuario.nombre) || ((usuariosLista.find(u=>u && u.admin) || {}).nombre) || "el anfitrión",
     modo: modoJuego,
     unCelular: comoJuegan === "unCelular",
     multi: !!esMultiPartida,
@@ -3954,7 +3953,9 @@ function turnosConInvitado(turnosBase, cabezasLista, inv, ladoInv, desdeRonda, t
 function agregarInvitadoLocal(inv){
   if(cabezas.some(c=>c.id===inv.id)) return;
   const invitador = cabezas.find(c=>c.id===inv.conQuien) || usuariosLista.find(u=>u && u.id===inv.conQuien);
-  const ladoInv = (invitador && (invitador.lado || (invitador.admin ? "A" : "B"))) || "A";
+  const ladoInv = (inv && (inv.anatomia === "masculino" || inv.anatomia === "femenino"))
+    ? ladoDeUsuario(inv)
+    : ((invitador && (invitador.lado || ladoDeUsuario(invitador))) || "A");
   cabezas.push({ id:inv.id, nombre:inv.nombre, lado:ladoInv, admin:false, invitado:true, conQuien:inv.conQuien || null });
   if(orden.indexOf(inv.id) < 0) orden.push(inv.id);
 
@@ -3984,9 +3985,11 @@ async function agregarInvitadoAPartida(inv){
       const cabezasD = Array.isArray(d.cabezas) ? d.cabezas.slice() : [];
       const ordenD = Array.isArray(d.orden) ? d.orden.slice() : [];
       if(cabezasD.some(c=>c.id===inv.id)) return;
-      // El lado sale de QUIEN LO INVITÓ (conQuien es un id, no un lado).
+      // El lado sale de la anatomía del invitado; si es viejo, de quien lo invitó.
       const invitador = cabezasD.find(c=>c.id===inv.conQuien) || usuariosLista.find(u=>u && u.id===inv.conQuien);
-      const ladoInv = (invitador && (invitador.lado || (invitador.admin ? "A" : "B"))) || "A";
+      const ladoInv = (inv && (inv.anatomia === "masculino" || inv.anatomia === "femenino"))
+        ? ladoDeUsuario(inv)
+        : ((invitador && (invitador.lado || ladoDeUsuario(invitador))) || "A");
       const nuevo = { id: inv.id, nombre: inv.nombre, lado: ladoInv, admin: false, invitado: true, conQuien: inv.conQuien || null };
       cabezasD.push(nuevo);
       ordenD.push(inv.id);

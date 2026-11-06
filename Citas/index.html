@@ -272,7 +272,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, baseUrl, cargarUsuarios, asegurarFabrica, unirConFabrica, leerDocActividad, nombrePorId, fijarUsuarios } from "../config.js";
+import { resolverFirebase, baseUrl, cargarUsuarios, asegurarFabrica, unirConFabrica, leerDocActividad, nombrePorId, fijarUsuarios, ladoDeUsuario, nombresDeLado } from "../config.js";
 import { confirmar, aviso } from "../confirmar.js";
 import { soyInvitado } from "../invitado.js";
 import { avisarTelegram } from "../telegram.js";
@@ -740,8 +740,8 @@ function fechaLargaISO(t){
 }
 
 function nombreDeLado(lado){
-  const u = usuarios.find(x => x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
-  return (u && u.nombre) || ("Lado " + lado);
+  try{ return nombresDeLado(usuarios, lado); }catch(e){}
+  return "Sin usar";
 }
 
 // El 👗 de una cita guardada muestra lo que hay ese día: el plan si existe, y si
@@ -751,9 +751,9 @@ function verVestuarioDeLaCita(c){
   if(fecha.length !== 10) return;
   const uPara = usuarios.find(u => u && u.id === c.paraId);
   if(!uPara) return;
-  const lado = uPara.admin ? "A" : "B";
   location.href = "../Lenceria/?fecha=" + encodeURIComponent(fecha)
-    + "&lado=" + lado + "&modo=ver";
+    + "&persona=" + encodeURIComponent(uPara.id)
+    + "&lado=" + ladoDeUsuario(uPara) + "&modo=ver";
 }
 
 // Si la cita cambia de día, mueve los planes y las propuestas de ese día.
@@ -800,7 +800,7 @@ async function moverVestuario(vieja, nueva, paraId){
   });
 
   const choques = planesViejos.filter(p =>
-    planes.some(x => x.id === (p.lado + "_" + nueva)));
+    planes.some(x => x.id === ((p.duenoId || p.lado) + "_" + nueva)));
   if(choques.length){
     lineas.push("");
     lineas.push("El " + fechaLargaISO(nueva) + " ya tiene plan de "
@@ -817,7 +817,8 @@ async function moverVestuario(vieja, nueva, paraId){
   for(const p of planesViejos){
     try{
       await deleteDoc(doc(db, "lenceriaVestuarios", p.id));
-      await setDoc(doc(db, "lenceriaVestuarios", p.lado + "_" + nueva), {
+      const idNuevo = (p.duenoId ? p.duenoId : p.lado) + "_" + nueva;
+      await setDoc(doc(db, "lenceriaVestuarios", idNuevo), {
         lado: p.lado,
         duenoId: p.duenoId || "",
         fechaTexto: nueva,
@@ -937,9 +938,9 @@ function irAProponer(fecha, u){
   if(!u) return;
   const f = String(fecha || "").slice(0, 10);
   if(f.length !== 10) return;
-  const lado = u.admin ? "A" : "B";
   location.href = "../Lenceria/?fecha=" + encodeURIComponent(f)
-    + "&lado=" + lado + "&modo=proponer";
+    + "&persona=" + encodeURIComponent(u.id)
+    + "&lado=" + ladoDeUsuario(u) + "&modo=proponer";
 }
 
 // La pregunta que sale después de guardar o confirmar una cita.

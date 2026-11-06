@@ -205,8 +205,9 @@ apuntando a un nombre que ya no existe, y **al editarlas se cambiarian solas**.
 ## El vestuario de una cita (`Lenceria/`)
 
 Cada tarjeta de cita tiene un botón **👗** que abre Lencería con el día de la cita
-y el lado de **quien la recibe**. El enlace **no se guarda**: se calcula, así que
-si la cita cambia de día el botón apunta solo al día nuevo.
+y **la persona que la recibe** (`persona`, su id). El enlace **no se guarda**: se
+calcula, así que si la cita cambia de día el botón apunta solo al día nuevo. Los
+planes se guardan e identifican **por persona**, no por lado (nov-2026).
 
 **Si la cita se mueve de fecha**, al guardar el cambio la app revisa el día viejo
 y ofrece mover el vestuario: los planes de las dos personas y las propuestas

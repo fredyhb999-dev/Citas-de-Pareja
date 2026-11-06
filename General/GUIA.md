@@ -123,6 +123,25 @@ cambia, así que **nunca** sirve para enlazar datos.
   pregunta antes de escribir.**
 
 
+## La anatomía define el contenido, no el administrador (nov-2026)
+
+Cada perfil base guarda en `config/ajustes.usuarios` un campo **`anatomia`**:
+`masculino` o `femenino`. **Masculino = lado A** y **femenino = lado B** en todo
+el contenido (acciones, castigos, opciones, personajes, ropa…).
+
+- **El administrador solo administra.** Quién es admin ya no decide qué contenido
+  usa cada quien; cambiarlo no mueve el contenido.
+- El ajuste está en la pantalla de **Usuarios**, en el renglón de cada perfil.
+  No va en la ventana de «Editar nombres y administrador».
+- Los **invitados eligen su anatomía al registrarse** y queda fija; si se
+  equivocan, salen y vuelven a entrar.
+- **Los dos pueden quedar en el mismo lado.** En ese caso los turnos y los planes
+  van **por persona**, no por lado (Guiadas, Lencería y Citas).
+- En las etiquetas se usan **nombres**, nunca la anatomía para identificar a una
+  persona: el nombre, «Fulano y Mengano» si comparten lado, o «Sin usar».
+- Los datos viejos sin `anatomia` se leen como antes: admin = masculino/A,
+  pareja = femenino/B. Las partidas ya pausadas conservan los lados que tenían.
+
 ## Estado de las reglas de Firebase (cerrado y revisado)
 
 **Las reglas de `solicitudes` estan CERRADAS y fueron revisadas el 6-oct-2026.**

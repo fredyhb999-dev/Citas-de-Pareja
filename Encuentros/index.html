@@ -345,7 +345,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, leerConfigGuardada, migrarActividadesAId, leerDocActividad, nombrePorId, fijarUsuarios } from "../config.js";
+import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, leerConfigGuardada, migrarActividadesAId, leerDocActividad, nombrePorId, fijarUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
@@ -1251,18 +1251,21 @@ document.getElementById("btnMulti2Ok").onclick = ()=>{
 };
 
 // ---------- configurar actividades (engrane) ----------
-// Mismo editor que Citas Guiadas: acciones por nivel y lado (A = administrador,
-// B = pareja), rejilla de tomas y boton Jugar. SIN "Eliminar actividad":
-// borrar una actividad se hace en Citas/actividades.html.
+// Mismo editor que Citas Guiadas: acciones por nivel y lado (el lado sale de
+// la anatomía de cada quien), rejilla de tomas y boton Jugar. SIN "Eliminar
+// actividad": borrar una actividad se hace en Citas/actividades.html.
 let actividadEd = null;
 let docActualEd = null;
 let datosEd = null;
 function nombreLado(lado){
-  try{
-    const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
-    if(u && u.nombre) return u.nombre;
-  }catch(e){}
-  return "Lado " + lado;
+  try{ return nombresDeLado(usuariosLista, lado); }catch(e){}
+  return "Sin usar";
+}
+function etiquetaLados(){
+  const a = nombreLado("A"), b = nombreLado("B");
+  if(a === "Sin usar") return b;
+  if(b === "Sin usar") return a;
+  return a + " y " + b;
 }
 // Las tomas viven en la BASE, en el campo `tomas` de `nivelesActividad` (el mismo
 // documento donde estan las acciones). Van "de pilon" en el documento que ya se
@@ -1437,7 +1440,7 @@ function pintarEditor(){
   const tomas = tomasGuardadasEd(docActualEd || actividadEd);
   NIVELES.forEach(nv=>{
     const lab = document.createElement("label");
-    lab.textContent = nv.nombre + " (" + nombreLado("A") + " y " + nombreLado("B") + ")";
+    lab.textContent = nv.nombre + " (" + etiquetaLados() + ")";
     const inp = document.createElement("input");
     inp.type = "number";
     inp.min = "0"; inp.max = "20";
@@ -1593,14 +1596,12 @@ document.getElementById("btnTomasOk").onclick = async ()=>{
 
 // ---------- cabezas + generación ----------
 function construirCabezas(){
-  const adm = usuariosLista.find(u=>u.admin);
   const out = [];
   usuariosLista.forEach(u=>{
     if(u.invitado){
-      const lado = (adm && u.conQuien === adm.id) ? "A" : "B";
-      out.push({ id: u.id, nombre: u.nombre || "Invitado", lado, admin: false, invitado: true, conQuien: u.conQuien || null });
+      out.push({ id: u.id, nombre: u.nombre || "Invitado", lado: ladoDeInvitado(u, usuariosLista), admin: false, invitado: true, conQuien: u.conQuien || null });
     }else{
-      out.push({ id: u.id, nombre: u.nombre || "", lado: u.admin ? "A" : "B", admin: !!u.admin, invitado: false });
+      out.push({ id: u.id, nombre: u.nombre || "", lado: ladoDeUsuario(u), admin: !!u.admin, invitado: false });
     }
   });
   return out;

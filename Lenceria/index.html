@@ -352,7 +352,7 @@ import {
   collection, getDocs, onSnapshot, serverTimestamp, increment, runTransaction, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, baseUrl } from "../config.js";
+import { resolverFirebase, cargarUsuarios, baseUrl, nombrePorId, ladoDeUsuario, nombresDeLado } from "../config.js";
 import { soyInvitado, CLAVE_LOCAL } from "../invitado.js";
 import { confirmar, aviso } from "../confirmar.js";
 import { avisarTelegram } from "../telegram.js";
@@ -472,8 +472,29 @@ let otroLado = "B";
 let otroId = "";
 
 function nombreLado(lado){
-  const u = usuariosLista.find(x => x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
-  return (u && u.nombre) || ("Lado " + lado);
+  try{ return nombresDeLado(usuariosLista, lado); }catch(e){}
+  return "Sin usar";
+}
+function nombrePersona(id){
+  const u = usuariosLista.find(x => x && x.id === id);
+  return (u && u.nombre) || nombrePorId(id, "?");
+}
+function ladoDePersona(id){
+  if(id === miId) return miLado;
+  if(id === otroId) return otroLado;
+  const u = usuariosLista.find(x => x && x.id === id);
+  return u ? ladoDeUsuario(u) : miLado;
+}
+function prendasDePersona(id){
+  const lado = ladoDePersona(id);
+  return prendas.filter(p => p && (p.duenoId ? p.duenoId === id : p.lado === lado));
+}
+function planesDePersona(id){
+  const lado = ladoDePersona(id);
+  return planes.filter(p => p && (p.duenoId ? p.duenoId === id : p.lado === lado));
+}
+function planDePersona(id, fecha){
+  return planesDePersona(id).find(p => String(p.fechaTexto || "") === String(fecha || ""));
 }
 
 // ====== 4) Utilidades de fecha. `fechaTexto` manda: no se comparan timestamps
@@ -618,6 +639,8 @@ let prendaEditando = null;
 let fotoProcesada = null;
 let refAuto = "";          // última referencia generada sola (para saber si pisarla)
 let ladoPrenda = "A";
+let personaPrenda = "";
+let personaElegir = "";
 let tabPrendas = "A";
 
 async function sembrarClasificaciones(){
@@ -1008,11 +1031,12 @@ function bloquePrendas(){
   const fila = document.createElement("div");
   fila.className = "filaPrendas";
 
-  [ordenTabs[0], ordenTabs[1]].forEach(lado => {
+  [ordenTabs[0], ordenTabs[1]].forEach(persona => {
+    if(!persona) return;
     const b = document.createElement("button");
-    b.className = "tab" + (tabPrendas === lado ? " activo" : "");
-    b.textContent = nombreLado(lado);
-    b.addEventListener("click", ()=>{ tabPrendas = lado; pintarConfig(); });
+    b.className = "tab" + (tabPrendas === persona ? " activo" : "");
+    b.textContent = nombrePersona(persona);
+    b.addEventListener("click", ()=>{ tabPrendas = persona; pintarConfig(); });
     fila.appendChild(b);
   });
 
@@ -1035,7 +1059,7 @@ function bloquePrendas(){
 
   const rej = document.createElement("div");
   rej.className = "rejilla";
-  const lista = ordenPorOlvido(prendasDeLado(tabPrendas).filter(p => pasaFiltro(p, filtroC)));
+  const lista = ordenPorOlvido(prendasDePersona(tabPrendas).filter(p => pasaFiltro(p, filtroC)));
   lista.forEach(p => rej.appendChild(tarjetaPrenda(p, null, ()=> abrirPrenda(p.id))));
   scroll.appendChild(rej);
 
@@ -1143,19 +1167,21 @@ function abrirPrenda(id){
   fotoProcesada = null;
 
   const p = id ? prendas.find(x => x.id === id) : null;
-  ladoPrenda = p ? (p.lado || tabPrendas) : tabPrendas;
+  personaPrenda = p ? (p.duenoId || idDeLado(p.lado)) : (tabPrendas || miId);
+  if(!personaPrenda) personaPrenda = miId;
+  ladoPrenda = p ? (p.lado || ladoDePersona(personaPrenda)) : ladoDePersona(personaPrenda);
 
   document.getElementById("prendaTitulo").textContent = id ? "Editar prenda" : "Nueva prenda";
   document.getElementById("btnBorrarPrenda").style.display = id ? "" : "none";
 
   const selLado = document.getElementById("pLado");
   selLado.innerHTML = "";
-  [["A", nombreLado("A")], ["B", nombreLado("B")]].forEach(([v, txt]) => {
+  [[miId, nombrePersona(miId)], [otroId, nombrePersona(otroId)]].filter(([v])=>!!v).forEach(([v, txt]) => {
     const o = document.createElement("option");
     o.value = v; o.textContent = txt;
     selLado.appendChild(o);
   });
-  selLado.value = ladoPrenda;
+  selLado.value = personaPrenda;
 
   llenarSelect(document.getElementById("pZona"), "zonas", p && p.zonaId);
   llenarSelect(document.getElementById("pEstilo"), "estilos", p && p.estiloId);
@@ -1318,7 +1344,8 @@ async function guardarPrenda(){
   const estiloId = document.getElementById("pEstilo").value;
   const tipoId = document.getElementById("pTipo").value;
   const colorId = document.getElementById("pColor").value;
-  const lado = document.getElementById("pLado").value;
+  const duenoId = document.getElementById("pLado").value || miId;
+  const lado = ladoDePersona(duenoId);
   let referencia = String(document.getElementById("pRef").value || "").trim();
 
   if(!referencia){
@@ -1342,7 +1369,7 @@ async function guardarPrenda(){
   boton.disabled = true;
   try{
     if(prendaEditando){
-      const campos = { lado, zonaId, estiloId, tipoId, colorId, ref: referencia, actualizadoEn: serverTimestamp() };
+      const campos = { lado, duenoId, zonaId, estiloId, tipoId, colorId, ref: referencia, actualizadoEn: serverTimestamp() };
       if(fotoProcesada){
         campos.foto = fotoProcesada.foto;
         campos.fotoW = fotoProcesada.fotoW;
@@ -1353,17 +1380,17 @@ async function guardarPrenda(){
       if(p) Object.assign(p, campos);
     }else{
       const docRef = await addDoc(collection(db, "lenceriaPrendas"), {
-        lado, duenoId: idDeLado(lado),
+        lado, duenoId,
         zonaId, estiloId, tipoId, colorId, ref: referencia,
         foto: fotoProcesada.foto, fotoW: fotoProcesada.fotoW, fotoH: fotoProcesada.fotoH,
         vecesUsadas: 0, ultimaFechaUso: null,
         creadoEn: serverTimestamp(), actualizadoEn: serverTimestamp(),
         creadoPorId: miId
       });
-      prendas.push({ id: docRef.id, lado, duenoId: idDeLado(lado), zonaId, estiloId, tipoId, colorId,
+      prendas.push({ id: docRef.id, lado, duenoId, zonaId, estiloId, tipoId, colorId,
         ref: referencia, foto: fotoProcesada.foto, fotoW: fotoProcesada.fotoW, fotoH: fotoProcesada.fotoH, vecesUsadas: 0 });
     }
-    tabPrendas = lado;
+    tabPrendas = duenoId;
     await aviso("Prenda guardada.");
     pintarConfig();
     history.back();
@@ -1469,15 +1496,15 @@ function botonPasados(texto, alTocar){
 
 function pintarPlanes(){
   document.getElementById("vistaPlanes").classList.add("listo");
-  document.getElementById("tabA").textContent = nombreLado(ordenTabs[0]);
-  document.getElementById("tabB").textContent = nombreLado(ordenTabs[1]);
+  document.getElementById("tabA").textContent = nombrePersona(ordenTabs[0]);
+  document.getElementById("tabB").textContent = nombrePersona(ordenTabs[1]);
   document.getElementById("tabA").classList.toggle("activo", tabActivo === ordenTabs[0]);
   document.getElementById("tabB").classList.toggle("activo", tabActivo === ordenTabs[1]);
 
   const panel = document.getElementById("panelPlanes");
   panel.innerHTML = "";
 
-  const esMia = (tabActivo === miLado);
+  const esMia = (tabActivo === miId);
 
   if(esMia && pedidoRecibido && pedidoRecibido.estado === "pendiente"){
     panel.appendChild(tarjetaPedidoRecibido());
@@ -1487,14 +1514,14 @@ function pintarPlanes(){
   if(accion){
     accion.textContent = esMia ? "Nuevo plan" : "Proponer";
     accion.disabled = (!otroId && !esMia);
-    accion.onclick = ()=> abrirElegir(esMia ? "plan" : "propuesta", null);
+    accion.onclick = ()=> abrirElegir(esMia ? "plan" : "propuesta", null, null, false, tabActivo);
   }
 
   if(!esMia && pedidoEnviado && pedidoEnviado.deId === miId){
     panel.appendChild(tarjetaPedidoEnviado());
   }
 
-  const { fut, pas } = planesDe(tabActivo);
+  const { fut, pas } = planesDePersona(tabActivo);
 
   // Llegando desde una cita: solo el plan de ese día.
   if(diaFiltro){
@@ -1517,7 +1544,7 @@ function pintarPlanes(){
     const p = document.createElement("p");
     p.className = "vacio";
     p.textContent = (esMia || otroId)
-      ? (nombreLado(tabActivo) + " todavía no tiene planes.")
+      ? (nombrePersona(tabActivo) + " todavía no tiene planes.")
       : "Falta configurar a tu pareja.";
     panel.appendChild(p);
     return;
@@ -1741,16 +1768,19 @@ async function limpiarPedidosVencidos(){
   }
 }
 
-function abrirElegir(modo, plan, fecha, sinHistorial){
+function abrirElegir(modo, plan, fecha, sinHistorial, personaId){
   modoElegir = modo;
   planEditando = plan ? plan.id : null;
-  ladoElegir = (modo === "plan") ? miLado : otroLado;
+  personaElegir = personaId || (modo === "plan" ? miId : otroId);
+  if(plan && plan.duenoId) personaElegir = plan.duenoId;
+  if(!personaElegir) personaElegir = miId;
+  ladoElegir = ladoDePersona(personaElegir);
   fechaElegir = plan ? (plan.fechaTexto || "") : (fecha || "");
   seleccion = plan ? (plan.prendas || []).slice() : [];
   limpiarFiltros(filtroE);
 
   document.getElementById("elegirTitulo").textContent =
-    (modo === "plan" ? "Vestidor de " : "Proponer a ") + nombreLado(ladoElegir);
+    (modo === "plan" ? "Vestidor de " : "Proponer a ") + nombrePersona(personaElegir);
   document.getElementById("eFecha").value = fechaElegir;
   document.getElementById("eFecha").min = hoyTexto();
   document.getElementById("eGuardar").textContent = (modo === "plan") ? "Guardar plan" : "Mandar propuesta";
@@ -1777,7 +1807,7 @@ function pintarVestidor(){
 
   const rej = document.getElementById("eRejilla");
   rej.innerHTML = "";
-  const lista = ordenPorOlvido(prendasDeLado(ladoElegir).filter(p => pasaFiltro(p, filtroE)));
+  const lista = ordenPorOlvido(prendasDePersona(personaElegir).filter(p => pasaFiltro(p, filtroE)));
   const vacio = document.getElementById("eVacio");
   vacio.style.display = lista.length ? "none" : "";
   vacio.textContent = (filtroE.tipo || filtroE.color || filtroE.estilo)
@@ -1860,8 +1890,10 @@ async function guardarPlan(){
   }
   await liquidarUsos();
 
-  const nuevoId = miLado + "_" + fechaTexto;
-  const existente = planes.find(p => p.id === nuevoId);
+  // El id del plan es de la PERSONA, no del lado: con los dos en la misma
+  // anatomía, un id por lado haría que se pisaran.
+  const nuevoId = miId + "_" + fechaTexto;
+  const existente = planDePersona(miId, fechaTexto) || planes.find(p => p.id === nuevoId);
   const cambiandoDia = planEditando && planEditando !== nuevoId;
 
   if(existente && existente.id !== planEditando){
@@ -1870,9 +1902,13 @@ async function guardarPlan(){
   }
 
   try{
-    if(cambiandoDia){
+    if(cambiandoDia && planEditando){
       await deleteDoc(doc(db, "lenceriaVestuarios", planEditando));
       planes = planes.filter(p => p.id !== planEditando);
+    }
+    if(existente && existente.id !== planEditando){
+      await deleteDoc(doc(db, "lenceriaVestuarios", existente.id));
+      planes = planes.filter(p => p.id !== existente.id);
     }
     if(planEditando === nuevoId){
       // Mismo día: solo lo editable. No se tocan `fijo`, `contado` ni `creadoEn`.
@@ -1923,7 +1959,7 @@ async function borrarPlan(plan){
 
 // ====== 8) Pedidos ======
 async function mandarPropuesta(fechaTexto){
-  const mio = planes.find(p => p.duenoId === otroId && p.fechaTexto === fechaTexto);
+  const mio = planDePersona(otroId, fechaTexto);
   if(mio && mio.fijo){
     aviso("Ese día está fijo. No se le puede proponer."); return;
   }
@@ -1949,7 +1985,7 @@ async function mandarPropuesta(fechaTexto){
     avisarTelegram("👗 " + miNombre + " te propuso un vestuario para el " + fechaLarga(fechaTexto) + ".",
       baseUrl() + "Lenceria/");
 
-    await aviso("Mandado. " + nombreLado(otroLado) + " lo va a ver.");
+    await aviso("Mandado. " + nombrePersona(otroId) + " lo va a ver.");
     await cargarPedidos();
     pintarPlanes();
     history.back();
@@ -1974,7 +2010,7 @@ function abrirPedido(){
   seleccion = (pedidoRecibido.prendas || []).slice();
   limpiarFiltros(filtroE);
 
-  document.getElementById("pedidoTitulo").textContent = "El vestuario que te propone " + nombreLado(otroLado);
+  document.getElementById("pedidoTitulo").textContent = "El vestuario que te propone " + nombrePersona(pedidoRecibido.deId || otroId);
   document.getElementById("pFecha").value = fechaElegir;
   document.getElementById("pFecha").min = hoyTexto();
 
@@ -1994,7 +2030,7 @@ function pintarPedido(){
 
   const rej = document.getElementById("pRejilla");
   rej.innerHTML = "";
-  prendasDeLado(miLado)
+  prendasDePersona(miId)
     .filter(p => pasaFiltro(p, filtroE))
     .sort((a, b) => tsUso(a) - tsUso(b))
     .forEach(p => rej.appendChild(tarjetaPrenda(p, seleccion.indexOf(p.id) >= 0, ()=> alternarSeleccion(p))));
@@ -2019,7 +2055,7 @@ async function aceptarPedido(){
   const vivas = seleccion.filter(id => prendas.some(p => p.id === id));
   if(!vivas.length){ aviso("Las prendas de ese pedido ya no existen."); return; }
 
-  const planDia = planes.find(p => p.duenoId === miId && p.fechaTexto === fechaTexto);
+  const planDia = planDePersona(miId, fechaTexto);
   if(planDia && planDia.fijo){
     aviso("Ese día está fijo. Quítale Fijo para aceptarlo."); return;
   }
@@ -2032,7 +2068,13 @@ async function aceptarPedido(){
   await liquidarUsos();
 
   try{
-    const idPlan = miLado + "_" + fechaTexto;
+    const idPlan = miId + "_" + fechaTexto;
+    if(planDia && planDia.id !== idPlan){
+      try{
+        await deleteDoc(doc(db, "lenceriaVestuarios", planDia.id));
+        planes = planes.filter(p => p.id !== planDia.id);
+      }catch(e){}
+    }
     await setDoc(doc(db, "lenceriaVestuarios", idPlan), {
       lado: miLado, duenoId: miId, fechaTexto,
       fechaUso: fechaAObjeto(fechaTexto),
@@ -2100,8 +2142,8 @@ async function cancelarPedido(){
 // Un conjunto al azar, pero con sentido: prioriza lo más olvidado y respeta las
 // reglas del vestidor. Si el filtro no deja nada, usa todo el catálogo del lado.
 function sorprendeme(){
-  const conFiltro = ordenPorOlvido(prendasDeLado(ladoElegir).filter(p => pasaFiltro(p, filtroE)));
-  const todas = conFiltro.length ? conFiltro : ordenPorOlvido(prendasDeLado(ladoElegir));
+  const conFiltro = ordenPorOlvido(prendasDePersona(personaElegir).filter(p => pasaFiltro(p, filtroE)));
+  const todas = conFiltro.length ? conFiltro : ordenPorOlvido(prendasDePersona(personaElegir));
   if(!todas.length){
     aviso("No hay prendas todavía. Agrégalas con el ⚙️."); return;
   }
@@ -2507,10 +2549,20 @@ function aplicarEntradaCita(){
   const fecha = String(p.get("fecha") || "").slice(0, 10);
   const lado = p.get("lado");
   const modo = p.get("modo");   // "plan" | "proponer" (lo manda la hojita de Citas)
-  if(fecha.length !== 10 || (lado !== "A" && lado !== "B")) return;
+  let personaId = p.get("persona") || "";
+  // Enlaces viejos: no traen `persona`, solo el lado. Se busca a la persona de
+  // ese lado; si los dos comparten anatomía, se prefiere la que corresponde.
+  if(!personaId && (lado === "A" || lado === "B")){
+    const pref = (modo === "proponer") ? otroId : miId;
+    const prefUser = usuariosLista.find(u=>u && !u.invitado && u.id === pref && ladoDeUsuario(u) === lado);
+    personaId = (prefUser && prefUser.id)
+      || ((usuariosLista.find(u=>u && !u.invitado && ladoDeUsuario(u) === lado) || {}).id)
+      || "";
+  }
+  if(fecha.length !== 10 || !personaId) return;
 
   esEntradaCita = true;
-  tabActivo = lado;
+  tabActivo = personaId;
   diaFiltro = (modo === "ver") ? fecha : "";
   pintarPlanes();
 
@@ -2519,23 +2571,22 @@ function aplicarEntradaCita(){
 
   if(fecha < hoyTexto()) return;
 
-  const plan = planes.find(x => x && x.fechaTexto === fecha
-    && (x.duenoId ? x.duenoId === idDeLado(lado) : x.lado === lado));
+  const plan = planDePersona(personaId, fecha);
 
-  if(modo === "plan" && lado === miLado){
-    abrirElegir("plan", plan || null, fecha, true);
+  if(modo === "plan" && personaId === miId){
+    abrirElegir("plan", plan || null, fecha, true, personaId);
     return;
   }
-  if(modo === "proponer" && lado === otroLado){
-    abrirElegir("propuesta", null, fecha, true);
+  if(modo === "proponer" && personaId === otroId){
+    abrirElegir("propuesta", null, fecha, true, personaId);
     return;
   }
 
   // Sin modo (o si algo no cuadra): mismo comportamiento de antes.
-  if(lado === miLado){
-    abrirElegir("plan", plan || null, fecha, true);
+  if(personaId === miId){
+    abrirElegir("plan", plan || null, fecha, true, personaId);
   }else if(!plan){
-    abrirElegir("propuesta", null, fecha, true);
+    abrirElegir("propuesta", null, fecha, true, personaId);
   }
 }
 
@@ -2551,18 +2602,19 @@ async function arrancar(){
     usuariosLista = await cargarUsuarios(db, getDoc, doc, await r.json());
   }catch(e){ usuariosLista = []; }
 
-  const admin = usuariosLista.find(u => u && u.admin);
-  if(miUsuario && typeof miUsuario.admin === "boolean") miLado = miUsuario.admin ? "A" : "B";
-  else if(admin && miUsuario) miLado = (miUsuario.id === admin.id) ? "A" : "B";
-  else miLado = "A";
-
-  otroLado = (miLado === "A") ? "B" : "A";
-  const otro = usuariosLista.find(u => u && (otroLado === "A" ? u.admin : (!u.admin && !u.invitado)));
+  const yoLista = usuariosLista.find(u => u && u.id === miId);
+  if(yoLista) miUsuario = yoLista;
+  miNombre = (miUsuario && miUsuario.nombre) || miNombre;
+  miLado = ladoDeUsuario(miUsuario);
+  // La pareja es la OTRA persona, no el otro lado: con los dos en la misma
+  // anatomía, buscar por lado devolvería a la misma persona.
+  const otro = usuariosLista.find(u => u && !u.invitado && u.id !== miId);
   otroId = (otro && otro.id) || "";
+  otroLado = otro ? ladoDeUsuario(otro) : ((miLado === "A") ? "B" : "A");
 
-  tabActivo = miLado;
-  tabPrendas = miLado;
-  ordenTabs = [miLado, otroLado];
+  tabActivo = miId;
+  tabPrendas = miId;
+  ordenTabs = [miId, otroId];
 
   await conTiempo(cargarTodo(), 10000).catch(()=>{});
 

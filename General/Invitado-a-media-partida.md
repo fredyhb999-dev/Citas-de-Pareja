@@ -61,8 +61,10 @@ Con eso, todo se calcula solo:
 
 - **Si entra en la última ronda**, ya no le toca jugar (`R − ronda = 0`): hay que
   avisarle o no dejarlo. En Opciones se avisa.
-- **El lado** del invitado sale de `conQuien`: si lo invitó el administrador,
-  juega el lado A; si lo invitó la pareja, el lado B.
+- **El lado** del invitado sale de **su anatomía**, elegida al registrarse
+  (Masculino = A, Femenino = B). Los invitados viejos sin el dato heredan el lado
+  de quien los invitó (`conQuien`). `conQuien` sigue sirviendo para saber de quién
+  es invitado, no para el contenido.
 - **Sin repetir** en su lista cuando el lado tiene suficientes opciones; se
   permite repetir solo si no alcanzan.
 - **Los invitados deben estar registrados** (existan en los usuarios del

@@ -354,7 +354,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios } from "../config.js";
+import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, escucharItem } from "../acceso.js";
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
@@ -468,27 +468,23 @@ function nombreAdmin(){
   const a = usuariosLista.find(u=>u.admin);
   return (a && a.nombre) || "el anfitrión";
 }
-// A = administrador, B = pareja (el primer usuario que no es admin ni invitado).
+// El nombre visible de un lado son las personas base que lo usan. Con los dos
+// en el mismo lado se muestran los dos nombres; si no hay nadie, "Sin usar".
 function nombreLado(lado){
-  try{
-    const u = usuariosLista.find(x=> x && (lado === "A" ? x.admin : (!x.admin && !x.invitado)));
-    if(u && u.nombre) return u.nombre;
-  }catch(e){}
-  return "Lado " + lado;
+  try{ return nombresDeLado(usuariosLista, lado); }catch(e){}
+  return "Sin usar";
 }
 function nombreCabeza(id){
   const c = (estado && estado.cabezas || []).find(x=>x.id === id) || (sesionActual && (sesionActual.cabezas || []).find(x=>x.id === id));
   return nombrePorId(c && c.id, c && c.nombre) || "alguien";
 }
 function construirCabezas(){
-  const adm = usuariosLista.find(u=>u.admin);
   const out = [];
   usuariosLista.forEach(u=>{
     if(u.invitado){
-      const lado = (adm && u.conQuien === adm.id) ? "A" : "B";
-      out.push({ id: u.id, nombre: u.nombre || "Invitado", lado, admin: false, invitado: true, conQuien: u.conQuien || null });
+      out.push({ id: u.id, nombre: u.nombre || "Invitado", lado: ladoDeInvitado(u, usuariosLista), admin: false, invitado: true, conQuien: u.conQuien || null });
     }else{
-      out.push({ id: u.id, nombre: u.nombre || "", lado: u.admin ? "A" : "B", admin: !!u.admin, invitado: false });
+      out.push({ id: u.id, nombre: u.nombre || "", lado: ladoDeUsuario(u), admin: !!u.admin, invitado: false });
     }
   });
   return out;

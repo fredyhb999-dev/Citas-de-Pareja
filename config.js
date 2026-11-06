@@ -120,6 +120,35 @@ export function nombrePorId(id, respaldo){
   return n || respaldo || "";
 }
 
+// ====== ANATOMÍA Y LADOS ======
+// La anatomía define qué contenido usa cada persona: masculino = A,
+// femenino = B. No tiene nada que ver con quién administra.
+// Los datos viejos no traen `anatomia`: se quedan como estaban (admin = A,
+// pareja = B) para no cambiar el contenido de nadie.
+export function ladoDeUsuario(u){
+  if(!u) return "A";
+  if(u.anatomia === "femenino") return "B";
+  if(u.anatomia === "masculino") return "A";
+  return u.admin ? "A" : "B";
+}
+
+/** Lado de un invitado: manda su anatomía; si es viejo, la de quien lo invitó. */
+export function ladoDeInvitado(u, lista){
+  if(!u) return "B";
+  if(u.anatomia === "masculino" || u.anatomia === "femenino") return ladoDeUsuario(u);
+  const inv = (Array.isArray(lista) ? lista : []).find(x=> x && x.id === u.conQuien);
+  return inv ? ladoDeUsuario(inv) : "B";
+}
+
+/** Etiqueta visible de un lado: los nombres de los perfiles base que lo usan. */
+export function nombresDeLado(lista, lado){
+  const ns = (Array.isArray(lista) ? lista : [])
+    .filter(u=> u && !u.invitado && ladoDeUsuario(u) === lado)
+    .map(u=> u.nombre || "")
+    .filter(Boolean);
+  return ns.length ? ns.join(" y ") : "Sin usar";
+}
+
 /** Lee usuarios en orden: Firestore ajustes > local > JSON dado. Nunca revienta. */
 export async function cargarUsuarios(db, getDocFn, docFn, respaldoJSON){
   // 1) Firestore (con tope para no colgar sin config)

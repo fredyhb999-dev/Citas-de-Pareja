@@ -115,12 +115,28 @@ número **de 0 o más**.
 quien ve el suyo; el administrador ve el de los dos perfiles base.** Ver
 `General/Puntos.md`.
 
-**Aviso que hay que recordar:** en toda la app **el admin es el lado A y la pareja
-el lado B** (`nombreLado()`, `armando()`), y hay contenido guardado **por lado**
-(acciones de `nivelesActividad`, `opcionesJuego/actual {A,B}`, `personajesJuego`
-`U1/U2`…). Por eso **cambiar de admin intercambia esos lados**: el contenido que
-estaba de un lado se ve del otro. Se decidió permitirlo así (decisión de Fredy,
-oct-2026). Cualquier usuario puede abrir el botón, porque la app no tiene login.
+**La anatomía define el contenido; el admin solo administra (nov-2026).** Cada
+perfil base tiene un ajuste **Anatomía** en la pantalla de Usuarios:
+**Masculino = lado A**, **Femenino = lado B**. Cambiar de administrador **ya no
+cambia el contenido**; solo cambia quién administra. Los dos perfiles pueden
+quedar en el mismo lado.
+
+- El ajuste va en el **renglón de cada perfil**, no en la ventana de «Editar
+  nombres y administrador».
+- Los dos perfiles base pueden cambiarlo. Los invitados eligen la suya al
+  registrarse y queda fija; si se equivocaron, salen y vuelven a entrar.
+- El contenido guardado **no se mueve**. Si está en el lado que no corresponde,
+  se corrige cambiando la anatomía, no las acciones.
+- Las etiquetas de los editores usan **nombres**: el de la persona, los dos
+  nombres si comparten lado, o «Sin usar» si no hay nadie. La anatomía nunca se
+  usa para identificar a una persona.
+- Con los dos en el mismo lado, los turnos y los planes van **por persona**: en
+  Guiadas se alternan los turnos, y en Lencería y Citas cada quien tiene sus
+  propios planes.
+- Los datos viejos sin anatomía se leen como antes: admin = masculino/A,
+  pareja = femenino/B.
+
+Cualquier usuario puede abrir el botón de Usuarios, porque la app no tiene login.
 
 ### Botones de volver, de esquina y "cambiar usuario"
 

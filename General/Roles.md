@@ -30,8 +30,13 @@ objeto `personaje` completo. Modes: **Clásico** (sale de `U1`/`U2`), **Cambia
    valores, o se rompen las partidas ya empezadas. Licencia: item
   **`roles`**. En el catálogo (`packs`): ruta **`Roles`**, sección
   **`juegos`**, y **sin** marcar `oficial` (el menú salta los `oficial:true`).
-  Engrane ⚙️ con **una pestaña por usuario** (no cinco): cada quien solo ve su
-  lado y el administrador tiene un botón para ver el del otro; dentro, dos
+  **Anatomía y lados (nov-2026):** A = masculino y B = femenino, según la
+  anatomía de cada perfil (no según quién administra). Con los dos en el mismo
+  lado, el **Duelo** y **Cambia de Bando** usan al admin con los originales (U1 o
+  U2) y al otro con la contraparte de la **misma** anatomía (C1 o C2), no la
+  cruzada. El contenido guardado no se mueve.
+  Engrane ⚙️ con **una pestaña por usuario** (no cinco): cada quien ve el lado
+  de su anatomía y el administrador tiene un botón para ver el del otro; dentro, dos
 sub-pestañas Personajes / Contrapartes; y una tercera, **Variantes Picantes**, que
 es común. **El orden de la pantalla de inicio (decisión de Fredy, oct-2026;
      rediseño completo el 17-oct-2026):** arriba **Número de rondas**, luego la
