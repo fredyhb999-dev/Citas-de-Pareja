@@ -2563,12 +2563,18 @@ function aplicarEntradaCita(){
       || ((usuariosLista.find(u=>u && !u.invitado && ladoDeUsuario(u) === lado) || {}).id)
       || "";
   }
+  // Si el enlace trae una persona que ya no existe (dato viejo), se usa el
+  // lado como respaldo para no quedarse en la pantalla principal.
+  if(personaId && !usuariosLista.some(u=>u && u.id === personaId)
+      && (lado === "A" || lado === "B")){
+    personaId = idDeLado(lado) || personaId;
+  }
   if(fecha.length !== 10 || !personaId) return;
 
   esEntradaCita = true;
   tabActivo = personaId;
   diaFiltro = (modo === "ver") ? fecha : "";
-  pintarPlanes();
+  try{ pintarPlanes(); }catch(e){ console.error("LENCERIA_PLANES_ENTRADA:", e); }
 
   // "ver": solo se muestra lo que hay ese día (no se abre el Vestidor).
   if(modo === "ver") return;
@@ -2623,10 +2629,15 @@ async function arrancar(){
 
   await conTiempo(cargarTodo(), 10000).catch(()=>{});
 
-  pintarConfig();
-  pintarPlanes();
-  escuchar();
-  aplicarEntradaCita();
+  // Un fallo al pintar la configuración no debe impedir que se abra la
+  // propuesta que viene desde una cita.
+  try{ pintarConfig(); }catch(e){ console.error("LENCERIA_CONFIG:", e); }
+  try{ pintarPlanes(); }catch(e){ console.error("LENCERIA_PLANES:", e); }
+  try{ escuchar(); }catch(e){}
+  try{ aplicarEntradaCita(); }catch(e){
+    console.error("LENCERIA_ENTRADA_CITA:", e);
+    try{ aviso("No se pudo abrir el vestidor desde la cita."); }catch(x){}
+  }
 
   vigilarInvitaciones(db, { tipo: "lenceria", esEsta: true, alTerminar: ()=> ver("vistaPlanes") });
 }
