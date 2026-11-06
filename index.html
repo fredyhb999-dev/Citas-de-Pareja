@@ -690,6 +690,11 @@ window.addEventListener("pageshow", ()=>{ actualizarPuntoCarrito(); });
   // Adquisiciones es un archivo suelto ("Retos/centro.html"), asi que si ya
   // trae extension se usa tal cual y no se le agrega la "/" (oct-2026).
   a.href = /\.html?$/i.test(p.ruta || "") ? p.ruta : (p.ruta || "") + "/";
+  // Lencería: se entra con versión para no cargar una copia vieja de la página
+  // (la de antes de los planes por persona). No afecta los datos.
+  if(/lenceria/i.test(p.ruta || "") || p.id === "lenceria"){
+    a.href += (a.href.indexOf("?") >= 0 ? "&" : "?") + "v=3";
+  }
   const ic = document.createElement("span");
   ic.className = "icon";
   if(p.id === "diablitos" && SVG_DIABLITOS){

@@ -230,6 +230,12 @@ Ejemplo: `u1_2026-11-07`. **El id fijo es lo que garantiza un plan por día y po
 persona.** Los planes viejos con id `A_...` o `B_...` se siguen leyendo por
 `lado`/`duenoId`; al moverlos o volver a guardarlos se pasan al id por persona.
 
+**Fechas:** se guardan y comparan siempre como `YYYY-MM-DD`. Si un dato viejo
+trae hora (`2026-11-07T19:00`), se recorta al leerlo; así el plan cae en la fecha
+de la cita y el botón 👗 lo encuentra. Al aceptar una propuesta, el plan se
+guarda **antes** del aviso; si solo falla el repintado, no se reporta como fallo
+de guardado.
+
 | Campo | Tipo | Qué es |
 |---|---|---|
 | `lado` | `"A"` \| `"B"` | |
