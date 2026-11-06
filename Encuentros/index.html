@@ -178,6 +178,11 @@
     <label class="opModo"><input type="radio" name="modoJuego" value="local"> Acciones en un Celular</label>
     <label class="opModo"><input type="radio" name="modoJuego" value="compartido" checked> Cada quien en el suyo</label>
   </div>
+  <!-- El mismo QR que sale durante la partida, pero antes de empezar: así los
+       invitados se registran primero y entran a las asignaciones desde la
+       primera ronda. Nace oculto y lo enciende `entrar()` para los dos perfiles
+       base (los invitados no ven esta pantalla). -->
+  <button class="btnSec" id="btnQRLista" style="display:none;margin-top:12px;">QR: invita a alguien</button>
 </div>
 
 <!-- ============ CONFIG (elegir para editar) ============ -->
@@ -653,6 +658,7 @@ async function entrar(){
       if(esAdminFlag && modoLocal){ try{ aviso("Sin conexión. Se jugará en este celular."); }catch(e){} }
       pintarLista("listaActs");
       ver("vistaLista", false);
+      try{ document.getElementById("btnQRLista").style.display = ""; }catch(e){}
     }else{
       ver("vistaEspera", false);
       chequearPartidaEspera();
@@ -2111,8 +2117,10 @@ async function agregarInvitado(id){
 document.getElementById("btnAgregarInv").onclick = ()=>{ abrirAgregar(); };
 document.getElementById("btnAgregarNo").onclick = ()=>{ cerrarModal("modalAgregar"); };
 
-// QR del anfitrión: quien lo escanea se registra como invitado SIN salir del juego.
-document.getElementById("btnQR").onclick = ()=>{
+// QR del anfitrión: quien lo escanea se registra como invitado SIN salir del
+// juego. Es el mismo en la pantalla de inicio (antes de empezar) y durante la
+// partida; así los invitados entran a las asignaciones desde la primera ronda.
+function abrirQRInvitacion(){
   const g = leerConfigGuardada();
   const caja = document.getElementById("qrCajaJuego");
   const msg = document.getElementById("qrMsg");
@@ -2132,7 +2140,9 @@ document.getElementById("btnQR").onclick = ()=>{
     });
   }catch(e){ caja.style.display = "none"; msg.textContent = "No se pudo generar."; }
   abrirModal("modalQR");
-};
+}
+document.getElementById("btnQR").onclick = abrirQRInvitacion;
+document.getElementById("btnQRLista").onclick = abrirQRInvitacion;
 document.getElementById("btnQRNo").onclick = ()=>{ cerrarModal("modalQR"); };
 
 document.getElementById("btnTerminar").onclick = async ()=>{

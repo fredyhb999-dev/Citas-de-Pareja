@@ -33,7 +33,8 @@ cierra con el atrás o el atrás se ignora.
 | Encuentros | `#modalUnir` | Base | **Cierra** | `pasoModalBase` |
 | Encuentros | `#modalMulti2` | Base | **Cierra** | `pasoModalBase` |
 | Encuentros | `#modalFin`, `#modalPausa` | Base / interna | **Cierra / se ignora** | `pasoModalBase` / `modalAbierto` |
-| Encuentros | `#modalQR`, `#modalAgregar` | Interna (partida/config) | **Se ignora** | `modalAbierto` |
+| Encuentros | `#modalQR` | Base (lista) / interna (partida) | **Cierra / se ignora** | `pasoModalBase` / `modalAbierto` |
+| Encuentros | `#modalAgregar` | Interna (partida) | **Se ignora** | `modalAbierto` |
 | Guiadas | `#modalTomas` | Base | **Cierra** | `tomasHist` |
 | Guiadas | `#modalMulti2`, `#modalMulti3` | Base | **Cierra** | `mostrarModalBase` |
 | Guiadas | `#modalUnir` | Base | **Cierra** | `mostrarModalBase` |
