@@ -17,6 +17,18 @@ Movido de `General/GUIA.md`. Contiene el detalle de la pantalla de Usuarios: flu
    «‹ Volver» de esa lista (y el atrás del celular) ya no repiten una pantalla
    antes de salir (nov-2026).
 
+**Tocar un usuario directo en la lista (nov-2026).** Ese camino también recarga,
+y antes caía al **menú**: dejaba el paso del engrane en el historial y, al
+entrar a un submenú y volver, reaparecía Usuarios con los botones de las
+esquinas encimados. Ahora hace lo mismo que «Cambiar usuario»: marca
+`ir_a_usuarios` y al recargar vuelve a **Usuarios**. En `entrar()` el paso se
+corrige a `{gear:"usu"}` para que el «‹ Volver» y el atrás del celular hagan lo
+mismo.
+
+**Los botones encimados son la señal, no el bug (decisión de Fredy).** No se
+agrega ningún parche que los oculte: si vuelven a aparecer, es que hay otro paso
+cruzado en el historial y hay que buscarlo.
+
 **Lo que estaba mal y por qué importa (hallazgo de Fredy, oct-2026):**
 
 La primera versión **borraba la identidad y recargaba**. De ahí salían dos

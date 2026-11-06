@@ -1040,6 +1040,10 @@ async function entrar(db){
       if(sessionStorage.getItem(CLAVE_IR_USU)){
         sessionStorage.removeItem(CLAVE_IR_USU);
         abrirPanelUsuarios();
+        // El paso del historial tiene que decir Usuarios: si se recargó desde
+        // otra pantalla del engrane, sin esto el «‹ Volver» y el atrás del
+        // celular no coincidían y quedaba un paso viejo (bug nov-2026).
+        try{ history.replaceState({ gear: "usu" }, "", location.pathname + location.search); }catch(e){}
       }
     }catch(e){}
   }else if(usuarios.length){
@@ -1310,6 +1314,10 @@ async function pintarInvUsuarios(){
     b.style.cssText = "flex:1;background:var(--card);border:1px solid " + ((yo && yo.id === u.id) ? "var(--teal)" : "var(--card-border)") + ";border-radius:12px;color:var(--fg);padding:12px;font-size:.95rem;font-family:'Chakra Petch',sans-serif;cursor:pointer;text-align:left;";
     b.onclick = ()=>{
       localStorage.setItem(CLAVE_LOCAL, JSON.stringify(u));
+      // Igual que el botón «Cambiar usuario»: al recargar, la app vuelve a
+      // abrir Usuarios en vez del menú. Si no, el paso del engrane quedaba en
+      // el historial y el «‹ Volver» de un submenú regresaba aquí (bug nov-2026).
+      try{ sessionStorage.setItem(CLAVE_IR_USU, "1"); }catch(e){}
       location.reload();
     };
     fila.appendChild(b);
