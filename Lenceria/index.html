@@ -1364,7 +1364,7 @@ async function guardarPrenda(){
         ref: referencia, foto: fotoProcesada.foto, fotoW: fotoProcesada.fotoW, fotoH: fotoProcesada.fotoH, vecesUsadas: 0 });
     }
     tabPrendas = lado;
-    aviso("Prenda guardada.");
+    await aviso("Prenda guardada.");
     pintarConfig();
     history.back();
   }catch(e){ aviso("No se pudo guardar la prenda."); }
@@ -1419,7 +1419,7 @@ async function borrarPrenda(){
 
     await deleteDoc(doc(db, "lenceriaPrendas", id));
     prendas = prendas.filter(x => x.id !== id);
-    aviso("Prenda borrada.");
+    await aviso("Prenda borrada.");
     pintarConfig();
     history.back();
   }catch(e){ aviso("No se pudo borrar la prenda."); }
@@ -1890,7 +1890,7 @@ async function guardarPlan(){
       }, { merge: true });
     }
 
-    aviso("Plan guardado.");
+    await aviso("Plan guardado.");
     await cargarPlanes();
     pintarPlanes();
     history.back();
@@ -1949,7 +1949,7 @@ async function mandarPropuesta(fechaTexto){
     avisarTelegram("👗 " + miNombre + " te propuso un vestuario para el " + fechaLarga(fechaTexto) + ".",
       baseUrl() + "Lenceria/");
 
-    aviso("Mandado. " + nombreLado(otroLado) + " lo va a ver.");
+    await aviso("Mandado. " + nombreLado(otroLado) + " lo va a ver.");
     await cargarPedidos();
     pintarPlanes();
     history.back();
@@ -2056,7 +2056,7 @@ async function aceptarPedido(){
     avisarTelegram("✅ " + miNombre + " aceptó el vestuario del " + fechaLarga(fechaTexto)
       + (modificado ? " (con cambios)" : "") + ".", baseUrl() + "Lenceria/");
 
-    aviso("Aceptado.");
+    await aviso("Aceptado.");
     await cargarPlanes();
     await cargarPedidos();
     pintarPlanes();
@@ -2079,7 +2079,7 @@ async function rechazarPedido(){
     avisarTelegram("❌ " + miNombre + " rechazó el vestuario del "
       + fechaLarga(pedidoRecibido.fechaTexto) + ".", baseUrl() + "Lenceria/");
 
-    aviso("Rechazado.");
+    await aviso("Rechazado.");
     await cargarPedidos();
     pintarPlanes();
     if(vistaActual === "vistaPedido") history.back();

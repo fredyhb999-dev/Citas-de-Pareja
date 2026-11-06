@@ -27,6 +27,10 @@
 //  Notas:
 //   - El texto entra SIEMPRE con `textContent`, nunca con `innerHTML`: varios de
 //     estos textos traen nombres, correos o accesorios que vienen de Firebase.
+//   - Si después del aviso vas a navegar o cerrar una vista (`history.back()`,
+//     `location.replace`, `ver(...)`), usa `await aviso(...)`: el aviso guarda un
+//     paso del historial y, si no lo esperas, ese `history.back()` lo cierra de
+//     inmediato (se ve como un parpadeo).
 //   - Va en Z 95: encima de los modales normales (60) y de los fuegos (70).
 //   - Si se pide otra confirmacion mientras esta abierta, la anterior se cierra
 //     como "no": nunca quedan dos encimadas.

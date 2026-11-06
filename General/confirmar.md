@@ -31,6 +31,8 @@ if(!await confirmar({
 
 // 2) AVISO: se dice UNA cosa y no hay nada que cancelar. Un solo boton,
 //    "Entendido", y SIEMPRE con ⚠️. NO se espera: se llama y ya.
+//    EXCEPCION: si despues vas a navegar o cerrar la vista, usa
+//    `await aviso(...)`; si no, ese history.back() cierra el aviso de inmediato.
 if(!esAnfitrion()){ aviso("Terminar la partida es cosa del anfitrión."); return; }
 ```
 
@@ -40,6 +42,17 @@ se paraba hasta que le dieras OK, y habia que respetarlo (los candados hacen
 el codigo sigue: **los candados siguen funcionando porque el `return` viene
 despues**. **Regla: si cambias un `alert()` por `aviso()`, el `return` (o el
 `return null`) tiene que quedarse donde estaba.**
+
+**Excepción (nov-2026):** si después del aviso el código va a **navegar o cerrar
+una vista** (`history.back()`, `location.replace`, `ver(...)`, `cerrar...`), hay
+que **esperarlo** con `await aviso(...)`. El aviso guarda un paso del historial;
+si navegas sin esperar, ese `history.back()` cierra el aviso de inmediato y se ve
+como un parpadeo. Los candados (`aviso(...); return;`) siguen sin esperarse.
+
+Si la función **no puede ser `async`** (la llaman desde código síncrono), el
+orden se invierte: **primero se navega y el aviso va al final**. Así el aviso
+queda encima de la vista nueva y, al aceptarlo, deshace su propio paso sin
+desincronizar nada (así lo hace `abortarPlacer()` en Castigos).
 
 **Decisiones que hay que respetar si se vuelve a tocar:**
 

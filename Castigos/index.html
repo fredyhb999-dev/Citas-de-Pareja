@@ -2415,8 +2415,11 @@ function abortarPlacer(){
   placerExtremo = false;
   esMultiPartida = false;
   try{ document.getElementById("swPlacer").checked = false; }catch(e){}
-  aviso("No hay acciones en los niveles que elegiste. Elige otros niveles u otro castigo.");
+  // PRIMERO se cambia de vista y DESPUÉS se avisa. Al revés, el aviso (que
+  // guarda su paso de historial) se quedaba abierto encima de la vista nueva
+  // y el atrás del celular desincronizaba historial y pantalla (nov-2026).
   ver("vistaInicio", "replace");
+  aviso("No hay acciones en los niveles que elegiste. Elige otros niveles u otro castigo.");
 }
 
 function armarPartidaNormal(){
