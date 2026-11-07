@@ -205,9 +205,11 @@ apuntando a un nombre que ya no existe, y **al editarlas se cambiarian solas**.
 ## El vestuario de una cita (`Lenceria/`)
 
 Cada tarjeta de cita tiene un botón **👗** que abre Lencería con el día de la cita
-y **la persona que la recibe** (`persona`, su id). El enlace **no se guarda**: se
-calcula, así que si la cita cambia de día el botón apunta solo al día nuevo. Los
-planes se guardan e identifican **por persona**, no por lado (nov-2026).
+y **la persona que oprime el botón** (`persona`, su id): muestra **su propio**
+vestuario para ese día. Crear o aceptar la cita propone el atuendo **del otro**;
+el 👗 es para ver el propio. El enlace **no se guarda**: se calcula, así que si la
+cita cambia de día el botón apunta solo al día nuevo. Los planes se guardan e
+identifican **por persona**, no por lado (nov-2026).
 
 **Al guardar una cita** el formulario **reemplaza** su paso del historial en vez
 de hacer `history.back()`. Si se hiciera back, el `popstate` pendiente cerraba la

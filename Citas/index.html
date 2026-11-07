@@ -752,16 +752,16 @@ function nombreDeLado(lado){
   return "Sin usar";
 }
 
-// El 👗 de una cita guardada muestra lo que hay ese día: el plan si existe, y si
-// no, la propuesta pendiente. Se abre la pestaña de quien recibe la cita.
+// El 👗 de una cita guardada abre el vestuario de QUIEN OPRIME el botón, para
+// ese día. Crear o aceptar la cita propone el atuendo del otro; este botón es
+// para ver el propio.
 function verVestuarioDeLaCita(c){
   const fecha = String(c.fechaCita || "").slice(0, 10);
-  if(fecha.length !== 10) return;
-  const uPara = usuarios.find(u => u && u.id === c.paraId);
-  if(!uPara) return;
+  if(fecha.length !== 10 || !miIdentidad) return;
+  const yo = usuarios.find(u => u && u.id === miIdentidad.id) || miIdentidad;
   location.href = "../Lenceria/?fecha=" + encodeURIComponent(fecha)
-    + "&persona=" + encodeURIComponent(uPara.id)
-    + "&lado=" + ladoDeUsuario(uPara) + "&modo=ver";
+    + "&persona=" + encodeURIComponent(yo.id)
+    + "&lado=" + ladoDeUsuario(yo) + "&modo=ver";
 }
 
 // Si la cita cambia de día, mueve los planes y las propuestas de ese día.
@@ -1067,17 +1067,17 @@ function renderCitas(docsSnap){
     quienEl.textContent = "Propuesta por " + nombrePorId(c.proponenteId, c.proponenteNombre) + " para " + nombrePorId(c.paraId, c.paraNombre);
     card.appendChild(quienEl);
 
-    // Botón de vestuario: muestra lo que hay ese día en Lencería (plan o
-    // propuesta pendiente). No sale en citas pasadas.
+    // Botón de vestuario: abre MI vestuario para ese día (el de quien oprime).
+    // No sale en citas pasadas.
     const fechaVest = String(c.fechaCita || "").slice(0, 10);
-    const uParaVest = usuarios.find(u => u && u.id === c.paraId);
+    const yoVest = usuarios.find(u => u && u.id === (miIdentidad && miIdentidad.id)) || miIdentidad;
     const vestPasada = fechaVest.length === 10 && fechaVest < hoyISO();
-    if(fechaVest.length === 10 && uParaVest && !vestPasada){
+    if(fechaVest.length === 10 && yoVest && !vestPasada){
       const btnVest = document.createElement("button");
       btnVest.className = "btnVestuario";
       btnVest.textContent = "👗";
-      btnVest.title = "Ver el vestuario de " + (uParaVest.nombre || "la pareja");
-      btnVest.setAttribute("aria-label", "Ver el vestuario de " + (uParaVest.nombre || "la pareja"));
+      btnVest.title = "Ver tu vestuario";
+      btnVest.setAttribute("aria-label", "Ver tu vestuario");
       btnVest.onclick = ()=> verVestuarioDeLaCita(c);
       filaTop.appendChild(btnVest);
     }
