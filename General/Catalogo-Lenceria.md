@@ -395,9 +395,10 @@ no hay historial por plan. Es un límite consciente, no un descuido.
 Cada tarjeta de cita tiene un botón **👗**. **No sale en citas pasadas** (no se
 puede crear nada para ayer).
 
-**El icono muestra, no propone.** Al tocarlo abre Lencería en la pestaña de quien
-recibe la cita: ahí se ve **su plan** si ya existe, o **la propuesta pendiente** si
-todavía no hay plan. Llega con `?fecha=AAAA-MM-DD&lado=A|B&modo=ver`.
+**El icono muestra, no propone.** Al tocarlo abre Lencería en la pestaña de
+**quien oprime el botón** (la persona actual): ahí se ve **su plan** si ya existe,
+o **la propuesta pendiente** si todavía no hay plan. Llega con
+`?fecha=AAAA-MM-DD&persona=<id>&lado=A|B&modo=ver`.
 
 **Proponer** el atuendo se ofrece en otros dos momentos, no desde el icono:
 

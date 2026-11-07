@@ -57,8 +57,10 @@ anfitrion ahi, entonces si aplica la regla de nacer oculto.**
   Engrane ⚙️ arriba-izquierda (solo admin) para editar las dos listas:
   **pestañas** por usuario, lista en **tabla** con scroll acotado y **buscador**,
   edición en línea, borrar (✕) a la derecha, y **pegar lista completa**. Al
-  terminar, aviso a todos y regreso; invitados expulsados. Pausar/continuar/
-  terminar/saltar turno/sacar invitados como Encuentros. Licencia: item
+  terminar, aviso a todos y regreso; **el anfitrión quita a los invitados que
+  jugaron** (`retirarInvitadosDeUsuarios()`) y la sala de espera los saca, aunque
+  no acepten el aviso en su celular. Pausar/continuar/terminar/saltar turno/sacar
+  invitados como Encuentros. Licencia: item
   **`opciones`**. En el catálogo (`packs`): ruta **`Opciones`**, sección
   **`experiencias`**. El mecanismo de **agregar invitado a media partida**
   (reutilizable para otros juegos) está documentado aparte en

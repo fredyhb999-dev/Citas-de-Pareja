@@ -356,7 +356,7 @@ la tarjeta y la tienda lo desmarca. Sin que el cliente recargue nada.
 |---|---|
 | Invitado apaga el celular o pierde red | Sigue en el turno. Mitigacion: "Saltar turno" del anfitrion |
 | **Sin internet**, el invitado no se expulsa al abrir | Deliberado: no se expulsa a nadie de una partida en curso por un corte de red |
-| Invitado que nunca recibe invitacion | Espera indefinidamente en la sala. Cerrar la app lo resuelve |
+| Invitado que nunca recibe invitacion | Espera indefinidamente en la sala. Cerrar la app lo resuelve. Si el anfitrion quita su ficha (al terminar una partida), la sala lo saca sola (`vigilarMiFicha()`, nov-2026) |
 | Escaneo y se salio | Se pierde el QR y hay que escanear de nuevo. Si **todavía no se ha jugado nada**, volver a escanear devuelve la misma ficha y sus puntos (oct-2026). **Si ya jugó y lo expulsaron**, vuelve como ficha nueva y en 0: el registro es temporal (ver *Registrarse por QR otra vez*) |
 | Varios juegos con invitación a la vez | **Resuelto (oct-2026):** la sala muestra **una sola carta**, la **más reciente que se pueda entrar** (se ordena por `actualizadaEn`). Antes ganaba la primera del listado, y esa sale por **orden alfabético** del nombre interno (`encuentros` < `opciones`), o sea siempre la misma. Importante: si la más reciente está **en pausa no gana**, para que el invitado no se quede sin poder entrar a ninguna |
 | Datos viejos de "invitado de invitado" | No se limpian (ya estaba en pendientes) |

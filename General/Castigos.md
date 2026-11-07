@@ -121,14 +121,14 @@ Cada N rondas (configurable, 1 o más) se asigna una imposición al azar al turn
 
 1. Elige castigo (o 3 en Multi) → paso de tomas → `iniciarPartida()`.
 2. Cada turno: **Imposición** (si está activa, el anfitrión la escribe) → **Castigo** (se muestra la acción + accesorio + medida; si es `tiempo` se inicia cronómetro) → **Listo** avanza al siguiente turno.
-3. **Solo el celular del turno ve la imposición y el castigo.** El título dice "Tienes que..." y debajo van la imposición y la acción. Los demás celulares muestran **únicamente "Turno de X"**: no ven imposición ni castigo (igual que Encuentros y Guiadas). En "un solo celular" el mismo teléfono muestra todos los turnos. La decisión se toma con `comoJuegan` y `t.jugador === miId`, **no** con `jugandoCompartido` (esa bandera tarda en quedar en `true` en el celular que se une y hacía que el turno ajeno se pintara entero).
-4. Al terminar: "¡Gracias por jugar!", fuegos (`encenderFuegos()`), fin de sesión si es compartida.
+3. **Solo el celular del turno ve la imposición y el castigo.** El título dice "Tienes que..." y debajo van la imposición y la acción. Los demás celulares muestran **únicamente "Turno de X…" dentro del mismo recuadro** (letra grande, gris, como el recuadro de Encuentros): no ven imposición ni castigo (igual que Encuentros y Guiadas). En "un solo celular" el mismo teléfono muestra todos los turnos. La decisión se toma con `comoJuegan` y `t.jugador === miId`, **no** con `jugandoCompartido` (esa bandera tarda en quedar en `true` en el celular que se une y hacía que el turno ajeno se pintara entero).
+4. Al terminar: "¡Gracias por jugar!", fuegos (`encenderFuegos()`), fin de sesión si es compartida. **El anfitrión quita a los invitados que jugaron** (`retirarInvitadosDeUsuarios()`), aunque no hayan aceptado el aviso en su celular; así no reaparecen en la siguiente partida y la sala de espera los saca.
 
 ## Controles de partida
 
 - **Saltar turno:** solo el anfitrión; consume imposición y castigo del turno.
 - **Pausar / Reanudar:** solo el anfitrión; guarda estado en `localStorage` (`castigos_partida_pausada`) y en la sesión compartida.
-- **Terminar Partida:** solo el anfitrión; termina para todos, `activa:false, terminada:true`.
+- **Terminar Partida:** solo el anfitrión; termina para todos, `activa:false, terminada:true`, y **quita a los invitados de esta partida** (nov-2026).
 - **Revivir:** switch del anfitrión; si está apagado, los turnos del lado no inicial se saltan.
 
 ## Navegación: «Volver», atrás del celular e historial

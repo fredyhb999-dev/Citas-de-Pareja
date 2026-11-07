@@ -153,6 +153,9 @@
     letter-spacing:.1em; text-transform:uppercase; color:var(--coral); }
   .faseTitulo{ font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:1.2rem; margin-bottom:8px; }
   .faseTexto{ font-size:1.1rem; line-height:1.6; margin-bottom:16px; color:var(--fg); }
+  /* Espera del turno ajeno: mismo look que el recuadro de Encuentros. */
+  #recibeAccion.espera{ font-family:'Chakra Petch',sans-serif; font-size:1.55rem;
+    font-weight:700; line-height:1.45; margin-bottom:0; color:var(--fg-muted); }
   #faseCastTexto{ text-align:center; }
   .faseTexto .acce{ color:var(--teal); font-weight:600; }
   #faseImpTexto, #recibeImp{ font-weight:600;
@@ -354,7 +357,7 @@
   <div id="faseRecibe" class="faseBox">
     <div class="faseTitulo" id="recibeTitulo">Tienes que...</div>
     <div class="faseTexto" id="recibeImp"></div>
-    <div class="faseTexto" id="recibeAccion" style="font-weight:600;"></div>
+    <div class="faseTexto" id="recibeAccion"></div>
   </div>
 
   <div id="filaListo" style="display:none;min-height:48px;width:100%;align-items:center;justify-content:center;margin:0 0 2px;">
@@ -3376,9 +3379,9 @@ function pintarTurno(){
   const esUnCelular = (comoJuegan === "unCelular");
   const soyTurno = esUnCelular || (t.jugador === miId);
   // El que tiene el turno ve "Tienes que…" + imposición + castigo. El resto
-  // solo ve "Turno de X".
+  // solo ve "Turno de X…", dentro del recuadro (igual que Encuentros).
   document.getElementById("partidaTitulo").textContent =
-    soyTurno ? "Tienes que..." : ("Turno de " + c.nombre);
+    soyTurno ? "Tienes que..." : "El Precio del Placer";
 
   // La imposición la toma el ANFITRIÓN (aunque en este turno sea el que recibe),
   // y se escribe en la sesión para que el que castiga la vea. Se guarda "" para
@@ -3389,11 +3392,28 @@ function pintarTurno(){
     if(jugandoCompartido){ escribirImposicionRemoto(t.imposicion); }
   }
 
-  // No es mi turno: solo queda "Turno de X" en el título. No se muestra ni la
-  // imposición ni el castigo (ni sus botones).
+  // No es mi turno: solo se muestra "Turno de X…" dentro del recuadro, en gris.
+  // No se ve ni la imposición ni el castigo (ni sus botones), igual que en
+  // Encuentros y Guiadas.
   if(!soyTurno){
+    const titEl = document.getElementById("recibeTitulo");
+    titEl.textContent = "";
+    titEl.style.display = "none";
+    const impEl = document.getElementById("recibeImp");
+    impEl.textContent = "";
+    impEl.style.display = "none";
+    const acEl = document.getElementById("recibeAccion");
+    acEl.className = "faseTexto espera";
+    acEl.textContent = "Turno de " + c.nombre + "…";
+    acEl.style.color = "";
+    acEl.style.display = "block";
+    fr.classList.add("ver");
     return;
   }
+  // Es mi turno: se restaura el recuadro por si antes se mostró la espera.
+  document.getElementById("recibeTitulo").textContent = "Tienes que...";
+  document.getElementById("recibeTitulo").style.display = "";
+  document.getElementById("recibeAccion").className = "faseTexto";
 
   if(faseTurno === "imposicion"){
     const impTxt = String(t.imposicion || "").trim();

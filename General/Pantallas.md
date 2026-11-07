@@ -15,7 +15,7 @@ Movido de `General/GUIA.md`. Contiene las decisiones específicas de cada pantal
 | Al registrarse va directo a la sala | A `Diablitos/`, sin ventana de "Listo". Si el anfitrion aun no publico nada, ve "Esperando Invitacion..." |
 | El invitado **no tiene salida** | Ni en la pantalla de espera ni durante la partida. Se queda hasta que termine |
 | La pareja **no** se expulsa nunca por un corte de red | La salida automatica solo se aplica al abrir la app, no durante la partida |
-| Al terminar, el invitado sale solo | Este o "Terminar Partida": mensaje, acepta, `salirModoInvitado()` |
+| Al terminar, el invitado sale solo | Este o "Terminar Partida": el **anfitrión** quita su ficha (`retirarInvitadosDeUsuarios()`) y la sala (`vigilarMiFicha()`) lo regresa a su inicio. Antes solo lo hacía el celular del invitado al aceptar (`salirModoInvitado()`), así que podía quedarse. Vale en los 4 juegos con invitados y en los dos modos (nov-2026) |
 | En toda la interfaz se dice **anfitrion** | No "administrador" |
 | Aviso de fin solo en la transicion real | Exige `&& jugando`, para que un documento viejo no lo displays otra vez |
 | **Al acabar una partida se prenden fuegos** | Modulo `fuegos.js` en la **raiz**. Sale en todos los modos (solo, pareja, multi, un celular o compartido) y tmbn si el anfitrion la termina. El aviso de fin **no** dice "La partida termino": dice "Gracias por jugar" y la pantalla se celebra con fuegos |

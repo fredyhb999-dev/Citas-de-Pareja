@@ -64,6 +64,27 @@ saldo se quedaba ahí guardado y **nadie lo volvía a leer jamás**, porque al
 registrarse de nuevo el invitado trae otro id. Los saldos que **ya** quedaron
 antes de este cambio no se limpian: quedan ahí y se dejan.
 
+### Al terminar, el anfitrión también limpia (nov-2026)
+
+Antes la ficha del invitado se borraba **solo desde el celular del invitado**, al
+aceptar el aviso de fin. Si cerraba la página o se quedaba esperando, la ficha
+seguía en la lista del anfitrión y el invitado viejo aparecía en los turnos de la
+siguiente partida.
+
+Ahora, al terminar (natural o "Terminar Partida"), **el anfitrión borra a los
+invitados que jugaron** con `retirarInvitadosDeUsuarios()` (`config.js`). Vale en
+los dos modos y en los cuatro juegos con invitados: **Encuentros, Castigos,
+Juego de Roles y Elecciones Peligrosas**.
+
+La **sala de espera** (`Diablitos`) escucha esa ficha con `vigilarMiFicha()`
+(`invitado.js`). Si el anfitrión la quita, la sala lo saca sola, **aunque no haya
+ninguna invitación que retirar**. Ese es el caso de **"Acciones en un Celular"**,
+donde no se publica invitación: sin esta señal, el invitado se quedaba atrapado
+en la sala.
+
+El invitado sigue saliendo al terminar la partida; para volver a jugar tiene que
+registrarse otra vez, como siempre.
+
 ### Registrarse por QR otra vez ya no duplica al invitado (arreglado oct-2026)
 
 El registro de invitado (`index.html`, botón "Confirmar") tiene **tres reglas** que

@@ -516,6 +516,11 @@ No romper:**
     copia local **no manda invitación ni se expone a nadie**, y se borra al
     empezar una partida nueva, al dar "Terminar Partida" o al aceptar el fin.
     (17-oct-2026)
+  - **Limpieza de invitados al terminar (nov-2026):** el anfitrión quita de su
+    lista a los invitados que jugaron con `retirarInvitadosDeUsuarios()`, tanto
+    en el final natural como en "Terminar Partida". No depende de que el
+    invitado acepte el aviso en su celular. La sala de `Diablitos` lo detecta
+    con `vigilarMiFicha()` y lo saca, incluso en "un solo celular".
   - **La selección del Duelo en solo lectura** (la pareja y los invitados ven,
     no marcan) usa un **checkbox propio**: teal con check oscuro, también
     deshabilitado. El nativo pintaba el check blanco sobre blanco y no se veía.
