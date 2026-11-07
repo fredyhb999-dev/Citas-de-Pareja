@@ -3385,11 +3385,17 @@ function pintarTurno(){
   // El que recibe ve "Te toca recibir" + imposición (contexto) + SOLO la acción.
   // Los demás ven "Turno de X" + imposición (sin acción). Nadie más tiene botones.
   if(soyReceptor || soyOtro){
-    document.getElementById("recibeTitulo").textContent = soyReceptor ? "Te toca recibir" : ("Turno de " + c.nombre);
+    document.getElementById("recibeTitulo").textContent = soyReceptor ? "Tienes que..." : ("Turno de " + c.nombre);
     const impEl = document.getElementById("recibeImp");
-    const impTxt = imposicionesActivas ? String(t.imposicion || "").trim() : "";
-    impEl.textContent = impTxt;
-    impEl.style.display = impTxt ? "" : "none";
+    // Solo el receptor ve la imposición; los demás solo ven "Turno de X"
+    if(soyReceptor){
+      const impTxt = imposicionesActivas ? String(t.imposicion || "").trim() : "";
+      impEl.textContent = impTxt;
+      impEl.style.display = impTxt ? "" : "none";
+    }else{
+      impEl.textContent = "";
+      impEl.style.display = "none";
+    }
     const acEl = document.getElementById("recibeAccion");
     if(soyReceptor && t.accion){
       acEl.textContent = fraseAccion(t.accion);
