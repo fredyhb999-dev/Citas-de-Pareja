@@ -121,7 +121,7 @@ Cada N rondas (configurable, 1 o más) se asigna una imposición al azar al turn
 
 1. Elige castigo (o 3 en Multi) → paso de tomas → `iniciarPartida()`.
 2. Cada turno: **Imposición** (si está activa, el anfitrión la escribe) → **Castigo** (se muestra la acción + accesorio + medida; si es `tiempo` se inicia cronómetro) → **Listo** avanza al siguiente turno.
-3. El que recibe ve solo su acción; los demás ven "Turno de X" sin la acción.
+3. **Solo el celular del turno ve la imposición y el castigo.** El título dice "Tienes que..." y debajo van la imposición y la acción. Los demás celulares muestran **únicamente "Turno de X"**: no ven imposición ni castigo (igual que Encuentros y Guiadas). En "un solo celular" el mismo teléfono muestra todos los turnos. La decisión se toma con `comoJuegan` y `t.jugador === miId`, **no** con `jugandoCompartido` (esa bandera tarda en quedar en `true` en el celular que se une y hacía que el turno ajeno se pintara entero).
 4. Al terminar: "¡Gracias por jugar!", fuegos (`encenderFuegos()`), fin de sesión si es compartida.
 
 ## Controles de partida

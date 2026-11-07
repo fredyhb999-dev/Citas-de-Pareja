@@ -352,7 +352,7 @@
   <!-- Vista del que recibe (y de los demás): sin botones. El que recibe ve la
        imposición como contexto y SOLO la acción; los demás ven "Turno de X". -->
   <div id="faseRecibe" class="faseBox">
-    <div class="faseTitulo" id="recibeTitulo">Te toca recibir</div>
+    <div class="faseTitulo" id="recibeTitulo">Tienes que...</div>
     <div class="faseTexto" id="recibeImp"></div>
     <div class="faseTexto" id="recibeAccion" style="font-weight:600;"></div>
   </div>
@@ -3364,14 +3364,21 @@ function pintarTurno(){
 
   const c = cabezas.find(x=>x.id===t.jugador) || { nombre:"?", lado:"?" };
   const colorAccion = (turnoIdx % 2 === 0) ? "var(--coral)" : "var(--teal)";
-  document.getElementById("partidaTitulo").textContent = "Turno de " + c.nombre;
-
-  const esUnCelular = (comoJuegan === "unCelular") || !jugandoCompartido;
+  // En "cada quien en el suyo", cada celular muestra SOLO su turno; a los demás
+  // solo les sale "Turno de X" (igual que Encuentros y Guiadas). En "un solo
+  // celular" el mismo teléfono muestra todos los turnos.
+  //
+  // OJO: aquí NO se mira `jugandoCompartido`. En el celular de quien se une esa
+  // bandera puede tardar un instante en quedar en true y, con el
+  // `|| !jugandoCompartido` de antes, el turno ajeno se pintaba entero (con
+  // imposición y castigo) en los dos teléfonos. `comoJuegan` viene de la sesión
+  // y es igual en todos los celulares (bug nov-2026, lo reportó Fredy).
+  const esUnCelular = (comoJuegan === "unCelular");
   const soyTurno = esUnCelular || (t.jugador === miId);
-  const miCab = cabezas.find(x=>x.id===miId);
-  const miLado = miCab ? miCab.lado : null;
-  const soyReceptor = jugandoCompartido && !esUnCelular && !soyTurno && miLado && miLado !== t.lado;
-  const soyOtro = jugandoCompartido && !esUnCelular && !soyTurno && !soyReceptor;
+  // El que tiene el turno ve "Tienes que…" + imposición + castigo. El resto
+  // solo ve "Turno de X".
+  document.getElementById("partidaTitulo").textContent =
+    soyTurno ? "Tienes que..." : ("Turno de " + c.nombre);
 
   // La imposición la toma el ANFITRIÓN (aunque en este turno sea el que recibe),
   // y se escribe en la sesión para que el que castiga la vea. Se guarda "" para
@@ -3382,30 +3389,9 @@ function pintarTurno(){
     if(jugandoCompartido){ escribirImposicionRemoto(t.imposicion); }
   }
 
-  // El que recibe ve "Te toca recibir" + imposición (contexto) + SOLO la acción.
-  // Los demás ven "Turno de X" + imposición (sin acción). Nadie más tiene botones.
-  if(soyReceptor || soyOtro){
-    document.getElementById("recibeTitulo").textContent = soyReceptor ? "Tienes que..." : ("Turno de " + c.nombre);
-    const impEl = document.getElementById("recibeImp");
-    // Solo el receptor ve la imposición; los demás solo ven "Turno de X"
-    if(soyReceptor){
-      const impTxt = imposicionesActivas ? String(t.imposicion || "").trim() : "";
-      impEl.textContent = impTxt;
-      impEl.style.display = impTxt ? "" : "none";
-    }else{
-      impEl.textContent = "";
-      impEl.style.display = "none";
-    }
-    const acEl = document.getElementById("recibeAccion");
-    if(soyReceptor && t.accion){
-      acEl.textContent = fraseAccion(t.accion);
-      acEl.style.color = colorAccion;
-      acEl.style.display = "block";
-    }else{
-      acEl.textContent = "";
-      acEl.style.display = "none";
-    }
-    fr.classList.add("ver");
+  // No es mi turno: solo queda "Turno de X" en el título. No se muestra ni la
+  // imposición ni el castigo (ni sus botones).
+  if(!soyTurno){
     return;
   }
 
