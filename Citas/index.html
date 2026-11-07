@@ -761,7 +761,7 @@ function verVestuarioDeLaCita(c){
   if(!uPara) return;
   location.href = "../Lenceria/?fecha=" + encodeURIComponent(fecha)
     + "&persona=" + encodeURIComponent(uPara.id)
-    + "&lado=" + ladoDeUsuario(uPara) + "&modo=ver&v=3";
+    + "&lado=" + ladoDeUsuario(uPara) + "&modo=ver";
 }
 
 // Si la cita cambia de día, mueve los planes y las propuestas de ese día.
@@ -951,7 +951,7 @@ function irAProponer(fecha, u){
   if(f.length !== 10) return;
   location.href = "../Lenceria/?fecha=" + encodeURIComponent(f)
     + "&persona=" + encodeURIComponent(u.id)
-    + "&lado=" + ladoDeUsuario(u) + "&modo=proponer&v=3";
+    + "&lado=" + ladoDeUsuario(u) + "&modo=proponer";
 }
 
 // La pregunta que sale después de guardar o confirmar una cita.

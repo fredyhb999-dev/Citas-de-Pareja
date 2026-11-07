@@ -63,6 +63,9 @@ de plan, la del pedido recibido y la del estado del enviado, y **debajo del
 recuadro** el botón **Nuevo plan** / **Proponer**. Cada pestaña muestra la ropa y
 los planes de esa persona, aunque los dos compartan anatomía.
 
+**Hoy sí cuenta:** al abrir un plan o una propuesta sin fecha, se precarga
+**hoy**. Solo se rechaza si la fecha queda vacía o es anterior a hoy.
+
 Los planes van en **dos secciones**:
 
 - **Próximos:** siempre a la vista, del más cercano al más lejano.
@@ -230,11 +233,7 @@ Ejemplo: `u1_2026-11-07`. **El id fijo es lo que garantiza un plan por día y po
 persona.** Los planes viejos con id `A_...` o `B_...` se siguen leyendo por
 `lado`/`duenoId`; al moverlos o volver a guardarlos se pasan al id por persona.
 
-**Fechas:** se guardan y comparan siempre como `YYYY-MM-DD`. Si un dato viejo
-trae hora (`2026-11-07T19:00`), se recorta al leerlo; así el plan cae en la fecha
-de la cita y el botón 👗 lo encuentra. Al aceptar una propuesta, el plan se
-guarda **antes** del aviso; si solo falla el repintado, no se reporta como fallo
-de guardado.
+**Fechas:** se guardan y comparan siempre como `YYYY-MM-DD`.
 
 | Campo | Tipo | Qué es |
 |---|---|---|

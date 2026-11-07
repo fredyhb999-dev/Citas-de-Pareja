@@ -491,15 +491,23 @@ function prendasDePersona(id){
 }
 function planesDePersona(id){
   const lado = ladoDePersona(id);
-  const estrictos = planes.filter(p => p && (p.duenoId ? p.duenoId === id : p.lado === lado));
-  if(estrictos.length) return estrictos;
-  // Respaldo: planes con un `duenoId` viejo o que no coincide pero del mismo
-  // lado. Sin esto, un plan guardado con un id anterior quedaba invisible.
-  return planes.filter(p => p && p.lado === lado);
+  return planes.filter(p => p && (p.duenoId ? p.duenoId === id : p.lado === lado));
+}
+function planesPorFecha(lista){
+  const hoy = hoyTexto();
+  const arr = Array.isArray(lista) ? lista : [];
+  const fut = arr.filter(p => String(p.fechaTexto || "") >= hoy)
+    .sort((a, b) => String(a.fechaTexto).localeCompare(String(b.fechaTexto)));
+  const pas = arr.filter(p => String(p.fechaTexto || "") < hoy)
+    .sort((a, b) => String(b.fechaTexto).localeCompare(String(a.fechaTexto)));
+  return { fut, pas };
+}
+function planesDePersonaPorFecha(id){
+  return planesPorFecha(planesDePersona(id));
 }
 function planDePersona(id, fecha){
   return planesDePersona(id).find(p =>
-    String(p.fechaTexto || "").slice(0, 10) === String(fecha || "").slice(0, 10));
+    String(p.fechaTexto || "") === String(fecha || ""));
 }
 
 // ====== 4) Utilidades de fecha. `fechaTexto` manda: no se comparan timestamps
@@ -518,7 +526,7 @@ function fechaAObjeto(texto){
 function fechaLarga(texto){
   if(!texto) return "";
   try{
-    return fechaAObjeto(String(texto).slice(0, 10)).toLocaleDateString("es-MX",
+    return fechaAObjeto(texto).toLocaleDateString("es-MX",
       { weekday: "long", day: "numeric", month: "long" });
   }catch(e){ return texto; }
 }
@@ -1526,11 +1534,11 @@ function pintarPlanes(){
     panel.appendChild(tarjetaPedidoEnviado());
   }
 
-  const { fut, pas } = planesDePersona(tabActivo);
+  const { fut, pas } = planesDePersonaPorFecha(tabActivo);
 
   // Llegando desde una cita: solo el plan de ese día.
   if(diaFiltro){
-    const solo = fut.concat(pas).filter(p => String(p.fechaTexto || "").slice(0, 10) === diaFiltro);
+    const solo = fut.concat(pas).filter(p => String(p.fechaTexto || "") === diaFiltro);
     if(!solo.length){
       const p = document.createElement("p");
       p.className = "vacio";
@@ -1780,7 +1788,8 @@ function abrirElegir(modo, plan, fecha, sinHistorial, personaId){
   if(plan && plan.duenoId) personaElegir = plan.duenoId;
   if(!personaElegir) personaElegir = miId;
   ladoElegir = ladoDePersona(personaElegir);
-  fechaElegir = String(plan ? (plan.fechaTexto || "") : (fecha || "")).slice(0, 10);
+  // Sin fecha, se propone HOY por defecto: un plan para el mismo día sí vale.
+  fechaElegir = plan ? (plan.fechaTexto || "") : (fecha || hoyTexto());
   seleccion = plan ? (plan.prendas || []).slice() : [];
   limpiarFiltros(filtroE);
 
@@ -1885,9 +1894,9 @@ function pintarContador(idEl){
 }
 
 async function guardarPlan(){
-  const fechaTexto = String(document.getElementById("eFecha").value || "").slice(0, 10);
+  const fechaTexto = document.getElementById("eFecha").value;
   if(!seleccion.length){ aviso("Elige al menos una prenda."); return; }
-  if(!fechaTexto || fechaTexto < hoyTexto()){ aviso("Elige una fecha de hoy en adelante."); return; }
+  if(!fechaTexto || fechaTexto < hoyTexto()){ aviso("Elige una fecha de hoy en adelante (hoy sí cuenta)."); return; }
 
   if(modoElegir === "propuesta"){
     await mandarPropuesta(fechaTexto);
@@ -1964,7 +1973,6 @@ async function borrarPlan(plan){
 
 // ====== 8) Pedidos ======
 async function mandarPropuesta(fechaTexto){
-  fechaTexto = String(fechaTexto || "").slice(0, 10);
   // Se propone a la PERSONA que se está viendo, no al "otro lado": con los dos
   // en la misma anatomía, el lado no distingue a nadie.
   const paraId = personaElegir || otroId;
@@ -1996,11 +2004,9 @@ async function mandarPropuesta(fechaTexto){
       baseUrl() + "Lenceria/");
 
     await aviso("Mandado. " + nombrePersona(paraId) + " lo va a ver.");
-    // El pedido YA se guardó. Si falla solo el repintado, no hay que decir que
-    // no se pudo mandar: se refresca al volver a entrar.
-    try{ await cargarPedidos(); }catch(e){}
-    try{ pintarPlanes(); }catch(e){ console.error("LENCERIA_PROPUESTA:", e); }
-    try{ history.back(); }catch(e){}
+    await cargarPedidos();
+    pintarPlanes();
+    history.back();
   }catch(e){ aviso("No se pudo mandar la propuesta."); }
 }
 
@@ -2016,7 +2022,7 @@ async function escribirAviso(para, de, estado, titulo, texto){
 function abrirPedido(){
   if(!pedidoRecibido) return;
   ladoElegir = miLado;
-  fechaElegir = String(pedidoRecibido.fechaTexto || "").slice(0, 10);
+  fechaElegir = pedidoRecibido.fechaTexto || "";
   // Si la propuesta venció, se abre sin fecha: hay que elegir una nueva.
   if(fechaElegir < hoyTexto()) fechaElegir = "";
   seleccion = (pedidoRecibido.prendas || []).slice();
@@ -2058,9 +2064,9 @@ function mismoConjunto(a, b){
 
 async function aceptarPedido(){
   if(!pedidoRecibido) return;
-  const fechaTexto = String(pedidoCongelado
-    ? (pedidoRecibido.fechaTexto || "")
-    : document.getElementById("pFecha").value).slice(0, 10);
+  const fechaTexto = pedidoCongelado
+    ? String(pedidoRecibido.fechaTexto || "")
+    : document.getElementById("pFecha").value;
   if(!fechaTexto || fechaTexto < hoyTexto()){ aviso("La fecha ya pasó. Elige otra."); return; }
   if(!seleccion.length){ aviso("Elige al menos una prenda."); return; }
 
@@ -2111,16 +2117,11 @@ async function aceptarPedido(){
       + (modificado ? " (con cambios)" : "") + ".", baseUrl() + "Lenceria/");
 
     await aviso("Aceptado.");
-    // El plan YA se guardó. Si falla solo el repintado, no hay que decir que
-    // no se pudo aceptar: se verá al volver a entrar.
-    try{ await cargarPlanes(); }catch(e){}
-    try{ await cargarPedidos(); }catch(e){}
-    try{ pintarPlanes(); }catch(e){ console.error("LENCERIA_ACEPTAR:", e); }
-    try{ history.back(); }catch(e){}
-  }catch(e){
-    console.error("LENCERIA_ACEPTAR_ERROR:", e);
-    aviso("No se pudo aceptar.");
-  }
+    await cargarPlanes();
+    await cargarPedidos();
+    pintarPlanes();
+    history.back();
+  }catch(e){ aviso("No se pudo aceptar."); }
 }
 
 async function rechazarPedido(){
@@ -2587,7 +2588,7 @@ function aplicarEntradaCita(){
   esEntradaCita = true;
   tabActivo = personaId;
   diaFiltro = (modo === "ver") ? fecha : "";
-  try{ pintarPlanes(); }catch(e){ console.error("LENCERIA_PLANES_ENTRADA:", e); }
+  pintarPlanes();
 
   // "ver": solo se muestra lo que hay ese día (no se abre el Vestidor).
   if(modo === "ver") return;
@@ -2642,15 +2643,10 @@ async function arrancar(){
 
   await conTiempo(cargarTodo(), 10000).catch(()=>{});
 
-  // Un fallo al pintar la configuración no debe impedir que se abra la
-  // propuesta que viene desde una cita.
-  try{ pintarConfig(); }catch(e){ console.error("LENCERIA_CONFIG:", e); }
-  try{ pintarPlanes(); }catch(e){ console.error("LENCERIA_PLANES:", e); }
-  try{ escuchar(); }catch(e){}
-  try{ aplicarEntradaCita(); }catch(e){
-    console.error("LENCERIA_ENTRADA_CITA:", e);
-    try{ aviso("No se pudo abrir el vestidor desde la cita."); }catch(x){}
-  }
+  pintarConfig();
+  pintarPlanes();
+  escuchar();
+  aplicarEntradaCita();
 
   vigilarInvitaciones(db, { tipo: "lenceria", esEsta: true, alTerminar: ()=> ver("vistaPlanes") });
 }
