@@ -126,6 +126,7 @@ Cada N rondas (configurable, 1 o más) se asigna una imposición al azar al turn
 
 ## Controles de partida
 
+- **Pantalla despierta:** mientras la partida está en curso, el celular no se apaga ni se bloquea (`mantenerDespierto()` de `../despierto.js`). Se suelta al terminar, al pausar y al salir de la partida. Ver `General/Despierto.md`.
 - **Saltar turno:** solo el anfitrión; consume imposición y castigo del turno.
 - **Pausar / Reanudar:** solo el anfitrión; guarda estado en `localStorage` (`castigos_partida_pausada`) y en la sesión compartida.
 - **Terminar Partida:** solo el anfitrión; termina para todos, `activa:false, terminada:true`, y **quita a los invitados de esta partida** (nov-2026).

@@ -597,6 +597,8 @@ import { encenderFuegos, apagarFuegos } from "../fuegos.js";
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
 // Oficiales: packs aprobados de la taquilla con ruta "Castigos".
 import { oficialesAprobados, tengoAcceso } from "../acceso.js";
+// Pantalla despierta mientras hay partida en curso.
+import { mantenerDespierto, soltarDespierto } from "../despierto.js";
 
 const firebaseConfig = resolverFirebase(firebaseConfigBase);
 const app = initializeApp(firebaseConfig);
@@ -946,6 +948,9 @@ function ver(id, guardar){
   document.getElementById(id).classList.add("ver");
   document.querySelectorAll(".modal").forEach(m=>{ m.style.display = "none"; });
   pintarSalidas();
+  // Pantalla despierta mientras se juega; se suelta al salir de la partida
+  // (inicio, espera, fin). Ver ../despierto.js.
+  try{ if(id === "vistaPartida") mantenerDespierto(); else soltarDespierto(); }catch(e){}
   if(guardar === "replace"){ try{ history.replaceState({ v:id }, ""); }catch(e){} }
   else if(guardar !== false){ try{ history.pushState({ v:id }, ""); }catch(e){} }
   window.scrollTo(0,0);
@@ -3106,6 +3111,8 @@ function escucharSesionCompartida(){
           const btnR = document.getElementById("btnReanudar");
           if(btnR) btnR.style.display = "none";
           document.getElementById("overlayPausa").style.display = "flex";
+          // Partida en pausa: no hace falta mantener la pantalla despierta.
+          try{ soltarDespierto(); }catch(e){}
           if(!pausaRemotaActiva){
             pausaRemotaActiva = true;
             cronoRestanteRemoto = tiempoRestanteSeg;
@@ -3118,6 +3125,8 @@ function escucharSesionCompartida(){
         if(pausaRemotaActiva){
           pausaRemotaActiva = false;
           reanudarCronoRemoto = true;
+          // Se reanuda la partida: otra vez pantalla despierta.
+          try{ mantenerDespierto(); }catch(e){}
         }
 
         if(d.sid === sidMostrado && jugandoCompartido){
@@ -3264,6 +3273,8 @@ document.getElementById("btnEsperaRefrescar").onclick = ()=>{ chequearPartidaEsp
 
 function mostrarFin(){
   pararTemporizador();
+  // Se acabo la partida: el celular ya puede dormirse.
+  try{ soltarDespierto(); }catch(e){}
   enPausa = false;
   document.getElementById("overlayPausa").style.display = "none";
   mostrarBotonAccion(null);
@@ -3663,6 +3674,8 @@ document.getElementById("btnPausar").onclick = async ()=>{
 document.getElementById("btnReanudar").onclick = async ()=>{
   enPausa = false;
   document.getElementById("overlayPausa").style.display = "none";
+  // Se sigue en la partida: otra vez pantalla despierta.
+  try{ if(vistaActual() === "vistaPartida") mantenerDespierto(); }catch(e){}
   if(jugandoCompartido && esAnfitrion){
     try{
       await setDoc(sesionRef(), { pausada: false, actualizadaEn: serverTimestamp() }, { merge:true });
@@ -4112,6 +4125,8 @@ async function entrar(){
           const btnR = document.getElementById("btnReanudar");
           if(btnR) btnR.style.display = "none";
           document.getElementById("overlayPausa").style.display = "flex";
+          // La partida está en pausa: no hace falta mantener la pantalla despierta.
+          try{ soltarDespierto(); }catch(e){}
           pausaRemotaActiva = true;
           cronoRestanteRemoto = tiempoRestanteSeg;
           pararTemporizador();

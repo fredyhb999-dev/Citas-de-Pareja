@@ -667,6 +667,7 @@ Al agregar o quitar algo del JSON de fabrica hay que subir `VERSION_FABRICA` en
 | `General/Favores-Express.md` | `favor.js`: favores expresos, precios del 🛒 y reglas de decisión | Solo si la tarea toca favores |
 | `General/Castigos.md` | `Castigos/`: "El Precio del Placer", editor, partida, multi, placer extremo, imposiciones, invitados | Solo si la tarea toca el juego de castigos |
 | `General/fuegos.md` | `fuegos.js`: fuegos artificiales al final de la partida | Solo si la tarea toca fuegos artificiales |
+| `General/Despierto.md` | `despierto.js`: mantiene la pantalla encendida mientras hay partida en curso | Solo si la tarea toca el bloqueo automático del celular |
 | `General/confirmar.md` | `confirmar.js`: cuadros modales de confirmar() y aviso() | Solo si la tarea toca los cuadros de confirmación |
 | `General/Opciones.md` | `Opciones/`: Elecciones Peligrosas, modos, reparto, lista de opciones | Solo si la tarea toca el juego de opciones |
 | `General/Roles.md` | `Roles/`: Juego de Roles, los cuatro modos (incluido el Duelo de seducción), personajes | Solo si la tarea toca el juego de Roles |
