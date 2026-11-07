@@ -587,7 +587,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, addDoc, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, leerConfigGuardada, migrarCastigosAId, nombrePorId, fijarUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
+import { resolverFirebase, cargarUsuarios, leerConfigGuardada, migrarCastigosAId, nombrePorId, fijarUsuarios, retirarInvitadosDeUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { confirmar, aviso } from "../confirmar.js";
 import { encenderFuegos, apagarFuegos } from "../fuegos.js";
 // Invitados: este juego solo publica y retira su invitación. No sabe nada de la sala.
@@ -2538,6 +2538,12 @@ try{ entrarDirecto = new URLSearchParams(location.search).get("entrar") === "1";
 function sesionRef(){ return doc(db, COLECCION_SESION, "actual"); }
 let jugandoCompartido = false;
 let soyHost = false;
+// Limpieza comun al terminar: los invitados de esta partida salen de la lista
+// del anfitrion aunque no hayan aceptado el aviso en su celular.
+async function retirarInvitadosDeLaPartida(ids){
+  const quedan = await retirarInvitadosDeUsuarios(db, ids);
+  if(Array.isArray(quedan)) usuariosLista = quedan;
+}
 
 // ---------- generación de listas (normal) ----------
 function generarJugadores(){
@@ -3285,6 +3291,11 @@ function mostrarFin(){
     try{ setDoc(sesionRef(), { activa:false, terminada:true, actualizadaEn: serverTimestamp() }, { merge:true }); }catch(e){}
   }
   jugandoCompartido = false;
+  // El anfitrion quita a los invitados de esta partida. No se hace en el
+  // celular del invitado para que no dependa de que acepte el aviso.
+  if(esAnfitrion && !esInvitadoFlag){
+    retirarInvitadosDeLaPartida((cabezas || []).map(c => c && c.id));
+  }
 }
 
 function controlesAnfitrionVisible(){
@@ -3670,6 +3681,9 @@ document.getElementById("btnTerminarPartidaEt3").onclick = async ()=>{
     await retirarInvitacion(JUEGO_INV);
     try{ apagarFuegos(); }catch(e){}
   }catch(e){}
+  if(esAnfitrion && !esInvitadoFlag){
+    await retirarInvitadosDeLaPartida((cabezas || []).map(c => c && c.id));
+  }
   resetearInicioMulti();
   ver("vistaInicio", "replace");
 };

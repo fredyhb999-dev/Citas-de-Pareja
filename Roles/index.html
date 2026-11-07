@@ -785,7 +785,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
+import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios, retirarInvitadosDeUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, escucharItem } from "../acceso.js";
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
@@ -829,6 +829,12 @@ const JUEGO_INV = "roles";
 
 function personajesRef(){ return doc(db, "personajesJuego", "actual"); }
 function sesionRef(){ return doc(db, "sesionRoles", "actual"); }
+// Limpieza comun al terminar: los invitados de esta partida salen de la lista
+// del anfitrion aunque no hayan aceptado el aviso en su celular.
+async function retirarInvitadosDeLaPartida(ids){
+  const quedan = await retirarInvitadosDeUsuarios(db, ids);
+  if(Array.isArray(quedan)) usuariosLista = quedan;
+}
 
 // ---------- partida de UN SOLO CELULAR: se guarda en ESTE teléfono ----------
 // No es una sesión de Firebase: no se manda ninguna invitación ni se expone a
@@ -2147,6 +2153,10 @@ function abrirFin(texto){
 }
 function finPartida(){
   abrirFin("¡Gracias por jugar!");
+  // Solo el anfitrion limpia: en el celular del invitado no se toca la lista.
+  if(!esInvitadoFlag && esAnfitrion()){
+    retirarInvitadosDeLaPartida(((estado && estado.cabezas) || []).map(c => c && c.id));
+  }
 }
 async function siguiente(){
   if(!estado || estado.terminada || !jugando) return;
@@ -2833,6 +2843,9 @@ document.getElementById("btnTerminarPartida").onclick = async ()=>{
   if(jugandoCompartido){
     try{ await setDoc(sesionRef(), { activa: false, terminada: true, porAdmin: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
     await retirarInvitacion(JUEGO_INV);
+  }
+  if(!esInvitadoFlag && esAnfitrion()){
+    await retirarInvitadosDeLaPartida(((estado && estado.cabezas) || []).map(c => c && c.id));
   }
   reiniciarVariantes();   // acá también se acabó: se apaga la casilla
   pintarPaso();

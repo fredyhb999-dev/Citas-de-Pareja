@@ -345,7 +345,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, leerConfigGuardada, migrarActividadesAId, leerDocActividad, nombrePorId, fijarUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
+import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, leerConfigGuardada, migrarActividadesAId, leerDocActividad, nombrePorId, fijarUsuarios, retirarInvitadosDeUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
@@ -758,6 +758,12 @@ function escucharSesion(){
             abrirModal("modalUnir");
           }
         }else{
+          // El anfitrion quita a los invitados que jugaron aunque no hayan
+          // aceptado el aviso en su celular: si no, su ficha se queda y sale
+          // otra vez en los turnos de la siguiente partida.
+          if(d && d.terminada && d.hostUid === miId){
+            retirarInvitadosDeLaPartida((d.cabezas || []).map(c => c && c.id));
+          }
           // Partida en un solo celular: nada de sesión compartida la toca.
           if(jugando && !jugandoCompartido) return;
           // Si la partida TERMINO (no pausada, no descartada) se avisa a TODOS
@@ -790,6 +796,9 @@ function avanzarLocal(){
     ronda++;
     if(ronda >= largo){
       jugando = false;
+      // Fin natural en un solo celular: los invitados de esta partida salen
+      // aqui mismo, sin esperar a que cada uno acepte en su telefono.
+      retirarInvitadosDeLaPartida((cabezas || []).map(c => c && c.id));
       pintarPaso();
       // Acciones en un Celular tambien se celebra: mismo aviso y mismos fuegos
       // que cuando la partida es compartida.
@@ -901,6 +910,28 @@ async function cerrarSesion(){
   try{ await setDoc(sesionRef(), { activa: false, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
   // La partida ya no existe, asi que tampoco hay nada que invitar.
   await retirarInvitacion(JUEGO_INV);
+}
+
+// Al acabar una partida, los invitados que jugaron salen de la lista del
+// anfitrion AUNQUE no hayan aceptado el aviso en su celular. Antes solo se
+// borraban desde el telefono del invitado; si cerraba la pagina, su ficha se
+// quedaba y volvia a aparecer en los turnos de la siguiente partida
+// (nov-2026, lo reporto Fredy con Lola y Lila).
+async function retirarInvitadosDeLaPartida(ids){
+  const quedan = await retirarInvitadosDeUsuarios(db, ids);
+  if(Array.isArray(quedan)) usuariosLista = quedan;
+}
+// Red de seguridad al empezar otra partida: si la anterior quedo terminada y
+// algun invitado no alcanzo a salir, se limpia antes de armar los turnos.
+async function limpiarInvitadosDeSesionAnterior(){
+  if(typeof navigator !== "undefined" && navigator.onLine === false) return;
+  try{
+    const sd = await getDoc(sesionRef());
+    if(!sd.exists()) return;
+    const s = sd.data();
+    if(!s || s.activa || !Array.isArray(s.cabezas)) return;
+    await retirarInvitadosDeLaPartida(s.cabezas.map(c => c && c.id));
+  }catch(e){}
 }
 
 // Fin de encuentro, igual que en Elecciones Peligrosas: fuegos de fondo,
@@ -1680,6 +1711,10 @@ function repartirRuedaEnc(bolsas, necesarias){
   return pool.slice(0, necesarias);
 }
 async function generarYIniciar(activities, tomas){
+  // Si la partida anterior ya termino, se limpian sus invitados antes de armar
+  // los turnos. Cubre a quien cerro su celular sin aceptar el aviso: su ficha
+  // seguia en la lista y aparecia como un jugador mas.
+  await limpiarInvitadosDeSesionAnterior();
   const cabezasIn = construirCabezas();
   const largoCalc = NIVELES.reduce((t, nv)=> t + Math.max(0, tomas[nv.id] || 0), 0);
   const minLargo = cabezasIn.length;
@@ -2170,6 +2205,10 @@ document.getElementById("btnTerminarPartida").onclick = async ()=>{
     // La sala se entera y expulsa a los que se quedaron esperando.
     await retirarInvitacion(JUEGO_INV);
   }
+  // El anfitrion quita a los invitados de esta partida aunque no acepten el
+  // aviso en su celular (en los dos modos: compartido y un solo celular).
+  // Va despues de terminar la sesion para no alterar los turnos en vivo.
+  await retirarInvitadosDeLaPartida((cabezas || []).map(c => c && c.id));
   pintarPaso();
   entrar();
 };

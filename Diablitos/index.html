@@ -1216,7 +1216,7 @@ cambiarPestana(SEC_ACTIVA);
 <!-- Aparte del juego, a proposito. Si Firebase no responde, esta seccion se
      queda callada y los diablitos siguen jugando: no hay forma de que se rompa. -->
 <script type="module">
-import { soyInvitado, vigilarInvitaciones, salirDeInvitado } from "../invitado.js";
+import { soyInvitado, vigilarInvitaciones, vigilarMiFicha, salirDeInvitado } from "../invitado.js";
 import { confirmar } from "../confirmar.js";
 import { montarFavor } from "../favor.js";
 try{ montarFavor(); }catch(e){}
@@ -1228,6 +1228,14 @@ const btnIr = document.getElementById("salaIr");
 let destino = "";
 // Si me invitaron y luego la invitacion desaparece, la partida se acabo.
 let huboInvitacion = false;
+// Una sola salida, venga de donde venga: de que desaparezca la invitacion o
+// de que el anfitrion me quite de su lista de invitados.
+let saliendo = false;
+function salirSala(){
+  if(saliendo) return;
+  saliendo = true;
+  salirDeInvitado().then(()=>{ location.replace("../"); });
+}
 
 function pintar(mias){
   const vivas = (mias || []).filter(v=>v && v.activa === true);
@@ -1240,7 +1248,7 @@ function pintar(mias){
     esperando.textContent = "Esperando Invitación…";
     if(huboInvitacion){
       huboInvitacion = false;
-      salirDeInvitado().then(()=>{ location.replace("../"); });
+      salirSala();
     }
     return;
   }
@@ -1293,6 +1301,9 @@ function arrancar(){
     panel.style.display = "block";
     esperando.style.display = "block";
     vigilarInvitaciones({ cambio: pintar });
+    // En "Acciones en un Celular" no hay invitacion que desaparezca: la senal
+    // de que la partida acabo es que el anfitrion quita la ficha del invitado.
+    vigilarMiFicha(salirSala);
   }catch(e){}
 }
 

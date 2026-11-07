@@ -86,6 +86,19 @@ el celular por Fredy. NO se ha subido todavía.**
 > **El invitado solo está dentro mientras dura la partida. Cuando termina, se le
 > devuelve su información y sale. No hay salida libre, en ningún juego.**
 
+Al terminar (natural o "Terminar Partida"), **el anfitrión borra la ficha de los
+invitados que jugaron**, aunque el invitado no haya aceptado el aviso en su
+celular. Sin esto, el nombre del invitado viejo seguía apareciendo en los turnos
+(nov-2026: salían Lola y Lila a la vez). Aplica igual en **Encuentros, Castigos,
+Roles y Opciones**. En Encuentros, además, al empezar otra partida se limpian las
+fichas que hayan quedado de la partida anterior terminada.
+
+La **sala de espera** también vigila esa ficha (`vigilarMiFicha()`). Si el
+anfitrión quita al invitado, la sala lo saca aunque no haya ninguna invitación
+que retirar. Es el caso de **"Acciones en un Celular"**, donde no se publica
+invitación: sin esta señal, el invitado se quedaba atrapado en `Diablitos`
+después de que la partida terminara.
+
 Consecuencia que costó aprender: **tener copia de seguridad NO significa ser
 invitado.** Son dos cosas distintas, y antes el código las confundía. Esa
 confusión era el origen de casi todo lo que se arregló aquí.

@@ -354,7 +354,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, where, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "../firebase-config.js";
-import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
+import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios, retirarInvitadosDeUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, escucharItem } from "../acceso.js";
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
@@ -406,6 +406,12 @@ const JUEGO_INV = "opciones";
 
 function opcionesRef(){ return doc(db, "opcionesJuego", "actual"); }
 function sesionRef(){ return doc(db, "sesionOpciones", "actual"); }
+// Limpieza comun al terminar: los invitados de esta partida salen de la lista
+// del anfitrion aunque no hayan aceptado el aviso en su celular.
+async function retirarInvitadosDeLaPartida(ids){
+  const quedan = await retirarInvitadosDeUsuarios(db, ids);
+  if(Array.isArray(quedan)) usuariosLista = quedan;
+}
 
 function mostrarGracia(){ abrirModal("modalGracia"); }
 document.getElementById("btnGraciaOk").onclick = ()=>{ cerrarModal("modalGracia"); };
@@ -1018,6 +1024,10 @@ function abrirFin(texto){
 }
 function finPartida(){
   abrirFin("¡Gracias por jugar!");
+  // Solo el anfitrion limpia: en el celular del invitado no se toca la lista.
+  if(!esInvitadoFlag && esAnfitrion()){
+    retirarInvitadosDeLaPartida(((estado && estado.cabezas) || []).map(c => c && c.id));
+  }
 }
 async function pick(choice){
   if(!estado || estado.terminada || !jugando) return;
@@ -1235,6 +1245,9 @@ document.getElementById("btnTerminarPartida").onclick = async ()=>{
   if(jugandoCompartido){
     try{ await setDoc(sesionRef(), { activa: false, terminada: true, porAdmin: true, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
     await retirarInvitacion(JUEGO_INV);
+  }
+  if(!esInvitadoFlag && esAnfitrion()){
+    await retirarInvitadosDeLaPartida(((estado && estado.cabezas) || []).map(c => c && c.id));
   }
   pintarPaso();
   entrar();

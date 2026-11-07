@@ -443,10 +443,11 @@ function mostrarFin(){
   try{ document.getElementById("modalFin").style.display = "flex"; }catch(e){}
 }
 function abrirFin(texto){
-  if(finMostrado) return;
+  if(finMostrado) return false;
   finMostrado = true;
   try{ document.getElementById("finTxt").textContent = texto || "¡Gracias por jugar!"; }catch(e){}
   mostrarFin();
+  return true;
 }
 let pendienteSrc = "local"; // 'local' (guia_prog) | 'sesion' (sesionGuiada/actual)
 let pendienteMultiPrev = null;
@@ -639,7 +640,10 @@ function escucharSesion(){
           // nombre y el aviso lo dice (oct-2026, lo pidió Fredy). Si la cita se
           // acabó sola, es el agradecimiento de siempre.
           if(d && d.terminada){
-            abrirFin(d.porNombre ? (d.porNombre + " terminó la cita.") : "¡Gracias por jugar!");
+            const mostrado = abrirFin(d.porNombre ? (d.porNombre + " terminó la cita.") : "¡Gracias por jugar!");
+            // Si el aviso ya se había usado en esta pantalla, no se deja al otro
+            // atorado en el turno: se sale igual a la lista.
+            if(!mostrado) entrar();
             return;
           }
           entrar();
@@ -1202,6 +1206,8 @@ document.getElementById("btnContinuar").onclick = async ()=>{
       sidMostrado = nsid;
       await setDoc(sesionRef(), { sid: nsid, reanudada: true, activa: true, pausada: false, actualizadaEn: serverTimestamp() }, { merge: true });
     }catch(e){}
+    finMostrado = false;
+    finEnLocal = false;
     aplicaSesion(d);
     ver("vistaPlayer");
     return;
@@ -1949,6 +1955,9 @@ document.getElementById("btnSig").onclick = ()=>{
 document.getElementById("btnFinOk").onclick = ()=>{
   try{ apagarFuegos(); }catch(e){}
   document.getElementById("modalFin").style.display = "none";
+  // El aviso queda disponible otra vez para la siguiente cita (si no, después
+  // de aceptarlo una vez ningún final volvía a salir).
+  finMostrado = false;
   if(finEnLocal){ finEnLocal = false; borrarProg(); }
   entrar();
 };
@@ -2011,6 +2020,8 @@ document.getElementById("btnUnirme").onclick = ()=>{
     return;
   }
   jugandoCompartido = true;
+  finMostrado = false;
+  finEnLocal = false;
   aplicaSesion(d);
   ver("vistaPlayer");
 };

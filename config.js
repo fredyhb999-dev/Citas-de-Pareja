@@ -176,6 +176,30 @@ function conTiempo(promesa, ms){
   ]);
 }
 
+/**
+ * Quita de la lista del anfitrión a los invitados indicados. Se llama al
+ * terminar una partida (natural o con el botón), aunque el invitado no haya
+ * aceptado el aviso en su celular. Así su ficha no reaparece en la siguiente.
+ * Devuelve la lista nueva, o null si no hubo cambios / no se pudo.
+ */
+export async function retirarInvitadosDeUsuarios(db, ids){
+  const fuera = new Set((Array.isArray(ids) ? ids : []).filter(Boolean));
+  if(!fuera.size) return null;
+  // Sin conexión no se bloquea el final de la partida esperando a la red.
+  if(typeof navigator !== "undefined" && navigator.onLine === false) return null;
+  try{
+    const ref = doc(db, "config", "ajustes");
+    const snap = await conTiempo(getDoc(ref), 8000);
+    const lista = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios : [];
+    const quedan = lista.filter(u => !(u && u.invitado === true && fuera.has(u.id)));
+    if(quedan.length === lista.length) return null;
+    await conTiempo(setDoc(ref, { usuarios: quedan, actualizadoEn: serverTimestamp() }, { merge: true }), 8000);
+    guardarUsuariosLocal(quedan);
+    fijarUsuarios(quedan);
+    return quedan;
+  }catch(e){ return null; }
+}
+
 // =====================================================
 //  INSTALADOR DE FABRICA
 //  Que pasa: al empezar el proyecto el contenido inicial se metio en archivos

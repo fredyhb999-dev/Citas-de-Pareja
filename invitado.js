@@ -214,6 +214,34 @@ export function vigilarInvitaciones(hooks){
 }
 
 /**
+ * La sala de espera escucha si el anfitrión todavía tiene tu ficha. Si te quita
+ * (porque la partida terminó, sobre todo en "Acciones en un Celular", donde no
+ * hay invitación que retirar; o porque te sacó a mano), avisa UNA vez.
+ */
+export function vigilarMiFicha(alPerder){
+  const db = dbActual();
+  if(!db) return function(){};
+  let parar = null, avisado = false;
+  try{
+    parar = onSnapshot(doc(db, "config", "ajustes"), (snap)=>{
+      try{
+        if(avisado || !soyInvitado()) return;
+        const yo = miIdInvitado();
+        if(!yo || !snap.exists()) return;
+        const arr = snap.data().usuarios;
+        // Sin la lista no se puede concluir nada: no se saca a nadie por duda.
+        if(!Array.isArray(arr)) return;
+        if(arr.some(u => u && u.id === yo)) return;
+        avisado = true;
+        try{ parar && parar(); }catch(e){}
+        try{ alPerder && alPerder(); }catch(e){}
+      }catch(e){}
+    }, ()=>{});
+  }catch(e){}
+  return function(){ try{ if(parar) parar(); }catch(e){} };
+}
+
+/**
  * Un juego anuncia que hay partida. La escribe una vez y la retira al acabar.
  * No necesita saber si alguien la vio.
  */
