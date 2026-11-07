@@ -1162,12 +1162,17 @@ function ponerZoom(box){
     if(!pista || !pista.getCapabilities) return;
     const cap = pista.getCapabilities();
     if(!cap.zoom) return;
+    // Chrome solo deja mover el zoom si la camara se pidio CON permiso de zoom
+    // (`zoom: true` en getUserMedia) y lo refleja en getSettings(). Si no esta
+    // ahi, la barra no serviria de nada: mejor no mostrarla.
+    const ajustes = pista.getSettings ? pista.getSettings() : {};
+    if(!("zoom" in ajustes)) return;
     const min = Number(cap.zoom.min);
     const max = Number(cap.zoom.max);
     const paso = Number(cap.zoom.step) || 0.1;
     if(!isFinite(min) || !isFinite(max) || max <= min) return;
 
-    let actual = min;
+    let actual = Math.min(max, Math.max(min, Number(ajustes.zoom) || min));
     const barra = document.createElement("div");
     barra.className = "zoomCam";
     const menos = document.createElement("button");
@@ -1176,13 +1181,19 @@ function ponerZoom(box){
     mas.type = "button"; mas.textContent = "＋"; mas.setAttribute("aria-label", "Acercar");
     const rango = document.createElement("input");
     rango.type = "range"; rango.min = String(min); rango.max = String(max);
-    rango.step = String(paso); rango.value = String(min);
+    rango.step = String(paso); rango.value = String(actual);
     rango.setAttribute("aria-label", "Zoom de la cámara");
 
     function aplicar(v){
       actual = Math.min(max, Math.max(min, v));
       rango.value = String(actual);
-      try{ pista.applyConstraints({ advanced: [{ zoom: actual }] }).catch(()=>{}); }catch(e){}
+      // Se intenta de las dos formas conocidas: algunos navegadores aceptan
+      // `advanced` y otros solo la restriccion directa.
+      try{
+        pista.applyConstraints({ advanced: [{ zoom: actual }] }).catch(()=>{
+          try{ pista.applyConstraints({ zoom: actual }).catch(()=>{}); }catch(e){}
+        });
+      }catch(e){}
     }
     rango.oninput = ()=>{ aplicar(Number(rango.value)); };
     menos.onclick = ()=>{ aplicar(actual - paso); };
@@ -1201,7 +1212,9 @@ async function iniciarScan(){
     scanObj = new Html5Qrcode("lector");
     await scanObj.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
+      // `videoConstraints` con `zoom: true` pide permiso de zoom a la camara.
+      // Sin eso Chrome muestra la barra pero ignora los cambios (ver ponerZoom).
+      { fps: 10, qrbox: 250, videoConstraints: { facingMode: "environment", zoom: true } },
       async (texto)=>{
         try{
           const data = JSON.parse(texto);
@@ -2192,7 +2205,9 @@ document.getElementById("invEntrar").onclick = async ()=>{
     scanInv = new Html5Qrcode("lectorInv");
     await scanInv.start(
       { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
+      // `videoConstraints` con `zoom: true` pide permiso de zoom a la camara.
+      // Sin eso Chrome muestra la barra pero ignora los cambios (ver ponerZoom).
+      { fps: 10, qrbox: 250, videoConstraints: { facingMode: "environment", zoom: true } },
       async (texto)=>{
         try{
           const data = JSON.parse(texto);

@@ -149,6 +149,13 @@ las tiene, aparece debajo del video una barra con **− / control / +**.
 
 - El zoom es el de la **propia cámara** (`applyConstraints`), no un acercamiento
   visual: el QR se lee más grande de verdad.
+- **Chrome Android solo deja mover el zoom si la cámara se pidió con permiso de
+  zoom.** Por eso los dos lectores pasan `videoConstraints: { facingMode:
+  "environment", zoom: true }`. Ese detalle es el que hace la diferencia: sin él
+  `getCapabilities()` sí muestra el zoom, la barra aparece, pero los cambios se
+  ignoran en silencio (lo que pasó en la primera prueba).
+- Se comprueba `getSettings().zoom`: si no está, la barra **no se muestra**,
+  porque no serviría de nada.
 - Si la cámara **no ofrece zoom** (pasa en varios iPhone, donde Safari no lo
   expone), la barra **no se muestra** y el lector funciona igual que antes.
 - La barra se quita al cerrar el lector (`detenerScan` / `detenerScanInv`), para
