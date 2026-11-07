@@ -140,3 +140,17 @@ el mismo nombre devuelve la misma ficha (tambien **sin acentos**: "Jose" y
 "José" son la misma persona) y no crea un segundo nombre en la lista; y dos
 personas registrándose al mismo tiempo **quedan las dos**, no se pisan.
 
+### Zoom en la cámara del lector QR (nov-2026)
+
+Los dos lectores de la pantalla principal (`#lector` del asistente y `#lectorInv`
+de "Entrar modo invitado") llaman a `ponerZoom(...)` justo después de encender la
+cámara. Ahí se leen las capacidades de la cámara (`getCapabilities().zoom`) y, si
+las tiene, aparece debajo del video una barra con **− / control / +**.
+
+- El zoom es el de la **propia cámara** (`applyConstraints`), no un acercamiento
+  visual: el QR se lee más grande de verdad.
+- Si la cámara **no ofrece zoom** (pasa en varios iPhone, donde Safari no lo
+  expone), la barra **no se muestra** y el lector funciona igual que antes.
+- La barra se quita al cerrar el lector (`detenerScan` / `detenerScanInv`), para
+  que no quede colgada al volver a abrirlo.
+

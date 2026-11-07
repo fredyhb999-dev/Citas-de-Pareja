@@ -160,6 +160,14 @@
   #lector video{ border-radius:16px; }
   #lectorInv{ width:100%; max-width:340px; }
   #lectorInv video{ border-radius:16px; }
+  /* Barra de zoom del lector QR: solo aparece si la cámara del celular la admite. */
+  .zoomCam{ display:flex; align-items:center; gap:8px; margin:8px auto 0; max-width:340px; }
+  .zoomCam button{
+    width:34px; height:34px; flex:none; border-radius:50%;
+    border:1px solid var(--card-border); background:var(--card); color:var(--fg);
+    font-size:1.15rem; line-height:1; cursor:pointer;
+  }
+  .zoomCam input{ flex:1; accent-color: var(--teal); }
   #pantallaInvitado select{ color-scheme:dark; }
   #pantallaInvitado select option{ background:var(--card); color:var(--fg); }
 </style>
@@ -1130,12 +1138,61 @@ document.getElementById("wQRCancelar").onclick = async ()=>{
 // ---------- escanear QR de mi pareja ----------
 let scanObj = null;
 async function detenerScan(){
+  quitarZoom(document.getElementById("lector"));
   try{ if(scanObj){ await scanObj.stop(); } }catch(e){}
   try{ if(scanObj){ await scanObj.clear(); } }catch(e){}
   scanObj = null;
 }
 function msgQR(t){
   document.getElementById("wizMsg2").textContent = t || "";
+}
+// ---------- zoom de la cámara del lector QR ----------
+// html5-qrcode no trae zoom propio. Se usa el zoom del propio navegador, que
+// existe en la mayoría de los Android (y en algunos otros). Si la cámara no lo
+// admite, no se agrega nada y todo sigue igual.
+function quitarZoom(box){
+  try{ const b = box && box.querySelector(".zoomCam"); if(b) b.remove(); }catch(e){}
+}
+function ponerZoom(box){
+  quitarZoom(box);
+  try{
+    const video = box && box.querySelector("video");
+    if(!video || !video.srcObject) return;
+    const pista = video.srcObject.getVideoTracks()[0];
+    if(!pista || !pista.getCapabilities) return;
+    const cap = pista.getCapabilities();
+    if(!cap.zoom) return;
+    const min = Number(cap.zoom.min);
+    const max = Number(cap.zoom.max);
+    const paso = Number(cap.zoom.step) || 0.1;
+    if(!isFinite(min) || !isFinite(max) || max <= min) return;
+
+    let actual = min;
+    const barra = document.createElement("div");
+    barra.className = "zoomCam";
+    const menos = document.createElement("button");
+    menos.type = "button"; menos.textContent = "−"; menos.setAttribute("aria-label", "Alejar");
+    const mas = document.createElement("button");
+    mas.type = "button"; mas.textContent = "＋"; mas.setAttribute("aria-label", "Acercar");
+    const rango = document.createElement("input");
+    rango.type = "range"; rango.min = String(min); rango.max = String(max);
+    rango.step = String(paso); rango.value = String(min);
+    rango.setAttribute("aria-label", "Zoom de la cámara");
+
+    function aplicar(v){
+      actual = Math.min(max, Math.max(min, v));
+      rango.value = String(actual);
+      try{ pista.applyConstraints({ advanced: [{ zoom: actual }] }).catch(()=>{}); }catch(e){}
+    }
+    rango.oninput = ()=>{ aplicar(Number(rango.value)); };
+    menos.onclick = ()=>{ aplicar(actual - paso); };
+    mas.onclick = ()=>{ aplicar(actual + paso); };
+
+    barra.appendChild(menos);
+    barra.appendChild(rango);
+    barra.appendChild(mas);
+    box.appendChild(barra);
+  }catch(e){}
 }
 async function iniciarScan(){
   msgQR("");
@@ -1165,6 +1222,7 @@ async function iniciarScan(){
       },
       ()=>{}
     );
+    ponerZoom(document.getElementById("lector"));
   }catch(e){
     msgQR("Sin cámara o sin permiso. Revisa el navegador.");
   }
@@ -2113,6 +2171,7 @@ document.getElementById("invSalir").onclick = async ()=>{
 };
 let scanInv = null;
 async function detenerScanInv(){
+  quitarZoom(document.getElementById("lectorInv"));
   try{ if(scanInv){ await scanInv.stop(); } }catch(e){}
   try{ if(scanInv){ await scanInv.clear(); } }catch(e){}
   scanInv = null;
@@ -2173,6 +2232,7 @@ document.getElementById("invEntrar").onclick = async ()=>{
       },
       ()=>{}
     );
+    ponerZoom(document.getElementById("lectorInv"));
   }catch(e){
     invMsg("Sin cámara o sin permiso. Revisa el navegador.");
   }
