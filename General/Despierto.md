@@ -11,20 +11,31 @@ hay una partida en curso. Usa la función del navegador **Screen Wake Lock**
 | `mantenerDespierto()` | Enciende el permiso. Se puede llamar muchas veces: si ya está encendido, no hace nada. |
 | `soltarDespierto()` | Apaga el permiso y deja que el celular vuelva a dormirse. |
 
-## Dónde se enciende y dónde se suelta (Castigos)
+## Dónde se enciende y dónde se suelta
 
-La decisión se toma en un solo lugar: **`ver()`**, la función que cambia de vista.
+Lo usan **todos los juegos**: Castigos, Encuentros, Guiadas, Opciones, Roles y
+Diablitos. En los cinco primeros la decisión se toma en un solo lugar:
+**`ver()`**, la función que cambia de vista.
 
-- Entrar a `vistaPartida` → **encender**.
+- Entrar a la vista de juego (`vistaPartida` en Castigos, `vistaPlayer` en los
+  demás) → **encender**.
 - Cualquier otra vista (inicio, espera, bloqueo, fin) → **soltar**.
 
-Además hay tres casos que no pasan por `ver()`:
+Además hay casos que no pasan por `ver()`:
 
 | Caso | Qué se hace |
 |---|---|
-| Se termina la partida (`mostrarFin()`) | Se suelta. |
+| Se termina la partida (`mostrarFin()`, `abrirFin()`, `finPartida()`) | Se suelta. |
+| Se llega al último paso y la pantalla se queda en "fin" | Se suelta. |
 | El anfitrión pausa y el invitado ve el aviso de pausa | Se suelta al aparecer el aviso y se vuelve a encender al reanudar. |
+| Guiadas: la cita queda en pausa (sin aviso) | Se suelta en `pintarPaso()` y se vuelve a encender al reanudar. |
 | Un celular entra directo a una sesión ya pausada | Se suelta después de mostrar el aviso. |
+
+**Diablitos** es aparte: su juego es un script clásico (no puede importar
+módulos). El módulo de invitaciones le deja el puente en `window.despiertoJuego`,
+y el juego avisa con `pantallaDespierta(true)` al correr (`correr()`) y
+`pantallaDespierta(false)` al detenerse (`parar()`: pausa, configuración, salida
+o pestaña oculta).
 
 ## Reglas del navegador (por qué está escrito así)
 
@@ -38,12 +49,7 @@ Además hay tres casos que no pasan por `ver()`:
   módulo no hace nada y el juego sigue normal. No lanza error.
 - Necesita **HTTPS** (GitHub Pages ya lo es).
 
-## Pendiente
-
-Hoy solo está conectado en **`Castigos/`**. Para llevarlo a los otros juegos
-(Encuentros, Guiadas, Opciones, Roles, Diablitos) hay que importar el módulo y
-llamar a `mantenerDespierto()` / `soltarDespierto()` en los mismos tres momentos:
-empezar, pausar/reanudar y terminar.
+## Nota para quien programe
 
 El chequeo `herramientas/sintaxis/extract.py` incluye `despierto.js` en su lista de
 archivos sueltos: si se crea otro módulo de raíz, hay que agregarlo ahí o

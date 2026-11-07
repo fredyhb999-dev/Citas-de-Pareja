@@ -792,6 +792,8 @@ import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invi
 import { encenderFuegos, apagarFuegos } from "../fuegos.js";
 import { confirmar, aviso } from "../confirmar.js";
 import { montarFavor } from "../favor.js";
+// Pantalla despierta mientras hay partida en curso.
+import { mantenerDespierto, soltarDespierto } from "../despierto.js";
 try{ montarFavor(); }catch(e){}
 
 function mezclar(a){
@@ -1502,7 +1504,12 @@ function escucharSesion(){
           finMostrado = false;
           if(jugando && !jugandoCompartido) return;
           if(d.pausada && d.hostUid !== miId){
-            if(jugando){ jugando = false; abrirModal("modalPausa"); }
+            if(jugando){
+              jugando = false;
+              // Partida en pausa: no hace falta mantener la pantalla despierta.
+              try{ soltarDespierto(); }catch(e){}
+              abrirModal("modalPausa");
+            }
             return;
           }
           if(jugando){ cargarEstado(d); pintarPaso(); return; }
@@ -1991,6 +1998,8 @@ function pintarPasoDueloJuntos(d){
   // En Juntos no hay turno: la línea de turno no se usa y no debe dejar hueco.
   turnoNombre.style.display = "none";
   if(d.terminada){
+    // Partida terminada: se suelta la pantalla despierta.
+    try{ soltarDespierto(); }catch(e){}
     flipwrap.style.display = "none";
     vacio.style.display = "none";
     btnSig.style.display = "none";
@@ -2090,6 +2099,8 @@ function pintarPaso(){
   try{ pintarFaseDuelo(); }catch(e){}
   try{ document.getElementById("tarjetaDuelo").style.display = "none"; }catch(e){}
   if(d.terminada){
+    // Partida terminada: se suelta la pantalla despierta.
+    try{ soltarDespierto(); }catch(e){}
     flipwrap.style.display = "none";
     vacio.style.display = "none";
     btnSig.style.display = "none";
@@ -2147,6 +2158,8 @@ function pintarPaso(){
 // Todos los caminos de "se acabo" pasan por aqui, sin importar el modo:
 // se juego en un celular o compartido, se acabo sola o la termino el anfitrion.
 function abrirFin(texto){
+  // Se acabó la partida: el celular ya puede dormirse.
+  try{ soltarDespierto(); }catch(e){}
   try{ document.getElementById("finTxt").textContent = texto; }catch(e){}
   try{ encenderFuegos(); }catch(e){}
   abrirModal("modalFin");
@@ -4340,6 +4353,8 @@ function ver(id, guardar){
   document.getElementById(id).classList.add("ver");
   try{ document.getElementById("btnCfg").style.display = (id === "vistaInicio") ? "block" : "none"; }catch(e){}
   pintarSalidas();
+  // Pantalla despierta mientras se juega; se suelta al salir de la partida.
+  try{ if(id === "vistaPlayer") mantenerDespierto(); else soltarDespierto(); }catch(e){}
   if(guardar !== false){ try{ history.pushState({ v: id }, ""); }catch(e){} }
   window.scrollTo(0, 0);
 }

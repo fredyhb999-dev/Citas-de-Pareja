@@ -278,6 +278,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from
 import { encenderFuegos, apagarFuegos } from "../fuegos.js";
 import { aviso, confirmar } from "../confirmar.js";
 import { montarFavor } from "../favor.js";
+// Pantalla despierta mientras hay partida en curso.
+import { mantenerDespierto, soltarDespierto } from "../despierto.js";
 try{ montarFavor(); }catch(e){}
 
 const NIVELES = [
@@ -439,6 +441,8 @@ let finEnLocal = false;
 // Fin de cita, igual que en Elecciones Peligrosas: fuegos de fondo, texto de
 // agradecimiento y el boton "Aceptar" (que los apaga).
 function mostrarFin(){
+  // Se acabó la cita: el celular ya puede dormirse.
+  try{ soltarDespierto(); }catch(e){}
   try{ encenderFuegos(); }catch(e){}
   try{ document.getElementById("modalFin").style.display = "flex"; }catch(e){}
 }
@@ -664,6 +668,8 @@ function ver(id, guardar){
   // cuando la pareja está jugando. Es lo mismo que hace `Encuentros/` con
   // `pintarSalidas()`. Va junto al engrane porque las dos cosas dependen de la vista.
   document.getElementById("lnkInicio").style.display = (id === "vistaPlayer") ? "none" : "";
+  // Pantalla despierta mientras se juega; se suelta al salir de la partida.
+  try{ if(id === "vistaPlayer") mantenerDespierto(); else soltarDespierto(); }catch(e){}
   if(guardar !== false){
     try{ history.pushState({ v: id, act: ultimaActividad }, ""); }catch(e){}
   }
@@ -1869,6 +1875,12 @@ function pintarPaso(){
   const fin = document.getElementById("finMsg");
   const prog = document.getElementById("progreso");
   const p = listaJuego[paso];
+  // Pantalla despierta solo mientras la cita corre y no está en pausa.
+  try{
+    if(document.getElementById("vistaPlayer").classList.contains("ver")){
+      if(p && !sesionPausada()) mantenerDespierto(); else soltarDespierto();
+    }
+  }catch(e){}
   if(jugandoCompartido){
     prog.hidden = false;
     prog.textContent = (paso + 1) + " de " + total;

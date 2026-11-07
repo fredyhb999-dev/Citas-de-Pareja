@@ -497,6 +497,22 @@ h1{
   var esInvitado = false;
   var devils = [];
 
+  // Pantalla despierta mientras el juego corre (ver ../despierto.js). Este
+  // script es clasico y no puede importar modulos, asi que el modulo se deja en
+  // `window.despiertoJuego` desde el <script type="module"> de mas abajo; aqui
+  // solo se anota lo que se quiere y se avisa si el puente ya existe.
+  var quieroDespierto = false;
+  function pantallaDespierta(on){
+    quieroDespierto = !!on;
+    window.quieroDespierto = quieroDespierto;
+    try{
+      if(window.despiertoJuego){
+        if(on){ window.despiertoJuego.mantener(); }
+        else{ window.despiertoJuego.soltar(); }
+      }
+    }catch(e){}
+  }
+
   function rnd(a, b){ return a + Math.random() * (b - a); }
 
   function puedeGuardar(){
@@ -909,6 +925,8 @@ h1{
   function correr(){
     medir();
     corriendo = true;
+    // Mientras los diablitos corren, el celular no se duerme.
+    pantallaDespierta(true);
     if(devils.length === 0){
       crear(); crear(); crear(); crear();
     }
@@ -916,6 +934,8 @@ h1{
 
   function parar(){
     corriendo = false;
+    // Juego detenido (pausa, configuracion o salida): el celular ya puede dormir.
+    pantallaDespierta(false);
   }
 
   function reiniciar(){
@@ -1219,6 +1239,13 @@ cambiarPestana(SEC_ACTIVA);
 import { soyInvitado, vigilarInvitaciones, vigilarMiFicha, salirDeInvitado } from "../invitado.js";
 import { confirmar } from "../confirmar.js";
 import { montarFavor } from "../favor.js";
+// Pantalla despierta: el juego es un script clasico y no puede importar, asi
+// que aqui se le deja el puente en `window.despiertoJuego`.
+import { mantenerDespierto, soltarDespierto } from "../despierto.js";
+window.despiertoJuego = { mantener: mantenerDespierto, soltar: soltarDespierto };
+// Si el juego ya habia pedido la pantalla despierta antes de que este modulo
+// cargara, se atiende ahora esa intencion.
+if(window.quieroDespierto){ try{ mantenerDespierto(); }catch(e){} }
 try{ montarFavor(); }catch(e){}
 
 const panel = document.getElementById("salaInv");
