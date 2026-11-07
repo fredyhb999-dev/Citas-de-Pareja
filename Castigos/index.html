@@ -3389,10 +3389,14 @@ function pintarTurno(){
   // y es igual en todos los celulares (bug nov-2026, lo reportó Fredy).
   const esUnCelular = (comoJuegan === "unCelular");
   const soyTurno = esUnCelular || (t.jugador === miId);
-  // El que tiene el turno ve "Tienes que…" + imposición + castigo. El resto
-  // solo ve "Turno de X…", dentro del recuadro (igual que Encuentros).
+  // En "un solo celular" el nombre es lo que importa: el teléfono va pasando de
+  // mano en mano y hay que saber de quién es el turno (y quién aplica el castigo
+  // que se despliega). En "cada quien" el que tiene el turno ya sabe que es él
+  // ("Tienes que..."), y a los demás se les muestra "Turno de X…" en el recuadro.
   document.getElementById("partidaTitulo").textContent =
-    soyTurno ? "Tienes que..." : "El Precio del Placer";
+    esUnCelular ? ("Turno de " + c.nombre)
+    : soyTurno ? "Tienes que..."
+    : "El Precio del Placer";
 
   // La imposición la toma el ANFITRIÓN (aunque en este turno sea el que recibe),
   // y se escribe en la sesión para que el que castiga la vea. Se guarda "" para
