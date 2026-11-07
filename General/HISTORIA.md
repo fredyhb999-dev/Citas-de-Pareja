@@ -1363,3 +1363,187 @@ anatomía para identificar a una persona.
 **Compatibilidad.** Los usuarios sin `anatomia` se leen como antes (admin = A,
 pareja = B); los invitados viejos heredan la de quien los invitó; las partidas
 pausadas conservan sus lados. El contenido no se migra ni se mueve.
+
+---
+
+## Lo que se bajó de `GUIA.md` y `AGENTS.md` al adelgazarlos (nov-2026)
+
+**Por qué.** La documentación creció hasta que cada cambio pagaba la lectura de todo
+el proyecto: 1,012 líneas obligatorias (`AGENTS.md` + `GUIA.md`) antes de escribir una
+sola, y 1,700 si la tarea era de `Roles/`. El problema no era documentar, sino tener
+mezclados **lo que rige hoy**, **el porqué** y **el manual de cada pantalla**. Se
+separó: nada se borró; el relato se vino aquí.
+
+### 1. El arnés de pruebas (venía de `GUIA.md`)
+
+El arnés de pruebas con Chrome y sus scripts **se eliminaron** del repo: eran lentos y
+poco fiables (Chrome sin ventana devolvía volcados vacíos). Lo que queda es el
+**chequeo de sintaxis** en `herramientas/sintaxis/` (`revisar.py`) y la **prueba en
+vivo** (Pages y el celular de Fredy).
+
+Las menciones a "arnés", `Temp\opencode`, `undef.py`, `expcheck.py`, `argcheck.py`,
+`dupcheck.py`, `build_*.py`, `inject_*.py`, `final.py`, `run_*.py`, `instalador/` y
+demás que aparezcan más abajo son **registro histórico** de cómo se verificó en su
+momento: **esos archivos ya no existen** y no deben buscarse ni correrse.
+
+**El error que ya se cometió (oct-2026):** `jscheck.py` **no** saca los `<script>` de
+los HTML. Si se le pasa un `.html` a mano, cuenta también las llaves del CSS y da "OK"
+**por casualidad**. Hay que pasarle el `.js` que dejó `extract.py`, que vive en
+`Temp\opencode\extracted`. Por eso existe `revisar.py`, que hace las dos cosas en el
+orden correcto y revisa **todo** el repo. Le pasa un `.html` a `jscheck.py` = **no se
+revisó nada** (ya pasó, oct-2026).
+
+**La trampa de Chrome sin ventana:** si se abre una página con
+`--virtual-time-budget`, **los `setTimeout` NO se disparan** cuando hay una petición de
+red pendiente (el SDK de Firebase la deja abierta y el reloj virtual se detiene). Se
+perdieron 3 intentos con eso. Para probar algo después de que cargue, hay que meter la
+llamada **sin temporizador**, justo después del punto que interesa.
+
+### 2. Comunicaciones: el cuarto submenú (venía de `GUIA.md`)
+
+**Antes** el menú tenía cinco entradas, y dos eran casos especiales: **Chat** y
+**Acompañante** salían directo como enlaces, sin submenú. Los otros tres
+(Experiencias, Juegos, Retos) eran submenús de verdad.
+
+**Ahora (oct-2026)** los cuatro son iguales:
+
+| Menú | Lleva a |
+|---|---|
+| Experiencias en Pareja | Citas + lo del catálogo |
+| Juegos | Diablitos + lo del catálogo |
+| Retos | Retos + lo del catálogo |
+| **Comunicaciones** 💬 | Chat y Acompañante |
+
+El botón **Comunicaciones** va **al final** del menú, con la descripción "Chatea en
+vivo y algo más", y dentro la pantalla se llama **"Comunicación y algo más 😉"**.
+
+**Las piezas:** `#btnCom`, `#vistaCom`, `abrirCom()` / `cerrarCom()`, y el hash
+`#com`. Es el mismo molde que los otros tres submenús.
+
+**Los títulos de los submenús van centrados** (`.subTitulo{ text-align:center }`).
+Con "COMUNICACIÓN Y ALGO MÁS", que es largo, se notaba que se quedaba pegado a la
+izquierda.
+
+**Y aplicó la lección del bug de Retos:** `#btnCom` **nace visible** y
+`renderPacksDeVerdad()` no lo toca. Un submenú con tarjetas escritas a mano no puede
+depender del catálogo para que su botón aparezca.
+
+### 3. Los «Volver»: cómo estaban repartidos antes (venía de `GUIA.md`)
+
+| Pantalla | Antes | Ahora |
+|---|---|---|
+| Encuentros | izquierda | **derecha** |
+| Guiadas | izquierda | **derecha** |
+| Diablitos | derecha, pero a 8px/10px | **derecha**, a 20px y con `env(safe-area-inset-top)` |
+| Citas, Retos | derecha (en el header) | derecha |
+| **Tienda** (secciones Experiencias/Juegos/Extras) | enlace de **texto** arriba ("‹ Centro de Adquisiciones") y, en el Centro, `← Inicio` | **`‹ Volver` en la esquina superior derecha** (`#btnCasa` contextual), como toda la app. Se quitó el enlace de texto |
+
+**Todos los «Volver» de la app quedan fijos** (nov-2026): no se van con el scroll, así
+que no hay que subir hasta arriba para salir. Vale para los juegos, la Tienda, Citas,
+Retos, Panel y Autorizar. Todos dicen **«‹ Volver»**, van en la esquina superior
+derecha y llevan fondo y borde para que se lean cuando pasa contenido por debajo. En
+Citas y Retos salieron del encabezado para quedar flotando. En Chat y Acompañante el
+encabezado no se desplaza (solo la lista de mensajes), así que ya se quedaban quietos.
+En el Panel, «Entrar con Google» pasó a la izquierda, y en el Catálogo el «‹ Volver» es
+contextual: dentro de una sección regresa a la lista de secciones, y en la lista sale
+al menú del Panel. En ese Catálogo **el atrás del celular hace lo mismo que el
+«‹ Volver»** (nov-2026): cada sección es un paso real del historial, así que el gesto
+devuelve a la lista de secciones en vez de salirse de la página, y el gesto «adelante»
+vuelve a entrar. Es el mismo criterio de `Castigos/`.
+
+### 4. Los cinco síntomas del atrás en los submenús (venía de `GUIA.md`)
+
+**Lo que reportaba Fredy:** al usar el botón de regresar del navegador, las pantallas
+se comportaban de una forma muy rara. Pasaba sobre todo en Retos, pero el defecto era
+de **los cuatro submenús** (Experiencias, Juegos, Retos, Comunicaciones), porque es el
+mismo código.
+
+**La causa era una sola, y era de fondo:** los submenús **no eran pasos del
+historial**. `abrirRetos()` etc. solo encendían y apagaban un `display`, sin
+`pushState` ni tocar la dirección. El navegador no tenía idea de que ahí había habido
+un avance. Y el `#retos` de la barra de direcciones se usaba **solo para abrir un
+submenú al entrar**, nunca para registrar la navegación ni para saber de dónde venías.
+
+| # | Qué pasaba | Por qué |
+|---|---|---|
+| 1 | El botón atrás dentro de un submenú no hacía nada (o sacaba de la app) | No había entrada en el historial que deshacer |
+| 2 | Volver de Retos al menú y luego regresar de otra pantalla **reabría el submenú solo** | `cerrarRetos()` no borraba el `#retos` de la dirección |
+| 3 | Atrás desde `index.html#retos` devolvía a la pantalla anterior de verdad (el Centro de Adquisiciones), no al menú | El "Volver" de la app y el del navegador contaban historias distintas |
+| 4 | Al llegar con atrás al menú, **⚙️ y 🛒 desaparecían** | El `hashchange` mostraba el menú pero no devolvía los dos botones que los submenús apagan (`index.html:1051-1054`); solo lo hacía `mostrarMenu()`, al que nunca llamaba |
+| 5 | En `Retos/centro.html`, de la Tienda con atrás salías en **Deseos** | `navTienda` llamaba `ver("vistaCatalogo", false)` y ese `false` **no guardaba el paso** |
+
+**El detalle del paso "fijo".** Al entrar por un enlace (`../index.html#retos` desde
+`Retos/index.html`) esa entrada **no la guardamos nosotros**. Por eso `mostrarMenu()`
+la marca con `{sub:h, fijo:true}`: así el "‹ Volver" del submenú **cierra aquí** y no
+devuelve al usuario a la partida de donde vino. Sin esa distinción, el "Volver" de un
+juego y el "‹ Volver" del submenú se peleaban por el mismo paso.
+
+**Y en `Retos/centro.html`:** `navTienda` ya guarda su paso (`ver("vistaCatalogo")` sin
+el `false`), y al salir por el enlace "← Volver" se hace `replaceState` con la vista
+que se está viendo. Sin eso, al volver con atrás se entraba a una vista que ya se
+había cerrado.
+
+Lo mismo aplicaba a `Opciones/index.html`, que tenía la misma forma: **quedó
+arreglado** (oct-2026) y hoy usa `pushState` igual que los demás.
+
+### 5. Repaso de la navegación de toda la app (nov-2026)
+
+Se revisaron las pantallas que usan historial y se dejó la misma regla en todas: **el
+atrás del celular y el «‹ Volver» hacen lo mismo**. Lo que quedó escrito como regla
+vigente está en `GUIA.md` -> *Navegación con el botón atrás*; aquí solo va el registro
+de que el repaso se hizo.
+
+### 6. Notas de mantenimiento que se bajaron (venía de `GUIA.md`)
+
+- **Acentos duplicados al guardar texto en Windows:** la causa es que el archivo se
+  escribió dos veces (UTF-8 guardado como Windows-1252 y vuelto a guardar). A mano no
+  se arregla: hay que deshacer la doble conversión. Se usó
+  `Temp\opencode\fixencoding.py` (respaldo en `GUIA-PROYECTOS.md.bak`). Al revisar
+  documentos, buscar caracteres CJK: señal de doble conversión.
+- **No hay `firestore.rules` en el repo:** las reglas viven en la consola de Firebase.
+  Por eso "revisar las reglas" es siempre una acción manual.
+- **Verificación:** el arnés con Chrome se retiró (oct-2026). Hoy lo único automático
+  es el **chequeo de sintaxis** en `herramientas/sintaxis/` (`extract.py` +
+  `jscheck.py`); el resto se prueba **en vivo**.
+
+### 7. De `AGENTS.md`: por qué existen algunas reglas de trabajo
+
+- **No anticipar la segunda mitad de un trabajo (18-oct-2026).** Se escribió porque
+  faltaba: Fredy pidió "un botón para jalar todas las acciones con un JSON" y el modelo
+  anticipó y metió también "Exportar", que nadie había pedido. La regla de "no tocar
+  algo que no tenga que ver con el pedido" no cubría esto: esa habla del alcance, no de
+  si hay pedido.
+- **Leer los documentos antes de tocar (el origen).** Sin leerlos se repiten errores ya
+  resueltos y se rehacen cambios a medias. Ese fallo ya ocurrió una vez: un trabajo
+  completo se descartó porque nadie tenía el contexto a la mano.
+- **La separación de documentos (oct-2026).** Los cuatro del medio se partieron de
+  `GUIA.md`: entonces pasó de 2,274 a 1,417 líneas, y hoy ronda las 400. Son detalle de
+  una sola pantalla o módulo: se leen enteros o no se leen, y estorban al leer lo de
+  todos los días.
+- **Cerrar las reglas de la pareja ya se propuso una vez (oct-2026)** sin estar
+  escrito, y Fredy tuvo que recordar el acuerdo. Por eso hoy está escrito en
+  `AGENTS.md` y en `GUIA.md`.
+- **Si las compras dejan de funcionar**, la causa más probable es la lista de los 7
+  campos de `create` en las reglas de `solicitudes`; la forma de comprobarlo está en la
+  sección 3 de `reglas-firebase-taquilla.txt`.
+- **El permiso de `borrar` en `solicitudes`** sigue pendiente y es manual: hoy solo lo
+  tiene el publicador, y el rediseño de la cola lo necesita. Está **en espera** con los
+  cinco pasos de licencias.
+
+### 8. Pendientes que ya estaban cerrados (y por eso salieron de la lista)
+
+- **Probar la vuelta automática del invitado al abrir la app:** **PROBADA EN VIVO, las
+  dos pasaron** (un invitado con QR y partida en curso no debe ser expulsado; uno sin
+  partida debe volver solo).
+- **Rotar la llave expuesta: REVISADO (oct-2026), no hay ninguna llave expuesta.** Lo
+  que decía esto era el marcador `PON_AQUI_TU_KEY` de `Default Project\General\README.md`:
+  un espacio reservado, no una llave real. Se revisó el repo entero buscando llaves con
+  forma de secreto (`AIza...`, `-----BEGIN`, `sk-...`) y lo único que hay es la API key
+  de Firebase de `taquilla-juegos` y la mitad **pública** del par de licencias: las dos
+  van al repo por diseño. La mitad privada no está en ningún archivo. **Único cuidado de
+  aquí en adelante:** no pegar una llave real en ese `README.md`, porque esa carpeta se
+  lee en cada conversación.
+- **Sala de espera:** probada en vivo con dos teléfonos reales (Fredy, oct-2026).
+- **Favores Express:** construida y probada en vivo (Fredy, oct-2026). El plan de
+  desarrollo se borró al quedar probado, y lo que valía se pasó a
+  `General/Favores-Express.md`.

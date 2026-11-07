@@ -10,7 +10,8 @@ Este script hace las dos cosas en el orden correcto:
   1. `extract.py` deja los scripts sueltos en Temp/opencode/extracted
   2. `jscheck.py` revisa ESOS .js, que es lo que hay que revisar
 
-Uso:  python revisar.py
+Uso:  python revisar.py        (solo problemas y un resumen)
+      python revisar.py -v     (detalle completo, como antes)
 Sale con codigo 1 si algo fallo.
 """
 import io, os, subprocess, sys, glob, re
@@ -18,13 +19,21 @@ import io, os, subprocess, sys, glob, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 OUT = r"C:\Users\Fred\AppData\Local\Temp\opencode\extracted"
+VERBOSO = "-v" in sys.argv[1:]
 
 
-def correr(nombre, argumentos):
-    print("\n== %s ==" % nombre)
+def correr_capturado(nombre, argumentos):
+    """Corre un script del chequeo y devuelve (codigo, salida en bytes)."""
     r = subprocess.run([sys.executable, os.path.join(HERE, nombre)] + argumentos,
-                       cwd=HERE)
-    return r.returncode
+                       cwd=HERE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    return r.returncode, r.stdout
+
+
+def soltar(salida):
+    """Imprime la salida tal cual la produjo el otro script (respeta acentos)."""
+    sys.stdout.flush()
+    sys.stdout.buffer.write(salida)
+    sys.stdout.buffer.flush()
 
 
 # Pantallas donde el Volver NO es fijo a proposito: su encabezado no se
@@ -149,8 +158,66 @@ def revisar_navegacion():
     return errores, avisos
 
 
-if correr("extract.py", []) != 0:
+def revisar_documentacion():
+    """Aviso de tamano de la documentacion. NO tumba la revision.
+
+    La lectura obligatoria (AGENTS.md + GUIA.md) tiene un tope de 750 lineas
+    juntas: es lo que se lee en cada sesion. Si se pasa, el relato se mueve a
+    HISTORIA.md (ver AGENTS.md, *Presupuesto de documentacion*).
+
+    Ademas informa, sin fallar, que documentos de detalle pasan de 350 lineas.
+    """
+    tope = 750
+
+    def contar(rel):
+        try:
+            return len(io.open(os.path.join(REPO, rel), encoding="utf-8",
+                               errors="replace").read().splitlines())
+        except Exception:
+            return 0
+
+    a = contar("AGENTS.md")
+    g = contar("General/GUIA.md")
+    total = a + g
+    print("AGENTS.md %d + GUIA.md %d = %d lineas (tope %d)"
+          % (a, g, total, tope))
+
+    avisos = 0
+    if total > tope:
+        print("AVISO    Documentacion: la lectura obligatoria pasa el tope por %d "
+              "lineas. Mueve el relato a HISTORIA.md; no recortes reglas." % (total - tope))
+        avisos += 1
+
+    grandes = []
+    for p in sorted(glob.glob(os.path.join(REPO, "General", "*.md"))):
+        nombre = os.path.basename(p)
+        if nombre in ("GUIA.md", "HISTORIA.md", "Indices-Codigo.md"):
+            continue
+        n = len(io.open(p, encoding="utf-8", errors="replace").read().splitlines())
+        if n > 350:
+            grandes.append((n, nombre))
+    if grandes:
+        print("Info: documentos de detalle grandes: " +
+              ", ".join("%s (%d)" % (nm, n) for n, nm in sorted(grandes, reverse=True)))
+
+    if not avisos:
+        print("OK: la lectura obligatoria esta dentro del tope.")
+    return avisos
+
+
+# 1) extraer los scripts de los HTML
+print("\n== extract.py ==")
+cod_ext, out_ext = correr_capturado("extract.py", [])
+if cod_ext != 0:
+    soltar(out_ext)
     sys.exit(1)
+if VERBOSO:
+    soltar(out_ext)
+# "FALTA" no tumba la revision, pero NUNCA se esconde: es una pantalla de la
+# lista que ya no existe (o se movio) y hay que corregir extract.py.
+for linea in out_ext.decode("utf-8", "replace").splitlines():
+    if "FALTA" in linea:
+        print(linea)
 
 # Todo lo que extract.py dejo, en el orden en que lo genero.
 archivos = []
@@ -162,24 +229,33 @@ if not archivos:
     print("No hay nada que revisar.")
     sys.exit(1)
 
-# 1) llaves y parenteses
+# 2) llaves y parentesis: UNA sola corrida para todos los archivos.
 print("\n== jscheck.py (%d archivos) ==" % len(archivos))
 malos = 0
-for p in archivos:
-    r = subprocess.run([sys.executable, os.path.join(HERE, "jscheck.py"), p])
-    if r.returncode != 0:
-        malos += 1
+cod_js, out_js = correr_capturado("jscheck.py", archivos)
+if cod_js != 0:
+    soltar(out_js)
+    malos += 1
+elif VERBOSO:
+    soltar(out_js)
+else:
+    print("OK: %d archivos, llaves y parentesis en orden." % len(archivos))
 
-# 2) que no se use nada que no este importado
+# 3) que no se use nada que no este importado
 # (esto se col\u00f3 en oct-2026: `onSnapshot()` se usaba en favor.js sin
 #  importarlo, y como estaba dentro de un try{} con catch vacio, fallaba en
 #  silencio: no habia cartelito ni ventana y ningun error en pantalla.)
 print("\n== nombres.py (%d archivos) ==" % len(archivos))
-r = subprocess.run([sys.executable, os.path.join(HERE, "nombres.py")] + archivos)
-if r.returncode != 0:
+cod_nom, out_nom = correr_capturado("nombres.py", archivos)
+if cod_nom != 0:
+    soltar(out_nom)
     malos += 1
+elif VERBOSO:
+    soltar(out_nom)
+else:
+    print("OK: ningun nombre usado sin importar o definir.")
 
-# 3) navegacion: que una pantalla nueva no vuelva al patron viejo.
+# 4) navegacion: que una pantalla nueva no vuelva al patron viejo.
 print("\n== navegacion ==")
 err_nav, avis_nav = revisar_navegacion()
 if err_nav:
@@ -187,13 +263,19 @@ if err_nav:
 if avis_nav:
     print("Avisos: %d (no detienen la revision)." % avis_nav)
 
-# 4) modales: toda ventana del HTML tiene que estar registrada.
+# 5) modales: toda ventana del HTML tiene que estar registrada.
 print("\n== modales ==")
 err_mod, avis_mod = revisar_modales()
 if err_mod:
     malos += 1
 if avis_mod:
     print("Avisos: %d (no detienen la revision)." % avis_mod)
+
+# 6) documentacion: aviso de tamano (no detiene la revision).
+print("\n== documentacion ==")
+avis_doc = revisar_documentacion()
+if avis_doc:
+    print("Avisos: %d (no detienen la revision)." % avis_doc)
 
 if malos:
     print("\n%d revision(es) con problemas." % malos)

@@ -27,6 +27,7 @@ cierra con el atrás o el atrás se ignora.
 | `index.html` | ✏️ Editar `#invOverlayUsu` | Usuarios | **Cierra** | `cerrarEdUsuarios` (token) |
 | `index.html` | 🔑 Clave `#invOverlayPin` | Usuarios | **Cierra / cancela** | `cancelarPinActual` |
 | `index.html` | 📜 Historial `#invOverlayHist` | Usuarios | **Cierra** | `cerrarHistorial` |
+| `index.html` | 📨 Propuestas `#invOverlayProp` | Usuarios | **Cierra** | `cerrarPropuestas` |
 | Encuentros | `#modalTomas` | Base | **Cierra** | `tomasHist` (paso propio) |
 | Encuentros | `#vistaSeguir` (“¿Continuar?”) | Base | **Cierra** | `pasoModalBase` |
 | Encuentros | `#modalGracia` | Base | **Cierra** | `pasoModalBase` |

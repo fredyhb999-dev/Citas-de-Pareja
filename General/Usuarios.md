@@ -83,6 +83,11 @@ los datos llegan después de cerrarla.
 atrás la detecta y la cierra sola (`overlaysInv()`), sin tener que agregarla a
 una lista.
 
+**El 🛒 es de cada quien (nov-2026):** sale **solo en tu propia fila**. Ahí se
+proponen los 5 números del Centro/Favor y **el otro perfil base los aprueba**;
+mientras no haya acuerdo, los valores en uso no cambian. Detalle en
+`General/Propuestas-Precios.md`.
+
 - **Los dos perfiles base** (admin y pareja, o sea `!invitado`): campo de nombre
   **editable** y un **radio "Admin"**. **Solo hay un administrador.**
 - **Los invitados**: solo salen para editarles los puntos; su nombre se muestra

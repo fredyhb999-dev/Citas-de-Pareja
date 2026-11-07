@@ -84,6 +84,14 @@
     content:""; position:absolute; top:2px; right:2px; width:10px; height:10px;
     border-radius:50%; background:var(--rojo); box-shadow:0 0 0 2px var(--bg);
   }
+  /* Puntito con número del engrane: hay propuestas de los 5 números del carrito
+     para aprobar, o resultados sin ver. Lo pone actualizarAvisoPropuestas(). */
+  #gearDot{
+    position:absolute; top:-2px; right:-2px; min-width:17px; height:17px;
+    padding:0 4px; border-radius:9px; background:var(--rojo); color:#fff;
+    font-family:'Inter',sans-serif; font-size:.62rem; font-weight:700; line-height:17px;
+    text-align:center; box-shadow:0 0 0 2px var(--bg); display:none;
+  }
   /* ---------- identidad ---------- */
   #pantallaUsuario{ display:none; width:100%; max-width:380px; flex-direction:column; align-items:center; text-align:center; }
   #pantallaUsuario h1{ margin-bottom:10px; }
@@ -179,7 +187,7 @@
 <body>
 
 <a class="menu-btn" id="menuBtn" href="Tienda/" aria-label="Centro de Adquisiciones" style="display:none">🛒</a>
-<button class="menu-btn" id="gearBtn" type="button" aria-label="Invitados" style="display:none;left:18px;right:auto;text-decoration:none;background:none;border:none;cursor:pointer;">⚙️</button>
+<button class="menu-btn" id="gearBtn" type="button" aria-label="Invitados" style="display:none;left:18px;right:auto;text-decoration:none;background:none;border:none;cursor:pointer;">⚙️<span id="gearDot"></span></button>
 
 <div class="eyebrow">Complicidad en Pareja</div>
 
@@ -305,6 +313,14 @@
     <button id="invCambiarUsu" type="button" style="display:none;position:absolute;top:max(20px, env(safe-area-inset-top));left:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">Cambiar usuario</button>
     <h1 style="font-size:1.4rem;text-align:center;">Usuarios 👥</h1>
     <p id="invQuien" style="font-size:.82rem;color:var(--fg-muted);text-align:center;margin:0 0 10px;"></p>
+    <!-- Propuestas de los 5 números del carrito. Nace oculta: solo aparece si
+         hay algo pendiente o un resultado sin ver (regla de la casa). -->
+    <button class="card" id="invPropCard" type="button" style="display:none;width:100%;text-align:left;cursor:pointer;font-family:inherit;margin:0 0 12px;">
+      <span class="icon">📨</span>
+      <span class="label"><div class="title">Propuestas</div>
+      <div class="subtitle" id="invPropSub">Cambios que necesitan acuerdo</div></span>
+      <span class="chevron">›</span>
+    </button>
     <div id="invUsuarios" style="display:flex;flex-direction:column;gap:10px;"></div>
     <div style="display:flex;gap:8px;margin-top:10px;">
       <input type="text" id="invNuevo" placeholder="Nuevo invitado" maxlength="30" autocomplete="off" style="margin-bottom:0;">
@@ -319,7 +335,8 @@
        mismo objeto del usuario dentro de config/ajustes, junto a nombre/admin. -->
   <div id="invOverlayPts" style="display:none;position:fixed;inset:0;background:rgba(9,7,15,.8);z-index:70;align-items:center;justify-content:center;padding:24px;">
     <div style="background:var(--bg-2);border:1px solid var(--card-border);border-radius:20px;padding:22px;width:100%;max-width:380px;">
-      <h2 id="invPtsTitulo" style="font-size:1.1rem;margin-bottom:14px;font-family:'Chakra Petch',sans-serif;">Puntos</h2>
+      <h2 id="invPtsTitulo" style="font-size:1.1rem;margin-bottom:6px;font-family:'Chakra Petch',sans-serif;">Puntos</h2>
+      <p style="font-size:.78rem;color:var(--fg-muted);margin:0 0 14px;">Los cambios no se aplican hasta que tu pareja los apruebe.</p>
       <label for="invPtsActivar" style="display:block;font-size:.82rem;color:var(--fg-muted);margin-bottom:6px;">Puntos para activar un deseo</label>
       <input type="number" id="invPtsActivar" min="1" step="1" value="500" style="margin-bottom:6px;">
       <div class="hint" style="font-size:.72rem;color:var(--fg-muted);margin-bottom:14px;">Lo que se descuenta al poner un deseo a la venta.</div>
@@ -338,7 +355,7 @@
       <p id="invPtsMsg" style="font-size:.82rem;color:var(--rojo);min-height:18px;margin:10px 0;"></p>
       <div style="display:flex;gap:10px;">
         <button class="btnPri" id="invPtsCancelar" style="flex:1;background:var(--card);color:var(--fg);border:1px solid var(--card-border);">Cancelar</button>
-        <button class="btnPri" id="invPtsGuardar" style="flex:1;">Guardar</button>
+        <button class="btnPri" id="invPtsGuardar" style="flex:1;">Proponer</button>
       </div>
     </div>
   </div>
@@ -389,6 +406,20 @@
       </div>
     </div>
   </div>
+
+  <!-- ============ OVERLAY: propuestas de los 5 números del carrito ============ -->
+  <!-- Se abre desde la tarjeta "Propuestas" de Usuarios. El atrás la cierra y
+       deja la pantalla en Usuarios (se busca por el prefijo invOverlay). -->
+  <div id="invOverlayProp" style="display:none;position:fixed;inset:0;background:rgba(9,7,15,.8);z-index:70;align-items:center;justify-content:center;padding:24px;">
+    <div style="background:var(--bg-2);border:1px solid var(--card-border);border-radius:20px;padding:22px;width:100%;max-width:380px;">
+      <h2 style="font-size:1.1rem;margin:0 0 6px;font-family:'Chakra Petch',sans-serif;">Propuestas</h2>
+      <p style="font-size:.78rem;color:var(--fg-muted);margin:0 0 14px;">Un cambio se aplica solo cuando los dos están de acuerdo.</p>
+      <div id="invPropLista" style="display:flex;flex-direction:column;gap:12px;max-height:52dvh;overflow-y:auto;"></div>
+      <p id="invPropMsg" style="font-size:.82rem;color:var(--rojo);min-height:18px;margin:10px 0;"></p>
+      <button class="btnPri" id="invPropCerrar" type="button" style="width:100%;background:var(--card);color:var(--fg);border:1px solid var(--card-border);margin-top:0;">Cerrar</button>
+    </div>
+  </div>
+
   <div id="invVistaTg" style="display:none;width:100%;text-align:left;">
     <button id="invBackTg" type="button" style="position:absolute;top:max(20px, env(safe-area-inset-top));right:20px;background:none;border:none;color:var(--fg-muted);font-size:.85rem;cursor:pointer;font-family:'Chakra Petch',sans-serif;padding:4px;">‹ Volver</button>
     <h1 style="font-size:1.4rem;text-align:center;">Telegram 📲</h1>
@@ -507,7 +538,7 @@
 
 <script type="module">
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, where, limit, orderBy, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, serverTimestamp, collection, getDocs, query, where, limit, orderBy, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "./firebase-config.js";
 import { verificarCodigo, verificarFirma } from "./taquilla.js";
 import {
@@ -634,6 +665,10 @@ function mostrarMenu(nombre){
     // Los avisos de Favores Express NO se prenden aqui: los prende `montarFavor()`
     // abajo, para que funcione igual en TODAS las pantallas (oct-2026).
   }catch(e){}
+  // Propuestas de los 5 numeros del carrito: se empieza a escuchar aqui por el
+  // mismo criterio (ya hay identidad y base). Alimenta el puntito del engrane y
+  // la tarjeta de Usuarios.
+  try{ iniciarPropuestas(dbActual()); }catch(e){}
   // El boton flotante del Favor Express. Se prende aqui (y no al arrancar)
   // porque es justo cuando ya se sabe que hay identidad y base valida. Va en su
   // propio modulo: si algo falla, el menu sigue igual (mismo criterio que antes).
@@ -1304,6 +1339,9 @@ function verMenu(){
   document.getElementById("gearBtn").style.display = "";
   document.getElementById("menuBtn").style.display = "";
   iconoMenu("menu");
+  // El puntito del engrane, por si el aviso llegó mientras estabas en otra
+  // pantalla. Si no hay nada, se apaga solo.
+  try{ actualizarAvisoPropuestas(); }catch(e){}
 }
 // El "#" que hay en la barra de direcciones, ya normalizado ("#extras" es el
 // nombre viejo de Retos y se acepta igual, por si algo viejo lo trae).
@@ -1477,13 +1515,17 @@ async function pintarInvUsuarios(){
     // varias colecciones y rompía la app. Ademas, con el tachon las filas
     // quedaban de distinto tamaño (solo la de los demás lo traía) y los iconos
     // de la derecha no alineaban. Ahora TODAS las filas traen nombre + carrito.
-    const g = document.createElement("button");
-    g.type = "button";
-    g.textContent = "🛒";
-    g.setAttribute("aria-label", "Tienda de " + u.nombre);
-    g.style.cssText = "background:var(--card);border:1px solid var(--card-border);border-radius:12px;color:var(--fg);font-size:1.05rem;cursor:pointer;padding:12px;min-width:46px;";
-    g.onclick = ()=> abrirPuntos(u);
-    fila.appendChild(g);
+    // El carrito es de cada quien: sale SOLO en tu propia fila. Los invitados
+    // no lo tienen, y la fila de tu pareja tampoco (cada quien propone lo suyo).
+    if(!soyInvitado() && !u.invitado && yo && yo.id === u.id){
+      const g = document.createElement("button");
+      g.type = "button";
+      g.textContent = "🛒";
+      g.setAttribute("aria-label", "Tienda de " + u.nombre);
+      g.style.cssText = "background:var(--card);border:1px solid var(--card-border);border-radius:12px;color:var(--fg);font-size:1.05rem;cursor:pointer;padding:12px;min-width:46px;";
+      g.onclick = ()=> abrirPuntos(u);
+      fila.appendChild(g);
+    }
     // Historial de puntos: cada quien ve el suyo; el administrador ve el de los
     // dos perfiles base (admin y pareja), no el de invitados.
     const verHist = (yo && yo.id === u.id) || (yo && yo.admin && !u.invitado);
@@ -1532,6 +1574,8 @@ async function pintarInvUsuarios(){
   const esBase = !soyInvitado();
   try{ document.getElementById("invEditar").style.display = esBase ? "" : "none"; }catch(e){}
   try{ document.getElementById("invCambiarUsu").style.display = esBase ? "" : "none"; }catch(e){}
+  // La tarjeta "Propuestas" (nace oculta) y el puntito del engrane.
+  try{ actualizarAvisoPropuestas(); }catch(e){}
 }
 
 // ====== LOS DOS NUMEROS DE PUNTOS DEL CENTRO DE ADQUISICIONES ======
@@ -1540,6 +1584,9 @@ async function pintarInvUsuarios(){
 // Los lee `Retos/centro.html` (`miActivar()` y `miPrecio()`).
 let usuarioPts = null;
 function abrirPuntos(u){
+  // Cada quien propone lo suyo: solo tu propia fila, y nunca un invitado.
+  const yo = leerGuardado();
+  if(soyInvitado() || !u || u.invitado || !yo || yo.id !== u.id) return;
   usuarioPts = u;
   document.getElementById("invPtsTitulo").textContent = "Tienda de " + u.nombre;
   document.getElementById("invPtsActivar").value = parseInt(u.ptsActivar, 10) > 0 ? u.ptsActivar : 500;
@@ -1634,44 +1681,487 @@ function cerrarHistorial(){
 }
 document.getElementById("invHistCerrar").onclick = cerrarHistorial;
 
+// ====== LOS 5 NÚMEROS DEL CARRITO: AHORA SE PROPONEN ======
+// Un cambio ya no se guarda directo: el que propone da su "sí" y el otro perfil
+// base lo aprueba. Mientras no haya acuerdo, los valores en uso NO se tocan: el
+// Centro y favor.js siguen leyendo lo mismo de siempre.
+const CAMPOS_PROP = {
+  ptsActivar:   { etiqueta: "Puntos para activar un deseo", unidad: "pts" },
+  precioCompra: { etiqueta: "Precio para comprar un deseo", unidad: "pts" },
+  precioFavor:  { etiqueta: "Precio de un Favor Express", unidad: "pts" },
+  pctCastigo:   { etiqueta: "Castigo si aceptan y no cumplen", unidad: "%" },
+  minutosFavor: { etiqueta: "Minutos para cumplir un favor", unidad: "min" }
+};
+const CAMPOS_PROP_ORDEN = ["ptsActivar","precioCompra","precioFavor","pctCastigo","minutosFavor"];
+// Los mismos valores por defecto que usan el carrito, el Centro y favor.js.
+const DEFECTOS_PROP = { ptsActivar: 500, precioCompra: 100, precioFavor: 15, pctCastigo: 50, minutosFavor: 10 };
+function valorEfectivoProp(u, campo){
+  const n = parseInt(u && u[campo], 10);
+  if(campo === "precioFavor") return (isFinite(n) && n >= 0) ? n : DEFECTOS_PROP[campo];
+  if(campo === "pctCastigo") return (isFinite(n) && n >= 0 && n <= 100) ? n : DEFECTOS_PROP[campo];
+  if(campo === "minutosFavor") return (isFinite(n) && n > 0) ? n : DEFECTOS_PROP[campo];
+  return (isFinite(n) && n > 0) ? n : DEFECTOS_PROP[campo];
+}
+function valorPropValido(campo, n){
+  if(!isFinite(n)) return false;
+  if(campo === "ptsActivar" || campo === "precioCompra") return n > 0;
+  if(campo === "precioFavor") return n >= 0;
+  if(campo === "pctCastigo") return n >= 0 && n <= 100;
+  if(campo === "minutosFavor") return n >= 1;
+  return false;
+}
+function textoValorProp(campo, valor){
+  const def = CAMPOS_PROP[campo];
+  return String(valor) + (def && def.unidad ? " " + def.unidad : "");
+}
+
+let enviandoPropuesta = false;
 document.getElementById("invPtsGuardar").onclick = async ()=>{
   if(!usuarioPts) return;
+  const msgEl = document.getElementById("invPtsMsg");
+  msgEl.textContent = "";
+  if(soyInvitado()){ msgEl.textContent = "Solo la pareja puede proponer cambios."; return; }
+  if(usuarioPts.invitado){ msgEl.textContent = "Los invitados no tienen carrito."; return; }
+  // Se guarda la referencia: si cierran la ventana mientras se envía,
+  // `cerrarPuntos()` pone el global en null y esto tiene que seguir sabiendo
+  // de quién era el carrito.
+  const objetivo = usuarioPts;
   const activar  = parseInt(document.getElementById("invPtsActivar").value, 10);
   const precio   = parseInt(document.getElementById("invPtsPrecio").value, 10);
   const favor    = parseInt(document.getElementById("invPtsFavor").value, 10);
   const pctCast  = parseInt(document.getElementById("invPctCastigo").value, 10);
   const minFav   = parseInt(document.getElementById("invMinFavor").value, 10);
-  if(!(activar > 0)){ document.getElementById("invPtsMsg").textContent = "El de activar tiene que ser más de 0."; return; }
-  if(!(precio > 0)){ document.getElementById("invPtsMsg").textContent = "El precio tiene que ser más de 0."; return; }
-  if(!(favor >= 0)){ document.getElementById("invPtsMsg").textContent = "El del favor tiene que ser 0 o más."; return; }
-  if(!(pctCast >= 0 && pctCast <= 100)){ document.getElementById("invPtsMsg").textContent = "El castigo va de 0 a 100 %."; return; }
-  if(!(minFav >= 1)){ document.getElementById("invPtsMsg").textContent = "Los minutos tienen que ser 1 o más."; return; }
+  if(!(activar > 0)){ msgEl.textContent = "El de activar tiene que ser más de 0."; return; }
+  if(!(precio > 0)){ msgEl.textContent = "El precio tiene que ser más de 0."; return; }
+  if(!(favor >= 0)){ msgEl.textContent = "El del favor tiene que ser 0 o más."; return; }
+  if(!(pctCast >= 0 && pctCast <= 100)){ msgEl.textContent = "El castigo va de 0 a 100 %."; return; }
+  if(!(minFav >= 1)){ msgEl.textContent = "Los minutos tienen que ser 1 o más."; return; }
   const db = dbActual();
-  if(!db){ document.getElementById("invPtsMsg").textContent = "No hay base de datos."; return; }
+  if(!db){ msgEl.textContent = "No hay base de datos."; return; }
+  // Un solo envío a la vez: si se toca dos veces, el segundo no hace nada.
+  if(enviandoPropuesta) return;
+  enviandoPropuesta = true;
+  const btn = document.getElementById("invPtsGuardar");
+  btn.disabled = true;
+  btn.textContent = "Enviando…";
   try{
     const ref = doc(db, "config", "ajustes");
     const snap = await getDoc(ref);
     const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios.slice() : [];
-    const i = arr.findIndex(v=> v.id === usuarioPts.id);
-    if(i < 0) return;
-    arr[i] = Object.assign({}, arr[i], { ptsActivar: activar, precioCompra: precio, precioFavor: favor, pctCastigo: pctCast, minutosFavor: minFav });
+    const i = arr.findIndex(v=> v && v.id === objetivo.id);
+    if(i < 0){ msgEl.textContent = "Ese usuario ya no está."; return; }
+    if(arr[i].invitado){ msgEl.textContent = "Los invitados no tienen carrito."; return; }
+    // Hacen falta los dos perfiles base: uno propone y el otro aprueba.
+    if(arr.filter(u=> u && !u.invitado).length < 2){
+      msgEl.textContent = "Falta registrar a tu pareja para poder proponer.";
+      return;
+    }
+    const yo = leerGuardado();
+    if(!yo){ msgEl.textContent = "No sé quién eres. Vuelve a entrar."; return; }
+    if(objetivo.id !== yo.id){
+      msgEl.textContent = "Solo puedes proponer tus propios números.";
+      return;
+    }
+    const valores = { ptsActivar: activar, precioCompra: precio, precioFavor: favor, pctCastigo: pctCast, minutosFavor: minFav };
+    // Solo se propone lo que de verdad cambió contra el valor que está en uso.
+    const cambios = CAMPOS_PROP_ORDEN.filter(c=> valores[c] !== valorEfectivoProp(arr[i], c));
+    if(!cambios.length){ msgEl.textContent = "No cambiaste ningún valor."; return; }
+    // Las pendientes de estos campos se leen antes: la nueva reemplaza a la vieja.
+    let pendientes = [];
+    try{
+      const snapProp = await getDocs(collection(db, "propuestasPrecios"));
+      pendientes = snapProp.docs.filter(d=>{
+        const x = d.data() || {};
+        return x.estado === "pendiente" && x.paraId === objetivo.id;
+      });
+    }catch(e){}
+    let enviadas = 0;
+    for(const campo of cambios){
+      for(const d of pendientes){
+        const x = d.data() || {};
+        if(x.campo === campo){ try{ await deleteDoc(d.ref); }catch(e){} }
+      }
+      await addDoc(collection(db, "propuestasPrecios"), {
+        paraId: objetivo.id,
+        paraNombre: objetivo.nombre || "",
+        campo,
+        valorActual: valorEfectivoProp(arr[i], campo),
+        valorNuevo: valores[campo],
+        deId: yo.id,
+        deNombre: yo.nombre || "",
+        estado: "pendiente",
+        vistoPorProp: false,
+        creadoEn: serverTimestamp()
+      });
+      enviadas++;
+    }
+    cerrarPuntos();
+    pintarInvUsuarios();
+    await aviso(enviadas === 1
+      ? "Propuesta enviada. Falta que tu pareja la apruebe."
+      : "Propuestas enviadas (" + enviadas + "). Falta que tu pareja las apruebe.");
+  }catch(e){
+    msgEl.textContent = "No se pudo enviar. Revisa tu conexión.";
+  }finally{
+    // Se suelta siempre, incluso si se salió por un mensaje de error.
+    enviandoPropuesta = false;
+    btn.disabled = false;
+    btn.textContent = "Proponer";
+  }
+};
+
+// ====== PROPUESTAS: PUNTITO DEL ENGRANE Y TARJETA DE USUARIOS ======
+// Viven en `propuestasPrecios`, aparte de los valores en uso. El que propone ya
+// dio su "sí"; el otro perfil base es el que aprueba. Una sola pendiente por
+// campo: la nueva reemplaza a la anterior.
+let propuestasCache = [];
+let propuestasEscucha = null;
+let propuestasDb = null;
+let propuestasMostrando = null; // ids de resultados que se están viendo ahora
+let propuestasOcupado = false;  // una acción individual a la vez
+let propuestasLote = false;     // "Aceptar todas" / "Rechazar todas" en curso
+
+function textoDestinoProp(p){
+  const yo = leerGuardado();
+  if(yo && p.paraId === yo.id) return "tus números";
+  if(p.paraId && p.paraId === p.deId) return "sus números";
+  return (p.paraNombre || "esa persona");
+}
+
+function propuestasParaMi(){
+  if(soyInvitado()) return [];
+  const yo = leerGuardado();
+  if(!yo) return [];
+  return propuestasCache.filter(p=> p.estado === "pendiente" && p.deId !== yo.id);
+}
+function propuestasMiasPendientes(){
+  if(soyInvitado()) return [];
+  const yo = leerGuardado();
+  if(!yo) return [];
+  return propuestasCache.filter(p=> p.estado === "pendiente" && p.deId === yo.id);
+}
+function propuestasResultadosNuevos(){
+  if(soyInvitado()) return [];
+  const yo = leerGuardado();
+  if(!yo) return [];
+  return propuestasCache.filter(p=> p.deId === yo.id
+    && (p.estado === "aceptada" || p.estado === "rechazada")
+    && !p.vistoPorProp);
+}
+function propuestasResultadosVisibles(){
+  const porId = new Map();
+  propuestasResultadosNuevos().forEach(p=> porId.set(p.id, p));
+  if(propuestasMostrando && propuestasMostrando.size){
+    propuestasCache.forEach(p=>{
+      if(propuestasMostrando.has(p.id) && (p.estado === "aceptada" || p.estado === "rechazada")){
+        porId.set(p.id, p);
+      }
+    });
+  }
+  return Array.from(porId.values());
+}
+function actualizarAvisoPropuestas(){
+  const para = propuestasParaMi();
+  const mias = propuestasMiasPendientes();
+  const res = propuestasResultadosNuevos();
+  const n = para.length + res.length;
+  const dot = document.getElementById("gearDot");
+  if(dot){
+    dot.textContent = n > 9 ? "9+" : String(n);
+    dot.style.display = n ? "flex" : "none";
+    dot.style.alignItems = "center";
+    dot.style.justifyContent = "center";
+  }
+  const card = document.getElementById("invPropCard");
+  if(card){
+    const total = para.length + mias.length + res.length;
+    card.style.display = total ? "" : "none";
+    const sub = document.getElementById("invPropSub");
+    if(sub){
+      const partes = [];
+      if(para.length) partes.push(para.length + " para aprobar");
+      if(mias.length) partes.push(mias.length + (mias.length === 1 ? " tuya esperando" : " tuyas esperando"));
+      if(res.length) partes.push(res.length + (res.length === 1 ? " resultado nuevo" : " resultados nuevos"));
+      sub.textContent = partes.join(" · ") || "Cambios que necesitan acuerdo";
+    }
+  }
+}
+function iniciarPropuestas(db){
+  if(!db || soyInvitado()) return;
+  if(propuestasEscucha && propuestasDb === db) return;
+  try{ if(propuestasEscucha) propuestasEscucha(); }catch(e){}
+  propuestasDb = db;
+  try{
+    propuestasEscucha = onSnapshot(collection(db, "propuestasPrecios"), (snap)=>{
+      propuestasCache = snap.docs.map(d=> Object.assign({ id: d.id }, d.data() || {}));
+      actualizarAvisoPropuestas();
+      if(propuestasAbiertas()) pintarPropuestas();
+    }, (e)=>{ console.warn("Propuestas: no se pudo escuchar propuestasPrecios", e); });;
+  }catch(e){
+    propuestasEscucha = null;
+    propuestasDb = null;
+  }
+}
+function propuestasAbiertas(){
+  const ov = document.getElementById("invOverlayProp");
+  return !!(ov && ov.style.display && ov.style.display !== "none");
+}
+function crearFilaProp(titulo, detalle, acciones){
+  const f = document.createElement("div");
+  f.style.cssText = "border:1px solid var(--card-border);background:var(--card);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;";
+  const t = document.createElement("div");
+  t.textContent = titulo;
+  t.style.cssText = "font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.9rem;";
+  f.appendChild(t);
+  if(detalle){
+    const d = document.createElement("div");
+    d.textContent = detalle;
+    d.style.cssText = "font-size:.8rem;color:var(--fg-muted);line-height:1.45;";
+    f.appendChild(d);
+  }
+  if(acciones && acciones.length){
+    const caja = document.createElement("div");
+    caja.style.cssText = "display:flex;gap:8px;margin-top:2px;";
+    acciones.forEach(a=>{
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = a.texto;
+      b.style.cssText = "flex:1;padding:10px;border-radius:12px;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;"
+        + (a.principal
+          ? "background:var(--teal);color:#06110f;border:1px solid var(--teal);"
+          : "background:var(--bg);color:var(--fg);border:1px solid var(--card-border);");
+      b.onclick = a.onclick;
+      caja.appendChild(b);
+    });
+    f.appendChild(caja);
+  }
+  return f;
+}
+function etiquetaProp(p){
+  return (CAMPOS_PROP[p.campo] && CAMPOS_PROP[p.campo].etiqueta) || p.campo || "Valor";
+}
+function pintarPropuestas(){
+  const lista = document.getElementById("invPropLista");
+  if(!lista) return;
+  lista.innerHTML = "";
+  const para = propuestasParaMi();
+  const mias = propuestasMiasPendientes();
+  const res = propuestasResultadosVisibles();
+  if(!para.length && !mias.length && !res.length){
+    const vacio = document.createElement("div");
+    vacio.style.cssText = "font-size:.85rem;color:var(--fg-muted);text-align:center;padding:10px 0;";
+    vacio.textContent = "No hay propuestas pendientes.";
+    lista.appendChild(vacio);
+    return;
+  }
+  const titulo = (texto)=>{
+    const h = document.createElement("div");
+    h.style.cssText = "font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-muted);";
+    h.textContent = texto;
+    lista.appendChild(h);
+  };
+  if(para.length){
+    titulo("Para ti");
+    if(para.length > 1){
+      const caja = document.createElement("div");
+      caja.style.cssText = "display:flex;gap:8px;";
+      const si = document.createElement("button");
+      si.type = "button";
+      si.textContent = "Aceptar todas";
+      si.style.cssText = "flex:1;padding:10px;border-radius:12px;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;background:var(--teal);color:#06110f;border:1px solid var(--teal);";
+      si.onclick = ()=> resolverTodasPropuestas(true);
+      const no = document.createElement("button");
+      no.type = "button";
+      no.textContent = "Rechazar todas";
+      no.style.cssText = "flex:1;padding:10px;border-radius:12px;font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;background:var(--bg);color:var(--fg);border:1px solid var(--card-border);";
+      no.onclick = ()=> resolverTodasPropuestas(false);
+      caja.appendChild(si);
+      caja.appendChild(no);
+      lista.appendChild(caja);
+    }
+    para.forEach(p=>{
+      const detalle = "«" + etiquetaProp(p) + "» de " + textoDestinoProp(p)
+        + ": de " + textoValorProp(p.campo, p.valorActual)
+        + " a " + textoValorProp(p.campo, p.valorNuevo) + ".";
+      lista.appendChild(crearFilaProp((p.deNombre || "Tu pareja") + " propone", detalle, [
+        { texto: "Aceptar", principal: true, onclick: ()=> aceptarPropuesta(p) },
+        { texto: "Rechazar", onclick: ()=> rechazarPropuesta(p) }
+      ]));
+    });
+  }
+  if(mias.length){
+    titulo("Tuyas");
+    mias.forEach(p=>{
+      const detalle = "«" + etiquetaProp(p) + "» de " + textoDestinoProp(p)
+        + ": de " + textoValorProp(p.campo, p.valorActual)
+        + " a " + textoValorProp(p.campo, p.valorNuevo) + ".";
+      lista.appendChild(crearFilaProp("Esperando aprobación", detalle, [
+        { texto: "Cancelar", onclick: ()=> cancelarPropuesta(p) }
+      ]));
+    });
+  }
+  if(res.length){
+    titulo("Resultados");
+    res.forEach(p=>{
+      const ok = p.estado === "aceptada";
+      const detalle = ok
+        ? "«" + etiquetaProp(p) + "» de " + textoDestinoProp(p)
+          + " ahora es " + textoValorProp(p.campo, p.valorNuevo) + "."
+        : "«" + etiquetaProp(p) + "» de " + textoDestinoProp(p)
+          + " se queda en " + textoValorProp(p.campo, p.valorActual) + ".";
+      lista.appendChild(crearFilaProp(ok ? "✅ Aceptada" : "❌ Rechazada", detalle, []));
+    });
+  }
+}
+function abrirPropuestas(){
+  if(soyInvitado()) return;
+  propuestasMostrando = new Set(propuestasResultadosNuevos().map(p=> p.id));
+  const msgEl = document.getElementById("invPropMsg");
+  if(msgEl) msgEl.textContent = "";
+  document.getElementById("invOverlayProp").style.display = "flex";
+  pintarPropuestas();
+  actualizarAvisoPropuestas();
+}
+function cerrarPropuestas(){
+  // Solo se marcan como vistos si la ventana estaba abierta de verdad. Si esto
+  // corre al abrir el engrane (cerrarOverlaysInv), no se toca nada.
+  const estabaAbierta = propuestasAbiertas();
+  const ov = document.getElementById("invOverlayProp");
+  if(ov) ov.style.display = "none";
+  if(!estabaAbierta){ propuestasMostrando = null; return; }
+  const ids = Array.from(new Set(
+    (propuestasMostrando ? Array.from(propuestasMostrando) : [])
+      .concat(propuestasResultadosNuevos().map(p=> p.id))
+  ));
+  propuestasMostrando = null;
+  if(!ids.length){ actualizarAvisoPropuestas(); return; }
+  // Se marcan como vistos: se guarda en la base y en la copia local.
+  propuestasCache = propuestasCache.map(p=> ids.indexOf(p.id) >= 0
+    ? Object.assign({}, p, { vistoPorProp: true }) : p);
+  const db = dbActual();
+  if(db){
+    ids.forEach(id=>{
+      try{
+        setDoc(doc(db, "propuestasPrecios", id), { vistoPorProp: true }, { merge: true }).catch(()=>{});
+      }catch(e){}
+    });
+  }
+  actualizarAvisoPropuestas();
+}
+async function aceptarPropuesta(p, desdeLote){
+  if(!desdeLote && (propuestasOcupado || propuestasLote)) return;
+  if(soyInvitado() || !p || p.estado !== "pendiente") return;
+  if(!desdeLote) propuestasOcupado = true;
+  const msgEl = document.getElementById("invPropMsg");
+  if(msgEl) msgEl.textContent = "";
+  try{
+    const db = dbActual();
+    if(!db){ if(msgEl) msgEl.textContent = "No hay base de datos."; return; }
+    // Se relee la propuesta: si la cancelaron o resolvieron en el otro teléfono,
+    // no se aplica nada (y no se recrea un documento fantasma).
+    const snapProp = await getDoc(doc(db, "propuestasPrecios", p.id));
+    if(!snapProp.exists()){ if(msgEl) msgEl.textContent = "Esa propuesta ya no existe."; return; }
+    const prop = Object.assign({}, p, snapProp.data() || {});
+    if(prop.estado !== "pendiente"){ if(msgEl) msgEl.textContent = "Esa propuesta ya no está pendiente."; return; }
+    if(!CAMPOS_PROP[prop.campo]){ if(msgEl) msgEl.textContent = "Esa propuesta no es válida."; return; }
+    const yo = leerGuardado();
+    if(!yo || yo.id === prop.deId){ if(msgEl) msgEl.textContent = "Solo la otra persona puede aprobarla."; return; }
+    const nuevo = parseInt(prop.valorNuevo, 10);
+    if(!valorPropValido(prop.campo, nuevo)){ if(msgEl) msgEl.textContent = "El valor propuesto no es válido."; return; }
+    const ref = doc(db, "config", "ajustes");
+    const snap = await getDoc(ref);
+    const arr = (snap.exists() && Array.isArray(snap.data().usuarios)) ? snap.data().usuarios.slice() : [];
+    const i = arr.findIndex(u=> u && u.id === prop.paraId);
+    if(i < 0){ if(msgEl) msgEl.textContent = "Ese usuario ya no existe."; return; }
+    const actual = valorEfectivoProp(arr[i], prop.campo);
+    if(actual !== parseInt(prop.valorActual, 10)){
+      // El valor cambió mientras se decidía: no se pisa a ciegas. Se actualiza
+      // el "de" de la propuesta para que se vea contra el valor real.
+      try{ await setDoc(doc(db, "propuestasPrecios", p.id), { valorActual: actual }, { merge: true }); }catch(e){}
+      if(msgEl) msgEl.textContent = "El valor cambió mientras decidías (ahora es " + textoValorProp(prop.campo, actual) + "). Revisa y vuelve a aceptar.";
+      return;
+    }
+    arr[i] = Object.assign({}, arr[i], { [prop.campo]: nuevo });
     await setDoc(ref, { usuarios: arr, actualizadoEn: serverTimestamp() }, { merge: true });
     guardarUsuariosLocal(arr);
-    // Si editas los numeros del usuario con el que estas, tu copia local tambien
-    // se actualiza: si no, el Centro leeria los viejos hasta recargar.
+    // Si el que aprueba es el dueño del dato, su copia local también cambia.
     try{
       const yoLoc = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || "null");
-      if(yoLoc && yoLoc.id === usuarioPts.id){
-        yoLoc.ptsActivar = activar; yoLoc.precioCompra = precio; yoLoc.precioFavor = favor; yoLoc.pctCastigo = pctCast; yoLoc.minutosFavor = minFav;
+      if(yoLoc && yoLoc.id === prop.paraId){
+        yoLoc[prop.campo] = nuevo;
         localStorage.setItem(CLAVE_LOCAL, JSON.stringify(yoLoc));
       }
     }catch(e){}
-    cerrarPuntos();
-    pintarInvUsuarios();
+    await setDoc(doc(db, "propuestasPrecios", p.id), { estado: "aceptada", resueltoEn: serverTimestamp(), vistoPorProp: false }, { merge: true });
+    if(msgEl) msgEl.textContent = "Aceptada.";
   }catch(e){
-    document.getElementById("invPtsMsg").textContent = "No se pudo guardar. Revisa tu conexión.";
+    if(msgEl) msgEl.textContent = "No se pudo guardar. Revisa tu conexión.";
+  }finally{
+    if(!desdeLote) propuestasOcupado = false;
   }
-};
+}
+async function rechazarPropuesta(p, desdeLote){
+  if(!desdeLote && (propuestasOcupado || propuestasLote)) return;
+  if(soyInvitado() || !p || p.estado !== "pendiente") return;
+  if(!desdeLote) propuestasOcupado = true;
+  const msgEl = document.getElementById("invPropMsg");
+  if(msgEl) msgEl.textContent = "";
+  try{
+    const db = dbActual();
+    if(!db){ if(msgEl) msgEl.textContent = "No hay base de datos."; return; }
+    const snapProp = await getDoc(doc(db, "propuestasPrecios", p.id));
+    if(!snapProp.exists()){ if(msgEl) msgEl.textContent = "Esa propuesta ya no existe."; return; }
+    const prop = Object.assign({}, p, snapProp.data() || {});
+    if(prop.estado !== "pendiente"){ if(msgEl) msgEl.textContent = "Esa propuesta ya no está pendiente."; return; }
+    const yo = leerGuardado();
+    if(!yo || yo.id === prop.deId){ if(msgEl) msgEl.textContent = "Solo la otra persona puede rechazarla."; return; }
+    await setDoc(doc(db, "propuestasPrecios", p.id), { estado: "rechazada", resueltoEn: serverTimestamp(), vistoPorProp: false }, { merge: true });
+    if(msgEl) msgEl.textContent = "Rechazada.";
+  }catch(e){
+    if(msgEl) msgEl.textContent = "No se pudo guardar. Revisa tu conexión.";
+  }finally{
+    if(!desdeLote) propuestasOcupado = false;
+  }
+}
+async function cancelarPropuesta(p){
+  if(propuestasOcupado || propuestasLote) return;
+  if(!p || p.estado !== "pendiente") return;
+  propuestasOcupado = true;
+  const msgEl = document.getElementById("invPropMsg");
+  if(msgEl) msgEl.textContent = "";
+  try{
+    const db = dbActual();
+    if(!db){ if(msgEl) msgEl.textContent = "No hay base de datos."; return; }
+    const snapProp = await getDoc(doc(db, "propuestasPrecios", p.id));
+    if(!snapProp.exists()){ if(msgEl) msgEl.textContent = "Esa propuesta ya no existe."; return; }
+    const prop = Object.assign({}, p, snapProp.data() || {});
+    if(prop.estado !== "pendiente"){ if(msgEl) msgEl.textContent = "Esa propuesta ya no está pendiente."; return; }
+    const yo = leerGuardado();
+    if(!yo || yo.id !== prop.deId){ if(msgEl) msgEl.textContent = "Solo quien la propuso puede cancelarla."; return; }
+    await deleteDoc(doc(db, "propuestasPrecios", p.id));
+    if(msgEl) msgEl.textContent = "Propuesta retirada.";
+  }catch(e){
+    if(msgEl) msgEl.textContent = "No se pudo retirar. Revisa tu conexión.";
+  }finally{
+    propuestasOcupado = false;
+  }
+}
+async function resolverTodasPropuestas(aceptar){
+  if(propuestasLote || propuestasOcupado) return;
+  const lista = propuestasParaMi().slice();
+  if(!lista.length) return;
+  propuestasLote = true;
+  try{
+    for(const p of lista){
+      if(aceptar) await aceptarPropuesta(p, true);
+      else await rechazarPropuesta(p, true);
+    }
+  }finally{
+    propuestasLote = false;
+  }
+}
+document.getElementById("invPropCard").onclick = abrirPropuestas;
+document.getElementById("invPropCerrar").onclick = cerrarPropuestas;
 document.getElementById("invAgregar").onclick = async ()=>{
   const inp = document.getElementById("invNuevo");
   const nombre = inp.value.trim();
@@ -1970,6 +2460,7 @@ function cerrarOverlaysInv(){
   try{ cerrarPuntos(); }catch(e){}
   try{ cerrarEdUsuarios(); }catch(e){}
   try{ cerrarHistorial(); }catch(e){}
+  try{ cerrarPropuestas(); }catch(e){}
   // Red de seguridad: cualquier ventana nueva se oculta aunque todavía no
   // tenga su función de cierre propia.
   overlaysInv().forEach(el=>{ try{ el.style.display = "none"; }catch(e){} });
