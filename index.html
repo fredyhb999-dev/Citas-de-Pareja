@@ -1153,7 +1153,7 @@ function msgQR(t){
 function quitarZoom(box){
   try{ const b = box && box.querySelector(".zoomCam"); if(b) b.remove(); }catch(e){}
 }
-function ponerZoom(box){
+function ponerZoom(box, scan){
   quitarZoom(box);
   try{
     const video = box && box.querySelector("video");
@@ -1184,16 +1184,35 @@ function ponerZoom(box){
     rango.step = String(paso); rango.value = String(actual);
     rango.setAttribute("aria-label", "Zoom de la cámara");
 
-    function aplicar(v){
+    // Se prueban las formas que usan los distintos navegadores y se comprueba
+    // en getSettings() que el zoom CAMBIO de verdad. Ojo: `advanced` puede
+    // responder "listo" sin hacer nada, asi que no basta con esperar el ok.
+    let aplicando = false;
+    let pendiente = null;
+    async function probar(cons){
+      try{
+        await pista.applyConstraints(cons);
+        const s = pista.getSettings ? pista.getSettings() : {};
+        return Math.abs(Number(s.zoom) - actual) < 0.001;
+      }catch(e){ return false; }
+    }
+    async function aplicar(v){
       actual = Math.min(max, Math.max(min, v));
       rango.value = String(actual);
-      // Se intenta de las dos formas conocidas: algunos navegadores aceptan
-      // `advanced` y otros solo la restriccion directa.
+      if(aplicando){ pendiente = actual; return; }
+      aplicando = true;
       try{
-        pista.applyConstraints({ advanced: [{ zoom: actual }] }).catch(()=>{
-          try{ pista.applyConstraints({ zoom: actual }).catch(()=>{}); }catch(e){}
-        });
-      }catch(e){}
+        let ok = await probar({ zoom: actual });
+        if(!ok) ok = await probar({ zoom: { exact: actual } });
+        if(!ok) ok = await probar({ advanced: [{ zoom: actual }] });
+        // Ultimo intento: el metodo del propio lector (usa su pista interna).
+        if(!ok && scan && scan.applyVideoConstraints){
+          try{ await scan.applyVideoConstraints({ advanced: [{ zoom: actual }] }); }catch(e){}
+        }
+      }finally{
+        aplicando = false;
+        if(pendiente !== null){ const v2 = pendiente; pendiente = null; aplicar(v2); }
+      }
     }
     rango.oninput = ()=>{ aplicar(Number(rango.value)); };
     menos.onclick = ()=>{ aplicar(actual - paso); };
@@ -1235,7 +1254,7 @@ async function iniciarScan(){
       },
       ()=>{}
     );
-    ponerZoom(document.getElementById("lector"));
+    ponerZoom(document.getElementById("lector"), scanObj);
   }catch(e){
     msgQR("Sin cámara o sin permiso. Revisa el navegador.");
   }
@@ -2247,7 +2266,7 @@ document.getElementById("invEntrar").onclick = async ()=>{
       },
       ()=>{}
     );
-    ponerZoom(document.getElementById("lectorInv"));
+    ponerZoom(document.getElementById("lectorInv"), scanInv);
   }catch(e){
     invMsg("Sin cámara o sin permiso. Revisa el navegador.");
   }
