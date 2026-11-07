@@ -145,7 +145,8 @@ personas registrándose al mismo tiempo **quedan las dos**, no se pisan.
 Los dos lectores de la pantalla principal (`#lector` del asistente y `#lectorInv`
 de "Entrar modo invitado") llaman a `ponerZoom(...)` justo después de encender la
 cámara. Ahí se leen las capacidades de la cámara (`getCapabilities().zoom`) y, si
-las tiene, aparece debajo del video una barra con **− / control / +**.
+las tiene, aparece debajo del video una barra con **− / control / +** y el valor
+actual (por ejemplo **1.0×**).
 
 - El zoom es el de la **propia cámara** (`applyConstraints`), no un acercamiento
   visual: el QR se lee más grande de verdad.
@@ -156,8 +157,21 @@ las tiene, aparece debajo del video una barra con **− / control / +**.
   ignoran en silencio (lo que pasó en la primera prueba).
 - Se comprueba `getSettings().zoom`: si no está, la barra **no se muestra**,
   porque no serviría de nada.
+- Al aplicar un valor se prueba la restricción directa, `exact` y `advanced`, y
+  se **verifica en `getSettings()` que de verdad cambió**. No basta con que
+  `advanced` responda “listo”: puede responder sin hacer nada.
+- **La barra va FUERA del recuadro de la cámara** (`box.parentNode.insertBefore`,
+  no `box.appendChild`). html5-qrcode pone una capa encima del video que se
+  tragaba los toques: por eso el control ni siquiera se movía. Se quita por su
+  id (`zoomCam_<id del lector>`) al cerrar el lector.
+- **La cámara frontal y la trasera se reportan por separado.** Que la frontal
+  tenga zoom no garantiza que la trasera lo tenga. Para comprobarlo en el
+  celular: `clackcam.com/tools/camera-test/` (abre primero la trasera y muestra
+  la línea “Zoom”).
 - Si la cámara **no ofrece zoom** (pasa en varios iPhone, donde Safari no lo
   expone), la barra **no se muestra** y el lector funciona igual que antes.
-- La barra se quita al cerrar el lector (`detenerScan` / `detenerScanInv`), para
-  que no quede colgada al volver a abrirlo.
+
+**PROBADO EN VIVO (Fredy, nov-2026):** en dos Android con Chrome la barra se
+mueve y el zoom se ajusta correctamente. Antes de sacar la barra del recuadro,
+los toques no llegaban al control.
 
