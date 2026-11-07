@@ -1726,31 +1726,25 @@ function tarjetaPedidoEnviado(){
   h.textContent = "Tu propuesta";
   f.appendChild(h);
 
+  // Solo puede quedar una propuesta pendiente: al aceptarla o rechazarla se
+  // borra (el plan ya quedó guardado o ya no hay nada que esperar).
   const vencido = pedidoVencido(pedidoEnviado);
   const p = document.createElement("p");
   p.className = "usoTexto";
-  if(vencido){
-    p.textContent = "Vencido. Era para el " + fechaLarga(pedidoEnviado.fechaTexto)
-      + " y no se respondió a tiempo.";
-  }else if(pedidoEnviado.estado === "pendiente"){
-    p.textContent = "Pendiente de respuesta. Para el " + fechaLarga(pedidoEnviado.fechaTexto) + ".";
-  }else if(pedidoEnviado.estado === "aceptado"){
-    p.textContent = (pedidoEnviado.modificado ? "Aceptado con cambios" : "Aceptado")
-      + ". Para el " + fechaLarga(pedidoEnviado.fechaFinalTexto || pedidoEnviado.fechaTexto) + ".";
-  }else{
-    p.textContent = "Rechazado.";
-  }
+  p.textContent = vencido
+    ? "Vencido. Era para el " + fechaLarga(pedidoEnviado.fechaTexto)
+      + " y no se respondió a tiempo."
+    : "Pendiente de respuesta. Para el " + fechaLarga(pedidoEnviado.fechaTexto) + ".";
   f.appendChild(p);
 
-  if(pedidoEnviado.estado === "pendiente"){
-    const btns = document.createElement("div");
-    btns.className = "filaBtns";
-    const b = document.createElement("button");
-    b.textContent = vencido ? "Quitar el pedido" : "Cancelar pedido";
-    b.addEventListener("click", cancelarPedido);
-    btns.appendChild(b);
-    f.appendChild(btns);
-  }
+  const btns = document.createElement("div");
+  btns.className = "filaBtns";
+  const b = document.createElement("button");
+  b.textContent = vencido ? "Quitar el pedido" : "Cancelar pedido";
+  b.addEventListener("click", cancelarPedido);
+  btns.appendChild(b);
+  f.appendChild(btns);
+
   return f;
 }
 
@@ -1759,6 +1753,16 @@ function tarjetaPedidoEnviado(){
 // nunca cuenta como "usado": eso solo lo hacen los planes.
 async function limpiarPedidosVencidos(){
   const hoy = hoyTexto();
+
+  // Los pedidos ya respondidos se guardaban y su tarjeta se quedaba pegada
+  // para siempre. Ahora se borran al responder; esto limpia los que ya
+  // estaban en la base antes del cambio.
+  if(pedidoRecibido && pedidoRecibido.estado !== "pendiente"){
+    try{ await deleteDoc(doc(db, "lenceriaPedidos", miId)); pedidoRecibido = null; }catch(e){}
+  }
+  if(pedidoEnviado && pedidoEnviado.estado !== "pendiente"){
+    try{ await deleteDoc(doc(db, "lenceriaPedidos", otroId)); pedidoEnviado = null; }catch(e){}
+  }
 
   if(pedidoRecibido && pedidoRecibido.estado === "pendiente"
       && String(pedidoRecibido.fechaTexto || "") < hoy){
@@ -1992,8 +1996,7 @@ async function mandarPropuesta(fechaTexto){
       deId: miId, deLado: miLado, paraId, paraLado,
       prendas: seleccion, fechaTexto, fechaUso: fechaAObjeto(fechaTexto),
       congelado: !!document.getElementById("eCongelar").checked,
-      estado: "pendiente", creadoEn: serverTimestamp(), respondidoEn: null,
-      prendasFinales: null, fechaFinalTexto: null, modificado: false
+      estado: "pendiente", creadoEn: serverTimestamp()
     });
 
     await escribirAviso(paraId, miId, "pendiente",
@@ -2102,14 +2105,14 @@ async function aceptarPedido(){
     }, { merge: true });
 
     const modificado = !mismoConjunto(vivas, pedidoRecibido.prendas) || fechaTexto !== pedidoRecibido.fechaTexto;
+    const deId = pedidoRecibido.deId;
 
-    await setDoc(doc(db, "lenceriaPedidos", miId), {
-      estado: "aceptado", respondidoEn: serverTimestamp(),
-      prendasFinales: vivas, fechaFinalTexto: fechaTexto,
-      fechaUso: fechaAObjeto(fechaTexto), modificado
-    }, { merge: true });
+    // El pedido ya cumplió: el plan quedó guardado arriba. Se borra, para que
+    // "Tu propuesta: aceptado" no se quede pegado para siempre.
+    await deleteDoc(doc(db, "lenceriaPedidos", miId));
+    pedidoRecibido = null;
 
-    await escribirAviso(pedidoRecibido.deId, miId, "aceptado",
+    await escribirAviso(deId, miId, "aceptado",
       "Aceptaron tu vestuario",
       (modificado ? "Con cambios. " : "") + "Para el " + fechaLarga(fechaTexto) + ".");
 
@@ -2129,15 +2132,18 @@ async function rechazarPedido(){
   const ok = await confirmar({ titulo: "¿Rechazar el vestuario?", ok: "Rechazar" });
   if(!ok) return;
   try{
-    await setDoc(doc(db, "lenceriaPedidos", miId), {
-      estado: "rechazado", respondidoEn: serverTimestamp()
-    }, { merge: true });
+    const deId = pedidoRecibido.deId;
+    const fechaPedido = pedidoRecibido.fechaTexto;
 
-    await escribirAviso(pedidoRecibido.deId, miId, "rechazado",
+    // Rechazado no deja plan: el pedido ya no sirve para nada.
+    await deleteDoc(doc(db, "lenceriaPedidos", miId));
+    pedidoRecibido = null;
+
+    await escribirAviso(deId, miId, "rechazado",
       "Rechazaron tu vestuario", "Puedes proponer otro cuando quieras.");
 
     avisarTelegram("❌ " + miNombre + " rechazó el vestuario del "
-      + fechaLarga(pedidoRecibido.fechaTexto) + ".", baseUrl() + "Lenceria/");
+      + fechaLarga(fechaPedido) + ".", baseUrl() + "Lenceria/");
 
     await aviso("Rechazado.");
     await cargarPedidos();

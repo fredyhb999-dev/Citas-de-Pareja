@@ -59,9 +59,10 @@ se va**.
 
 Título **Ilusiones y sueños** y subtítulo **"Planifica y da vida a tu ilusión."**
 Pestañas **por persona** afuera (el de uno primero), recuadro con las tarjetas
-de plan, la del pedido recibido y la del estado del enviado, y **debajo del
-recuadro** el botón **Nuevo plan** / **Proponer**. Cada pestaña muestra la ropa y
-los planes de esa persona, aunque los dos compartan anatomía.
+de plan, la del pedido recibido y la de la propuesta enviada **mientras está
+pendiente**, y **debajo del recuadro** el botón **Nuevo plan** / **Proponer**.
+Cada pestaña muestra la ropa y los planes de esa persona, aunque los dos
+compartan anatomía.
 
 **Hoy sí cuenta:** al abrir un plan o una propuesta sin fecha, se precarga
 **hoy**. Solo se rechaza si la fecha queda vacía o es anterior a hoy.
@@ -261,15 +262,21 @@ pendiente y los dos sentidos no se pisan.
 | `paraId`, `paraLado` | string | Quién recibe |
 | `prendas` | array de string | Propuesta original |
 | `fechaTexto`, `fechaUso` | string / timestamp | Fecha propuesta |
-| `estado` | string | `"pendiente"`, `"aceptado"` o `"rechazado"` |
-| `creadoEn`, `respondidoEn` | timestamp | |
-| `prendasFinales` | array \| null | Lo que quedó al aceptar |
-| `fechaFinalTexto` | string \| null | Fecha final al aceptar |
-| `modificado` | boolean | `true` si el receptor cambió prendas o fecha |
+| `estado` | string | Solo `"pendiente"`: al aceptar o rechazar, el pedido **se borra** |
+| `creadoEn` | timestamp | |
 | `congelado` | boolean | Quien propone pidió que **no se pueda cambiar**: solo aceptar o rechazar |
 
-Se conserva el último pedido con su estado; el siguiente lo sobrescribe. **No
-hay historial de pedidos.**
+**Al aceptar o rechazar el pedido se borra**, porque ya cumplió:
+
+- **Aceptado:** el plan de verdad queda guardado en `lenceriaVestuarios` (el de
+  quien aceptó, con la fecha final y las prendas finales). La constancia para
+  quien propuso es ese plan, más el aviso de Telegram y la campana.
+- **Rechazado:** no hay plan ni nada que esperar.
+
+Así la tarjeta **"Tu propuesta"** no se queda pegada para siempre. El siguiente
+pedido reemplaza al anterior. **No hay historial de pedidos.** Los pedidos viejos
+que quedaron guardados como `aceptado` o `rechazado` se borran solos la primera
+vez que cualquiera abra la pantalla.
 
 ### `invitosLenceria/{idDeQuienEscribe}`
 
@@ -327,7 +334,8 @@ el mismo documento.
 - **Fijo** es por plan (por día): no se puede mandar ni aceptar un pedido para
   ese día. El dueño sí puede editar su plan aunque esté fijo.
 - **Un pedido por persona**, sin caducidad mientras su fecha siga en el futuro.
-  El nuevo reemplaza al anterior.
+  El nuevo reemplaza al anterior. **Al aceptarlo o rechazarlo se borra** (ver
+  `lenceriaPedidos`): ya no queda nada que consultar.
   **Si la fecha pasa sin respuesta, el pedido se borra** la siguiente vez que
   cualquiera de los dos abra la app (y se apaga su aviso): ya no sirve, porque no
   se aceptó. Mientras la pantalla siga abierta de un día para otro, se ve como
@@ -335,7 +343,9 @@ el mismo documento.
 - **Un pedido nunca cuenta como "usado".** El conteo solo mira los **planes**:
   si no se aceptó, nunca hubo plan, así que no suma nada.
 - Quien recibe un pedido puede **cambiar prendas y fecha y aceptar sin pedir
-  autorización**. Quien lo mandó ve "Aceptado" o "Aceptado con cambios".
+  autorización**. Quien lo mandó se entera por **Telegram y por la campana**, y
+  ve el plan ya guardado en la pestaña de quien aceptó (con los cambios, si los
+  hubo).
   **Salvo que la propuesta venga congelada**: al proponer hay una casilla *"Que no
   lo pueda cambiar"* (`congelado: true`). En ese caso el receptor **no puede
   tocar prendas ni fecha**: solo aceptar o rechazar, y la tarjeta lo marca como
