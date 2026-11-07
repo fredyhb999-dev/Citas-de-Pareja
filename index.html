@@ -161,13 +161,17 @@
   #lectorInv{ width:100%; max-width:340px; }
   #lectorInv video{ border-radius:16px; }
   /* Barra de zoom del lector QR: solo aparece si la cámara del celular la admite. */
-  .zoomCam{ display:flex; align-items:center; gap:8px; margin:8px auto 0; max-width:340px; }
+  .zoomCam{
+    display:flex; align-items:center; gap:8px; margin:8px auto 0; max-width:340px;
+    position:relative; z-index:5;
+  }
   .zoomCam button{
     width:34px; height:34px; flex:none; border-radius:50%;
     border:1px solid var(--card-border); background:var(--card); color:var(--fg);
-    font-size:1.15rem; line-height:1; cursor:pointer;
+    font-size:1.15rem; line-height:1; cursor:pointer; touch-action:manipulation;
   }
-  .zoomCam input{ flex:1; accent-color: var(--teal); }
+  .zoomCam input{ flex:1; accent-color: var(--teal); touch-action:manipulation; }
+  .zoomCam .zoomVal{ min-width:42px; text-align:right; font-size:.8rem; color:var(--fg-muted); }
   #pantallaInvitado select{ color-scheme:dark; }
   #pantallaInvitado select option{ background:var(--card); color:var(--fg); }
 </style>
@@ -1151,7 +1155,14 @@ function msgQR(t){
 // existe en la mayoría de los Android (y en algunos otros). Si la cámara no lo
 // admite, no se agrega nada y todo sigue igual.
 function quitarZoom(box){
-  try{ const b = box && box.querySelector(".zoomCam"); if(b) b.remove(); }catch(e){}
+  try{
+    if(box && box.id){
+      const b = document.getElementById("zoomCam_" + box.id);
+      if(b) b.remove();
+    }
+    const b2 = box && box.querySelector(".zoomCam");
+    if(b2) b2.remove();
+  }catch(e){}
 }
 function ponerZoom(box, scan){
   quitarZoom(box);
@@ -1175,6 +1186,7 @@ function ponerZoom(box, scan){
     let actual = Math.min(max, Math.max(min, Number(ajustes.zoom) || min));
     const barra = document.createElement("div");
     barra.className = "zoomCam";
+    if(box.id) barra.id = "zoomCam_" + box.id;
     const menos = document.createElement("button");
     menos.type = "button"; menos.textContent = "−"; menos.setAttribute("aria-label", "Alejar");
     const mas = document.createElement("button");
@@ -1183,6 +1195,10 @@ function ponerZoom(box, scan){
     rango.type = "range"; rango.min = String(min); rango.max = String(max);
     rango.step = String(paso); rango.value = String(actual);
     rango.setAttribute("aria-label", "Zoom de la cámara");
+    const valor = document.createElement("span");
+    valor.className = "zoomVal";
+    const etiqueta = (v)=> (Math.round(v * 10) / 10).toFixed(1) + "×";
+    valor.textContent = etiqueta(actual);
 
     // Se prueban las formas que usan los distintos navegadores y se comprueba
     // en getSettings() que el zoom CAMBIO de verdad. Ojo: `advanced` puede
@@ -1199,6 +1215,7 @@ function ponerZoom(box, scan){
     async function aplicar(v){
       actual = Math.min(max, Math.max(min, v));
       rango.value = String(actual);
+      valor.textContent = etiqueta(actual);
       if(aplicando){ pendiente = actual; return; }
       aplicando = true;
       try{
@@ -1221,7 +1238,11 @@ function ponerZoom(box, scan){
     barra.appendChild(menos);
     barra.appendChild(rango);
     barra.appendChild(mas);
-    box.appendChild(barra);
+    barra.appendChild(valor);
+    // La barra va FUERA del recuadro de la camara: html5-qrcode pone una capa
+    // encima del video que se tragaba los toques.
+    if(box.parentNode) box.parentNode.insertBefore(barra, box.nextSibling);
+    else box.appendChild(barra);
   }catch(e){}
 }
 async function iniciarScan(){
