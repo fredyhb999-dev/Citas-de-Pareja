@@ -42,6 +42,7 @@ Es el diario: cuenta cómo se llegó a lo de hoy, no lo que manda. Si contradice
 | `General/Diablitos.md` | Iconos dibujados (SVG) del juego Diablitos | Solo si la tarea toca ese icono |
 | `General/Telegram.md` | `avisarTelegram()`: módulo central de avisos por Telegram | Solo si la tarea toca avisos por Telegram |
 | `General/Catalogo.md` | Aviso de "nuevo" (packs nuevos en el carrito y en el Centro) | Solo si la tarea toca ese aviso |
+| `General/Packs-Personajes.md` | Packs de personajes: ítems del catálogo que instalan sus personajes en las listas de la pareja (**pendiente de implementar**) | Solo si la tarea toca packs de personajes |
 | `General/Despierto.md` | `despierto.js`: mantiene la pantalla encendida durante la partida | Solo si la tarea toca el bloqueo automático del celular |
 | `General/fuegos.md` | `fuegos.js`: fuegos artificiales al final de la partida | Solo si la tarea toca los fuegos |
 | `General/confirmar.md` | `confirmar.js`: cuadros de `confirmar()` y `aviso()` | Solo si la tarea toca esos cuadros |
