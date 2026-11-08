@@ -544,6 +544,14 @@ No romper:**
   - **El invitado también carga el contenido** (`cargarPersonajes()`); si no, su
     lista de selección sale **vacía**. Y no se dibuja la selección sin contenido
     (`asegurarPersonajes()`).
+  - **"Pegar lista completa" tiene la casilla "Reemplazar los que ya existen"**
+    (nov-2026). **Apagada** (como estaba): solo agrega y salta los nombres que ya
+    están. **Encendida:** actualiza los que coinciden **por id** y, si el texto no
+    trae id, **por nombre**; conserva el `par` que ya tenía si el pegado no lo
+    trae; **no borra** los que no vengan en el texto; y antes de aplicar avisa
+    cuántos se actualizan y cuántos se agregan. Sirve para corregir rutas de
+    imagen o textos en masa sin tocar el id ni las contrapartes. En **Variantes
+    Picantes** la casilla no sale (ahí no hay nada que reemplazar).
   - **"Pegar lista completa" es tolerante, pero NO adivina.** Acepta: un arreglo
     JSON, un objeto suelto, **un pedazo de arreglo sin los corchetes** (`{...}, {...},`
     — con o sin la coma final), el formato envuelto (`{"U1":[...]}`), **comillas

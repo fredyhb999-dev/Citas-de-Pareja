@@ -613,6 +613,13 @@
   </div>
   <div class="pegarBox" id="pegarBox" style="display:none">
     <textarea id="pegarTa" placeholder="Un personaje por línea (o un arreglo JSON)."></textarea>
+    <!-- Actualizar en masa: sin esta casilla, pegar solo AGREGA y salta los
+         nombres que ya existen (así se comportaba antes). Con ella, los que ya
+         existen se actualizan y los demás se agregan. -->
+    <label class="opModo" id="pegarReemplWrap" style="margin-top:8px; background:none; border:none; padding:4px 0;">
+      <input type="checkbox" id="pegarReemplazar">
+      <span>Reemplazar los que ya existen</span>
+    </label>
     <button class="btnPri" id="btnPegarOk" style="margin-top:8px;">Agregar a la lista</button>
   </div>
   <!-- Avisos de correspondencia. SOLO avisan: nunca bloquean. -->
@@ -4055,6 +4062,9 @@ function pintarCfg(){
     ? "Una variante por línea."
     : "Un personaje por línea (o un arreglo JSON).";
   document.getElementById("btnPegarOk").textContent = enEspeciales ? "Agregar variantes" : "Agregar a la lista";
+  // La casilla de reemplazar es solo para personajes: en Variantes Picantes
+  // no hay "reemplazar", son textos sueltos.
+  document.getElementById("pegarReemplWrap").style.display = enEspeciales ? "none" : "flex";
   document.getElementById("btnExportar").textContent = enEspeciales ? "Exportar variantes" : "Exportar lista";
 
   const box = document.getElementById("tablaBox");
@@ -4247,18 +4257,76 @@ async function pegarLista(){
   if(crudos === null) return;   // el JSON estaba mal: ya se avisó
   if(!crudos.length){ aviso("No se encontró ningún personaje."); return; }
   if(!Array.isArray(personajes[clave])) personajes[clave] = [];
-  let n = 0;
+  const lista = personajes[clave];
+  const reemplazar = document.getElementById("pegarReemplazar").checked;
+
+  // 1) Emparejar sin tocar la lista: primero por id (la llave de verdad),
+  //    después por nombre. Así se puede corregir la ruta de la imagen —o
+  //    renombrar— sin perder el id ni la contraparte.
+  const plan = [];
+  const nombresNuevos = new Set();
   crudos.forEach(x=>{
     const p = personajeDe(x);
-    if(!p || yaExiste(clave, p.personaje)) return;
-    // En contrapartes, si el pegado no trae `par` se deja sin asignar: lo avisa
-    // la caja de abajo y se ata desde el detalle.
-    personajes[clave].push(p); n++;
+    if(!p) return;
+    let actual = null;
+    if(reemplazar){
+      const pedido = parseInt((x && typeof x === "object") ? x.id : "", 10);
+      if(pedido) actual = lista.find(q=> q && q.id === pedido) || null;
+      if(!actual){
+        const n = p.personaje.toLowerCase();
+        actual = lista.find(q=> q && String(q.personaje || "").trim().toLowerCase() === n) || null;
+      }
+    }
+    if(!actual){
+      // Sin casilla, o con casilla pero sin coincidencia: solo se agrega.
+      const n = p.personaje.toLowerCase();
+      if(yaExiste(clave, p.personaje) || nombresNuevos.has(n)) return;
+      nombresNuevos.add(n);
+    }
+    // En contrapartes, si el pegado no trae `par`, al agregar se deja sin
+    // asignar (lo avisa la caja de abajo y se ata desde el detalle). Al
+    // actualizar, se conserva el que ya tenía.
+    plan.push({ p, actual });
   });
+
+  const cambios = new Set(plan.filter(z=> z.actual).map(z=> z.actual.id)).size;
+  const nuevos = plan.filter(z=> !z.actual).length;
+  if(!cambios && !nuevos){
+    aviso("No se agregó nada: ya estaban todos.");
+    return;
+  }
+
+  // Reemplazar pisa textos e imágenes: se avisa antes, con los números.
+  if(cambios){
+    const ok = await confirmar({
+      titulo: "¿Reemplazar los que ya existen?",
+      texto: "Se van a actualizar " + cambios + " personaje(s)"
+        + (nuevos ? (" y agregar " + nuevos) : "")
+        + ". Los campos que vengan vacíos se guardan vacíos.",
+      ok: "Reemplazar"
+    });
+    if(!ok) return;
+  }
+
+  // 2) Aplicar.
+  plan.forEach(z=>{
+    const p = z.p;
+    if(!z.actual){ lista.push(p); return; }
+    z.actual.personaje = p.personaje;
+    z.actual.situacion = p.situacion;
+    z.actual.gancho = p.gancho;
+    z.actual.derechos = p.derechos;
+    z.actual.si_quieres = p.si_quieres;
+    z.actual.imagen = p.imagen;
+    if(p.par !== null) z.actual.par = p.par;
+  });
+
   ta.value = "";
   await guardarPersonajes();
   limpiarFiltro(); pintarCfg();
-  aviso(n ? ("Se agregaron " + n + " personaje(s).") : "No se agregó nada: ya estaban todos.");
+  if(cambios && nuevos) aviso("Se actualizaron " + cambios + " y se agregaron " + nuevos + " personaje(s).");
+  else if(cambios) aviso("Se actualizaron " + cambios + " personaje(s).");
+  else aviso("Se agregaron " + nuevos + " personaje(s).");
 }
 
 // ---------- exportar ----------
