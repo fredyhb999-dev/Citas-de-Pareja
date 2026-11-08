@@ -743,10 +743,13 @@ async function cargarClasificaciones(){
   }catch(e){}
 }
 
+// Alfabético por nombre, siempre. De aquí salen las cuatro pestañas, los chips
+// de tipo, los filtros y los campos del alta de prenda: todos en el mismo orden.
+// El campo `orden` se sigue guardando en la base, pero ya no manda en pantalla.
 function ordenarClasif(){
+  const col = new Intl.Collator("es", { numeric: true, sensitivity: "base" });
   for(const g of GRUPOS){
-    clasif[g].sort((a, b) => ((a.orden ?? 0) - (b.orden ?? 0))
-      || String(a.nombre || "").localeCompare(String(b.nombre || "")));
+    clasif[g].sort((a, b) => col.compare(String(a.nombre || ""), String(b.nombre || "")));
   }
 }
 
@@ -757,14 +760,14 @@ function valor(grupo, id){
 // Referencia automática: las 3 primeras letras del TIPO + número consecutivo.
 // Ejemplo: Top -> top-1, top-2; Vestido -> ves-1. Nunca repite: toma el mayor
 // que ya existe y suma uno; si por lo que sea ese ya está, sigue subiendo.
-// ====== Uso de las prendas: para ordenar por olvido y avisar de lo reciente ======
+// ====== Uso de las prendas: para ordenar la cuadrícula y avisar de lo reciente ======
 function fechaDeUso(p){
   if(!p || !p.ultimaFechaUso) return null;
   const d = p.ultimaFechaUso.toDate ? p.ultimaFechaUso.toDate() : new Date(p.ultimaFechaUso);
   return isNaN(d.getTime()) ? null : d;
 }
 
-// Nunca usada = 0: así queda al principio de la zona.
+// Nunca usada = 0: así queda al principio de la lista.
 function tsUso(p){
   const d = fechaDeUso(p);
   return d ? d.getTime() : 0;
@@ -790,13 +793,37 @@ function textoUso(p){
   return d.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
 }
 
-// Dentro de cada zona, primero lo que lleva más tiempo sin usarse.
-function ordenPorOlvido(lista){
+// Una sola lista, sin agrupar por zona: primero las NUNCA usadas y después el
+// resto, y dentro de cada grupo por referencia (top-1, top-2, top-10: los números
+// se comparan como números, no como texto). Las prendas sin referencia van al
+// final de su grupo.
+function claveRef(p){
+  return String((p && p.ref) || "").trim();
+}
+
+// Compara dos prendas por su referencia. El número se compara como número
+// (top-2 va antes que top-10) y las que no tienen referencia van al final.
+function compararRef(col, a, b){
+  const ra = claveRef(a), rb = claveRef(b);
+  if(!ra && rb) return 1;
+  if(ra && !rb) return -1;
+  return col.compare(ra, rb);
+}
+
+// Solo por referencia, sin mirar el uso: es el orden de la pestaña Prendas de la
+// configuración, donde se busca una prenda por su referencia.
+function ordenRef(lista){
+  const col = new Intl.Collator("es", { numeric: true, sensitivity: "base" });
+  return lista.slice().sort((a, b) => compararRef(col, a, b));
+}
+
+function ordenPrendas(lista){
+  const col = new Intl.Collator("es", { numeric: true, sensitivity: "base" });
   return lista.slice().sort((a, b) => {
-    const za = valor("zonas", a.zonaId), zb = valor("zonas", b.zonaId);
-    const z = ((za ? za.orden : 0) - (zb ? zb.orden : 0));
-    if(z) return z;
-    return tsUso(a) - tsUso(b);
+    const na = tsUso(a) ? 1 : 0;
+    const nb = tsUso(b) ? 1 : 0;
+    if(na !== nb) return na - nb;
+    return compararRef(col, a, b);
   });
 }
 
@@ -807,7 +834,9 @@ function tipoCubreTodo(tipoId){
   return !!(t && t.cubreTodo);
 }
 
-function siguienteRef(tipoId, excluirId){
+// `reservadas` son las referencias que ya se dieron en el mismo recorrido (al
+// corregir varias de golpe): se cuentan como usadas para no repetir ninguna.
+function siguienteRef(tipoId, excluirId, reservadas){
   const nombre = (nombreDe("tipos", tipoId) || "pre")
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .toUpperCase().slice(0, 3).toLowerCase();
@@ -816,16 +845,64 @@ function siguienteRef(tipoId, excluirId){
   let max = 0;
   prendas.forEach(p => {
     if(!p || (excluirId && p.id === excluirId)) return;
-    const r = String(p.ref || "").trim().toLowerCase();
+    const r = normTexto(p.ref);
     if(!r) return;
     usadas.add(r);
     if(!r.startsWith(prefijo)) return;
     const n = parseInt(r.slice(prefijo.length), 10);
     if(!isNaN(n) && n > max) max = n;
   });
+  (reservadas || []).forEach(r => { const t = normTexto(r); if(t) usadas.add(t); });
   let n = max + 1;
   while(usadas.has(prefijo + n)) n++;
   return prefijo + n;
+}
+
+// ====== Referencias: nunca vacías y nunca repetidas ======
+// La referencia se volvió parte del orden de la pantalla. Al guardar ya se impide
+// que quede vacía o repetida; esto corrige lo que ya estaba así (datos viejos o
+// una importación): a la que no tiene se le pone la siguiente de su tipo y, de las
+// repetidas, conserva la referencia la más antigua.
+let refsRevisadas = false;
+
+async function asegurarRefs(forzar){
+  if(refsRevisadas && !forzar) return;
+  refsRevisadas = true;
+  if(!prendas.length) return;
+
+  // Primero la más antigua: esa se queda con su referencia.
+  const porAntiguedad = prendas.slice().sort((a, b) => {
+    const ta = a.creadoEn && a.creadoEn.toMillis ? a.creadoEn.toMillis() : 0;
+    const tb = b.creadoEn && b.creadoEn.toMillis ? b.creadoEn.toMillis() : 0;
+    return ta - tb;
+  });
+
+  const vistas = new Set();
+  const cambios = [];
+  porAntiguedad.forEach(p => {
+    const r = claveRef(p);
+    const n = normTexto(r);
+    if(r && !vistas.has(n)){ vistas.add(n); return; }
+    const nueva = siguienteRef(p.tipoId, p.id, vistas);
+    vistas.add(normTexto(nueva));
+    cambios.push({ prenda: p, nueva });
+  });
+  if(!cambios.length) return;
+
+  let hechas = 0;
+  for(const c of cambios){
+    try{
+      await setDoc(doc(db, "lenceriaPrendas", c.prenda.id), { ref: c.nueva }, { merge: true });
+      c.prenda.ref = c.nueva;
+      hechas++;
+    }catch(e){}
+  }
+  if(!hechas) return;
+  pintarConfig();
+  pintarPlanes();
+  aviso(hechas === 1
+    ? "Se corrigió 1 referencia que estaba vacía o repetida."
+    : "Se corrigieron " + hechas + " referencias que estaban vacías o repetidas.");
 }
 
 function nombreDe(grupo, id){
@@ -1072,7 +1149,7 @@ function bloquePrendas(){
 
   const rej = document.createElement("div");
   rej.className = "rejilla";
-  const lista = ordenPorOlvido(prendasDePersona(tabPrendas).filter(p => pasaFiltro(p, filtroC)));
+  const lista = ordenRef(prendasDePersona(tabPrendas).filter(p => pasaFiltro(p, filtroC)));
   lista.forEach(p => rej.appendChild(tarjetaPrenda(p, null, ()=> abrirPrenda(p.id))));
   scroll.appendChild(rej);
 
@@ -1825,7 +1902,7 @@ function pintarVestidor(){
 
   const rej = document.getElementById("eRejilla");
   rej.innerHTML = "";
-  const lista = ordenPorOlvido(prendasDePersona(personaElegir).filter(p => pasaFiltro(p, filtroE)));
+  const lista = ordenPrendas(prendasDePersona(personaElegir).filter(p => pasaFiltro(p, filtroE)));
   const vacio = document.getElementById("eVacio");
   vacio.style.display = lista.length ? "none" : "";
   vacio.textContent = (filtroE.tipo || filtroE.color || filtroE.estilo)
@@ -2051,9 +2128,7 @@ function pintarPedido(){
 
   const rej = document.getElementById("pRejilla");
   rej.innerHTML = "";
-  prendasDePersona(miId)
-    .filter(p => pasaFiltro(p, filtroE))
-    .sort((a, b) => tsUso(a) - tsUso(b))
+  ordenPrendas(prendasDePersona(miId).filter(p => pasaFiltro(p, filtroE)))
     .forEach(p => rej.appendChild(tarjetaPrenda(p, seleccion.indexOf(p.id) >= 0, ()=> alternarSeleccion(p))));
 
   pintarContador("pContador");
@@ -2166,8 +2241,8 @@ async function cancelarPedido(){
 // Un conjunto al azar, pero con sentido: prioriza lo más olvidado y respeta las
 // reglas del vestidor. Si el filtro no deja nada, usa todo el catálogo del lado.
 function sorprendeme(){
-  const conFiltro = ordenPorOlvido(prendasDePersona(personaElegir).filter(p => pasaFiltro(p, filtroE)));
-  const todas = conFiltro.length ? conFiltro : ordenPorOlvido(prendasDePersona(personaElegir));
+  const conFiltro = ordenPrendas(prendasDePersona(personaElegir).filter(p => pasaFiltro(p, filtroE)));
+  const todas = conFiltro.length ? conFiltro : ordenPrendas(prendasDePersona(personaElegir));
   if(!todas.length){
     aviso("No hay prendas todavía. Agrégalas con el ⚙️."); return;
   }
@@ -2181,11 +2256,12 @@ function sorprendeme(){
     const pies = todas.find(p => p.zonaId === "zona_pies");
     if(pies) elegidas.push(pies);
   }else{
-    // Una por zona, la más olvidada de cada una (el orden ya las deja primero).
+    // Una por zona, la más olvidada de cada una. La lista ya no viene por
+    // olvido (va por referencia), así que aquí se compara la fecha a mano.
     const porZona = {};
     todas.forEach(p => {
       const z = p.zonaId || "sin_zona";
-      if(!porZona[z]) porZona[z] = p;
+      if(!porZona[z] || tsUso(p) < tsUso(porZona[z])) porZona[z] = p;
     });
     Object.keys(porZona).forEach(z => elegidas.push(porZona[z]));
   }
@@ -2459,6 +2535,7 @@ async function aplicarImportacion(){
   }
 
   await cargarPrendas();
+  await asegurarRefs(true);
   pintarConfig();
   pintarPlanes();
 
@@ -2652,6 +2729,8 @@ async function arrancar(){
   pintarConfig();
   pintarPlanes();
   escuchar();
+  // Las referencias se revisan después de pintar, sin frenar el arranque.
+  asegurarRefs().catch(()=>{});
   aplicarEntradaCita();
 
   vigilarInvitaciones(db, { tipo: "lenceria", esEsta: true, alTerminar: ()=> ver("vistaPlanes") });

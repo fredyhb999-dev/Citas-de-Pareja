@@ -91,6 +91,12 @@ scroll y el **"agregar" queda fijo abajo**, siempre a la mano.
 lleva tipo, y los tipos se amplían). Zonas, colores y estilos son casi fijos:
 las zonas del cuerpo y los colores no cambian. Decidido con Fredy (nov-2026).
 
+**Orden alfabético en las cuatro listas.** Tipos, Colores, Zonas y Estilos se
+muestran **por nombre, de la A a la Z**, y con ese mismo orden salen los chips de
+tipo, los desplegables Color/Estilo y los cuatro campos del alta de prenda: es una
+sola lista ordenada en un solo sitio. El campo `orden` se sigue guardando en la
+base, pero ya no manda en pantalla.
+
 **Prendas** conserva dentro sus propias pestañas **por persona** (el de uno
 primero) y sus **chips por tipo**. Las dos pestañas de persona y el botón
 **"Nueva prenda"** van **en el mismo renglón**, para no gastar alto: la cuadrícula
@@ -134,12 +140,41 @@ que estuvo en un plan**, no el día en que se contó.
 "ayer", o "hoy") y la línea se pinta en **coral** en lugar de turquesa. Es un
 aviso suave —"esta ya la usaste"— sin mensaje ni bloqueo.
 
-### Orden por olvido
+### Orden de las prendas
 
-Dentro de cada zona, las prendas se ordenan **de la que lleva más tiempo sin
-usarse a la más reciente**, y las nunca usadas van primero. Así, al abrir el
-Vestidor, lo abandonado aparece arriba sin tener que buscar. No cambia la
-pantalla: solo el orden.
+**Vestidor y Ajustar pedido** (la misma cuadrícula): una sola lista, **sin agrupar
+por zona**. Primero las **nunca usadas** y después las usadas; dentro de cada grupo,
+por **referencia** (`top-1`, `top-2`, `top-10`: el número se compara como número, no
+como texto).
+
+**Pestaña Prendas de la configuración**: **solo por referencia**, sin mirar el uso:
+ahí se busca una prenda por su referencia.
+
+En las dos, las prendas sin referencia van al final (no debería quedar ninguna; ver
+*Referencias*).
+
+**Sorpréndeme** no depende de ese orden: elige la más olvidada de cada zona
+comparando la fecha de uso.
+
+### Referencias: ni vacías ni repetidas
+
+**La referencia se llena sola:** las **tres primeras letras del tipo** y un número
+consecutivo — `top-1`, `top-2`, `ves-1`, `bab-1`.
+
+- Se calcula con el **mayor número que ya exista** de ese prefijo y se suma uno. Por
+  eso **no se repite ni se reutiliza**: si borras `top-2`, la siguiente sigue siendo
+  `top-3`. La numeración es **de toda la pareja**, no por lado, para que `top-1` no
+  signifique dos cosas distintas.
+- **Se puede escribir a mano.** Si cambias el tipo y la referencia seguía siendo la
+  automática, se regenera con el prefijo nuevo; si la escribiste tú, no se toca.
+- Máximo **8 caracteres**, para que quepa en la tarjeta.
+- **Al guardar**, una referencia vacía se llena sola y una repetida se rechaza con un
+  aviso. Se comparan sin mayúsculas ni acentos.
+- **Al abrir la pantalla** se revisan las que ya estaban mal: a la que no tiene se le
+  pone la siguiente de su tipo y, de las repetidas, conserva la referencia **la más
+  antigua**. Un aviso dice cuántas se corrigieron. Sin internet no se corrige nada y
+  se reintenta en la siguiente apertura.
+- **Importar prendas** pasa por esa misma revisión al terminar.
 
 ### "Sorpréndeme"
 
@@ -150,19 +185,6 @@ Botón en el Vestidor que arma un conjunto **respetando las reglas**:
 - Si no, elige **una prenda por zona**, la más olvidada de cada una.
 - Respeta los filtros activos; si no dejan nada, usa todo el catálogo del lado.
 - No guarda: solo deja la selección puesta para que la ajustes y le des Guardar.
-
-**La referencia se llena sola:** las **tres primeras letras del tipo** y un
-número consecutivo — `top-1`, `top-2`, `ves-1`, `bab-1`.
-
-- Se calcula con el **mayor número que ya exista** de ese prefijo y se suma uno.
-  Por eso **no se repite ni se reutiliza**: si borras `top-2`, la siguiente sigue
-  siendo `top-3`. La numeración es **de toda la pareja**, no por lado, para que
-  `top-1` no signifique dos cosas distintas.
-- **Se puede escribir a mano.** Si cambias el tipo y la referencia seguía siendo
-  la automática, se regenera con el prefijo nuevo; si la escribiste tú, no se
-  toca.
-- **Al guardar se comprueba que no exista otra igual** y se avisa si la hay.
-- Máximo **8 caracteres**, para que quepa en la tarjeta.
 
 **El botón de ampliar.** Cada tarjeta con foto tiene un botón redondo en la
 esquina inferior derecha con **dos flechas en diagonal** (dibujadas en SVG, no
@@ -200,7 +222,7 @@ esquema en las cuatro:
 | Campo | Tipo | Qué es |
 |---|---|---|
 | `nombre` | string | Lo que se muestra. Editable |
-| `orden` | number | 10, 20, 30… para ordenar |
+| `orden` | number | 10, 20, 30… Se conserva en la base; la pantalla ordena alfabético |
 | `origen` | string | `"fabrica"` o `"usuario"` |
 | `creadoEn` | timestamp | `serverTimestamp()` |
 | `actualizadoEn` | timestamp | Solo cuando se renombra |
@@ -218,7 +240,7 @@ esquema en las cuatro:
 | `lado` | `"A"` \| `"B"` | Para mostrar y agrupar |
 | `duenoId` | string | Id del usuario dueño. **Manda sobre `lado`** |
 | `zonaId`, `estiloId`, `tipoId`, `colorId` | string | Ids de las clasificaciones |
-| `ref` | string | Referencia corta y automática (máx. 8): `top-1`, `ves-1` |
+| `ref` | string | Referencia corta y automática (máx. 8): `top-1`, `ves-1`. **Única en la pareja y nunca vacía** |
 | `foto` | string | Data URL JPEG (`data:image/jpeg;base64,...`) |
 | `fotoW`, `fotoH` | number | Medidas de la imagen guardada |
 | `vecesUsadas` | number | Empieza en 0 |

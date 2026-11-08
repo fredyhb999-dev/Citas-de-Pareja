@@ -314,9 +314,3 @@ escrito. Detalle en `GUIA.md` → *La base de cada PAREJA*.
 Todo el detalle de **pantallas, navegación, estándares de tamaño y moldes A/B** vive en
 **`General/Pantallas.md`**. Aquí en `AGENTS.md` solo están las **reglas de trabajo** y
 la **tabla de documentos**.
-
-## Pendientes de limpieza (fuera del repo)
-
-- **`Temp\opencode\respaldo-docs-2026-11-07\`**: respaldo de la documentación antes de
-  reordenarla (nov-2026). **Se borra cuando Fredy confirme que subió los cambios con
-  GitHub Desktop.** Si al empezar una sesión todavía está, **recordárselo**.
