@@ -613,12 +613,12 @@
   </div>
   <div class="pegarBox" id="pegarBox" style="display:none">
     <textarea id="pegarTa" placeholder="Un personaje por línea (o un arreglo JSON)."></textarea>
-    <!-- Actualizar en masa: sin esta casilla, pegar solo AGREGA y salta los
-         nombres que ya existen (así se comportaba antes). Con ella, los que ya
-         existen se actualizan y los demás se agregan. -->
+    <!-- Reemplazo completo: sin la casilla, pegar solo AGREGA y salta los
+         nombres que ya existen. Con ella, la lista de esta pestaña queda
+         EXACTAMENTE como el texto pegado: lo que no venga se borra. -->
     <label class="opModo" id="pegarReemplWrap" style="margin-top:8px; background:none; border:none; padding:4px 0;">
       <input type="checkbox" id="pegarReemplazar">
-      <span>Reemplazar los que ya existen</span>
+      <span>Reemplazar toda la lista con lo pegado</span>
     </label>
     <button class="btnPri" id="btnPegarOk" style="margin-top:8px;">Agregar a la lista</button>
   </div>
@@ -3803,6 +3803,16 @@ function miLado(){ return puedeVerOtroLado() ? ((ladoCfg === "2") ? "2" : "1") :
 function nombreDeLado(n){ return nombreLado(n === "1" ? "A" : "B"); }
 // La lista que se está viendo ahora mismo: "U1","U2","C1","C2" o "ESP".
 function claveCfg(){ return enEspeciales ? "ESP" : (subCfg + miLado()); }
+// Cómo se llama una lista en un aviso: "Personajes de Mary", "Contrapartes de
+// Fredy", "Variantes Picantes".
+const CLAVES_LISTA = ["U1","U2","C1","C2","ESP"];
+function esClaveLista(k){ return CLAVES_LISTA.indexOf(String(k || "")) >= 0; }
+function nombreDeLista(clave){
+  if(clave === "ESP") return "Variantes Picantes";
+  const n = String(clave || "");
+  const lado = n.slice(-1) === "2" ? "2" : "1";
+  return (n.charAt(0) === "C" ? "Contrapartes" : "Personajes") + " de " + nombreDeLado(lado);
+}
 function limpiarFiltro(){ filtroCfg = ""; document.getElementById("buscarOpt").value = ""; }
 
 // ¿Ya hay uno con ese nombre en esta lista? (no se repiten, como en el juego original)
@@ -3864,7 +3874,12 @@ function avisoJSONMalo(){
 // OJO (arreglado oct-2026): si EMPIEZA como JSON y esta MAL escrito, NO se cae a
 // "un renglon por personaje" en silencio. Se avisa y no se pega nada. Devuelve
 // `null` cuando el JSON estaba mal, para que quien llama no vuelva a avisar.
+// De qué lista es el JSON pegado: se llena cuando el objeto trae UNA sola
+// lista adentro ({"U1":[...]}), que es como exporta la app. Con un arreglo
+// pelado (archivos viejos) queda vacío y no se puede validar el nombre.
+let claveJSONPegado = "";
 function parsePegadoPersonajes(texto){
+  claveJSONPegado = "";
   const t = String(texto || "").trim();
   if(!t) return [];
   if(t[0] === "[" || t[0] === "{"){
@@ -3877,7 +3892,10 @@ function parsePegadoPersonajes(texto){
     if(typeof d === "object"){
       // Un objeto con UN arreglo adentro (ej. {"U1":[...]}): se usa ese arreglo.
       const conArreglo = Object.keys(d).filter(k=> Array.isArray(d[k]));
-      if(conArreglo.length === 1) return d[conArreglo[0]];
+      if(conArreglo.length === 1){
+        claveJSONPegado = conArreglo[0];
+        return d[conArreglo[0]];
+      }
       return [d];   // es un solo personaje
     }
     aviso("Lo que pegaste no es una lista de personajes.");
@@ -3888,6 +3906,7 @@ function parsePegadoPersonajes(texto){
 // En Especiales acepta cadenas (una por linea) u objetos {texto}. Mismo cuidado:
 // si empieza como JSON y esta mal, se avisa y no se pega nada.
 function parsePegadoTextos(texto){
+  claveJSONPegado = "";
   const t = String(texto || "").trim();
   if(!t) return [];
   if(t[0] === "[" || t[0] === "{"){
@@ -3899,7 +3918,10 @@ function parsePegadoTextos(texto){
     if(Array.isArray(d)) return sinDuplicados(d.map(x=> (x && typeof x === "object") ? (x.texto || "") : x));
     if(typeof d === "object"){
       const conArreglo = Object.keys(d).filter(k=> Array.isArray(d[k]));
-      if(conArreglo.length === 1) return sinDuplicados(d[conArreglo[0]].map(x=> (x && typeof x === "object") ? (x.texto || "") : x));
+      if(conArreglo.length === 1){
+        claveJSONPegado = conArreglo[0];
+        return sinDuplicados(d[conArreglo[0]].map(x=> (x && typeof x === "object") ? (x.texto || "") : x));
+      }
       return [String(d.texto || "")];
     }
     return null;
@@ -4064,8 +4086,7 @@ function pintarCfg(){
   document.getElementById("btnPegarOk").textContent = enEspeciales ? "Agregar variantes" : "Agregar a la lista";
   // La casilla de reemplazar es solo para personajes: en Variantes Picantes
   // no hay "reemplazar", son textos sueltos.
-  document.getElementById("pegarReemplWrap").style.display = enEspeciales ? "none" : "flex";
-  document.getElementById("btnExportar").textContent = enEspeciales ? "Exportar variantes" : "Exportar lista";
+  document.getElementById("pegarReemplWrap").style.display = enEspeciales ? "none" : "flex";  document.getElementById("btnExportar").textContent = enEspeciales ? "Exportar variantes" : "Exportar lista";
 
   const box = document.getElementById("tablaBox");
   box.innerHTML = "";
@@ -4232,11 +4253,28 @@ async function borrarDetalle(){
 }
 
 // ---------- pegar ----------
+// ¿El elemento pegado ya trae contraparte asignada? Es la señal para distinguir
+// una lista de contrapartes de una de personajes cuando el archivo es viejo
+// (arreglo pelado, sin nombre de lista).
+function traePar(x){
+  return !!(x && typeof x === "object"
+    && x.par !== null && x.par !== undefined && String(x.par).trim() !== "");
+}
+
 async function pegarLista(){
   const ta = document.getElementById("pegarTa");
+  const pegado = ta.value;
+  const esJSON = /^[\[{]/.test(String(pegado || "").trim());
+
   if(enEspeciales){
-    const textos = parsePegadoTextos(ta.value);
+    const textos = parsePegadoTextos(pegado);
     if(textos === null) return;   // el JSON estaba mal: ya se avisó
+    // El archivo puede decir de qué lista es: se valida antes de tocar nada.
+    if(esClaveLista(claveJSONPegado) && claveJSONPegado !== "ESP"){
+      aviso("Ese archivo es de " + nombreDeLista(claveJSONPegado)
+        + " y estás en " + nombreDeLista("ESP") + ".\n\nNo se pegó nada.");
+      return;
+    }
     if(!textos.length){ aviso("No se encontró ninguna variante."); return; }
     if(!Array.isArray(personajes.ESP)) personajes.ESP = [];
     let n = 0;
@@ -4252,81 +4290,103 @@ async function pegarLista(){
     aviso(n ? ("Se agregaron " + n + " variante(s).") : "No se agregó nada: ya estaban todas.");
     return;
   }
+
   const clave = claveCfg();
-  const crudos = parsePegadoPersonajes(ta.value);
+  const crudos = parsePegadoPersonajes(pegado);
   if(crudos === null) return;   // el JSON estaba mal: ya se avisó
+
+  // 1) Validar que el archivo sea de ESTA pestaña. Antes se podía pegar
+  //    contrapartes en Personajes (y al revés) sin que nada lo frenara.
+  if(esClaveLista(claveJSONPegado) && claveJSONPegado !== clave){
+    aviso("Ese archivo es de " + nombreDeLista(claveJSONPegado)
+      + " y estás en " + nombreDeLista(clave) + ".\n\nNo se pegó nada.");
+    return;
+  }
+  if(esJSON && !esClaveLista(claveJSONPegado)){
+    const conPar = crudos.filter(traePar).length;
+    if(subCfg === "U" && conPar > 0){
+      aviso("Ese texto trae contrapartes (tienen \"par\") y estás en "
+        + nombreDeLista(clave) + ".\n\nNo se pegó nada: revisa de qué lista es.");
+      return;
+    }
+    if(subCfg === "C" && conPar === 0){
+      const ok = await confirmar({
+        titulo: "¿Son contrapartes?",
+        texto: "Ninguno de los personajes trae contraparte asignada. ¿Seguro que van en "
+          + nombreDeLista(clave) + "?",
+        ok: "Sí, son contrapartes"
+      });
+      if(!ok) return;
+    }
+  }
+
   if(!crudos.length){ aviso("No se encontró ningún personaje."); return; }
   if(!Array.isArray(personajes[clave])) personajes[clave] = [];
   const lista = personajes[clave];
-  const reemplazar = document.getElementById("pegarReemplazar").checked;
+  const reemplazarTodo = document.getElementById("pegarReemplazar").checked;
 
-  // 1) Emparejar sin tocar la lista: primero por id (la llave de verdad),
-  //    después por nombre. Así se puede corregir la ruta de la imagen —o
-  //    renombrar— sin perder el id ni la contraparte.
-  const plan = [];
-  const nombresNuevos = new Set();
-  crudos.forEach(x=>{
-    const p = personajeDe(x);
-    if(!p) return;
-    let actual = null;
-    if(reemplazar){
-      const pedido = parseInt((x && typeof x === "object") ? x.id : "", 10);
-      if(pedido) actual = lista.find(q=> q && q.id === pedido) || null;
-      if(!actual){
-        const n = p.personaje.toLowerCase();
-        actual = lista.find(q=> q && String(q.personaje || "").trim().toLowerCase() === n) || null;
-      }
-    }
-    if(!actual){
-      // Sin casilla, o con casilla pero sin coincidencia: solo se agrega.
-      const n = p.personaje.toLowerCase();
-      if(yaExiste(clave, p.personaje) || nombresNuevos.has(n)) return;
-      nombresNuevos.add(n);
-    }
-    // En contrapartes, si el pegado no trae `par`, al agregar se deja sin
-    // asignar (lo avisa la caja de abajo y se ata desde el detalle). Al
-    // actualizar, se conserva el que ya tenía.
-    plan.push({ p, actual });
-  });
-
-  const cambios = new Set(plan.filter(z=> z.actual).map(z=> z.actual.id)).size;
-  const nuevos = plan.filter(z=> !z.actual).length;
-  if(!cambios && !nuevos){
-    aviso("No se agregó nada: ya estaban todos.");
+  // 2a) Sin la casilla: solo agregar, como siempre.
+  if(!reemplazarTodo){
+    let n = 0;
+    crudos.forEach(x=>{
+      const p = personajeDe(x);
+      if(!p || yaExiste(clave, p.personaje)) return;
+      lista.push(p); n++;
+    });
+    if(!n){ aviso("No se agregó nada: ya estaban todos."); return; }
+    ta.value = "";
+    await guardarPersonajes();
+    limpiarFiltro(); pintarCfg();
+    aviso("Se agregaron " + n + " personaje(s).");
     return;
   }
 
-  // Reemplazar pisa textos e imágenes: se avisa antes, con los números.
-  if(cambios){
-    const ok = await confirmar({
-      titulo: "¿Reemplazar los que ya existen?",
-      texto: "Se van a actualizar " + cambios + " personaje(s)"
-        + (nuevos ? (" y agregar " + nuevos) : "")
-        + ". Los campos que vengan vacíos se guardan vacíos.",
-      ok: "Reemplazar"
-    });
-    if(!ok) return;
-  }
-
-  // 2) Aplicar.
-  plan.forEach(z=>{
-    const p = z.p;
-    if(!z.actual){ lista.push(p); return; }
-    z.actual.personaje = p.personaje;
-    z.actual.situacion = p.situacion;
-    z.actual.gancho = p.gancho;
-    z.actual.derechos = p.derechos;
-    z.actual.si_quieres = p.si_quieres;
-    z.actual.imagen = p.imagen;
-    if(p.par !== null) z.actual.par = p.par;
+  // 2b) Reemplazo COMPLETO: la pestaña queda como el archivo.
+  //     Para conservar los ids, la lista actual se quita un momento del mapa:
+  //     así un id que era de esta misma lista se puede volver a usar. Si un id
+  //     choca con OTRA lista, se reasigna (y se avisa), porque las contrapartes
+  //     se atan por id.
+  const viejos = lista;
+  personajes[clave] = [];
+  let idsCambiados = 0;
+  const nombres = new Set();
+  crudos.forEach(x=>{
+    const p = personajeDe(x);
+    if(!p) return;
+    const n = p.personaje.toLowerCase();
+    if(nombres.has(n)) return;          // nombres repetidos en el mismo pegado
+    nombres.add(n);
+    const pedido = parseInt((x && typeof x === "object") ? x.id : "", 10);
+    if(pedido && pedido !== p.id) idsCambiados++;
+    personajes[clave].push(p);
   });
+  const nuevo = personajes[clave];
+  personajes[clave] = viejos;           // se restaura hasta que se confirme
+  if(!nuevo.length){ aviso("No se encontró ningún personaje."); return; }
 
+  const idsViejos = new Set(viejos.map(v=> v.id));
+  const idsNuevos = new Set(nuevo.map(v=> v.id));
+  const borrar = viejos.filter(v=> !idsNuevos.has(v.id)).length;
+  const agregar = nuevo.filter(v=> !idsViejos.has(v.id)).length;
+  const actualizar = nuevo.length - agregar;
+
+  const extra = idsCambiados
+    ? ("\n\nA " + idsCambiados + " se les va a cambiar el id porque chocaba con otra lista: revisa las contrapartes.")
+    : "";
+  const ok = await confirmar({
+    titulo: "¿Reemplazar toda la lista?",
+    texto: "Se van a borrar " + borrar + ", actualizar " + actualizar
+      + " y agregar " + agregar + ".\n\n"
+      + nombreDeLista(clave) + " va a quedar exactamente como el archivo." + extra,
+    ok: "Reemplazar"
+  });
+  if(!ok) return;
+
+  personajes[clave] = nuevo;
   ta.value = "";
   await guardarPersonajes();
   limpiarFiltro(); pintarCfg();
-  if(cambios && nuevos) aviso("Se actualizaron " + cambios + " y se agregaron " + nuevos + " personaje(s).");
-  else if(cambios) aviso("Se actualizaron " + cambios + " personaje(s).");
-  else aviso("Se agregaron " + nuevos + " personaje(s).");
+  aviso("Listo: " + nombreDeLista(clave) + " quedó con " + nuevo.length + " personaje(s).");
 }
 
 // ---------- exportar ----------
@@ -4335,8 +4395,10 @@ async function pegarLista(){
 // NO depende del buscador: el buscador es para buscar, no para achicar el
 // respaldo. Si no, un archivo que dice "todos los personajes" podría salir con
 // la mitad y nadie lo notaría.
-// El archivo es un arreglo pelado, el mismo formato que acepta "Pegar lista
-// completa": lo que se exporta se puede volver a pegar tal cual.
+// El archivo es un objeto con el nombre de la lista adentro ({"U1":[...]}), el
+// mismo formato que acepta "Pegar lista completa": lo que se exporta se puede
+// volver a pegar tal cual, y el pegado sabe rechazarlo si es de otra pestaña.
+// Los archivos viejos (arreglo pelado) se siguen aceptando.
 function limpiarParaArchivo(s){
   // Deja solo lo que un nombre de archivo aguanta. El nombre del usuario viene
   // de la base, y un "/" o un ":" ahí rompería la descarga.
@@ -4357,7 +4419,7 @@ function exportarLista(){
     aviso(enEspeciales ? "No hay ninguna variante en esta lista." : "No hay ningún personaje en esta lista.");
     return;
   }
-  const texto = JSON.stringify(lista, null, 2);
+  const texto = JSON.stringify({ [claveCfg()]: lista }, null, 2);
   const nombre = nombreArchivoExport();
   try{
     const blob = new Blob([texto], { type: "application/json" });

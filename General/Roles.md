@@ -544,14 +544,22 @@ No romper:**
   - **El invitado también carga el contenido** (`cargarPersonajes()`); si no, su
     lista de selección sale **vacía**. Y no se dibuja la selección sin contenido
     (`asegurarPersonajes()`).
-  - **"Pegar lista completa" tiene la casilla "Reemplazar los que ya existen"**
-    (nov-2026). **Apagada** (como estaba): solo agrega y salta los nombres que ya
-    están. **Encendida:** actualiza los que coinciden **por id** y, si el texto no
-    trae id, **por nombre**; conserva el `par` que ya tenía si el pegado no lo
-    trae; **no borra** los que no vengan en el texto; y antes de aplicar avisa
-    cuántos se actualizan y cuántos se agregan. Sirve para corregir rutas de
-    imagen o textos en masa sin tocar el id ni las contrapartes. En **Variantes
-    Picantes** la casilla no sale (ahí no hay nada que reemplazar).
+  - **"Pegar lista completa" valida la pestaña y puede reemplazar toda la lista**
+    (nov-2026). Había pasado que se pegaron contrapartes en Personajes y no avisó
+    nada. Ahora:
+    - **El archivo dice de qué lista es** (`{"U1":[...]}`, ver *Exportar lista*).
+      Si no coincide con la pestaña, **no pega nada** y dice cuál es y en cuál
+      estás.
+    - **Archivos viejos** (arreglo pelado, sin nombre): en **Personajes** se
+      **bloquea** si algo trae `par` (son contrapartes); en **Contrapartes**,
+      si **ninguno** trae `par`, **pregunta** antes de seguir.
+    - **Casilla "Reemplazar toda la lista con lo pegado"**: apagada, solo agrega
+      y salta los nombres que ya están. Encendida, la pestaña queda **exactamente**
+      como el archivo: actualiza por **id**, agrega y **borra los que no vengan**.
+      Antes de aplicar dice cuántos se borran, actualizan y agregan. Conserva los
+      ids; si alguno choca con otra lista lo reasigna y avisa (las contrapartes se
+      atan por id). Solo afecta a la pestaña visible. En **Variantes Picantes** la
+      casilla no sale.
   - **"Pegar lista completa" es tolerante, pero NO adivina.** Acepta: un arreglo
     JSON, un objeto suelto, **un pedazo de arreglo sin los corchetes** (`{...}, {...},`
     — con o sin la coma final), el formato envuelto (`{"U1":[...]}`), **comillas
@@ -569,8 +577,11 @@ No romper:**
     tiene seleccionado en ese momento** — la pestaña de usuario + la sub-pestaña
     (Personajes / Contrapartes), o **Variantes Picantes** — y en esa pestaña el
     texto se renombra solo ("Exportar variantes"). Tres reglas:
-    - **Lo que se exporta es un arreglo pelado**, el mismo formato que acepta
-      "Pegar lista completa": el archivo se puede volver a pegar tal cual.
+    - **Lo que se exporta es un objeto con el nombre de la lista adentro**
+      (`{"U1":[...]}`), el mismo formato que acepta "Pegar lista completa": el
+      archivo se puede volver a pegar tal cual y el pegado lo rechaza si se
+      intenta meter en otra pestaña. Los archivos viejos de arreglo pelado se
+      siguen aceptando.
     - **No le hace caso al buscador.** El buscador es para buscar, no para
       achicar un respaldo: si respetara el filtro, un archivo que dice "todos los
       personajes" podría salir con la mitad y nadie lo notaría.
