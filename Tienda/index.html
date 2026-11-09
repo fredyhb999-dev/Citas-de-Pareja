@@ -97,10 +97,16 @@
 
 <script type="module">
 import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
 import { miProyecto, appTaq, leerLicencias, guardarLicencias, tieneCodigoValido, escucharCatalogo, nuevosSinPedir } from "../acceso.js";
+// Base de la pareja: solo para leer e instalar los packs de personajes.
+import firebaseConfigBase from "../firebase-config.js";
+import { resolverFirebase } from "../config.js";
+import { instalarPacksPersonajes, reinstalarPackPersonajes, leerPacksInstalados } from "../packsPersonajes.js";
+import { confirmar, aviso } from "../confirmar.js";
 
 // miProyecto, appTaq, leerLicencias, guardarLicencias, tieneCodigoValido y
 // escucharCatalogo ahora vienen de ../acceso.js (logica compartida).
@@ -108,6 +114,24 @@ import { miProyecto, appTaq, leerLicencias, guardarLicencias, tieneCodigoValido,
 // necesita ESCRIBIR graciaUsada en el documento; ver Problemas 2.txt.
 let usuarioGoogle = null;
 let packsCache = [];
+
+// Base de la pareja: se abre una sola vez para leer y escribir sus personajes.
+// Si el config no está completo, se queda en null y las tarjetas se ven como hoy.
+let dbPareja = null;
+try{
+  const appPareja = initializeApp(resolverFirebase(firebaseConfigBase), "pareja");
+  dbPareja = getFirestore(appPareja);
+}catch(e){ dbPareja = null; }
+
+// Mapa de packs ya instalados (`packsInstalados`). Se lee UNA vez al abrir la
+// pantalla y se guarda para todas las tarjetas.
+let packsInstalados = {};
+async function cargarPacksInstalados(){
+  if(!dbPareja){ packsInstalados = {}; return; }
+  try{ packsInstalados = await leerPacksInstalados(dbPareja); }
+  catch(e){ packsInstalados = {}; }
+}
+
 const SEC_NOMBRES = { experiencias: "💑 Experiencias en Pareja", juegos: "🎮 Juegos", extras: "✨ Extras" };
 const SEC_DESC = { experiencias: "Material de Apoyo para tu cita", juegos: "Diviértete en esa cita especial", extras: "Retos que te llevarán a otro nivel" };
 let secActual = null;
@@ -285,11 +309,27 @@ async function tarjetaPack(p){
     const btn = document.createElement("button");
     div.appendChild(h); div.appendChild(d); div.appendChild(est); div.appendChild(btn);
     if(await tieneCodigoValido(p.id)){
-      est.className = "estado ok";
-      est.textContent = "✅ Se agregó a tu menú";
-      btn.className = "btn ghost";
-      btn.textContent = "Abrir";
-      btn.onclick = ()=>{ location.href = "../" + (p.ruta || "") + "/"; };
+      if(p.tipo === "personajes" && dbPareja){
+        // Pack de personajes: el estado dice si ya está en las listas de la
+        // pareja y el botón instala o reinstala. "Abrir" sigue existiendo.
+        const instalado = !!(packsInstalados && packsInstalados[p.id]);
+        est.className = "estado ok";
+        est.textContent = instalado ? "✅ Instalado" : "✅ Se agregó a tu menú";
+        btn.className = "btn";
+        btn.textContent = instalado ? "Reinstalar personajes" : "Instalar personajes";
+        btn.onclick = ()=> (instalado ? reinstalarDesdeTienda(p, btn) : instalarDesdeTienda(btn));
+        const abrir = document.createElement("button");
+        abrir.className = "btn ghost";
+        abrir.textContent = "Abrir";
+        abrir.onclick = ()=>{ location.href = "../" + (p.ruta || "Roles") + "/"; };
+        div.appendChild(abrir);
+      }else{
+        est.className = "estado ok";
+        est.textContent = "✅ Se agregó a tu menú";
+        btn.className = "btn ghost";
+        btn.textContent = "Abrir";
+        btn.onclick = ()=>{ location.href = "../" + (p.ruta || "") + "/"; };
+      }
     }else if(await graciaDisponible(p.id)){
       est.className = "estado ok";
       est.textContent = "⏳ Venció, pero tienen último acceso disponible";
@@ -303,6 +343,48 @@ async function tarjetaPack(p){
       btn.onclick = ()=>pedir(p, btn, est);
     }
     return div;
+}
+
+// Instalar desde la Tienda sin haber abierto Roles nunca: hace la instalación
+// completa (la misma función detecta qué packs faltan).
+async function instalarDesdeTienda(btn){
+  if(!dbPareja) return;
+  btn.disabled = true;
+  try{
+    const res = await instalarPacksPersonajes(dbPareja);
+    if(res && res.instalados.length){
+      aviso("Se instalaron los personajes de: " + res.instalados.join(", "));
+    }else{
+      aviso("Los personajes ya estaban instalados.");
+    }
+  }catch(e){
+    msg("No se pudieron instalar los personajes. Revisa tu conexión.");
+  }
+  // Actualizar el mapa en memoria ANTES de repintar la tarjeta.
+  await cargarPacksInstalados();
+  btn.disabled = false;
+  pintar();
+}
+
+// Reinstalar: restaura lo editado, recrea lo borrado y repara las parejas.
+async function reinstalarDesdeTienda(p, btn){
+  if(!dbPareja) return;
+  const ok = await confirmar({
+    titulo: "Se restaurarán los personajes del pack.",
+    texto: "Lo que hayas editado se pierde. ¿Seguir?",
+    ok: "Reinstalar"
+  });
+  if(!ok) return;
+  btn.disabled = true;
+  try{
+    const r = await reinstalarPackPersonajes(dbPareja, p);
+    aviso("Listo: " + r.restaurados + " restaurados, " + r.recreados + " recreados.");
+  }catch(e){
+    msg("No se pudo reinstalar. Revisa tu conexión.");
+  }
+  await cargarPacksInstalados();
+  btn.disabled = false;
+  pintar();
 }
 
 async function pedir(p, btn, est){
@@ -394,8 +476,9 @@ function escuchar(){
   stopEscucha = escucharCatalogo({ cambio(){ pintar(); } });
 }
 
-pintar();
-escuchar();
+// Primero se lee el mapa de packs instalados (una sola vez) y después se pinta.
+cargarPacksInstalados().then(()=>{ pintar(); escuchar(); },
+  ()=>{ pintar(); escuchar(); });
 </script>
 
 </body>

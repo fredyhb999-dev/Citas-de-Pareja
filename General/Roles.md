@@ -207,10 +207,30 @@ activos solo aplicaría el primero.
 4. **Quien es dueño de la lista original juega los originales, y el otro juega
    las contrapartes.**
 
-> **Recuerdo de las contrapartes:** cada personaje de U1 tiene su contraparte en
-> **C2**, y cada uno de U2 en **C1**. Ejemplo: el Doctor en U1, la Paciente en
-> C2. Consecuencia de la línea cruzada: **la contraparte de un personaje tuyo se
-> edita en la pestaña del otro.**
+> **Recuerdo de las contrapartes:** el enlace es el campo **`par`**, no la lista.
+> Con la instalación canónica, la contraparte de U1 queda en **C2** y la de U2 en
+> **C1**. Ejemplo: el Doctor en U1, la Paciente en C2. Por eso, **la contraparte
+> de un personaje tuyo se edita en la pestaña del otro.**
+
+### La contraparte se busca por `par` (nov-2026)
+
+`contraparteDe(id, lado, mismo)` conserva su firma, pero **ya no usa la lista ni el
+modo**: busca el `par` en las cuatro listas y exige **exactamente una** contraparte
+(si hay dos, es ambigua y el personaje no cuenta). También resuelve la dirección
+inversa: si le pasan la contraparte, devuelve el original. Así sirven igual los datos
+viejos (mismo lado) y los nuevos (cruzados).
+
+- `poolsEspejoMismo()`, `listaDeCabezaPara()` y `selPoolDe()` ya **no usan `C<n>`
+  fijo**: toman las contrapartes **por `par`** de las `U` del lado. Con la
+  instalación canónica da lo mismo; con packs, manda el `par`.
+- `avisosCorrespondencia()` comprueba con `contraparteDe` y avisa si un original no
+  tiene exactamente una.
+- `dueloMismoLado` **sigue existiendo, pero solo decide el reparto de roles** (el
+  admin lleva los originales y el resto las contrapartes), no qué lista se usa.
+- `contraDeRonda()` y `agregarInvitado()` usan **el mismo reparto** que
+  `poolsDuelo()`.
+- Una pareja **A+A o B+B real** juega **la mitad del pack que coincide con su
+  lado**; no hay instalación especial, solo la búsqueda por `par`.
 
 ### Sin contraparte no cuenta (ni se ve)
 

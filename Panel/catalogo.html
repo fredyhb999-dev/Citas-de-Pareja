@@ -39,6 +39,9 @@
     width:100%; border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg); color:var(--fg); padding:11px 12px; font-size:.88rem;
     font-family:'Inter',sans-serif; margin-bottom:8px; }
+  textarea{ width:100%; border-radius:12px; border:1px solid var(--card-border);
+    background:var(--bg); color:var(--fg); padding:11px 12px; font-size:.82rem;
+    font-family:'Inter',sans-serif; margin-bottom:8px; resize:vertical; }
   label.chk{ display:flex; align-items:center; gap:8px; font-size:.85rem; color:var(--fg-muted); margin:4px 0 10px; }
   label.chk input{ accent-color:var(--teal); width:18px; height:18px; }
   .fila{ display:flex; gap:8px; }
@@ -99,6 +102,11 @@
 <div class="caja">
   <h3 id="formTitulo">Nuevo juego / experiencia</h3>
   <p class="mini">ID = documento en <b>packs</b> (ej. masaje, daditos). Sin espacios.</p>
+  <!-- Tipo del ítem. Solo se muestra en Extras: ahí viven los packs de personajes. -->
+  <select id="fTipo" title="Tipo de ítem" style="display:none">
+    <option value="normal">Tipo: Normal</option>
+    <option value="personajes">Tipo: Pack de personajes</option>
+  </select>
   <input type="text" id="fId" placeholder="ID (ej. daditos)">
   <input type="text" id="fTitulo" placeholder="Título (ej. Daditos)">
   <input type="text" id="fIcono" placeholder="Icono (ej. 🎲)">
@@ -116,6 +124,16 @@
   <input type="number" id="fOrden" placeholder="Orden" min="0" max="999" value="10">
   <input type="date" id="fNuevo">
   <label class="chk"><input type="checkbox" id="fActivo" checked> Activo en catálogo</label>
+  <div id="cajaPack" style="display:none;flex-direction:column;">
+    <textarea id="fPares" placeholder="Pares del pack en JSON" style="min-height:150px;font-family:monospace;font-size:.78rem;"></textarea>
+    <textarea id="fVariantes" placeholder="Variantes picantes: una por línea (opcional)" style="min-height:64px;"></textarea>
+    <div class="fila">
+      <button class="btn ghost" id="btnPlantilla" type="button">Plantilla</button>
+      <button class="btn ghost" id="btnExportarPack" type="button">Exportar</button>
+      <button class="btn ghost" id="btnImportarPack" type="button">Importar</button>
+    </div>
+    <p class="mini">Cada par lleva un normal y su contraparte, con géneros opuestos (A y B). La ruta y la sección se fijan solas: Extras y Roles.</p>
+  </div>
   <div class="fila">
     <button class="btn" id="btnGuardar">Guardar</button>
     <button class="btn ghost" id="btnLimpiar">Limpiar</button>
@@ -295,6 +313,26 @@ document.getElementById("btnSorpresa").onclick = ()=>{
   document.getElementById("fIcono").value = ICONOS[idx];
 };
 function leerForm(){
+  const tipo = (document.getElementById("fTipo").value === "personajes") ? "personajes" : "normal";
+  let pares = [];
+  let paresError = "";
+  if(tipo === "personajes"){
+    const raw = document.getElementById("fPares").value.trim();
+    if(!raw){
+      paresError = "Pega los pares del pack en JSON.";
+    }else{
+      try{
+        let v = JSON.parse(raw);
+        // Se acepta el arreglo pelado o el pack completo (con `pares` adentro).
+        if(v && !Array.isArray(v) && Array.isArray(v.pares)) v = v.pares;
+        pares = v;
+      }catch(e){
+        paresError = "El JSON de los pares está mal escrito. Revisa las comas y las comillas.";
+      }
+    }
+  }
+  const variantes = document.getElementById("fVariantes").value
+    .split(/\r?\n/).map(t=> t.trim()).filter(Boolean);
   return {
     id: document.getElementById("fId").value.trim(),
     titulo: document.getElementById("fTitulo").value.trim(),
@@ -305,6 +343,10 @@ function leerForm(){
     orden: parseInt(document.getElementById("fOrden").value, 10) || 10,
     activo: document.getElementById("fActivo").checked,
     nuevo: document.getElementById("fNuevo").value || "",
+    tipo: tipo,
+    pares: pares,
+    paresError: paresError,
+    variantes: variantes,
   };
 }
 function pintarForm(f){
@@ -318,9 +360,143 @@ function pintarForm(f){
   document.getElementById("fOrden").value = (f.orden ?? 10);
   document.getElementById("fActivo").checked = f.activo !== false;
   document.getElementById("fNuevo").value = f.nuevo || "";
-  const sec = document.getElementById("fSeccion").value;
-  document.getElementById("formTitulo").textContent = f.id ? ("Editar: " + f.id) : ("Nuevo en " + nombreSec(sec));
+  document.getElementById("fTipo").value = (f.tipo === "personajes") ? "personajes" : "normal";
+  const pares = (f.tipo === "personajes" && Array.isArray(f.pares)) ? f.pares : [];
+  document.getElementById("fPares").value = pares.length ? JSON.stringify(pares, null, 2) : "";
+  document.getElementById("fVariantes").value = Array.isArray(f.variantes) ? f.variantes.join("\n") : "";
+  actualizarTipoForm();
   validarForm();
+}
+// Muestra u oculta lo que es solo para packs. El selector de tipo vive SOLO en
+// Extras: es la única sección donde se venden packs de personajes.
+function actualizarTipoForm(){
+  const enExtras = secActual === "extras";
+  const sel = document.getElementById("fTipo");
+  sel.style.display = enExtras ? "" : "none";
+  if(!enExtras) sel.value = "normal";
+  const esPack = sel.value === "personajes";
+  document.getElementById("cajaPack").style.display = esPack ? "flex" : "none";
+  const ruta = document.getElementById("fRuta");
+  const sec = document.getElementById("fSeccion");
+  // En un pack, la ruta y la sección no se escogen: se fijan solas.
+  ruta.disabled = esPack;
+  sec.disabled = esPack;
+  if(esPack){ ruta.value = "Roles"; sec.value = "extras"; }
+  const idv = document.getElementById("fId").value.trim();
+  document.getElementById("formTitulo").textContent = idv
+    ? ("Editar: " + idv)
+    : (esPack ? "Nuevo pack de personajes" : ("Nuevo en " + nombreSec(sec.value || secActual || "experiencias")));
+}
+document.getElementById("fTipo").addEventListener("change", actualizarTipoForm);
+// Plantilla mínima: dos pares, uno con normal A y otro con normal B.
+document.getElementById("btnPlantilla").onclick = ()=>{
+  const modelo = [
+    {
+      normal: { personaje: "Bruno", genero: "A", situacion: "Jefe de oficina.", gancho: "Te mira demasiado.", derechos: "Puede pedirte quedarte.", si_quieres: "Si aceptas, la reunión se alarga.", imagen: "" },
+      contraparte: { personaje: "Bruna", genero: "B", situacion: "Asistente nueva.", gancho: "Sabe más de lo que dice.", derechos: "Puede cerrar la puerta.", si_quieres: "Si aceptas, se queda a solas.", imagen: "" }
+    },
+    {
+      normal: { personaje: "Carla", genero: "B", situacion: "Clienta habitual.", gancho: "Siempre pide lo mismo.", derechos: "Puede cambiar la cita.", si_quieres: "Si aceptas, la cita se alarga.", imagen: "" },
+      contraparte: { personaje: "Carlos", genero: "A", situacion: "Recepcionista del turno noche.", gancho: "Te conoce de antes.", derechos: "Puede dejarte pasar.", si_quieres: "Si aceptas, te acompaña.", imagen: "" }
+    }
+  ];
+  document.getElementById("fPares").value = JSON.stringify(modelo, null, 2);
+  msg("");
+};
+// Exportar: copia el pack completo (con id y pares) al portapapeles.
+document.getElementById("btnExportarPack").onclick = async ()=>{
+  msg("");
+  const f = leerForm();
+  const pack = {
+    id: f.id, titulo: f.titulo, icono: f.icono, desc: f.desc,
+    ruta: "Roles", seccion: "extras", orden: f.orden, activo: f.activo,
+    tipo: "personajes", oficial: true,
+    pares: Array.isArray(f.pares) ? f.pares : [],
+    variantes: f.variantes
+  };
+  try{
+    await navigator.clipboard.writeText(JSON.stringify(pack, null, 2));
+    msg("Pack copiado al portapapeles ✅", true);
+  }catch(e){ msg("No se pudo copiar. Revisa los permisos del navegador."); }
+};
+// Importar: toma el JSON pegado en el cuadro de los pares y llena el formulario.
+document.getElementById("btnImportarPack").onclick = ()=>{
+  msg("");
+  const raw = document.getElementById("fPares").value.trim();
+  if(!raw){ msg("Pega el JSON del pack en el cuadro de los pares y vuelve a tocar Importar."); return; }
+  let v;
+  try{ v = JSON.parse(raw); }
+  catch(e){ msg("El JSON está mal escrito. Revisa las comas y las comillas."); return; }
+  const pack = (v && !Array.isArray(v) && Array.isArray(v.pares)) ? v : { pares: v };
+  document.getElementById("fTipo").value = "personajes";
+  const idEl = document.getElementById("fId");
+  if(pack.id && !idEl.disabled) idEl.value = String(pack.id);
+  if(pack.titulo) document.getElementById("fTitulo").value = String(pack.titulo);
+  if(pack.icono) document.getElementById("fIcono").value = String(pack.icono);
+  if(pack.desc) document.getElementById("fDesc").value = String(pack.desc);
+  if(pack.orden !== undefined) document.getElementById("fOrden").value = parseInt(pack.orden, 10) || 10;
+  if(pack.activo !== undefined) document.getElementById("fActivo").checked = pack.activo !== false;
+  document.getElementById("fPares").value = JSON.stringify(Array.isArray(pack.pares) ? pack.pares : [], null, 2);
+  document.getElementById("fVariantes").value = Array.isArray(pack.variantes) ? pack.variantes.join("\n") : "";
+  actualizarTipoForm();
+  validarForm();
+  msg("Pack cargado ✅ Revisa y guarda.", true);
+};
+// Validación de los pares (General/Packs-Personajes.md, 8.2). Devuelve el
+// arreglo ya normalizado o un mensaje claro para mostrar.
+function validarParesPack(arr){
+  if(!Array.isArray(arr) || !arr.length){
+    return { error: "Los pares tienen que ser una lista con al menos un par." };
+  }
+  if(arr.length % 2) return { error: "El pack tiene que tener una cantidad PAR de pares." };
+  const out = [];
+  let a = 0, b = 0;
+  for(let i = 0; i < arr.length; i++){
+    const par = arr[i] || {};
+    const normal = par.normal || {};
+    const contra = par.contraparte || {};
+    const gn = String(normal.genero || "").trim().toUpperCase();
+    const gc = String(contra.genero || "").trim().toUpperCase();
+    const n = i + 1;
+    if(!String(normal.personaje || "").trim() || !String(contra.personaje || "").trim()){
+      return { error: "El par " + n + " necesita el nombre del normal y el de su contraparte." };
+    }
+    if((gn !== "A" && gn !== "B") || (gc !== "A" && gc !== "B")){
+      return { error: "En el par " + n + ", el género tiene que ser A o B." };
+    }
+    if(gn === gc){
+      return { error: "En el par " + n + " los dos géneros son iguales: tienen que ser opuestos (A y B)." };
+    }
+    if(String(normal.imagen || "").trim().toLowerCase().startsWith("data:") ||
+       String(contra.imagen || "").trim().toLowerCase().startsWith("data:")){
+      return { error: "En el par " + n + " hay una imagen pegada como base64. Usa una dirección (http…) o una ruta del repo." };
+    }
+    out.push({
+      normal: {
+        personaje: String(normal.personaje).trim(),
+        genero: gn,
+        situacion: String(normal.situacion || ""),
+        gancho: String(normal.gancho || ""),
+        derechos: String(normal.derechos || ""),
+        si_quieres: String(normal.si_quieres || ""),
+        imagen: String(normal.imagen || "").trim()
+      },
+      contraparte: {
+        personaje: String(contra.personaje).trim(),
+        genero: gc,
+        situacion: String(contra.situacion || ""),
+        gancho: String(contra.gancho || ""),
+        derechos: String(contra.derechos || ""),
+        si_quieres: String(contra.si_quieres || ""),
+        imagen: String(contra.imagen || "").trim()
+      }
+    });
+    if(gn === "A") a++; else b++;
+  }
+  if(!a || !b || a !== b){
+    return { error: "El pack necesita la misma cantidad de pares con normal A y con normal B, y al menos uno de cada uno." };
+  }
+  return { pares: out };
 }
 function formCompleto(){
   const id = document.getElementById("fId").value.trim();
@@ -341,6 +517,16 @@ document.getElementById("btnGuardar").onclick = async (e)=>{
   if(!f.id || !/^[a-z0-9_-]{2,30}$/i.test(f.id)){ msg("ID inválido: letras/números/_/-, 2-30."); return; }
   if(!f.titulo){ msg("Pon título."); return; }
   if(!yoEmail){ msg("Entra con Google primero."); return; }
+  // Pack de personajes: se valida TODO antes de escribir nada (8.2).
+  let paresPack = [];
+  if(f.tipo === "personajes"){
+    if(f.paresError){ msg(f.paresError); return; }
+    const v = validarParesPack(f.pares);
+    if(v.error){ msg(v.error); return; }
+    paresPack = v.pares;
+    f.seccion = "extras";
+    f.ruta = "Roles";
+  }
   if(!(await soyPublicador())){ msg("Ese Google no está en Correos que publican."); return; }
   const repetido = cacheItems.some(p=>p.id !== f.id && (p.seccion || "experiencias") === f.seccion && (p.icono || "") === f.icono);
   e.target.disabled = true;
@@ -350,18 +536,36 @@ document.getElementById("btnGuardar").onclick = async (e)=>{
       seccion: f.seccion, orden: f.orden, activo: f.activo,
       actualizadoEn: serverTimestamp(),
     };
+    if(f.tipo === "personajes"){
+      data.tipo = "personajes";
+      data.oficial = true;
+      data.seccion = "extras";
+      data.ruta = "Roles";
+      data.pares = paresPack;
+      data.variantes = f.variantes;
+    }else{
+      // El guardado usa `merge`: hay que limpiar los restos de un pack anterior.
+      data.tipo = "normal";
+      data.pares = [];
+      data.variantes = [];
+    }
     if(f.nuevo){
       const t = new Date(f.nuevo + "T23:59:59").getTime();
       data.nuevoHasta = new Date(t);
     }else{
       data.nuevoHasta = null;
     }
+    // Aviso, sin bloquear, si el pack se acerca al tope de 1 MiB del documento.
+    const pesado = (f.tipo === "personajes" && JSON.stringify(paresPack).length > 200 * 1024);
     await setDoc(doc(db, "packs", f.id), data, { merge: true });
+    let avisoGuardado = "Guardado ✅";
     if(f.seccion !== (secActual || "experiencias")){
-      msg("Guardado ✅ · ahora está en " + nombreSec(f.seccion) + ". Se quitó de esta lista.", true);
-    }else{
-      msg(repetido ? "Guardado ✅ (ojo: ese icono ya se usa en esta sección)" : "Guardado ✅", true);
+      avisoGuardado = "Guardado ✅ · ahora está en " + nombreSec(f.seccion) + ". Se quitó de esta lista.";
+    }else if(repetido){
+      avisoGuardado = "Guardado ✅ (ojo: ese icono ya se usa en esta sección)";
     }
+    if(pesado) msg("Guardado ✅ · ojo: los pares pasan de 200 KB y el documento tiene un tope de 1 MiB.");
+    else msg(avisoGuardado, true);
     pintarForm({});
     cargar();
   }catch(err){
@@ -410,7 +614,8 @@ async function cargar(){
           const t = p.nuevoHasta && p.nuevoHasta.toDate ? p.nuevoHasta.toDate() : null;
           if(t) nv = t.toISOString().slice(0, 10);
         }catch(e){}
-        pintarForm({ id: p.id, titulo: p.titulo, icono: p.icono, desc: p.desc, ruta: p.ruta, seccion: p.seccion, orden: p.orden, activo: p.activo !== false, nuevo: nv });
+        pintarForm({ id: p.id, titulo: p.titulo, icono: p.icono, desc: p.desc, ruta: p.ruta, seccion: p.seccion, orden: p.orden, activo: p.activo !== false, nuevo: nv,
+          tipo: p.tipo === "personajes" ? "personajes" : "normal", pares: p.pares, variantes: p.variantes });
         window.scrollTo(0, 0);
       };
       const act = document.createElement("button");

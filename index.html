@@ -1026,6 +1026,8 @@ function agregarFila(valor, adminMarcado){
   inp.placeholder = idx < 2 ? ("Nombre " + (idx + 1)) : "Invitado (ej. Suegra)";
   inp.value = valor || "";
   inp.style.marginBottom = "0";
+  inp.style.flex = "1 1 auto";
+  inp.style.minWidth = "0";
   const lab = document.createElement("label");
   lab.style.cssText = "display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--fg-muted);white-space:nowrap;";
   const rad = document.createElement("input");
@@ -1038,6 +1040,21 @@ function agregarFila(valor, adminMarcado){
   lab.appendChild(document.createTextNode("Admin"));
   fila.appendChild(inp);
   fila.appendChild(lab);
+  // La anatomía es obligatoria en los dos perfiles base: el pack instala a los
+  // personajes del lado que corresponde (masculino = A, femenino = B). Nace en
+  // "Elige..." a propósito, para que nadie quede con un lado puesto sin querer.
+  if(idx < 2){
+    const sel = document.createElement("select");
+    sel.className = "wAnat";
+    sel.style.cssText = "flex-shrink:0;border-radius:10px;border:1px solid var(--card-border);background:var(--bg);color:var(--fg);padding:8px 6px;font-size:.78rem;font-family:'Inter',sans-serif;margin-bottom:0;";
+    [["","Elige..."],["masculino","Masculino"],["femenino","Femenino"]].forEach(([v, txt])=>{
+      const o = document.createElement("option");
+      o.value = v;
+      o.textContent = txt;
+      sel.appendChild(o);
+    });
+    fila.appendChild(sel);
+  }
   if(idx >= 2){
     const x = document.createElement("button");
     x.type = "button";
@@ -1061,11 +1078,21 @@ document.getElementById("wBtn3").onclick = async ()=>{
   if(nombres.length < 2 || !nombres[0] || !nombres[1]){
     msg("Escribe al menos los dos primeros nombres."); verPaso(3); return;
   }
+  const anatomias = filas.map(f=>{
+    const s = f.querySelector('select.wAnat');
+    return s ? s.value : "";
+  });
+  if(!anatomias[0] || !anatomias[1]){
+    msg("Elige la anatomía de los dos primeros perfiles."); verPaso(3); return;
+  }
   const adminId = (document.querySelector('input[name="wAdmin"]:checked') || {}).value || "u1";
   const usuarios = nombres
-    .map((n, i)=>({ id: "u" + (i + 1), nombre: n }))
+    .map((n, i)=>({ id: "u" + (i + 1), nombre: n, anatomia: anatomias[i] }))
     .filter(u=>u.nombre)
-    .map(u=>({ id: u.id, nombre: u.nombre, admin: u.id === adminId }));
+    .map(u=> Object.assign(
+      { id: u.id, nombre: u.nombre, admin: u.id === adminId },
+      u.anatomia ? { anatomia: u.anatomia } : {}
+    ));
   const btn = document.getElementById("wBtn3");
   btn.disabled = true;
   try{
@@ -1555,13 +1582,15 @@ async function pintarInvUsuarios(){
     }else{
       const anatSel = document.createElement("select");
       anatSel.style.cssText = "border-radius:10px;border:1px solid var(--card-border);background:var(--bg);color:var(--fg);padding:6px 8px;font-size:.85rem;font-family:'Inter',sans-serif;";
-      [["masculino","Masculino"],["femenino","Femenino"]].forEach(([v, txt])=>{
+      [["","Elige..."],["masculino","Masculino"],["femenino","Femenino"]].forEach(([v, txt])=>{
         const o = document.createElement("option");
         o.value = v;
         o.textContent = txt;
         anatSel.appendChild(o);
       });
-      anatSel.value = u.anatomia || (u.admin ? "masculino" : "femenino");
+      // Sin anatomía guardada se muestra "Elige...": poner el valor por defecto
+      // engañaba, porque parecía elegido y nunca se había elegido.
+      anatSel.value = (u.anatomia === "masculino" || u.anatomia === "femenino") ? u.anatomia : "";
       anatSel.onchange = ()=> guardarAnatomiaUsuario(u.id, anatSel.value, us);
       anatLine.appendChild(anatSel);
     }

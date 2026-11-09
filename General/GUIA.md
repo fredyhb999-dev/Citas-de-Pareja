@@ -81,6 +81,8 @@ contenido (acciones, castigos, opciones, personajes, ropa…).
   persona: el nombre, «Fulano y Mengano» si comparten lado, o «Sin usar».
 - Los datos viejos sin `anatomia` se leen como antes: admin = masculino/A, pareja =
   femenino/B. Las partidas ya pausadas conservan los lados que tenían.
+- **Al instalar un pack, la anatomía es obligatoria**: el asistente no guarda sin
+  ella, y un perfil viejo sin anatomía muestra «Elige...» en Usuarios.
 
 ## Estado de las reglas de Firebase (cerrado y revisado)
 
@@ -415,3 +417,6 @@ Aquí no se repite: una lista corta siempre se queda vieja.
 > **Regla:** si lo que se toca es el detalle de una pantalla o un módulo, se lee
 > **ese** archivo. Si es una regla general, es este. Lo que va en uno de esos archivos
 > **no** se copia aquí: solo la línea que apunta.
+
+**Packs de personajes:** un ítem del catálogo puede instalar sus personajes en las
+listas de la pareja. Detalle en `General/Packs-Personajes.md`.

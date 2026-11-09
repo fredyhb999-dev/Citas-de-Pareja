@@ -1,9 +1,8 @@
 # Packs de personajes
 
 > Detalle de la función **packs de personajes**: ítems del catálogo que instalan sus
-> personajes en las listas de la pareja. Diseñada y acordada con Fredy (nov-2026) y
-> **pendiente de implementar**: hasta que se implemente, nada de lo que aquí se
-> describe existe todavía en la app.
+> personajes en las listas de la pareja. Diseñada y acordada con Fredy (nov-2026) e
+> implementada en nov-2026; lo único pendiente es la prueba en vivo (12.2).
 
 Este documento es la **fuente única** de la función. Está escrito para que otra sesión
 u otro modelo lo ejecute **sin depender de la conversación donde se diseñó**.
@@ -652,22 +651,22 @@ Cada paso se cierra con `revisar.py` en verde antes de pasar al siguiente.
 
 ## 15. Checklist de cierre
 
-- [ ] `packsPersonajes.js` registrado en `extract.py`.
-- [ ] Instalación automática solo para perfiles base y con licencia.
-- [ ] `packsInstalados` con `normalId`/`contraparteId` por par.
-- [ ] Contrapartes cruzadas y `par` correcto.
-- [ ] `contraparteDe` busca por `par` en las dos listas.
-- [ ] Espejo, Seleccionar e invitado de Duelo usan la misma regla.
-- [ ] Reinstalación restaura, recrea y repara; no toca lo ajeno.
-- [ ] Editor con validación de pares y sin base64.
-- [ ] Tarjeta con "Instalado" y "Reinstalar personajes".
-- [ ] Asistente exige anatomía a los dos perfiles base.
-- [ ] Usuarios muestra "Elige..." cuando falta.
-- [ ] Documentación actualizada (`Modelo-Datos.md`, `Roles.md`, `Usuarios.md`,
+- [x] `packsPersonajes.js` registrado en `extract.py`.
+- [x] Instalación automática solo para perfiles base y con licencia.
+- [x] `packsInstalados` con `normalId`/`contraparteId` por par.
+- [x] Contrapartes cruzadas y `par` correcto.
+- [x] `contraparteDe` busca por `par` en las cuatro listas.
+- [x] Espejo, Seleccionar e invitado de Duelo usan la misma regla.
+- [x] Reinstalación restaura, recrea y repara; no toca lo ajeno.
+- [x] Editor con validación de pares y sin base64.
+- [x] Tarjeta con "Instalado" y "Reinstalar personajes".
+- [x] Asistente exige anatomía a los dos perfiles base.
+- [x] Usuarios muestra "Elige..." cuando falta.
+- [x] Documentación actualizada (`Modelo-Datos.md`, `Roles.md`, `Usuarios.md`,
       `GUIA.md`).
-- [ ] Encabezado de este documento sin la nota de "pendiente de implementar".
-- [ ] `python revisar.py` en verde.
-- [ ] Prueba en vivo anotada.
+- [x] Encabezado de este documento sin la nota de "pendiente de implementar".
+- [x] `python revisar.py` en verde.
+- [ ] Prueba en vivo (12.2): pendiente, a cargo de Fredy.
 
 ---
 

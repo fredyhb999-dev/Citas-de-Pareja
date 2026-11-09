@@ -78,7 +78,7 @@ tres veces y nunca fue exacto. Lo que importa son las rutas.
 | `sesionGuiada/actual` | doc | `lista[]`, `paso`, `terminada`, … |
 | `sesionEncuentros/actual` | doc | `cabezas[]`, `listas{}`, `orden[]`, `turno`, `ronda`, … |
 | `sesionOpciones/actual` | doc | `cabezas[]`, `listas{}`, `pares{}`, `eliminadas{}`, … |
-| `personajesJuego/actual` | doc | `U1[]`, `U2[]`, `C1[]`, `C2[]`, `ESP[]` |
+| `personajesJuego/actual` | doc | `U1[]`, `U2[]`, `C1[]`, `C2[]`, `ESP[]`, `packsInstalados{}` |
 | `sesionRoles/actual` | doc | `listas{}`, `modoJuego`, `modoBase`, `especiales[]`, … |
 | `seleccionRoles/actual` | doc | `sel{}`, `cabezas[]`, `agregar?` |
 | `sesionCastigos/actual` | doc | sesión compartida de Castigos |
@@ -105,9 +105,17 @@ tres veces y nunca fue exacto. Lo que importa son las rutas.
 ### Taquilla
 | Ruta | Forma | Qué guarda |
 |---|---|---|
-| `packs` | col | `titulo`, `icono`, `ruta`, `seccion`, `oficial?`, `niveles?`, `tomasSugeridas?` |
+| `packs` | col | `titulo`, `icono`, `ruta`, `seccion`, `oficial?`, `niveles?`, `tomasSugeridas?`; los de personajes agregan `tipo:"personajes"`, `pares[]`, `variantes[]?` |
 | `solicitudes` | col | `para`, `item`, `email`, `estado`, `fecha`, `codigo?`, `vence?`, … |
 | `config/permisos` | doc | la lista de correos que publican |
+
+**Packs de personajes** (`General/Packs-Personajes.md`). El pack no lleva ids: cada
+`pares[]` trae `{ normal{}, contraparte{} }` con el texto del personaje y su `genero`
+(solo para saber a qué lista va: A → `U1`/`C1`, B → `U2`/`C2`). Al instalar, cada
+copia recibe un `id` y un **`par`** (el id del original de su pareja, o `null` en el
+original); el personaje instalado **no** lleva `genero`. El mapa de slots queda en
+`personajesJuego/actual.packsInstalados`:
+`{ "<packId>": { fecha, pares[{normalId, contraparteId}], variantes[] } }`.
 
 ---
 

@@ -140,6 +140,12 @@ quedar en el mismo lado.
   propios planes.
 - Los datos viejos sin anatomía se leen como antes: admin = masculino/A,
   pareja = femenino/B.
+- **La anatomía es obligatoria al crear los perfiles**: el asistente no guarda si
+  los dos primeros no la eligen. Los invitados que se agregan ahí quedan sin ella
+  y se corrigen en Usuarios.
+- Si un perfil **no tiene anatomía guardada**, el desplegable muestra
+  **«Elige...»** y no un valor por defecto que parecía elegido. Al escoger, guarda
+  con `guardarAnatomiaUsuario()`; «Elige...» no borra lo que ya había.
 
 Cualquier usuario puede abrir el botón de Usuarios, porque la app no tiene login.
 
