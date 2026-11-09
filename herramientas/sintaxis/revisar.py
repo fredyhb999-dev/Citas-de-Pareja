@@ -277,6 +277,22 @@ avis_doc = revisar_documentacion()
 if avis_doc:
     print("Avisos: %d (no detienen la revision)." % avis_doc)
 
+# 7) indice de codigo: solo avisa si quedo desfasado (no detiene la revision).
+#    Se arregla con `python indice.py`; ver herramientas/sintaxis/indice.py.
+print("\n== indice ==")
+try:
+    import indice
+    n_idx = indice.desfase()
+except Exception as e:
+    print("AVISO    no se pudo revisar el indice: %s" % e)
+    n_idx = 0
+if n_idx:
+    print("AVISO    General/Indices-Codigo.md desfasado: %d entradas. "
+          "Corre python indice.py." % n_idx)
+    print("Avisos: 1 (no detienen la revision).")
+else:
+    print("OK: el indice coincide con el codigo.")
+
 if malos:
     print("\n%d revision(es) con problemas." % malos)
     sys.exit(1)

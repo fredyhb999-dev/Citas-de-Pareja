@@ -79,7 +79,8 @@ nunca se recorta una regla.
   no se queda tachado en la lista.
 - **Una regla vive en un solo sitio**; los demás apuntan.
 - **Un documento de detalle no crece sin que algo salga.**
-- **`Indices-Codigo.md` no se edita a mano:** se regenera cuando cambian los archivos.
+- **`Indices-Codigo.md` no se edita a mano:** se regenera con `python indice.py`
+  cuando cambian los archivos.
 - **Poda:** una vez al mes, o cuando una tarea tarde de más, se revisan cuatro cosas:
   tamaño, fechas, pendientes cerrados y reglas duplicadas.
 
@@ -149,6 +150,9 @@ de producto, se pregunta antes de escribir.
   **Nunca le pases un `.html` a `jscheck.py`**: no saca los `<script>` y cuenta
   también las llaves del CSS, así que dice "OK" por casualidad. El `.js` que hay
   que revisar es el que deja `extract.py`.
+- **El índice de código** se mantiene con `python indice.py` (misma carpeta):
+  recalcula números y anexo y no toca los textos. `revisar.py` avisa si quedó
+  desfasado.
 - Si agregas una pantalla o un módulo, **regístralo en `extract.py`**, o queda sin
   revisar para siempre.
 - **No hay arnés con Chrome** (se retiró en oct-2026: lento y poco fiable). **La
