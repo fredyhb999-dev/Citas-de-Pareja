@@ -33,7 +33,7 @@
     border-radius:16px; padding:16px; margin-bottom:12px; }
   .caja h3{ font-family:'Chakra Petch',sans-serif; margin:0 0 4px; font-size:1rem; }
   .caja .mini{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; word-break:break-all; }
-  input[type=text], input[type=number], input[type=date]{
+  input[type=text], input[type=number], input[type=date], select{
     width:100%; border-radius:12px; border:1px solid var(--card-border);
     background:var(--bg); color:var(--fg); padding:11px 12px; font-size:.88rem;
     font-family:'Inter',sans-serif; margin-bottom:8px; }
@@ -95,6 +95,13 @@
   <div id="iconos" style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;"></div>
   <input type="text" id="fDesc" placeholder="Descripción corta">
   <input type="number" id="fOrden" placeholder="Orden" min="0" max="999" value="10">
+  <!-- Sección del catálogo donde se ofrece (Tienda). Se puede cambiar al editar,
+       así una actividad ya publicada se mueve de sección sin recrearla. -->
+  <select id="fSeccion" title="Sección del catálogo">
+    <option value="experiencias">Sección: Experiencias en Pareja</option>
+    <option value="juegos">Sección: Juegos</option>
+    <option value="extras">Sección: Extras</option>
+  </select>
   <input type="date" id="fNuevo">
   <label class="chk"><input type="checkbox" id="fActivo" checked> Activo en catálogo</label>
   <div id="nivelesBox" style="width:100%"></div>
@@ -170,6 +177,10 @@ function msg(t, ok){
   m.textContent = t || "";
   m.className = ok ? "ok" : "";
   m.id = "msg";
+}
+// Nombre corto de la sección del catálogo, para la lista.
+function nombreSeccion(s){
+  return s === "juegos" ? "Juegos" : (s === "extras" ? "Extras" : "Experiencias");
 }
 
 const NIVELES = [
@@ -313,6 +324,8 @@ function pintarForm(f){
   document.getElementById("fIcono").value = f.icono || "";
   document.getElementById("fDesc").value = f.desc || "";
   document.getElementById("fOrden").value = (f.orden ?? 10);
+  // Por defecto, Experiencias: así se comportaba antes de poder elegir.
+  document.getElementById("fSeccion").value = (f.seccion === "juegos" || f.seccion === "extras") ? f.seccion : "experiencias";
   document.getElementById("fActivo").checked = f.activo !== false;
   document.getElementById("fNuevo").value = f.nuevo || "";
   niveles = ladosVacios();
@@ -356,6 +369,7 @@ function actividadComoObjeto(){
   o.icono = document.getElementById("fIcono").value.trim() || "🏅";
   o.desc = document.getElementById("fDesc").value.trim();
   o.orden = parseInt(document.getElementById("fOrden").value, 10) || 10;
+  o.seccion = document.getElementById("fSeccion").value || "experiencias";
   o.activo = document.getElementById("fActivo").checked;
   const fv = document.getElementById("fNuevo").value;
   if(fv) o.nuevoHasta = fv;   // "YYYY-MM-DD", como lo espera el campo de fecha
@@ -437,6 +451,7 @@ async function pegarActividad(){
     icono: d.icono || "",
     desc: d.desc || d.descripcion || d.description || "",
     orden: parseInt(d.orden, 10) || 10,
+    seccion: d.seccion,
     activo: d.activo !== false,
     nuevo: aFechaISO(d.nuevoHasta || d.nuevo || d.fechaNuevo || ""),
     niveles: d.niveles || d.acciones || {},
@@ -467,7 +482,7 @@ document.getElementById("btnGuardar").onclick = async (e)=>{
   try{
     const data = {
       titulo, icono: document.getElementById("fIcono").value.trim() || "🏅",
-      desc, seccion: "experiencias",
+      desc, seccion: document.getElementById("fSeccion").value || "experiencias",
       orden: parseInt(document.getElementById("fOrden").value, 10) || 10,
       activo: document.getElementById("fActivo").checked,
       oficial: true, ruta: "Guiadas",
@@ -509,7 +524,7 @@ async function cargar(){
     h3.textContent = (p.icono || "🏅") + " " + (p.titulo || p.id) + (p.activo === false ? " (inactivo)" : "") + " · " + total + " acciones";
     const m = document.createElement("p");
     m.className = "mini";
-    m.textContent = "ID: " + p.id + " · orden " + (p.orden ?? 10) + (p.desc ? " · " + p.desc : "");
+    m.textContent = "ID: " + p.id + " · orden " + (p.orden ?? 10) + " · " + nombreSeccion(p.seccion) + (p.desc ? " · " + p.desc : "");
     const fila = document.createElement("div");
     fila.className = "fila";
     const ed = document.createElement("button");
@@ -520,7 +535,7 @@ async function cargar(){
         const t = p.nuevoHasta && p.nuevoHasta.toDate ? p.nuevoHasta.toDate() : null;
         if(t) nv = t.toISOString().slice(0, 10);
       }catch(e){}
-      pintarForm({ id: p.id, titulo: p.titulo, icono: p.icono, desc: p.desc, orden: p.orden, activo: p.activo !== false, nuevo: nv, niveles: p.niveles, tomas: p.tomasSugeridas });
+      pintarForm({ id: p.id, titulo: p.titulo, icono: p.icono, desc: p.desc, orden: p.orden, seccion: p.seccion, activo: p.activo !== false, nuevo: nv, niveles: p.niveles, tomas: p.tomasSugeridas });
       window.scrollTo(0, 0);
     };
     const act = document.createElement("button");

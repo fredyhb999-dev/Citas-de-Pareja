@@ -223,3 +223,17 @@ Lo importante, y por qué el cambio es chico:
 - **OJO: el lector de JSON es una COPIA del de `Roles/index.html`, no un módulo compartido.** Se dejó así a propósito, porque unificarlo tocaría `Roles/`, que ya fue probado en vivo. Si algún día se unifica: que vaya a un módulo de la **raíz** (y no a `config.js`, que ya trae Firebase) y se registre en `extract.py`.
 
 > **Bug encontrado al agregarlo:** `Panel/oficiales.html` **no estaba en `extract.py`**, así que el chequeo de sintaxis **nunca lo había revisado** (ni `index.html`, ni `catalogo.html`, ni `permisos.html`). Se agregó `Panel/oficiales.html` a la lista al tocarlo. **Los otros tres se probaron a mano y pasan**, así que se pueden agregar a la lista cuando se toquen.
+
+## 9. La sección del catálogo en los oficiales (nov-2026)
+
+`Panel/oficiales.html` y `Panel/castigos.html` tienen un selector **Sección: Experiencias en
+Pareja / Juegos / Extras**. Se guarda en `packs` como **`seccion`**, el mismo campo que usa la
+**Tienda** para agrupar lo que vende: ahí es donde se nota el cambio.
+
+- Al **editar** una actividad o un castigo ya publicado, el selector trae su sección y, al
+  guardar, la mueve. No hay que borrar ni recrear nada, y el `id` (la licencia) no cambia.
+- El valor por omisión es el de antes: `experiencias` en actividades, `juegos` en castigos.
+- **No mueve la tarjeta del menú.** Lo oficial nunca sale como tarjeta (`oficial:true` se
+  salta en `index.html`): las actividades oficiales se ven dentro de Guiadas y los castigos
+  dentro de Castigos. El campo decide solo la sección de la Tienda.
+- El JSON de **Pegar/Exportar** también lleva `seccion`.

@@ -175,4 +175,4 @@ Al arrancar: pinta la vista de inicio inmediatamente (no queda en blanco si Fire
 
 ## Archivos relacionados
 
-- `Panel/castigos.html` — pantalla del Panel para crear/editar/eliminar castigos oficiales (`ofc_…`), activar, ver tarjeta en el Centro, y Pegar/Exportar un castigo en JSON.
+- `Panel/castigos.html` — pantalla del Panel para crear/editar/eliminar castigos oficiales (`ofc_…`), activar, ver tarjeta en el Centro, elegir la **sección del catálogo** (`seccion`: Experiencias, Juegos o Extras) donde se ofrece en la Tienda, y Pegar/Exportar un castigo en JSON.
