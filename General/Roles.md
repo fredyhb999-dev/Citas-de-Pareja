@@ -220,6 +220,9 @@ modo**: busca el `par` en las cuatro listas y exige **exactamente una** contrapa
 inversa: si le pasan la contraparte, devuelve el original. Así sirven igual los datos
 viejos (mismo lado) y los nuevos (cruzados).
 
+- **Solo C1/C2 cuentan como contrapartes.** El `par` que traiga un personaje normal
+  (U1/U2) es un dato viejo de alguna importación y se ignora: antes se contaba y
+  marcaba parejas ambiguas.
 - `poolsEspejoMismo()`, `listaDeCabezaPara()` y `selPoolDe()` ya **no usan `C<n>`
   fijo**: toman las contrapartes **por `par`** de las `U` del lado. Con la
   instalación canónica da lo mismo; con packs, manda el `par`.

@@ -977,13 +977,22 @@ let idSiguiente = 1;
 // Las claves son texto porque hay datos viejos con ids numéricos y pegados.
 let porId = new Map();
 let porPar = new Map();
+// En qué lista vive cada id. Hace falta para la búsqueda inversa: el `par` de
+// un personaje normal no significa nada y no se debe seguir.
+let clavePorId = new Map();
 function indexarPersonajes(){
   porId = new Map();
   porPar = new Map();
+  clavePorId = new Map();
   ["U1","U2","C1","C2"].forEach(k=>{
     listaSegura(k).forEach(p=>{
       if(!p || p.id == null) return;
       porId.set(String(p.id), p);
+      clavePorId.set(String(p.id), k);
+      // SOLO C1/C2 alimentan el índice de parejas: las contrapartes viven ahí.
+      // Un normal puede traer `par` de datos viejos importados; se ignora,
+      // porque un normal nunca es contraparte de nadie (nov-2026).
+      if(k !== "C1" && k !== "C2") return;
       if(p.par === null || p.par === undefined) return;
       const clave = String(p.par);
       if(!porPar.has(clave)) porPar.set(clave, []);
@@ -1096,16 +1105,21 @@ function buscarPersonaje(id){
   }
   return null;
 }
-// La contraparte de un personaje, buscada por `par` en las CUATRO listas (ya no
-// depende de en qué lista esté ni del modo). Tiene que ser EXACTAMENTE UNA: si
-// hay 0 o hay más de 1 (es ambiguo), el personaje NO cuenta y tampoco se ve.
-// La firma se conserva para no tocar las llamadas, pero `ladoOriginal` y `mismo`
-// ya no deciden nada: el `par` es la única llave (General/Packs-Personajes.md, 7.2).
+// La contraparte de un personaje, buscada por `par` en las listas de
+// contrapartes (C1/C2; ya no depende de en qué lista esté ni del modo). Tiene
+// que ser EXACTAMENTE UNA: si hay 0 o hay más de 1 (es ambiguo), el personaje NO
+// cuenta y tampoco se ve. La firma se conserva para no tocar las llamadas, pero
+// `ladoOriginal` y `mismo` ya no deciden nada: el `par` es la única llave
+// (General/Packs-Personajes.md, 7.2).
 function contraparteDe(idOriginal, ladoOriginal, mismo){
   const hits = porPar.get(String(idOriginal)) || [];
   if(hits.length === 1) return hits[0];
   if(hits.length > 1) return null;
-  // Dirección inversa: el que se pasó ya es la contraparte y apunta a su normal.
+  // Dirección inversa: SOLO si lo que se pasó es una contraparte (C1/C2).
+  // Un normal con `par` viejo no se sigue: se enlazaría consigo mismo o con
+  // alguien del mismo lado (General/Packs-Personajes.md, 7.2).
+  const clave = clavePorId.get(String(idOriginal));
+  if(clave !== "C1" && clave !== "C2") return null;
   const p = porId.get(String(idOriginal));
   if(p && p.par !== null && p.par !== undefined) return porId.get(String(p.par)) || null;
   return null;
@@ -4193,9 +4207,10 @@ function pintarCfg(){
 // Las contrapartes van CRUZADAS (decidido por Fredy, oct-2026): las de la lista de
 // un usuario son las contrapartes de los personajes del OTRO. O sea, `C1` se ata a
 // `U2` y `C2` a `U1`. Antes era del mismo dueño (`C1` ↔ `U1`) y estaba al revés.
-// Avisos de correspondencia del engrane. Las parejas se comprueban por `par` en
-// las cuatro listas: cada original necesita EXACTAMENTE una contraparte, sin
-// importar en qué lista esté (General/Packs-Personajes.md, 7.4).
+// Avisos de correspondencia del engrane. Las parejas se comprueban por `par`
+// contra las contrapartes de C1/C2 (el `par` de un normal es dato viejo y se
+// ignora): cada original necesita EXACTAMENTE una contraparte
+// (General/Packs-Personajes.md, 7.4).
 function otroLado(n){ return (n === "1") ? "2" : "1"; }
 function avisosCorrespondencia(){
   const out = [];

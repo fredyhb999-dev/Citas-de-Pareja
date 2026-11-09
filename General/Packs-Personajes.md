@@ -369,10 +369,15 @@ todas las consultas:
 
 ```
 porId  = Map<String(id) -> personaje>          // U1, U2, C1, C2
-porPar = Map<String(par) -> [contrapartes]>    // solo los que tienen par
+porPar = Map<String(par) -> [contrapartes]>    // SOLO C1 y C2
 ```
 
 Usar `String(...)` en las claves: hay datos viejos con ids numéricos y textos pegados.
+
+**Solo C1 y C2 alimentan `porPar`.** Un personaje de U1/U2 nunca es contraparte: si
+trae `par`, es un dato viejo de alguna importación y se ignora. Si se indexara, cada
+normal se contaría a sí mismo o a un personaje del mismo lado y saldrían parejas
+ambiguas (nov-2026).
 
 ### 7.2 `contraparteDe`
 
@@ -384,6 +389,7 @@ hits = porPar.get(String(idOriginal)) || []
 si hits.length === 1 -> devolver hits[0]
 si hits.length > 1  -> null (ambiguo, como hoy)
 si no hay hits:
+   si idOriginal NO está en C1/C2 -> null      // el `par` de un normal no se sigue
    p = porId.get(String(idOriginal))
    si p && p.par != null -> devolver porId.get(String(p.par))   // dirección inversa
    si no -> null
