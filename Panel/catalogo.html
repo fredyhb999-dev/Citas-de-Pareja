@@ -106,7 +106,13 @@
   <button class="btn ghost" id="btnSorpresa" type="button" style="width:100%;margin-bottom:8px;">🎲 Sorpréndeme</button>
   <input type="text" id="fDesc" placeholder="Descripción corta">
   <input type="text" id="fRuta" placeholder="Ruta (ej. Daditos)">
-  <p class="mini" id="fSecFija" style="margin:0 0 8px;"></p>
+  <!-- Sección del catálogo. Al editar, mover un ítem de sección sin recrearlo;
+       al crear, decide en cuál queda. -->
+  <select id="fSeccion" title="Sección del catálogo">
+    <option value="experiencias">Sección: Experiencias en Pareja</option>
+    <option value="juegos">Sección: Juegos</option>
+    <option value="extras">Sección: Extras</option>
+  </select>
   <input type="number" id="fOrden" placeholder="Orden" min="0" max="999" value="10">
   <input type="date" id="fNuevo">
   <label class="chk"><input type="checkbox" id="fActivo" checked> Activo en catálogo</label>
@@ -200,7 +206,7 @@ function entrarSec(id, sinHistorial){
   document.getElementById("vistaCat").style.display = "block";
   document.getElementById("tituloPag").textContent = nombreSec(id);
   document.getElementById("tituloSec").style.display = "none";
-  document.getElementById("fSecFija").textContent = "Sección: " + nombreSec(id);
+  document.getElementById("fSeccion").value = id;
   armarIconos();
   pintarForm({});
   msg("");
@@ -249,7 +255,11 @@ const ICONOS_POR_SEC = {
   juegos: ["🎲","🎮","🃏","🎯","🎳","🧩","🎪","🏆","🎉","🪩","🎊","🍻"],
   extras: ["🔥","🏆","💪","🌶️","⚡","🎯","👀","🤫","🙈","🫣","🖤","🏁"],
 };
-function iconosSec(){ return ICONOS_POR_SEC[secActual] || ICONOS_POR_SEC.experiencias; }
+function iconosSec(){
+  const sel = document.getElementById("fSeccion");
+  const sec = (sel && sel.value) || secActual;
+  return ICONOS_POR_SEC[sec] || ICONOS_POR_SEC.experiencias;
+}
 let cacheItems = [];
 function armarIconos(){
   const box = document.getElementById("iconos");
@@ -264,6 +274,8 @@ function armarIconos(){
   });
 }
 armarIconos();
+// Cambiar la sección en el formulario cambia también los iconos sugeridos.
+document.getElementById("fSeccion").addEventListener("change", ()=> armarIconos());
 function hashId(s){
   let h = 0;
   s = String(s || "");
@@ -273,7 +285,8 @@ function hashId(s){
 document.getElementById("btnSorpresa").onclick = ()=>{
   const ICONOS = iconosSec();
   const id = document.getElementById("fId").value.trim() || ("x" + Date.now());
-  const usados = new Set(cacheItems.filter(p=>(p.seccion || "experiencias") === (secActual || "experiencias")).map(p=>p.icono));
+  const sec = document.getElementById("fSeccion").value || secActual || "experiencias";
+  const usados = new Set(cacheItems.filter(p=>(p.seccion || "experiencias") === sec).map(p=>p.icono));
   let idx = hashId(id) % ICONOS.length;
   for(let k = 0; k < ICONOS.length; k++){
     const em = ICONOS[(idx + k) % ICONOS.length];
@@ -288,7 +301,7 @@ function leerForm(){
     icono: document.getElementById("fIcono").value.trim() || "🎁",
     desc: document.getElementById("fDesc").value.trim(),
     ruta: document.getElementById("fRuta").value.trim(),
-    seccion: secActual || "experiencias",
+    seccion: document.getElementById("fSeccion").value || secActual || "experiencias",
     orden: parseInt(document.getElementById("fOrden").value, 10) || 10,
     activo: document.getElementById("fActivo").checked,
     nuevo: document.getElementById("fNuevo").value || "",
@@ -301,10 +314,12 @@ function pintarForm(f){
   document.getElementById("fIcono").value = f.icono || "";
   document.getElementById("fDesc").value = f.desc || "";
   document.getElementById("fRuta").value = f.ruta || "";
+  document.getElementById("fSeccion").value = f.seccion || secActual || "experiencias";
   document.getElementById("fOrden").value = (f.orden ?? 10);
   document.getElementById("fActivo").checked = f.activo !== false;
   document.getElementById("fNuevo").value = f.nuevo || "";
-  document.getElementById("formTitulo").textContent = f.id ? ("Editar: " + f.id) : ("Nuevo en " + nombreSec(secActual || "experiencias"));
+  const sec = document.getElementById("fSeccion").value;
+  document.getElementById("formTitulo").textContent = f.id ? ("Editar: " + f.id) : ("Nuevo en " + nombreSec(sec));
   validarForm();
 }
 function formCompleto(){
@@ -342,7 +357,11 @@ document.getElementById("btnGuardar").onclick = async (e)=>{
       data.nuevoHasta = null;
     }
     await setDoc(doc(db, "packs", f.id), data, { merge: true });
-    msg(repetido ? "Guardado ✅ (ojo: ese icono ya se usa en esta sección)" : "Guardado ✅", true);
+    if(f.seccion !== (secActual || "experiencias")){
+      msg("Guardado ✅ · ahora está en " + nombreSec(f.seccion) + ". Se quitó de esta lista.", true);
+    }else{
+      msg(repetido ? "Guardado ✅ (ojo: ese icono ya se usa en esta sección)" : "Guardado ✅", true);
+    }
     pintarForm({});
     cargar();
   }catch(err){

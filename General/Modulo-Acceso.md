@@ -233,6 +233,9 @@ Pareja / Juegos / Extras**. Se guarda en `packs` como **`seccion`**, el mismo ca
 - Al **editar** una actividad o un castigo ya publicado, el selector trae su sección y, al
   guardar, la mueve. No hay que borrar ni recrear nada, y el `id` (la licencia) no cambia.
 - El valor por omisión es el de antes: `experiencias` en actividades, `juegos` en castigos.
+- **El Catálogo (`Panel/catalogo.html`) tiene el mismo selector** en su formulario: al editar
+  un ítem se pasa de sección sin recrearlo, y el aviso al guardar dice a dónde se fue. Ahí el
+  selector también decide los iconos sugeridos y el "Sorpréndeme".
 - **No mueve la tarjeta del menú.** Lo oficial nunca sale como tarjeta (`oficial:true` se
   salta en `index.html`): las actividades oficiales se ven dentro de Guiadas y los castigos
   dentro de Castigos. El campo decide solo la sección de la Tienda.
