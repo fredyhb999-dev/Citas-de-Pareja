@@ -746,3 +746,34 @@ abajo) y "Toca la foto para ampliar" (boca arriba), en todos los modos.
 - Esas listas se ordenan **oficiales primero** y, dentro de cada grupo,
   **alfabético** sin distinguir mayúsculas ni acentos. Es solo orden de pantalla:
   la lista guardada no se reordena ni cambian los ids.
+
+## Fotos: pasar los enlaces de una instalación a otra (nov-2026)
+
+Herramienta de **mudanza**, no una función para clientes: pasa los **enlaces de las
+fotos** de una base a otra en un solo paso, sin cuatro export y sin que la otra
+persona tenga que importar cuatro archivos.
+
+- **Se abre con CINCO toques seguidos** (a menos de 900 ms) en el rótulo
+  **«SE ALGUIEN MAS...»** de arriba, y con otros cinco se cierra. El bloque
+  (`#fotosBox`) **nace oculto** al final del engrane (regla 7) y trae tres botones:
+  **Exportar fotos**, **Actualizar fotos** y **Deshacer la última actualización**
+  (este último solo si hay algo que deshacer en ese teléfono).
+- **El archivo es `Roles/fotos.json`**, con `{generado, fotos:[{lista, personaje,
+  imagen}]}`. Lleva **solo** lista, nombre y enlace: nunca `situacion`, `gancho`,
+  `derechos`, `si_quieres` ni ids (el repo es público).
+- **Exportar** saca las **cuatro listas en un solo archivo** y solo los que tienen
+  foto. Una foto quitada **no** se exporta vacía: en la otra base se queda la que
+  tenía.
+- **Actualizar** busca **por nombre dentro de su lista** (`U1`, `U2`, `C1`, `C2`),
+  comparando sin mayúsculas ni acentos (el mismo `normSel()` del buscador). Cambia
+  **solo `imagen`**: no toca textos, ids ni `par`, y no borra ni agrega. Si el nombre
+  aparece dos veces en la lista, lo salta y lo cuenta.
+- **Deshacer** guarda en el teléfono (`localStorage`, `roles_fotos_deshacer`) lo que
+  cambió la última vez y **solo revierte lo que sigue igual** a como lo dejó la
+  actualización: si alguien cambió una foto a mano después, esa se respeta. Un solo
+  nivel; para volver adelante se pulsa «Actualizar fotos» otra vez.
+- Si el teléfono **no tiene la base configurada** (`projectId` de plantilla), no
+  hace nada y lo dice. Escribe con `runTransaction` sobre `personajesJuego/actual`
+  para no pisar un cambio hecho al mismo tiempo.
+- **PENDIENTE:** se quita antes de vender y con el cambio de arquitectura, junto con
+  `Roles/fotos.json`. Ver `GUIA.md` → *Otros pendientes*.

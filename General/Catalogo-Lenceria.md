@@ -492,10 +492,11 @@ con **cinco toques seguidos en el rótulo "LENCERÍA"**, arriba de la pantalla.
 - **No borra** lo que sobre en la base destino: si allá existe algo que aquí ya
   no, se queda. Para igualar borrando haría falta otro modo, y no está hecho.
 
-> **PENDIENTE ANTES DE VENDER:** **quitar estos cuatro botones.** Son una
-> herramienta de mudanza entre la app de prueba y la personal, no una función de
-> cliente: alguien podría duplicar o pisar su base sin saber qué hace. Está
-> anotado también en `General/GUIA.md`, en *Otros pendientes*.
+> **PENDIENTE ANTES DE VENDER y AL CAMBIAR LA ARQUITECTURA:** **quitar estos cuatro
+> botones** (y el gesto de cinco toques). Son una herramienta de mudanza entre la app
+> de prueba y la personal, no una función de cliente: alguien podría duplicar o pisar
+> su base sin saber qué hace. Está anotado también en `General/GUIA.md`, en *Otros
+> pendientes*, junto con la mudanza de fotos de `Roles/`.
 
 ## Límites conocidos (no son bugs)
 

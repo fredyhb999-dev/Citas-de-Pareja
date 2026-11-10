@@ -18,7 +18,7 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 ---
 
-## `Roles/index.html` — 4,833 líneas
+## `Roles/index.html` — 5,099 líneas
 
 **Documento de detalle:** `General/Roles.md`
 
@@ -27,29 +27,29 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 | Para... | Función | Línea |
 |---|---|---|
-| Arrancar la página: identidad, licencia y estado guardado | `entrar()` | 1305 |
-| Cambiar de vista y guardar el paso del historial | `ver()` | 4668 |
-| Volver al menú deshaciendo los pasos | `salirAlMenu()` | 4698 |
-| Pintar la tarjeta de inicio (modo y "Jugar") | `pintarInicio()` | 1386 |
-| Pantalla de modo (Clásico, Cambia de Bando, Seleccionar, Duelo) | `pintarModo()` | 1391 |
-| Modal del duelo | `pintarModalDuelo()` / `abrirModalDuelo()` | 1431 / 1447 |
-| Quiénes juegan y de qué lado | `construirCabezas()` | 957 |
-| Pool de personajes: cargar, sembrar, guardar | `cargarPersonajes()` / `asegurarPersonajes()` / `guardarPersonajes()` | 1097 / 1116 / 1120 |
-| Buscar personaje o su contraparte | `buscarPersonaje()` / `contraparteDe()` | 1173 / 1199 |
-| Repartir tarjetas y preparar la partida | `repartirTarjetas()` / `preparar()` / `prepararDuelo()` | 2841 / 2870 / 2901 |
-| Arrancar la partida normal | `iniciar()` | 2928 |
-| Modo Seleccionar: pintar, abrir y arrancar | `pintarSeleccion()` / `abrirSeleccionLocal()` / `abrirSeleccionCompartida()` / `arrancarSeleccion()` | 3383 / 3503 / 3518 / 3559 |
-| Escuchar la selección compartida | `escucharSeleccion()` | 3606 |
-| Sala de espera (anfitrión e invitado) | `pintarSala()` | 1841 |
-| Pintar la partida: tarjeta, paso, duelo | `pintarTarjeta()` / `pintarPaso()` / `pintarCaraDuelo()` / `pintarPasoDueloJuntos()` | 2002 / 2226 / 2049 / 2150 |
-| Pasar turno o saltarlo | `siguienteTurno()` / `avanzarTarjeta()` / `siguienteSesion()` / `saltarTurno()` | 1279 / 1294 / 1710 / 1737 |
-| Terminar la partida | `abrirFin()` / `finPartida()` | 2321 / 2328 |
-| Sesión multijugador | `escucharSesion()` | 1655 |
-| Configuración: pintar, abrir, filas y editor | `pintarCfg()` / `abrirCfg()` / `filaPersonaje()` / `agregarPersonaje()` | 4240 / 4648 / 4216 / 4138 |
-| Exportar la lista de personajes | `exportarLista()` | 4603 |
-| Invitado: entrar, continuar, salir | `entrarAlJuego()` / `continuarPartida()` / `salirModoInvitado()` | 3857 / 3799 / 3922 |
-| QR de invitación | `abrirQR()` | 2773 |
-| Modales chicos | `abrirModal()` / `cerrarModal()` | 3951 / 3968 |
+| Arrancar la página: identidad, licencia y estado guardado | `entrar()` | 1319 |
+| Cambiar de vista y guardar el paso del historial | `ver()` | 4934 |
+| Volver al menú deshaciendo los pasos | `salirAlMenu()` | 4964 |
+| Pintar la tarjeta de inicio (modo y "Jugar") | `pintarInicio()` | 1400 |
+| Pantalla de modo (Clásico, Cambia de Bando, Seleccionar, Duelo) | `pintarModo()` | 1405 |
+| Modal del duelo | `pintarModalDuelo()` / `abrirModalDuelo()` | 1445 / 1461 |
+| Quiénes juegan y de qué lado | `construirCabezas()` | 971 |
+| Pool de personajes: cargar, sembrar, guardar | `cargarPersonajes()` / `asegurarPersonajes()` / `guardarPersonajes()` | 1111 / 1130 / 1134 |
+| Buscar personaje o su contraparte | `buscarPersonaje()` / `contraparteDe()` | 1187 / 1213 |
+| Repartir tarjetas y preparar la partida | `repartirTarjetas()` / `preparar()` / `prepararDuelo()` | 2855 / 2884 / 2915 |
+| Arrancar la partida normal | `iniciar()` | 2942 |
+| Modo Seleccionar: pintar, abrir y arrancar | `pintarSeleccion()` / `abrirSeleccionLocal()` / `abrirSeleccionCompartida()` / `arrancarSeleccion()` | 3397 / 3517 / 3532 / 3573 |
+| Escuchar la selección compartida | `escucharSeleccion()` | 3620 |
+| Sala de espera (anfitrión e invitado) | `pintarSala()` | 1855 |
+| Pintar la partida: tarjeta, paso, duelo | `pintarTarjeta()` / `pintarPaso()` / `pintarCaraDuelo()` / `pintarPasoDueloJuntos()` | 2016 / 2240 / 2063 / 2164 |
+| Pasar turno o saltarlo | `siguienteTurno()` / `avanzarTarjeta()` / `siguienteSesion()` / `saltarTurno()` | 1293 / 1308 / 1724 / 1751 |
+| Terminar la partida | `abrirFin()` / `finPartida()` | 2335 / 2342 |
+| Sesión multijugador | `escucharSesion()` | 1669 |
+| Configuración: pintar, abrir, filas y editor | `pintarCfg()` / `abrirCfg()` / `filaPersonaje()` / `agregarPersonaje()` | 4254 / 4914 / 4230 / 4152 |
+| Exportar la lista de personajes | `exportarLista()` | 4617 |
+| Invitado: entrar, continuar, salir | `entrarAlJuego()` / `continuarPartida()` / `salirModoInvitado()` | 3871 / 3813 / 3936 |
+| QR de invitación | `abrirQR()` | 2787 |
+| Modales chicos | `abrirModal()` / `cerrarModal()` | 3965 / 3982 |
 
 ---
 
@@ -344,62 +344,64 @@ No usa `vista…`: cambia de modo con `actualizarModo()`.
 ### `Roles\index.html`
 
 ```
-abrirAgregar(2489) · abrirCfg(4648) · abrirDetalle(4382) · abrirFin(2321)
-abrirMeterInvitado(2699) · abrirModal(3951) · abrirModalDuelo(1447) · abrirModalImagen(1943)
-abrirQR(2773) · abrirSeleccionCompartida(3518) · abrirSeleccionDueloCompartida(3345)
-abrirSeleccionDueloLocal(3328) · abrirSeleccionLocal(3503) · abrirVentanaEspecial(1505)
-actualizarTextoEstadoCarta(1937) · adminDe(2807) · agregarDesdeInput(4158)
-agregarEspecial(4149) · agregarInvitado(2568) · agregarPersonaje(4138)
-anunciarInvitacion(1788) · armando(1855) · arrancarSeleccion(3559) · asegurarOficiales(1068)
-asegurarPersonajes(1116) · avanzarDueloJuntosLocal(2352) · avanzarTarjeta(1294)
-avisoJSONMalo(4050) · avisosCorrespondencia(4319) · borrarDetalle(4425)
-buscarPersonaje(1173) · cabezas(1850) · cabs(2640) · cambiarMarca(3477)
-cambiarMarcaDuelo(3244) · cargarEstado(1565) · cargarIdentidad(926) · cargarOficiales(1054)
-cargarPersonajes(1097) · cerrarDetalle(4400) · cerrarModal(3968) · cerrarModalImagen(1951)
-cerrarSesion(1803) · chequearPartidaEspera(1631) · claveCfg(3989)
-confirmarArranqueDuelo(3140) · conPendiente(3773) · construirCabezas(957)
-construirCabezasModo(2800) · continuarPartida(3799) · continuarPartidaLocal(3822)
-contraDeRonda(2551) · contraparteDe(1199) · deck(2821) · disponiblesInvitados(2485)
-dueloEsJuntos(2529) · dueloLadoDePartida(2519) · dueloMismoLadoDePartida(1168)
-dueloModalidadDePartida(2524) · elegirAzarDuelo(3267) · elegirAzarSeleccion(3283)
-elegirTentacion(3307) · enEspera(1862) · entrar(1305) · entrarAlJuego(3857)
-entrarDirecto(1265) · esAnfitrion(1810) · esClaveLista(3993) · escucharAprobacion(896)
-escucharGrupo(4786) · escucharSeleccion(3606) · escucharSesion(1655) · esDueloJuntos(2577)
-esModoDuelo(2516) · esOficial(1050) · especialDe(1594) · especialDeLado(2042)
-especialK(1469) · especialPendido(1468) · exportarLista(4603) · filaPersonaje(4216)
-filaVariante(4183) · filtro(4279) · finPartida(2328) · guardarDetalle(4401)
-guardarEdit(4190) · guardarLocalGuardada(858) · guardarPersonajes(1120) · hostNombre(3359)
-idLibre(4009) · indexarPersonajes(985) · iniciar(2928) · iniciarEstado(1271)
-irAlMenu(4688) · lado(2814) · ladoAnatomiaCfg(3985) · ladoDeCabeza(2531) · ladoDuelo(2601)
-ladoOriginal(2559) · leerJSONPegado(4027) · leerLocalGuardada(872) · leerQuienSoy(923)
-licMsg(915) · limpiarFiltro(4000) · limpiarFiltroSel(3112) · limpiarLocalGuardada(882)
-limpiarParaArchivo(4589) · listaDeCabezaPara(2830) · listaDeLado(1149) · listaSegura(1006)
-llenar(1867) · llenarSelectPar(4363) · marcas(2725) · meterInvitado(2720) · mezclar(810)
-miLado(3986) · mismoContenidoPersonaje(1025) · mismosLados(2804) · modalAbierto(4711)
-modalidad(2903) · modoAdmiteInvitados(1816) · modoBaseDePartida(2510)
-mostrarBotonesAdmin(1817) · mostrarCaraDuelo(2136) · mostrarGracia(886) · nombreAdmin(943)
-nombreArchivoExport(4598) · nombreCabeza(953) · nombreDeLado(3987) · nombreDeLista(3994)
-nombreHostSeleccion(3122) · nombreLado(949) · nombres(1648) · normSel(3109)
-ordenPersonajes(1075) · otroLado(4318) · otroLadoDuelo(1161) · parejaAcepto(3132)
-parejaAEsperar(3128) · pares(2554) · paresDisponibles(1214) · parsePegadoPersonajes(4065)
-parsePegadoTextos(4092) · pedirCartasInvitado(2662) · pegarLista(4451) · personajeDe(4117)
-personajesRef(843) · pintarAvisosCfg(4340) · pintarCaraDuelo(2049) · pintarCfg(4240)
-pintarDueloPar(2108) · pintarDueloTentacion(2122) · pintarEspecial(1477)
-pintarFaseDuelo(1902) · pintarFoto(2001) · pintarFotoEn(1969) · pintarInicio(1386)
-pintarMeterInvitado(2708) · pintarModalDuelo(1431) · pintarModo(1391)
-pintarModoPartida(2538) · pintarPaso(2226) · pintarPasoDueloJuntos(2150) · pintarSala(1841)
-pintarSalidas(936) · pintarSeleccion(3383) · pintarSeleccionDuelo(3152)
-pintarTarjeta(2002) · pintarVolteo(1911) · ponerBadgeOficial(1083) · poolsDuelo(1228)
-poolsEspejoMismo(2813) · preparar(2870) · prepararDuelo(2901) · probar(4029)
-puedeVerOtroLado(3982) · quienes(2544) · recalcularOficiales(1031)
-reiniciarVariantes(1541) · repartirEspeciales(1551) · repartirTarjetas(2841)
-resetCarta(1958) · retirarInvitadosDeLaPartida(847) · revisarEspecial(2917) · ronda(2573)
-salirAlMenu(4698) · salirModoInvitado(3922) · saltarTurno(1737) · sanearSesion(1598)
-seguirEncima(3762) · seguirFuera(3767) · seleccionRef(3085) · selEsCompartida(3086)
-selFuente(3088) · selMarcosDe(3089) · selPoolDe(3092) · selTodosListos(3103)
-sesionRef(844) · siguienteDueloJuntos(2369) · siguienteSesion(1710) · siguienteTurno(1279)
-sinDuplicados(818) · soyCabeza(1269) · textoPersonaje(1020) · traePar(4446) · url(1971)
-ver(4668) · vistaDeInicio(4680) · voltear(1910) · voltearDuelo(2143) · yaExiste(4003)
+abrirAgregar(2503) · abrirCfg(4914) · abrirDetalle(4396) · abrirFin(2335)
+abrirMeterInvitado(2713) · abrirModal(3965) · abrirModalDuelo(1461) · abrirModalImagen(1957)
+abrirQR(2787) · abrirSeleccionCompartida(3532) · abrirSeleccionDueloCompartida(3359)
+abrirSeleccionDueloLocal(3342) · abrirSeleccionLocal(3517) · abrirVentanaEspecial(1519)
+actualizarFotos(4718) · actualizarTextoEstadoCarta(1951) · adminDe(2821)
+agregarDesdeInput(4172) · agregarEspecial(4163) · agregarInvitado(2582)
+agregarPersonaje(4152) · anunciarInvitacion(1802) · armando(1869) · arrancarSeleccion(3573)
+asegurarOficiales(1082) · asegurarPersonajes(1130) · avanzarDueloJuntosLocal(2366)
+avanzarTarjeta(1308) · avisoJSONMalo(4064) · avisosCorrespondencia(4333)
+bajarArchivo(4665) · baseConfigurada(4656) · borrarDetalle(4439) · buscarPersonaje(1187)
+cabezas(1864) · cabs(2654) · cambiarMarca(3491) · cambiarMarcaDuelo(3258)
+cargarEstado(1579) · cargarIdentidad(940) · cargarOficiales(1068) · cargarPersonajes(1111)
+cerrarDetalle(4414) · cerrarModal(3982) · cerrarModalImagen(1965) · cerrarSesion(1817)
+chequearPartidaEspera(1645) · claveCfg(4003) · confirmarArranqueDuelo(3154)
+conPendiente(3787) · construirCabezas(971) · construirCabezasModo(2814)
+continuarPartida(3813) · continuarPartidaLocal(3836) · contraDeRonda(2565)
+contraparteDe(1213) · deck(2835) · deshacerFotos(4823) · disponiblesInvitados(2499)
+dueloEsJuntos(2543) · dueloLadoDePartida(2533) · dueloMismoLadoDePartida(1182)
+dueloModalidadDePartida(2538) · elegirAzarDuelo(3281) · elegirAzarSeleccion(3297)
+elegirTentacion(3321) · enEspera(1876) · entrar(1319) · entrarAlJuego(3871)
+entrarDirecto(1279) · esAnfitrion(1824) · esClaveLista(4007) · escucharAprobacion(910)
+escucharGrupo(5052) · escucharSeleccion(3620) · escucharSesion(1669) · esDueloJuntos(2591)
+esModoDuelo(2530) · esOficial(1064) · especialDe(1608) · especialDeLado(2056)
+especialK(1483) · especialPendido(1482) · exportarFotos(4680) · exportarLista(4617)
+fechaCorta(4660) · filaPersonaje(4230) · filaVariante(4197) · filtro(4293)
+finPartida(2342) · guardarDetalle(4415) · guardarEdit(4204) · guardarLocalGuardada(872)
+guardarPersonajes(1134) · hostNombre(3373) · idLibre(4023) · indexarPersonajes(999)
+iniciar(2942) · iniciarEstado(1285) · irAlMenu(4954) · lado(2828) · ladoAnatomiaCfg(3999)
+ladoDeCabeza(2545) · ladoDuelo(2615) · ladoOriginal(2573) · leerJSONPegado(4041)
+leerLocalGuardada(886) · leerQuienSoy(937) · leerSnapshotFotos(4707) · licMsg(929)
+limpiarFiltro(4014) · limpiarFiltroSel(3126) · limpiarLocalGuardada(896)
+limpiarParaArchivo(4603) · listaDeCabezaPara(2844) · listaDeLado(1163) · listaSegura(1020)
+llenar(1881) · llenarSelectPar(4377) · marcas(2739) · meterInvitado(2734) · mezclar(824)
+miLado(4000) · mismoContenidoPersonaje(1039) · mismosLados(2818) · modalAbierto(4977)
+modalidad(2917) · modoAdmiteInvitados(1830) · modoBaseDePartida(2524)
+mostrarBotonesAdmin(1831) · mostrarCaraDuelo(2150) · mostrarGracia(900) · nombreAdmin(957)
+nombreArchivoExport(4612) · nombreCabeza(967) · nombreDeLado(4001) · nombreDeLista(4008)
+nombreHostSeleccion(3136) · nombreLado(963) · nombres(1662) · normSel(3123)
+ordenPersonajes(1089) · otroLado(4332) · otroLadoDuelo(1175) · parejaAcepto(3146)
+parejaAEsperar(3142) · pares(2568) · paresDisponibles(1228) · parsePegadoPersonajes(4079)
+parsePegadoTextos(4106) · pedirCartasInvitado(2676) · pegarLista(4465) · personajeDe(4131)
+personajesRef(857) · pintarAvisosCfg(4354) · pintarBotonDeshacerFotos(4713)
+pintarCaraDuelo(2063) · pintarCfg(4254) · pintarDueloPar(2122) · pintarDueloTentacion(2136)
+pintarEspecial(1491) · pintarFaseDuelo(1916) · pintarFoto(2015) · pintarFotoEn(1983)
+pintarInicio(1400) · pintarMeterInvitado(2722) · pintarModalDuelo(1445) · pintarModo(1405)
+pintarModoPartida(2552) · pintarPaso(2240) · pintarPasoDueloJuntos(2164) · pintarSala(1855)
+pintarSalidas(950) · pintarSeleccion(3397) · pintarSeleccionDuelo(3166)
+pintarTarjeta(2016) · pintarVolteo(1925) · ponerBadgeOficial(1097) · poolsDuelo(1242)
+poolsEspejoMismo(2827) · preparar(2884) · prepararDuelo(2915) · probar(4043)
+puedeVerOtroLado(3996) · quienes(2558) · recalcularOficiales(1045)
+reiniciarVariantes(1555) · repartirEspeciales(1565) · repartirTarjetas(2855)
+resetCarta(1972) · retirarInvitadosDeLaPartida(861) · revisarEspecial(2931) · ronda(2587)
+salirAlMenu(4964) · salirModoInvitado(3936) · saltarTurno(1751) · sanearSesion(1612)
+seguirEncima(3776) · seguirFuera(3781) · seleccionRef(3099) · selEsCompartida(3100)
+selFuente(3102) · selMarcosDe(3103) · selPoolDe(3106) · selTodosListos(3117)
+sesionRef(858) · siguienteDueloJuntos(2383) · siguienteSesion(1724) · siguienteTurno(1293)
+sinDuplicados(832) · soyCabeza(1283) · textoPersonaje(1034) · traePar(4460) · url(1985)
+ver(4934) · vistaDeInicio(4946) · voltear(1924) · voltearDuelo(2157) · yaExiste(4017)
 ```
 
 ### `Castigos\index.html`

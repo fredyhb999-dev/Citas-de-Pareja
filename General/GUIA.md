@@ -224,10 +224,11 @@ desmarca. Sin que el cliente recargue nada.
 - Sesión de Encuentros en `sesionEncuentros/actual`: la lista de TODOS los
   participantes (incluidos invitados) vive en un solo documento. **Confirmar en la
   consola que ese path no queda abierto a lectura ajena.**
-- **Quitar los botones de Exportar/Importar de la lencería ANTES DE VENDER.** Son una
-  herramienta de mudanza entre la app de prueba y la personal; un cliente no los
-  necesita y podría duplicar o pisar su base. Hoy viven al final de *Ajusta tus
-  ilusiones y sueños*, sin candado. Ver `General/Catalogo-Lenceria.md`.
+- **Quitar ANTES DE VENDER y al cambiar la arquitectura los dos accesos ocultos de
+  mudanza:** los botones de la lencería (5 toques en el rótulo «LENCERÍA») y los de
+  fotos de Roles (5 toques en «SE ALGUIEN MAS...»), con `Roles/fotos.json`. Son una
+  herramienta de mudanza entre instalaciones; un cliente no los necesita y podría
+  pisar su base. Ver `General/Catalogo-Lenceria.md` y `General/Roles.md`.
 
 ### Límites conocidos (no bloquean)
 

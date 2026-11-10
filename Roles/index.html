@@ -624,6 +624,20 @@
     </label>
     <button class="btnPri" id="btnPegarOk" style="margin-top:8px;">Agregar a la lista</button>
   </div>
+  <!-- ===== Mudanza de FOTOS entre dos instalaciones (OCULTA) =====
+       Pasa los ENLACES de las fotos de una base a otra sin tocar textos, ids ni
+       parejas. Se abre y se cierra con CINCO toques seguidos en el rótulo
+       "SE ALGUIEN MAS..." de arriba, igual que la mudanza de Lencería. Nace
+       oculta (regla 7) y es temporal: se quita antes de vender y con el cambio
+       de arquitectura (GUIA.md -> Otros pendientes). Detalle en General/Roles.md. -->
+  <div id="fotosBox" style="display:none; width:100%; margin-top:8px;">
+    <div class="filaBotones">
+      <button class="btnSec" id="btnFotosExportar" type="button">Exportar fotos</button>
+      <button class="btnSec" id="btnFotosImportar" type="button">Actualizar fotos</button>
+    </div>
+    <!-- Solo sale si hay una actualización que deshacer en ESTE teléfono. -->
+    <button class="btnSec" id="btnFotosDeshacer" type="button" style="display:none">Deshacer la última actualización</button>
+  </div>
   <!-- Avisos de correspondencia. SOLO avisan: nunca bloquean. -->
   <div id="cfgAvisos" style="display:none; width:100%; margin-top:12px; padding:11px 13px; border:1px solid var(--coral); border-radius:12px; background:rgba(255,106,92,.08); font-size:.78rem; color:var(--fg-muted);"></div>
   <div id="msg"></div>
@@ -4626,6 +4640,232 @@ function exportarLista(){
   }
 }
 
+// ---------- fotos: mudanza de enlaces entre dos instalaciones ----------
+// Manda SOLO el enlace de la foto de cada personaje que tiene una: nunca
+// situación, atractivo, derechos, acción ni ids. Se identifica por NOMBRE dentro
+// de su lista (U1/U2/C1/C2), porque los ids son de cada base. Es para pasar las
+// fotos que se ponen en una instalación a otra sin los cuatro export.
+// Se abre con cinco toques en el rótulo (ver abajo), no con un botón a la vista.
+// PENDIENTE: se quita antes de vender y con el cambio de arquitectura
+// (GUIA.md -> Otros pendientes), junto con Roles/fotos.json.
+const LISTAS_FOTOS = ["U1","U2","C1","C2"];
+const CLAVE_FOTOS_DESHACER = "roles_fotos_deshacer";
+
+// ¿Este teléfono está conectado a una base de verdad? Si no, la herramienta no
+// hace nada: así abrir la dirección del repo no sirve para tocar la base de nadie.
+function baseConfigurada(){
+  const c = firebaseConfig || {};
+  return !!c.projectId && c.projectId !== "TU_PROYECTO";
+}
+function fechaCorta(){
+  const d = new Date();
+  const dos = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + dos(d.getMonth() + 1) + "-" + dos(d.getDate());
+}
+function bajarArchivo(nombre, texto){
+  try{
+    const blob = new Blob([texto], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = nombre; a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    // El enlace se va con el archivo pintado: sin esto se queda un <a> suelto
+    // en el cuerpo y la URL nunca se libera.
+    setTimeout(function(){ URL.revokeObjectURL(url); if(a && a.parentNode) a.parentNode.removeChild(a); }, 2000);
+    return true;
+  }catch(e){ return false; }
+}
+
+async function exportarFotos(){
+  if(esInvitadoFlag){ aviso("Esta herramienta no es para invitados."); return; }
+  if(!baseConfigurada()){ aviso("Este teléfono no tiene la app conectada a una base."); return; }
+  let d = {};
+  try{
+    const sd = await getDoc(personajesRef());
+    d = sd.exists() ? sd.data() : {};
+  }catch(e){ aviso("No se pudo leer la base. Revisa la conexión."); return; }
+  const fotos = [];
+  LISTAS_FOTOS.forEach(k=>{
+    const arr = Array.isArray(d[k]) ? d[k] : [];
+    arr.forEach(p=>{
+      const nombre = String((p && p.personaje) || "").trim();
+      const img = String((p && p.imagen) || "").trim();
+      if(nombre && img) fotos.push({ lista: k, personaje: nombre, imagen: img });
+    });
+  });
+  if(!fotos.length){ aviso("No hay ningún personaje con foto."); return; }
+  const texto = JSON.stringify({ generado: fechaCorta(), fotos: fotos }, null, 2);
+  // Se llama igual que el del repo: así se reemplaza tal cual, sin renombrar.
+  if(!bajarArchivo("fotos.json", texto)){
+    aviso("No se pudo crear el archivo en este navegador.");
+    return;
+  }
+  aviso("Se descargó fotos.json con " + fotos.length + " foto(s).");
+}
+
+function leerSnapshotFotos(){
+  try{
+    const s = JSON.parse(localStorage.getItem(CLAVE_FOTOS_DESHACER) || "null");
+    return (s && Array.isArray(s.items) && s.items.length) ? s : null;
+  }catch(e){ return null; }
+}
+function pintarBotonDeshacerFotos(){
+  const b = document.getElementById("btnFotosDeshacer");
+  if(b) b.style.display = leerSnapshotFotos() ? "block" : "none";
+}
+
+async function actualizarFotos(){
+  if(esInvitadoFlag){ aviso("Esta herramienta no es para invitados."); return; }
+  if(!baseConfigurada()){ aviso("Este teléfono no tiene la app conectada a una base."); return; }
+  let datos = null;
+  try{
+    // Sin caché: si no, el teléfono podría seguir leyendo el archivo viejo.
+    const r = await fetch("fotos.json?v=" + Date.now(), { cache: "no-store" });
+    if(!r.ok) throw new Error("sin archivo");
+    datos = await r.json();
+  }catch(e){
+    aviso({ titulo: "No se encontró Roles/fotos.json",
+            texto: "Pídele el archivo actualizado a quien lo exportó." });
+    return;
+  }
+  const traidas = Array.isArray(datos && datos.fotos) ? datos.fotos : [];
+  const buenas = traidas.filter(x=> x && LISTAS_FOTOS.indexOf(x.lista) >= 0
+    && String(x.personaje || "").trim() && String(x.imagen || "").trim());
+  if(!buenas.length){ aviso("El archivo no trae ninguna foto."); return; }
+  // Si el archivo trae dos veces el mismo personaje, manda el último.
+  const porNombre = new Map();
+  buenas.forEach(x=>{ porNombre.set(x.lista + "|" + normSel(x.personaje).trim(), x); });
+  const entradas = Array.from(porNombre.values());
+
+  let d = {};
+  try{
+    const sd = await getDoc(personajesRef());
+    d = sd.exists() ? sd.data() : {};
+  }catch(e){ aviso("No se pudo leer la base. Revisa la conexión."); return; }
+
+  // Primero se cuenta y se arma el plan SIN escribir nada: así el resumen dice
+  // la verdad y se puede cancelar.
+  const cuentas = { actualizar: 0, iguales: 0, faltan: 0, repetidos: 0 };
+  const plan = [];
+  entradas.forEach(x=>{
+    const arr = Array.isArray(d[x.lista]) ? d[x.lista] : [];
+    const n = normSel(x.personaje).trim();
+    const hits = arr.filter(p=> normSel((p && p.personaje) || "").trim() === n);
+    if(!hits.length){ cuentas.faltan++; return; }
+    if(hits.length > 1){ cuentas.repetidos++; return; }
+    const actual = String((hits[0] && hits[0].imagen) || "").trim();
+    const nueva = String(x.imagen || "").trim();
+    if(actual === nueva){ cuentas.iguales++; return; }
+    cuentas.actualizar++;
+    plan.push({ lista: x.lista, personaje: String(hits[0].personaje || "").trim(),
+                anterior: actual, imagen: nueva });
+  });
+  const repetidosTxt = cuentas.repetidos
+    ? " Nombres repetidos en tu lista (se saltan): " + cuentas.repetidos + "."
+    : "";
+  if(!plan.length){
+    aviso({ titulo: "No hay nada que cambiar",
+            texto: "Ya estaban iguales: " + cuentas.iguales
+              + ".\nNo están en tu lista: " + cuentas.faltan + "." + repetidosTxt });
+    return;
+  }
+  const ok = await confirmar({
+    titulo: "¿Actualizar las fotos?",
+    texto: "Se actualizan " + cuentas.actualizar + " foto(s). Ya estaban iguales: "
+      + cuentas.iguales + ". No están en tu lista: " + cuentas.faltan + "." + repetidosTxt
+      + "\n\nSolo cambia la foto: los textos y las parejas no se tocan.",
+    ok: "Actualizar"
+  });
+  if(!ok) return;
+
+  let aplicados = [];
+  try{
+    aplicados = await runTransaction(db, async (tx)=>{
+      const ref = personajesRef();
+      const snap = await tx.get(ref);
+      const cur = snap.exists() ? snap.data() : {};
+      const nuevas = {};
+      LISTAS_FOTOS.forEach(k=>{ nuevas[k] = Array.isArray(cur[k]) ? cur[k].slice() : []; });
+      const hechos = [];
+      plan.forEach(it=>{
+        const n = normSel(it.personaje).trim();
+        const p = nuevas[it.lista].find(x=> normSel((x && x.personaje) || "").trim() === n);
+        if(!p) return;
+        // El "anterior" se toma AQUÍ, no del plan: así el deshacer guarda lo que
+        // de verdad había al momento de escribir.
+        hechos.push({ lista: it.lista, personaje: String(p.personaje || "").trim(),
+          anterior: String((p.imagen) || "").trim(), puesto: it.imagen });
+        p.imagen = it.imagen;
+      });
+      tx.set(ref, { U1: nuevas.U1, U2: nuevas.U2, C1: nuevas.C1, C2: nuevas.C2,
+        actualizadoEn: serverTimestamp() }, { merge: true });
+      return hechos;
+    });
+  }catch(e){ aviso("No se pudo guardar. Revisa la conexión e inténtalo otra vez."); return; }
+
+  // Copia para deshacer: un solo nivel, en ESTE teléfono.
+  try{
+    localStorage.setItem(CLAVE_FOTOS_DESHACER, JSON.stringify({
+      fecha: fechaCorta(),
+      items: aplicados.map(x=>({ lista: x.lista, personaje: x.personaje,
+                                anterior: x.anterior, puesto: x.puesto }))
+    }));
+  }catch(e){}
+
+  await cargarPersonajes();
+  pintarCfg();
+  pintarBotonDeshacerFotos();
+  aviso("Listo: se actualizaron " + aplicados.length + " foto(s)."
+    + (cuentas.faltan ? " " + cuentas.faltan + " no estaban en tu lista." : ""));
+}
+
+async function deshacerFotos(){
+  if(esInvitadoFlag){ aviso("Esta herramienta no es para invitados."); return; }
+  const s = leerSnapshotFotos();
+  if(!s){ aviso("No hay ninguna actualización que deshacer."); return; }
+  const ok = await confirmar({
+    titulo: "¿Deshacer la última actualización?",
+    texto: "Se vuelven a poner las fotos que había antes en " + s.items.length
+      + " personaje(s). Si alguna se cambió a mano después, esa no se toca.",
+    ok: "Deshacer"
+  });
+  if(!ok) return;
+  let res = { puestas: 0, saltadas: 0 };
+  try{
+    res = await runTransaction(db, async (tx)=>{
+      const ref = personajesRef();
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return { puestas: 0, saltadas: s.items.length };
+      const cur = snap.data();
+      const nuevas = {};
+      LISTAS_FOTOS.forEach(k=>{ nuevas[k] = Array.isArray(cur[k]) ? cur[k].slice() : []; });
+      const cuenta = { puestas: 0, saltadas: 0 };
+      s.items.forEach(it=>{
+        if(LISTAS_FOTOS.indexOf(it.lista) < 0){ cuenta.saltadas++; return; }
+        const n = normSel(it.personaje).trim();
+        const p = nuevas[it.lista].find(x=> normSel((x && x.personaje) || "").trim() === n);
+        if(!p){ cuenta.saltadas++; return; }
+        // Solo revierte lo que SIGUE igual a como lo dejó la importación.
+        if(String((p.imagen) || "").trim() !== String(it.puesto || "").trim()){
+          cuenta.saltadas++; return;
+        }
+        p.imagen = it.anterior || "";
+        cuenta.puestas++;
+      });
+      tx.set(ref, { U1: nuevas.U1, U2: nuevas.U2, C1: nuevas.C1, C2: nuevas.C2,
+        actualizadoEn: serverTimestamp() }, { merge: true });
+      return cuenta;
+    });
+  }catch(e){ aviso("No se pudo guardar. Revisa la conexión e inténtalo otra vez."); return; }
+  try{ localStorage.removeItem(CLAVE_FOTOS_DESHACER); }catch(e){}
+  await cargarPersonajes();
+  pintarCfg();
+  pintarBotonDeshacerFotos();
+  aviso("Se volvieron a poner " + res.puestas + " foto(s)."
+    + (res.saltadas ? " " + res.saltadas + " no se tocaron porque habían cambiado." : ""));
+}
+
 // ---------- eventos del engrane ----------
 document.getElementById("tabLado1").onclick = ()=>{ ladoCfg = "1"; enEspeciales = false; limpiarFiltro(); pintarCfg(); };
 document.getElementById("tabLado2").onclick = ()=>{ ladoCfg = "2"; enEspeciales = false; limpiarFiltro(); pintarCfg(); };
@@ -4641,6 +4881,32 @@ document.getElementById("btnPegar").onclick = ()=>{
 };
 document.getElementById("btnPegarOk").onclick = ()=>{ pegarLista(); };
 document.getElementById("btnExportar").onclick = ()=>{ exportarLista(); };
+document.getElementById("btnFotosExportar").onclick = ()=>{ exportarFotos(); };
+document.getElementById("btnFotosImportar").onclick = ()=>{ actualizarFotos(); };
+document.getElementById("btnFotosDeshacer").onclick = ()=>{ deshacerFotos(); };
+
+// Cinco toques seguidos en el rótulo "SE ALGUIEN MAS..." (a menos de 900 ms)
+// abren y cierran la mudanza de fotos, igual que en Lencería. Nace oculta para
+// no quitarle sitio al engrane. No es una función para clientes: se quita antes
+// de vender (GUIA.md -> Otros pendientes).
+let toquesRotulo = 0, ultimoToqueRotulo = 0;
+const rotuloFotos = document.querySelector(".eyebrow");
+if(rotuloFotos){
+  rotuloFotos.addEventListener("click", ()=>{
+    const ahora = Date.now();
+    toquesRotulo = (ahora - ultimoToqueRotulo < 900) ? toquesRotulo + 1 : 1;
+    ultimoToqueRotulo = ahora;
+    if(toquesRotulo < 5) return;
+    toquesRotulo = 0;
+    const caja = document.getElementById("fotosBox");
+    const mostrando = caja.style.display === "none";
+    caja.style.display = mostrando ? "block" : "none";
+    if(mostrando){
+      pintarBotonDeshacerFotos();
+      aviso("Fotos: exportar y actualizar.");
+    }
+  });
+}
 document.getElementById("btnPjGuardar").onclick = ()=>{ guardarDetalle(); };
 document.getElementById("btnPjBorrar").onclick = ()=>{ borrarDetalle(); };
 document.getElementById("btnPjNo").onclick = ()=>{ cerrarDetalle(); };
