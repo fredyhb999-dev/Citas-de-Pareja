@@ -143,6 +143,25 @@
 </head>
 <body>
 
+<!-- Reinstalar una actividad oficial desde la Tienda (ver Tienda/index.html). -->
+<div id="reinstalandoOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg,#120e1c);color:var(--fg,#f4f1fb);align-items:center;justify-content:center;padding:24px;text-align:center;">
+  <div style="max-width:380px;">
+    <div id="reinstalandoTitulo" style="font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:1.15rem;">Reinstalando actividad…</div>
+    <div id="reinstalandoTexto" style="font-size:.9rem;color:var(--fg-muted,#a599c7);margin-top:10px;"></div>
+    <button id="reinstalandoOk" class="btnPri" type="button" style="display:none;margin-top:16px;">Volver a la Tienda</button>
+  </div>
+</div>
+<script>
+(function(){
+  try{
+    if(new URLSearchParams(location.search).get("reinstalar")){
+      var ov = document.getElementById("reinstalandoOverlay");
+      if(ov) ov.style.display = "flex";
+    }
+  }catch(e){}
+})();
+</script>
+
 <a class="back" id="lnkInicio" href="../index.html#experiencias">‹ Volver</a>
 <button id="btnCfg" aria-label="Configurar">⚙️</button>
 
@@ -1122,6 +1141,78 @@ async function sincronizarOficiales(){
       }catch(e){}
     }
   }catch(e){}
+}
+// ---------- reinstalar una actividad oficial desde la Tienda ----------
+// La Tienda manda ?reinstalar=<idDelPack>. El juego, que conoce su formato,
+// reescribe el documento con el contenido del pack y vuelve a la Tienda.
+let seccionReinstalar = "extras";
+let volviendoReinstalar = false;
+function volverTiendaReinstalar(){
+  if(volviendoReinstalar) return;
+  volviendoReinstalar = true;
+  try{
+    if(document.referrer && document.referrer.indexOf("/Tienda") >= 0 && history.length > 1){
+      history.back();
+      return;
+    }
+  }catch(e){}
+  location.href = "../Tienda/?sec=" + encodeURIComponent(seccionReinstalar);
+}
+function overlayReinstalar(titulo, texto, conBoton){
+  const ov = document.getElementById("reinstalandoOverlay");
+  if(ov) ov.style.display = "flex";
+  const t = document.getElementById("reinstalandoTitulo");
+  if(t) t.textContent = titulo;
+  const x = document.getElementById("reinstalandoTexto");
+  if(x) x.textContent = texto || "";
+  const b = document.getElementById("reinstalandoOk");
+  if(b){
+    b.style.display = conBoton ? "inline-block" : "none";
+    b.onclick = volverTiendaReinstalar;
+  }
+}
+async function reinstalarOficialDesdeUrl(){
+  let id = "";
+  try{ id = new URLSearchParams(location.search).get("reinstalar") || ""; }catch(e){ return false; }
+  if(!id) return false;
+  const ov = document.getElementById("reinstalandoOverlay");
+  if(ov) ov.style.display = "flex";
+  // Quitar el parámetro YA: recargar o volver atrás no repite la instalación.
+  try{
+    const u = new URL(location.href);
+    u.searchParams.delete("reinstalar");
+    history.replaceState(history.state, "", u.pathname + (u.search || "") + u.hash);
+  }catch(e){}
+  try{
+    let ok = false;
+    try{ ok = await tengoAcceso(ITEM_ID); }catch(e){ ok = false; }
+    if(!ok){
+      overlayReinstalar("No se pudo reinstalar", "Tu licencia de Encuentros Guiados no está activa.", true);
+      return true;
+    }
+    const ofs = (await oficialesAprobados()).filter(p=>p.ruta === "Guiadas");
+    const p = ofs.find(x=>x.id === id);
+    if(!p){
+      overlayReinstalar("No se pudo reinstalar", "La actividad no está disponible o su licencia venció.", true);
+      return true;
+    }
+    seccionReinstalar = p.seccion || "extras";
+    const sug = (p.tomasSugeridas && Object.keys(p.tomasSugeridas).length) ? normTomasEnc(p.tomasSugeridas) : null;
+    const nn = {};
+    NIVELES.forEach(nv=>{ nn[nv.id] = normLados((p.niveles || {})[nv.id]); });
+    const ref = doc(db, "nivelesActividad", p.id);
+    const snap = await getDoc(ref);
+    const existe = snap.exists() ? snap.data() : null;
+    const payload = { n: nn, titulo: p.titulo || p.id, oficial: true, actualizadoEn: serverTimestamp() };
+    if(sug) payload.tomas = sug;
+    else if(existe && existe.tomas) payload.tomas = existe.tomas;
+    await setDoc(ref, payload);
+    overlayReinstalar("Listo", "Se restauró la actividad. Ya puedes usarla en Guiadas y Encuentros.", true);
+    setTimeout(()=>{ try{ if(!volviendoReinstalar) volverTiendaReinstalar(); }catch(e){} }, 1400);
+  }catch(e){
+    overlayReinstalar("No se pudo reinstalar", "Revisa tu conexión e inténtalo de nuevo.", true);
+  }
+  return true;
 }
 async function cargarActividades(){
   let base = [];
@@ -2395,6 +2486,7 @@ setInterval(()=>{
   }catch(e){}
 }, 4000);
 (async ()=>{
+  try{ if(await reinstalarOficialDesdeUrl()) return; }catch(e){}
   try{ await cargarIdentidad(); }catch(e){}
   try{ mostrarBotonesAdmin(); }catch(e){}
   try{ await sincronizarOficiales(); }catch(e){}

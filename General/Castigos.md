@@ -89,6 +89,7 @@ texto suelto: se convierte a esa forma con `accesorio:null` y medida libre.
 - `repararOficialCastigo()` recupera las acciones de un oficial si la copia local está vacía.
 - **Cortesía (nov-2026).** Si la licencia del juego base `castigos` venció pero la solicitud aprobada tiene `graciaUsada === false`, al entrar se marca usada, se muestra `modalGracia` ("no les arruinamos su noche") y se deja jugar una última vez. Igual que Guiadas y Encuentros.
 - Los **castigos oficiales** vencidos con cortesía también aparecen con 🏅. Al seleccionarlos (normal o multi) sale el aviso, y la cortesía se gasta al **arrancar la partida**, no al seleccionar. Después desaparecen de la lista y la Tienda deja de ofrecerlos.
+- Los castigos oficiales se pueden **reinstalar desde la Tienda** (botón “Reinstalar castigo”) con la licencia del pack y la de `castigos` vigentes. El juego recibe `?reinstalar=<id>`, reescribe `nivelesCastigo/{id}` con las acciones del pack y vuelve a la Tienda. Si el pack no trae tomas sugeridas, se dejan las actuales.
 
 ## Modos de juego
 

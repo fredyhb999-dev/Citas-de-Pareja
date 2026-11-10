@@ -209,8 +209,8 @@
   .fila{ display:flex; gap:12px; }
   .fila .campo{ flex:1; }
   #formMsg{ color: var(--rojo); font-size:.85rem; min-height:18px; margin-bottom:10px; }
-  #formBotones{ display:flex; gap:10px; margin-top:6px; }
-  #formBotones button{ flex:1; padding:16px; }
+  .formBotones{ display:flex; gap:10px; margin-top:6px; }
+  .formBotones button{ flex:1; padding:16px; }
   #btnCancelarForm{ background: var(--card); color: var(--fg); border:1px solid var(--card-border); }
 
   .resumen{
@@ -329,7 +329,7 @@
 
     <div id="formMsg"></div>
 
-    <div id="formBotones">
+    <div class="formBotones">
       <button id="btnCancelarForm">Cancelar</button>
       <button id="btnAccion" class="btnPrincipal">Proponer reto</button>
     </div>
@@ -350,7 +350,7 @@
 
     <div id="recompensaMsg"></div>
 
-    <div id="formBotones">
+    <div class="formBotones">
       <button id="btnCancelarRecompensa">Cancelar</button>
       <button id="btnGuardarRecompensa" class="btnPrincipal">Guardar recompensa</button>
     </div>

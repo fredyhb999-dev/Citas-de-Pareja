@@ -239,6 +239,7 @@ desmarca. Sin que el cliente recargue nada.
 | Escaneó y se salió | Se pierde el QR y hay que escanear de nuevo. Si **todavía no se ha jugado nada**, volver a escanear devuelve la misma ficha y sus puntos (oct-2026). **Si ya jugó y lo expulsaron**, vuelve como ficha nueva y en 0: el registro es temporal |
 | Varios juegos con invitación a la vez | **Resuelto (oct-2026):** la sala muestra **una sola carta**, la **más reciente que se pueda entrar** (orden por `actualizadaEn`). Si la más reciente está **en pausa no gana**, para que el invitado no se quede sin poder entrar a ninguna |
 | Datos viejos de "invitado de invitado" | No se limpian (ya estaba en pendientes) |
+| Avisos de retos: el nuevo pisa al anterior | La campana guarda uno por autor; el reto y el Telegram llegan igual (decidido nov-2026) |
 | El retorno del invitado se evalúa **solo en el inicio** | Si abre `Encuentros/` por link guardado, el chequeo no corre |
 | Doble `getDocs` de `escucharCatalogo()` | No es bug, solo gasto extra |
 | Una sesión vieja marcada `activa: true` sigue contando | El aviso nuevo sí se ata a la sesión, pero una partida vieja abierta no se autodetecta |

@@ -133,6 +133,20 @@ No se movieron porque no son solo lectura: dependen del `doc.id` para poder escr
 - Desde que se gasta, la actividad desaparece de las listas y la Tienda deja de
   ofrecer "Abrir última vez" (su `graciaDisponible()` exige `graciaUsada === false`).
 
+### Expansiones: licencia base obligatoria (nov-2026)
+
+- Una expansión no se puede **pedir, abrir ni reinstalar** sin la licencia
+  vigente del juego base. La **cortesía no cuenta**: es un último acceso, no una
+  licencia activa.
+- Mapa: packs de personajes → `roles`; actividades de Guiadas → `guiadas` **o**
+  `encuentros`; castigos oficiales → `castigos`; packs de Opciones → `opciones`.
+  Los juegos base (`guiadas`, `encuentros`, `castigos`, `opciones`, `roles`) no
+  exigen nada.
+- La Tienda desactiva los botones y muestra "🔒 Necesitas …"; `pedir()` vuelve a
+  validar antes de crear la solicitud.
+- El panel no cambia: si la app no deja pedir, la solicitud no llega. Pueden
+  quedar solicitudes viejas pendientes, que se rechazan desde el panel.
+
 ### Detalle de la instancia de Firebase
 
 Antes `index.html` usaba el nombre `"taquilla-menu"` y las otras tres páginas `"taquilla"`. Ahora **todas usan `"taquilla"`** (la constante `APP_TAQ` del módulo). Misma configuración, así que es equivalente, pero hay una instancia menos.

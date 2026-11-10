@@ -114,6 +114,8 @@ import { confirmar, aviso } from "../confirmar.js";
 // necesita ESCRIBIR graciaUsada en el documento; ver Problemas 2.txt.
 let usuarioGoogle = null;
 let packsCache = [];
+// Caché por pintada: qué licencias base están vigentes (se limpia al repintar).
+let licBaseCache = {};
 
 // Base de la pareja: se abre una sola vez para leer y escribir sus personajes.
 // Si el config no está completo, se queda en null y las tarjetas se ven como hoy.
@@ -211,6 +213,7 @@ async function pintar(){
 async function pintarDeVerdad(){
   listaEl.innerHTML = "";
   packsCache = [];
+  licBaseCache = {};
   try{
     const tdb = getFirestore(appTaq());
     const snap = await getDocs(collection(tdb, "packs"));
@@ -287,6 +290,64 @@ async function pintarDesdeCache(){
     }
   }
 }
+// ---------- licencia base de las expansiones ----------
+// Un pack de expansión solo se puede pedir, abrir o reinstalar si la pareja
+// tiene vigente el juego al que pertenece. Los juegos base no exigen nada.
+const ITEMS_BASE = { guiadas: true, encuentros: true, castigos: true, opciones: true, roles: true };
+function baseDePack(p){
+  const id = String((p && p.id) || "").toLowerCase();
+  if(ITEMS_BASE[id]) return null;                 // es un juego base
+  const ruta = String((p && p.ruta) || "").toLowerCase();
+  if(!ruta || !ITEMS_BASE[ruta]) return null;     // sin ruta conocida: no se bloquea
+  // Las actividades de Guiadas y Encuentros son el mismo pack: sirve cualquiera.
+  if(ruta === "guiadas") return ["guiadas", "encuentros"];
+  return [ruta];
+}
+async function licenciaBaseOk(item){
+  if(!(item in licBaseCache)){
+    try{ licBaseCache[item] = await tieneCodigoValido(item); }
+    catch(e){ licBaseCache[item] = false; }
+  }
+  return licBaseCache[item];
+}
+async function baseOkDePack(p){
+  const req = baseDePack(p);
+  if(!req) return { ok: true, req: null };
+  for(const item of req){
+    if(await licenciaBaseOk(item)) return { ok: true, req: req };
+  }
+  return { ok: false, req: req };
+}
+function nombreBase(req){
+  if(!req || !req.length) return "el juego base";
+  if(req.length > 1) return "Citas Guiadas o Encuentros";
+  const nombres = {
+    roles: "el Juego de Roles",
+    castigos: "El Precio del Placer",
+    guiadas: "Citas Guiadas",
+    encuentros: "Encuentros Guiados",
+    opciones: "Elecciones Peligrosas"
+  };
+  return nombres[req[0]] || "el juego base";
+}
+// A dónde abrir el pack: si es de Guiadas, al juego que la pareja tenga.
+async function rutaDePack(p){
+  const id = String((p && p.id) || "").toLowerCase();
+  const ruta = String((p && p.ruta) || "");
+  // Solo las ACTIVIDADES de Guiadas se pueden abrir en Encuentros. El juego
+  // base "guiadas" siempre abre Guiadas.
+  if(!ITEMS_BASE[id] && ruta.toLowerCase() === "guiadas"){
+    if(await licenciaBaseOk("guiadas")) return "Guiadas";
+    if(await licenciaBaseOk("encuentros")) return "Encuentros";
+  }
+  return ruta;
+}
+function esPackDeActividad(p){
+  if(!p || !p.oficial || p.tipo === "personajes") return false;
+  const ruta = String(p.ruta || "").toLowerCase();
+  return ruta === "guiadas" || ruta === "castigos";
+}
+
 async function tarjetaPack(p){
     const div = document.createElement("div");
     div.className = "pack";
@@ -308,10 +369,23 @@ async function tarjetaPack(p){
     est.className = "estado";
     const btn = document.createElement("button");
     div.appendChild(h); div.appendChild(d); div.appendChild(est); div.appendChild(btn);
-    if(await tieneCodigoValido(p.id)){
+
+    const tienePack = await tieneCodigoValido(p.id);
+    const base = await baseOkDePack(p);
+
+    // Sin el juego base no se pide, abre ni reinstala la expansión.
+    if(!base.ok){
+      est.textContent = "🔒 Necesitas " + nombreBase(base.req);
+      btn.className = "btn";
+      btn.textContent = tienePack ? "Abrir" : "Pedir acceso";
+      btn.disabled = true;
+      return div;
+    }
+
+    if(tienePack){
       if(p.tipo === "personajes" && dbPareja){
         // Pack de personajes: el estado dice si ya está en las listas de la
-        // pareja y el botón instala o reinstala. "Abrir" sigue existiendo.
+        // pareja y el botón instala o reinstala. "Abrir" queda debajo.
         const instalado = !!(packsInstalados && packsInstalados[p.id]);
         est.className = "estado ok";
         est.textContent = instalado ? "✅ Instalado" : "✅ Se agregó a tu menú";
@@ -321,21 +395,33 @@ async function tarjetaPack(p){
         const abrir = document.createElement("button");
         abrir.className = "btn ghost";
         abrir.textContent = "Abrir";
-        abrir.onclick = ()=>{ location.href = "../" + (p.ruta || "Roles") + "/"; };
+        abrir.onclick = async ()=>{ location.href = "../" + (await rutaDePack(p)) + "/"; };
+        div.appendChild(abrir);
+      }else if(esPackDeActividad(p)){
+        // Actividad oficial: reinstalar arriba y abrir debajo, como personajes.
+        est.className = "estado ok";
+        est.textContent = "✅ Se agregó a tu menú";
+        btn.className = "btn";
+        btn.textContent = (String(p.ruta || "").toLowerCase() === "castigos") ? "Reinstalar castigo" : "Reinstalar actividad";
+        btn.onclick = ()=>reinstalarActividadDesdeTienda(p, btn);
+        const abrir = document.createElement("button");
+        abrir.className = "btn ghost";
+        abrir.textContent = "Abrir";
+        abrir.onclick = async ()=>{ location.href = "../" + (await rutaDePack(p)) + "/"; };
         div.appendChild(abrir);
       }else{
         est.className = "estado ok";
         est.textContent = "✅ Se agregó a tu menú";
         btn.className = "btn ghost";
         btn.textContent = "Abrir";
-        btn.onclick = ()=>{ location.href = "../" + (p.ruta || "") + "/"; };
+        btn.onclick = async ()=>{ location.href = "../" + (await rutaDePack(p)) + "/"; };
       }
     }else if(await graciaDisponible(p.id)){
       est.className = "estado ok";
       est.textContent = "⏳ Venció, pero tienen último acceso disponible";
       btn.className = "btn";
       btn.textContent = "Abrir última vez";
-      btn.onclick = ()=>{ location.href = "../" + (p.ruta || "") + "/"; };
+      btn.onclick = async ()=>{ location.href = "../" + (await rutaDePack(p)) + "/"; };
     }else{
       est.textContent = "🔒 Sin acceso";
       btn.className = "btn";
@@ -349,6 +435,11 @@ async function tarjetaPack(p){
 // completa (la misma función detecta qué packs faltan).
 async function instalarDesdeTienda(btn){
   if(!dbPareja) return;
+  delete licBaseCache["roles"];
+  if(!(await licenciaBaseOk("roles"))){
+    msg("Necesitas el Juego de Roles para instalar personajes.");
+    return;
+  }
   btn.disabled = true;
   try{
     const res = await instalarPacksPersonajes(dbPareja);
@@ -369,6 +460,13 @@ async function instalarDesdeTienda(btn){
 // Reinstalar: restaura lo editado, recrea lo borrado y repara las parejas.
 async function reinstalarDesdeTienda(p, btn){
   if(!dbPareja) return;
+  const req = baseDePack(p);
+  if(req) req.forEach(item=>{ delete licBaseCache[item]; });
+  const base = await baseOkDePack(p);
+  if(!base.ok){
+    msg("Necesitas " + nombreBase(base.req) + " para reinstalar este pack.");
+    return;
+  }
   const ok = await confirmar({
     titulo: "Se restaurarán los personajes del pack.",
     texto: "Lo que hayas editado se pierde. ¿Seguir?",
@@ -387,8 +485,35 @@ async function reinstalarDesdeTienda(p, btn){
   pintar();
 }
 
+// Reinstalar una actividad oficial: confirma y manda al juego, que es el que
+// conoce el formato de sus acciones (B: la Tienda no escribe el documento).
+async function reinstalarActividadDesdeTienda(p, btn){
+  const req = baseDePack(p);
+  if(req) req.forEach(item=>{ delete licBaseCache[item]; });
+  const base = await baseOkDePack(p);
+  if(!base.ok){
+    msg("Necesitas " + nombreBase(base.req) + " para reinstalar este pack.");
+    return;
+  }
+  const ok = await confirmar({
+    titulo: "Se restaurará la actividad.",
+    texto: "Se reemplazarán las acciones y, si el pack las trae, las tomas. Lo que hayas editado se pierde. ¿Seguir?",
+    ok: "Reinstalar"
+  });
+  if(!ok) return;
+  const ruta = await rutaDePack(p);
+  location.href = "../" + ruta + "/?reinstalar=" + encodeURIComponent(p.id);
+}
+
 async function pedir(p, btn, est){
   msg("");
+  const req = baseDePack(p);
+  if(req) req.forEach(item=>{ delete licBaseCache[item]; });
+  const base = await baseOkDePack(p);
+  if(!base.ok){
+    msg("Necesitas " + nombreBase(base.req) + " para pedir este pack.");
+    return;
+  }
   try{
     if(!usuarioGoogle){
       const res = await signInWithPopup(getAuth(appTaq()), new GoogleAuthProvider());

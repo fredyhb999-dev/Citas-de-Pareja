@@ -113,10 +113,10 @@ una sola y no puede avisar de dos cosas. Por eso `TIPOS` tiene el campo
 `unoSolo`: `true` para el Chat (un documento fijo) y `false` para los Retos (una
 colección).
 
-> **Lo que sigue sin cubrir:** si la **misma** persona pide dos retos seguidos sin
-> que el otro haya visto el primero, el segundo **pisa** al primero (mismo autor,
-> mismo documento). El aviso del primero se pierde; **el reto sí existe** en
-> `Retos/`, solo no le llega la notificación. **Pendiente de decidir.**
+> **Decisión (nov-2026): se acepta así.** Si la **misma** persona pide dos retos
+> seguidos, el aviso más nuevo **pisa** al anterior (mismo autor, mismo documento).
+> No se cambia: los retos siguen todos en `Retos/` y el Telegram llega por cada
+> uno; lo único que se pierde es el cartelito de la campana del anterior.
 
 ### La campana se apaga SOLO si la pantalla se mostró de verdad (corregido oct-2026)
 

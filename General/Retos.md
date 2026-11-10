@@ -18,7 +18,8 @@ de veces que hay que apretar**, no una cantidad que se cobre.
 **El botón "Cumplida +1" solo lo ve quien propuso el reto** (`soyProponente`,
 en la lista de acciones). La pareja no lo ve. Por eso el doble toque
 simultáneo es improbable: solo pasaría si el mismo aprieta desde dos lugares a
-la vez. La falta de transacción queda anotada como pendiente de bajo riesgo.
+la vez. Ya usa `runTransaction` (nov-2026), así que dos toques simultáneos no se
+pisan al sumar.
 
 ### La meta de un reto se calcula sola (oct-2026)
 
@@ -70,11 +71,6 @@ no se vea como "0 días".
 las 4 de la tarde): 7 → 6 → 4 → 1 → 1 → 0 días. Y los retos viejos muestran
 exactamente lo mismo que antes.
 
-**Ojo, pendiente y NO se ha tocado:** `Retos/index.html` tiene un
-`id="formBotones"` **repetido** (el del formulario y el de "definir recompensa",
-L332 y L353; oct-2026: antes decia 326 y 347, ya corrieron). Hoy no rompe nada
-porque ningún JavaScript lo usa —solo el CSS—, pero es una bomba de tiempo. Se
-arregla aparte.
 ### Retos: sale de Experiencias y tiene submenú propio
 
 **El problema (hallazgo de Fredy, oct-2026).** Retos estaba como **tarjeta fija

@@ -53,3 +53,18 @@ secciones del Centro, y de ahí se entra a ver todo el catálogo.
 - **PROBADO EN VIVO:** el punto rojo del carrito **sale** cuando hay algo nuevo sin
   pedir, y se apaga al pedirlo o al vencer la fecha. La pastilla de las secciones
   también se comprobó.
+
+## Expansiones: licencia base y reinstalar (nov-2026)
+
+- La Tienda exige la **licencia vigente del juego base** para pedir, abrir o
+  reinstalar una expansión. El detalle del mapa está en `General/Modulo-Acceso.md`.
+- Los packs oficiales de actividades muestran **Reinstalar actividad** (o
+  **Reinstalar castigo**) **arriba** y **Abrir** debajo, igual que los packs de
+  personajes.
+- Reinstalar confirma que se van a reemplazar las acciones (y las tomas, si el
+  pack las trae), manda al juego con `?reinstalar=<id>` y el juego reescribe su
+  documento con el contenido del pack. Después vuelve a la Tienda.
+- **Guiadas y Encuentros son dos por uno**: comparten el documento de la
+  actividad. Se reinstala una vez y queda igual en las dos.
+- Si el pack **no trae tomas sugeridas**, se dejan las tomas que la pareja ya
+  tenía.

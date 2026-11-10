@@ -1547,3 +1547,21 @@ de que el repaso se hizo.
 - **Favores Express:** construida y probada en vivo (Fredy, oct-2026). El plan de
   desarrollo se borró al quedar probado, y lo que valía se pasó a
   `General/Favores-Express.md`.
+- **`id="formBotones"` duplicado en `Retos/`:** corregido en nov-2026. Los dos
+  bloques (Proponer reto y Definir recompensa) pasaron de id a la clase
+  `.formBotones`; el CSS y los botones no cambiaron de aspecto.
+- **Transacción de "Cumplida +1":** cerrado. `marcarCumplida()` y
+  `cumplirRetoIA()` usan `runTransaction`, así que dos toques simultáneos no se
+  pisan al sumar puntos (verificado nov-2026).
+- **Redacción del castigo y la recompensa de la IA:** cerrado. La instrucción
+  `PERSONA` exige un solo punto de vista y prohíbe "te debe"/"le debes"
+  (verificado nov-2026; el archivo externo queda como referencia).
+- **El aviso de retos que se pisa con el siguiente:** decisión tomada
+  (nov-2026). Se acepta que el aviso nuevo pise al anterior; los retos siguen
+  todos en `Retos/` y el Telegram llega por cada uno. Queda como límite conocido
+  en `GUIA.md`.
+- **Retos de la IA: las tres dudas de diseño quedaron resueltas (oct-2026).**
+  El reto siempre es para la pareja y no se puede rechazar; avisa por Telegram,
+  campana, cartelito y pancarta; y “Cumplida” lo aprieta quien está en el chat,
+  sin esperar aceptación. Queda pendiente quitar el botón “🎲 Reto picarón” y
+  decidir la condición o juego del chat que desbloquea el envío automático.

@@ -45,7 +45,9 @@ se repite es la **referencia** (`par`), no el contenido.
    instalado. Si `packsInstalados[packId]` existe, no se vuelve a instalar.
 5. **Revocar el acceso no borra nada** de lo instalado.
 6. **Primera instalación automática**, sin confirmación, con un `aviso()` al final.
-   **Reinstalación manual**, desde la tarjeta del pack en Tienda -> Extras.
+   **Reinstalación manual**, desde la tarjeta del pack en Tienda -> Expansiones
+   (clave interna `extras`). La Tienda exige la licencia vigente de Roles para
+   pedir, abrir o reinstalar (nov-2026).
 7. **No hay tarjeta de packs de personajes en el menú principal.** Solo Tienda -> Extras.
 8. **Cada pack es su propio ítem del catálogo**: su solicitud, su aprobación, su licencia.
 9. **El invitado no necesita nada especial.** Elige anatomía al registrarse (ya existe).

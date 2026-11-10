@@ -38,28 +38,25 @@ sea a la hora en que le diste "aceptar". Ahora usan `finDeUltimoDia()`, igual qu
 los retos propuestos a mano. **Esa función se movió a `config.js`** porque ahora la
 necesitan los dos lados; no debe copiarse en cada archivo.
 
-### ⏳ PENDIENTE DE DEFINIR — los retos de la IA (pedido por Fredy oct-2026)
+### Retos de la IA: decisiones tomadas (oct-2026)
 
-> **ESTO NO ESTÁ ACABADO. Antes de seguir metiendo mano a los retos de la IA,
-> hay que decidir estos tres puntos.** Fredy lo pidió expressly que se le
-> Masteringara.
+- **El reto es para la pareja:** la persona que no está en el chat, así que no lo
+  puede rechazar.
+- **Cómo se entera:** por las cuatro vías — Telegram (la única con la app
+  cerrada), campana y bip, el cartelito al abrir la app, y la pancarta si ya
+  estaba en `Retos/`. Ver *La campana ahora avisa de los retos de la IA*.
+- **Quién aprieta “Cumplida”:** el que está en el chat, que es quien mandó el
+  reto. El que lo cumple es la pareja. No hay que esperar una aceptación.
 
-1. **El botón "Reto picarón"** — ¿queda y dice "mándale un reto a [nombre]"?
-   ¿Se quita de los dos lados? (Lo acordado hasta ahora: **que el reto sea del
-   que NO está en el chat**, para que no pueda rechazarlo.)
-2. **¿Cómo se entera la pareja?** ~~Si no tiene la app abierta, el reto no le
-   llega. Hoy las notificaciones solo salen con `Retos/` abierto. **¿Tiene que
-   llegar aunque esté fuera de la app?**~~ **RESUELTO (oct-2026): ahora llega por
-   las cuatro vías** — Telegram (la única con la app cerrada), campana y bip, el
-   cartelito al abrir la app, y la pancarta si ya estaba en `Retos/`. Ver *La
-   campana ahora avisa de los retos de la IA*.
-3. **Si el que está en el chat puede apretarlo de una vez** — o sea, si la
-   pareja pide el reto a la IA y el reto le toca a ti que ya estás en el chat,
-   ¿se cuenta al instante o también tiene que esperar?
+**Pendiente — el botón “🎲 Reto picarón”:** es **temporal, para pruebas**. La
+idea es quitarlo, porque hoy permite mandar retos con demasiada facilidad. Falta
+decidir qué **condición o juego dentro del chat** hace que la persona se gane el
+derecho de que el acompañante de IA mande el reto automáticamente a la pareja.
+Mientras tanto, el botón se queda como está.
 
-**Por qué quedó así:** el reto que escoge uno mismo no es un reto, es un menú
-(Fredy: *"eso le quita todo el significado a reto"*). Por eso el dueño del reto
-tiene que ser **el que no está en el chat**.
+**Por qué el reto es del otro:** el reto que escoge uno mismo no es un reto, es un
+menú (Fredy: *"eso le quita todo el significado a reto"*). Por eso el dueño del
+reto tiene que ser **el que no está en el chat**.
 
 ### Retos de la IA: mecánica nueva (oct-2026)
 
@@ -124,20 +121,18 @@ contador), dicen *"Vale N pts para Fulano"*, y en vez de "Veces al día" y
 (1-3 fácil · 4-6 hay que animarse · 7-10 da pena hasta pensarlo), `"dias"` siempre
 1, y se le dice que el reto es para la pareja, no para quien pregunta.
 
-### ⏳ PENDIENTE (oct-2026): redacción del castigo y la recompensa de la IA
+### Redacción del castigo y la recompensa de la IA
 
 El castigo y la recompensa de un reto de la IA llegan **tal cual los escribe el
-modelo**: la app no los reescribe. A veces salen **mal redactados**, cambiando de
-persona y mezclando a quien manda el reto con quien lo tiene que cumplir (ejemplo
-que reportó Fredy: *"Si se le olvida o lo ignora, te debe el capricho más pesado
-que se le ocurra pedirte mañana."*).
+modelo**: la app no los reescribe. Por eso la instrucción de `PERSONA` exige que
+los dos vayan en un **solo punto de vista** (el de quien tiene que cumplir el
+reto), con tono parejo y sin frases como "te debe" o "le debes". Verificado en
+`Acompanante/index.html` (nov-2026).
 
-**Pendiente al próximo cambio de `Acompanante/`:** ajustar la instrucción de
-`PERSONA` para que el castigo y la recompensa vayan en un **solo punto de vista**
-(el de quien tiene que cumplir el reto) y en un tono parejo. Ojo: el texto de la
-instrucción vive en `Documents\Default Project\instruccion-IA.txt` y se mete con
-`Temp\opencode\aplicar_persona.py` (ver más abajo). **No se toca ahora** (decisión
-de Fredy, oct-2026).
+Ojo: el texto de la instrucción también vive en
+`Documents\Default Project\instruccion-IA.txt` y se mete con
+`Temp\opencode\aplicar_persona.py` (ver más abajo); ese archivo externo es de
+referencia. Lo que corre en la app es el `PERSONA` del repo.
 
 ### El nombre de la IA en el campo de escritura (oct-2026)
 
