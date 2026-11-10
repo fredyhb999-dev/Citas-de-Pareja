@@ -86,7 +86,7 @@
   </button>
   <button data-sec="extras" type="button">
     <span class="icon">✨</span>
-    <span class="label"><div class="title">Extras</div>
+    <span class="label"><div class="title">Expansiones</div>
     <div class="subtitle">Lo que vaya llegando</div></span>
   </button>
 </div>
@@ -132,7 +132,7 @@ async function cargarPacksInstalados(){
   catch(e){ packsInstalados = {}; }
 }
 
-const SEC_NOMBRES = { experiencias: "💑 Experiencias en Pareja", juegos: "🎮 Juegos", extras: "✨ Extras" };
+const SEC_NOMBRES = { experiencias: "💑 Experiencias en Pareja", juegos: "🎮 Juegos", extras: "✨ Expansiones" };
 const SEC_DESC = { experiencias: "Material de Apoyo para tu cita", juegos: "Diviértete en esa cita especial", extras: "Retos que te llevarán a otro nivel" };
 let secActual = null;
 try{ secActual = new URLSearchParams(location.search).get("sec"); }catch(e){}

@@ -53,7 +53,7 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 ---
 
-## `Castigos/index.html` — 4,176 líneas
+## `Castigos/index.html` — 4,271 líneas
 
 **Documento de detalle:** `General/Castigos.md`
 
@@ -62,23 +62,23 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 | Para... | Función | Línea |
 |---|---|---|
-| Cargar todo: identidad, castigos, accesorios, imposiciones, usuarios | `cargarTodo()` | 734 |
-| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 944 / 1025 |
-| Panel de configuración | `mostrarPanel()` | 1130 |
-| Lista y edición de castigos | `pintarCastigos()` / `abrirEditor()` / `pintarEditor()` / `guardarCastigoDatos()` | 1148 / 1231 / 1280 / 1483 |
-| Tomas de cada castigo | `pintarTomas()` | 1385 |
-| Accesorios e imposiciones | `pintarAccesorios()` / `pintarImposiciones()` | 1627 / 1750 |
-| Pantalla de inicio y castigo elegido | `pintarListaInicio()` / `seleccionarCastigo()` / `actualizarInicio()` | 1854 / 2121 / 2146 |
-| Pasos antes de jugar: quién castiga, modo, multi, imposiciones, placer | `preguntarQuienCastiga()` / `elegirModo()` / `toggleMulti()` / `preguntarImposicionesPor3()` / `preguntarNivelesPlacer()` | 2175 / 2186 / 2239 / 2322 / 2382 |
-| Armar y arrancar: normal y multi | `armarPartidaNormal()` / `iniciarPartida()` / `iniciarPartidaMulti()` | 2449 / 2971 / 2710 |
-| Repartir turnos y rueda | `repartirRueda()` / `generarTurnos()` / `generarTurnosMulti()` | 2765 / 2617 / 2810 |
-| Pintar turno, sala y fin | `pintarTurno()` / `pintarSala()` / `mostrarFin()` | 3345 / 3228 / 3274 |
-| Pausa: pausar, continuar, descartar | `pausarPartida()` / `continuarPausa()` / `descartarPausa()` | 1995 / 2080 / 2067 |
-| Sesión compartida: publicar y escuchar | `publicarSesion()` / `escucharSesionCompartida()` | 3005 / 3087 |
-| Turnos remotos y saltar turno remoto | `avanzarTurnoRemoto()` / `saltarTurnoRemoto()` / `escribirImposicionRemoto()` | 3496 / 3559 / 3477 |
-| Cronómetro | `pintarCrono()` / `iniciarTemporizadorDesde()` | 2928 / 2934 |
-| Invitados: QR y agregar a la partida | `abrirQRJuego()` / `agregarInvitadoAPartida()` | 3773 / 4011 |
-| Importar acciones | `parsearImportacion()` / `normalizarAccionImport()` | 1549 / 1585 |
+| Cargar todo: identidad, castigos, accesorios, imposiciones, usuarios | `cargarTodo()` | 748 |
+| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 960 / 1049 |
+| Panel de configuración | `mostrarPanel()` | 1156 |
+| Lista y edición de castigos | `pintarCastigos()` / `abrirEditor()` / `pintarEditor()` / `guardarCastigoDatos()` | 1174 / 1257 / 1306 / 1509 |
+| Tomas de cada castigo | `pintarTomas()` | 1411 |
+| Accesorios e imposiciones | `pintarAccesorios()` / `pintarImposiciones()` | 1653 / 1776 |
+| Pantalla de inicio y castigo elegido | `pintarListaInicio()` / `seleccionarCastigo()` / `actualizarInicio()` | 1880 / 2147 / 2201 |
+| Pasos antes de jugar: quién castiga, modo, multi, imposiciones, placer | `preguntarQuienCastiga()` / `elegirModo()` / `toggleMulti()` / `preguntarImposicionesPor3()` / `preguntarNivelesPlacer()` | 2230 / 2241 / 2294 / 2383 / 2443 |
+| Armar y arrancar: normal y multi | `armarPartidaNormal()` / `iniciarPartida()` / `iniciarPartidaMulti()` | 2510 / 3034 / 2771 |
+| Repartir turnos y rueda | `repartirRueda()` / `generarTurnos()` / `generarTurnosMulti()` | 2828 / 2678 / 2873 |
+| Pintar turno, sala y fin | `pintarTurno()` / `pintarSala()` / `mostrarFin()` | 3412 / 3295 / 3341 |
+| Pausa: pausar, continuar, descartar | `pausarPartida()` / `continuarPausa()` / `descartarPausa()` | 2021 / 2106 / 2093 |
+| Sesión compartida: publicar y escuchar | `publicarSesion()` / `escucharSesionCompartida()` | 3070 / 3154 |
+| Turnos remotos y saltar turno remoto | `avanzarTurnoRemoto()` / `saltarTurnoRemoto()` / `escribirImposicionRemoto()` | 3563 / 3626 / 3544 |
+| Cronómetro | `pintarCrono()` / `iniciarTemporizadorDesde()` | 2991 / 2997 |
+| Invitados: QR y agregar a la partida | `abrirQRJuego()` / `agregarInvitadoAPartida()` | 3840 / 4078 |
+| Importar acciones | `parsearImportacion()` / `normalizarAccionImport()` | 1575 / 1611 |
 
 ---
 
@@ -405,52 +405,54 @@ ver(4668) · vistaDeInicio(4680) · voltear(1910) · voltearDuelo(2143) · yaExi
 ### `Castigos\index.html`
 
 ```
-abortarPlacer(2438) · abrirDetalle(1453) · abrirEditor(1231) · abrirQRJuego(3773)
-accesorioEnUso(1713) · accionDeNivel(2609) · accionesModeloPorRonda(3930)
-accionVacia(1265) · actualizar(2331) · actualizarBotonJugar(1377) · actualizarInicio(2146)
-agregar(1343) · agregarInvitadoAPartida(4011) · agregarInvitadoLocal(3996)
-ajustarAltoCampo(1275) · anunciarinvitacion(3068) · armando(3235)
-armarBolsasImposicion(2579) · armarPartidaNormal(2449) · asignarImposicionesAlAzar(2590)
-avanzarSaltadoRemoto(3528) · avanzarTurnoNoSaltado(2965) · avanzarTurnoRemoto(3496)
-bolsasEnMemoria(3838) · bolsasParaInvitado(3872) · borrarAcceso(1695) · borrarAccion(1400)
-borrarCastigo(1213) · borrarImp(1782) · cargarAccesorios(776) · cargarCastigos(742)
-cargarDatosCastigo(1792) · cargarIdentidad(682) · cargarImposiciones(789)
-cargarSesionEnMemoria(3159) · cargarTodo(734) · cerrar(2053) · chequearConexion(4098)
-chequearPartidaEspera(3208) · clave(3917) · colorAccion(3380) · conGente(3231)
-construirNivelesOficial(815) · contarAccionesCastigos(1837) · continuarPausa(2080)
-controlesAnfitrionVisible(3315) · crearSesionCompartida(3062) · descartarPausa(2067)
-descripcionPausa(2042) · destino(1087) · elegirAccionInvitado(3913)
-elegirCastigoParaJugar(2457) · elegirModo(2186) · enEspera(3239) · enfocarAccion(1365)
-enJuego(936) · entrar(4104) · entrarAlJuegoCompartida(3196) · escribirImposicionRemoto(3477)
-escucharGrupo(701) · escucharSesionCompartida(3087) · esSoloPuro(3316)
-estadoPartidaLocal(1922) · esUnCelular(3390) · etiquetaLados(726) · filtro(1152)
-finVisible(930) · fraseAccion(3330) · generarJugadores(2557) · generarTurnos(2617)
-generarTurnosMulti(2810) · guardarCastigoDatos(1483) · guardarImposiciones(1789)
-idVigente(621) · iniciarPartida(2971) · iniciarPartidaMulti(2710)
-iniciarTemporizadorDesde(2934) · irAlMenu(1015) · ladoDe(3932) · ladoInv(3999)
-ladosParticipantes(2406) · leerNivelesCastigo(3845) · leerPausa(2010) · leerQuienSoy(678)
-llenar(3243) · mezclar(1266) · modalAbierto(1036) · modalBasePaso(972)
-mostrarBotonAccion(2914) · mostrarFin(3274) · mostrarModalBase(990) · mostrarPanel(1130)
-msg(1126) · msgTomas(1127) · nivel(3969) · nombreDeLado(722) · normalizaAcc(1407)
-normalizarAccionImport(1585) · normalizarAccionOficial(803) · normalizarNivelesPlacer(2376)
-normTxt(3836) · pararTemporizador(2910) · parsearImportacion(1549) · partes(4074)
-partes2(4084) · pausarPartida(1995) · pintarAccesorios(1627) · pintarAccesoriosDetalle(1409)
-pintarCastigos(1148) · pintarCrono(2928) · pintarEditor(1280) · pintarImposiciones(1750)
-pintarListaInicio(1854) · pintarSala(3228) · pintarSalidas(934) · pintarTomas(1385)
-pintarTomasJugar(2492) · pintarTomasJugarMulti(2506) · pintarTurno(3345)
-placerAccionesEnNiveles(2415) · placerAlcanzaMulti(2428) · placerAlcanzaNormal(2424)
-poolDeAcciones(3893) · preguntarImposicionesPor3(2322) · preguntarNivelesPlacer(2382)
-preguntarPausa(2049) · preguntarQuienCastiga(2175) · promptTexto(1816)
-publicarSesion(3005) · quitarAccesorioDeTodas(1729) · reanudarCronoRemotoSiHaceFalta(2955)
-recalcularSaltadoPorRevivir(2900) · refrescarUsuarios(695) · renombrarAcceso(1661)
-renombrarCastigo(1197) · repararOficialCastigo(903) · repartirRueda(2765)
-resetearInicioMulti(3719) · restaurarPartidaLocal(1953) · retirarInvitadosDeLaPartida(2551)
-salirAlMenu(1025) · salirModoInvitado(3747) · saltado(2693) · saltarTurnoRemoto(3559)
-seleccionarCastigo(2121) · sesionRef(2546) · setHowTabs(2210) · setModTabs(2203)
-setTipoTabs(2232) · sincronizarOficialesCastigos(832) · soyCabeza(3205)
-tieneAcciones(3867) · toggleMulti(2239) · tomarImposicion(2582) · totalAccionesDatos(899)
-totalAccionesEditor(1370) · turnosConInvitado(3950) · vaciaDatos(1260) · vale(3918)
-ver(944) · vistaActual(926) · volverConHistorial(1000) · volverDePartida(3736)
+abortarPlacer(2499) · abrirDetalle(1479) · abrirEditor(1257) · abrirQRJuego(3840)
+accesorioEnUso(1739) · accionDeNivel(2670) · accionesModeloPorRonda(3997)
+accionVacia(1291) · actualizar(2392) · actualizarBotonJugar(1403) · actualizarInicio(2201)
+agregar(1369) · agregarInvitadoAPartida(4078) · agregarInvitadoLocal(4063)
+ajustarAltoCampo(1301) · anunciarinvitacion(3135) · armando(3302)
+armarBolsasImposicion(2640) · armarPartidaNormal(2510) · asignarImposicionesAlAzar(2651)
+avanzarSaltadoRemoto(3595) · avanzarTurnoNoSaltado(3028) · avanzarTurnoRemoto(3563)
+bolsasEnMemoria(3905) · bolsasParaInvitado(3939) · borrarAcceso(1721) · borrarAccion(1426)
+borrarCastigo(1239) · borrarImp(1808) · cargarAccesorios(791) · cargarCastigos(756)
+cargarDatosCastigo(1818) · cargarIdentidad(696) · cargarImposiciones(804)
+cargarSesionEnMemoria(3226) · cargarTodo(748) · cerrar(2079) · chequearConexion(4165)
+chequearPartidaEspera(3275) · clave(3984) · colorAccion(3447) · conGente(3298)
+construirNivelesOficial(830) · contarAccionesCastigos(1863) · continuarPausa(2106)
+continuarSeleccionCastigo(2157) · controlesAnfitrionVisible(3382)
+crearSesionCompartida(3127) · descartarPausa(2093) · descripcionPausa(2068) · destino(1113)
+elegirAccionInvitado(3980) · elegirCastigoParaJugar(2518) · elegirModo(2241)
+enEspera(3306) · enfocarAccion(1391) · enJuego(952) · entrar(4171)
+entrarAlJuegoCompartida(3263) · escribirImposicionRemoto(3544) · escucharGrupo(715)
+escucharSesionCompartida(3154) · esSoloPuro(3383) · estadoPartidaLocal(1948)
+esUnCelular(3457) · etiquetaLados(740) · filtro(1178) · finVisible(946) · fraseAccion(3397)
+gastarCortesiasCastigo(2183) · generarJugadores(2618) · generarTurnos(2678)
+generarTurnosMulti(2873) · guardarCastigoDatos(1509) · guardarImposiciones(1815)
+idVigente(632) · iniciarPartida(3034) · iniciarPartidaMulti(2771)
+iniciarTemporizadorDesde(2997) · irAlMenu(1039) · ladoDe(3999) · ladoInv(4066)
+ladosParticipantes(2467) · leerNivelesCastigo(3912) · leerPausa(2036) · leerQuienSoy(692)
+llenar(3310) · mezclar(1292) · modalAbierto(1060) · modalBasePaso(988)
+mostrarBotonAccion(2977) · mostrarFin(3341) · mostrarGracia(1013) · mostrarModalBase(1006)
+mostrarPanel(1156) · msg(1152) · msgTomas(1153) · nivel(4036) · nombreDeLado(736)
+normalizaAcc(1433) · normalizarAccionImport(1611) · normalizarAccionOficial(818)
+normalizarNivelesPlacer(2437) · normTxt(3903) · pararTemporizador(2973)
+parsearImportacion(1575) · partes(4141) · partes2(4151) · pausarPartida(2021)
+pintarAccesorios(1653) · pintarAccesoriosDetalle(1435) · pintarCastigos(1174)
+pintarCrono(2991) · pintarEditor(1306) · pintarImposiciones(1776) · pintarListaInicio(1880)
+pintarSala(3295) · pintarSalidas(950) · pintarTomas(1411) · pintarTomasJugar(2553)
+pintarTomasJugarMulti(2567) · pintarTurno(3412) · placerAccionesEnNiveles(2476)
+placerAlcanzaMulti(2489) · placerAlcanzaNormal(2485) · poolDeAcciones(3960)
+preguntarImposicionesPor3(2383) · preguntarNivelesPlacer(2443) · preguntarPausa(2075)
+preguntarQuienCastiga(2230) · promptTexto(1842) · publicarSesion(3070)
+quitarAccesorioDeTodas(1755) · reanudarCronoRemotoSiHaceFalta(3018)
+recalcularSaltadoPorRevivir(2963) · refrescarUsuarios(709) · renombrarAcceso(1687)
+renombrarCastigo(1223) · repararOficialCastigo(919) · repartirRueda(2828)
+resetearInicioMulti(3786) · restaurarPartidaLocal(1979) · retirarInvitadosDeLaPartida(2612)
+salirAlMenu(1049) · salirModoInvitado(3814) · saltado(2754) · saltarTurnoRemoto(3626)
+seleccionarCastigo(2147) · sesionRef(2607) · setHowTabs(2265) · setModTabs(2258)
+setTipoTabs(2287) · sincronizarOficialesCastigos(847) · soyCabeza(3272)
+tieneAcciones(3934) · toggleMulti(2294) · tomarImposicion(2643) · totalAccionesDatos(915)
+totalAccionesEditor(1396) · turnosConInvitado(4017) · vaciaDatos(1286) · vale(3985)
+ver(960) · vistaActual(942) · volverConHistorial(1024) · volverDePartida(3803)
 ```
 
 ### `index.html`

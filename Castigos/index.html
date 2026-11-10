@@ -310,6 +310,15 @@
   <a class="btnPri" href="../Tienda/?sec=juegos" style="text-decoration:none;">Ir al Centro</a>
 </div>
 
+<!-- ============ MODAL CORTESÍA VENCIDO ============ -->
+<div class="modal" id="modalGracia">
+  <div class="caja">
+    <div style="font-size:.95rem;line-height:1.5;">Su acceso venció 🥺 pero hoy no les arruinamos su noche 💛 les obsequiamos este último acceso</div>
+    <div style="font-size:.75rem;color:var(--fg-muted);margin-top:10px;text-align:right;">Solicite su acceso en<br>Centro de Adquisiciones</div>
+    <button class="btnPri" id="btnGraciaOk" style="margin-top:14px;">Aceptar</button>
+  </div>
+</div>
+
 <!-- ============ VISTA TOMAS ============ -->
 <div class="vista" id="vistaTomas">
   <h1>Castigos por nivel</h1>
@@ -596,7 +605,9 @@ import { encenderFuegos, apagarFuegos } from "../fuegos.js";
 // Invitados: este juego solo publica y retira su invitación. No sabe nada de la sala.
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
 // Oficiales: packs aprobados de la taquilla con ruta "Castigos".
-import { oficialesAprobados, tengoAcceso } from "../acceso.js";
+import { miProyecto, appTaq, leerLicencias, tengoAcceso, oficialesAprobados, consumirCortesia } from "../acceso.js";
+// La cortesía del juego base verifica la firma aunque la licencia esté vencida.
+import { verificarFirma } from "../taquilla.js";
 // Pantalla despierta mientras hay partida en curso.
 import { mantenerDespierto, soltarDespierto } from "../despierto.js";
 
@@ -621,6 +632,9 @@ let mapaIdsCastigo = {};
 function idVigente(id){ return mapaIdsCastigo[id] || id; }
 let imposiciones = { A: [], B: [] };
 let castigoActivo = null;
+// Cortesía: castigo oficial vencido que espera el aviso, y si el aviso ya salió.
+let castigoPendienteCortesia = null;
+let cortesiaAvisada = false;
 let datos = {};
 let tomas = { ...DEF_TOMA };
 let editorCargado = false;
@@ -763,7 +777,8 @@ async function cargarCastigos(){
   const ofs = oficiales.map(o=>({
     nombre: o.titulo || o.id,
     id: o.id,
-    oficial: true
+    oficial: true,
+    cortesia: !!o.cortesia
   }));
   castigos = [...ofs, ...castigos];
   castigos.sort((a,b)=>{
@@ -831,7 +846,7 @@ function construirNivelesOficial(o){
 
 async function sincronizarOficialesCastigos(){
   try{
-    const ofs = await oficialesAprobados();
+    const ofs = await oficialesAprobados({ conCortesia: true });
     const castigosOficiales = ofs.filter(p => p.ruta === "Castigos");
     oficiales = castigosOficiales.map(p=>({
       id: p.id,
@@ -842,7 +857,8 @@ async function sincronizarOficialesCastigos(){
       activo: p.activo !== false,
       niveles: p.niveles || {},
       tomasSugeridas: p.tomasSugeridas || {},
-      nuevoHasta: p.nuevoHasta || null
+      nuevoHasta: p.nuevoHasta || null,
+      cortesia: !!p.cortesia
     }));
     for(const o of oficiales){
       try{
@@ -902,7 +918,7 @@ function totalAccionesDatos(){
 
 async function repararOficialCastigo(c){
   try{
-    const ofs = await oficialesAprobados();
+    const ofs = await oficialesAprobados({ conCortesia: true });
     const p = ofs.find(x=>x.id === c.id && x.ruta === "Castigos");
     if(!p) return false;
     const n = construirNivelesOficial(p);
@@ -993,6 +1009,14 @@ function mostrarModalBase(id, mostrar){
   el.style.display = mostrar ? "flex" : "none";
   modalBasePaso(id, mostrar);
 }
+// Aviso de último acceso (juego base vencido o castigo oficial vencido).
+function mostrarGracia(){ mostrarModalBase("modalGracia", true); }
+document.getElementById("btnGraciaOk").onclick = ()=>{
+  mostrarModalBase("modalGracia", false);
+  const pend = castigoPendienteCortesia;
+  castigoPendienteCortesia = null;
+  if(pend) continuarSeleccionCastigo(pend);
+};
 
 // El "← Volver" deshace el paso del historial, igual que el atrás del celular.
 // Si no hay paso anterior, no llega ningún popstate: a los 400 ms se cae a la
@@ -1082,6 +1106,8 @@ window.addEventListener("popstate", (ev)=>{
     editorCargado = false;
   }
   if(actual==="vistaPartida" && finVisible()) resetearInicioMulti();
+  // Se cancela el paso de tomas: el aviso de cortesía puede volver a salir.
+  if(actual==="vistaTomas") cortesiaAvisada = false;
   // El paso deshecho manda. Solo se restaura Configuración: el editor, las tomas
   // y la partida no se reabren desde el historial (mostrarían datos viejos).
   const destino = (ev && ev.state && ev.state.v === "vistaConfig") ? "vistaConfig" : "vistaInicio";
@@ -2119,6 +2145,16 @@ async function continuarPausa(p){
 }
 
 async function seleccionarCastigo(c){
+  // Castigo oficial vencido con cortesía: primero sale el aviso; sigue al aceptar.
+  if(c.cortesia && !cortesiaAvisada){
+    cortesiaAvisada = true;
+    castigoPendienteCortesia = c;
+    mostrarGracia();
+    return;
+  }
+  await continuarSeleccionCastigo(c);
+}
+async function continuarSeleccionCastigo(c){
   const pausa = await leerPausa();
   if(pausa){
     const r = await preguntarPausa(pausa);
@@ -2141,6 +2177,25 @@ async function seleccionarCastigo(c){
   tomasPartida = { ...tomas };
   pintarTomasJugar();
   ver("vistaTomas");
+}
+// Gasta la cortesía de los castigos oficiales vencidos que se van a jugar.
+// Se llama al arrancar la partida, no al seleccionar.
+async function gastarCortesiasCastigo(lista){
+  let gastadas = 0;
+  for(const c of (lista || [])){
+    if(!c || !c.cortesia || !c.id) continue;
+    const gastada = await consumirCortesia(c.id);
+    if(!gastada) continue;
+    gastadas++;
+    c.cortesia = false;
+    // Que no reaparezca en la lista si se repinta en esta sesión.
+    castigos = castigos.filter(x=> x.id !== c.id);
+    oficiales = oficiales.filter(x=> x.id !== c.id);
+  }
+  // Si el aviso no salió al seleccionar (otra ruta), sale aquí.
+  if(gastadas && !cortesiaAvisada) mostrarGracia();
+  cortesiaAvisada = false;
+  return gastadas;
 }
 
 function actualizarInicio(){
@@ -2212,9 +2267,9 @@ function setHowTabs(){
     document.getElementById(id).classList.toggle("activo", id==="how"+(comoJuegan==="unCelular"?"UnCelular":"CadaQuien"));
   });
 }
-document.getElementById("tipoNormal").onclick = ()=>{ tipoJuego="normal"; setTipoTabs(); actualizarInicio(); };
+document.getElementById("tipoNormal").onclick = ()=>{ tipoJuego="normal"; cortesiaAvisada = false; setTipoTabs(); actualizarInicio(); };
 document.getElementById("tipoMulti").onclick = async ()=>{
-  tipoJuego="multi"; setTipoTabs(); actualizarInicio();
+  tipoJuego="multi"; cortesiaAvisada = false; setTipoTabs(); actualizarInicio();
   const pausa = await leerPausa();
   if(pausa){
     const r = await preguntarPausa(pausa);
@@ -2243,6 +2298,11 @@ function toggleMulti(c){
   }else{
     if(multiSel.length>=3) return;
     multiSel.push(c.id);
+    // Castigo oficial vencido con cortesía: aviso al marcarlo.
+    if(c.cortesia && !cortesiaAvisada){
+      cortesiaAvisada = true;
+      mostrarGracia();
+    }
   }
   // actualizar multiCastigos
   multiCastigos = multiSel.map(id=>castigos.find(x=>x.id===id)).filter(Boolean);
@@ -2285,6 +2345,7 @@ document.getElementById("btnMultiCancel").onclick = ()=>{
   multiSel = [];
   multiCastigos = [];
   tipoJuego = "normal";
+  cortesiaAvisada = false;
   setTipoTabs();
   actualizarInicio();
 };
@@ -2748,6 +2809,8 @@ async function iniciarPartidaMulti(){
   generarJugadores();
   armarBolsasImposicion();
   if(placerExtremo && !placerAlcanzaMulti()){ abortarPlacer(); return; }
+  // La cortesía se gasta aquí, cuando la partida ya va a arrancar.
+  await gastarCortesiasCastigo(multiCastigos);
   generarTurnosMulti();
   if(comoJuegan==="cadaQuien" && modoJuego!=="solo"){
     await publicarSesion();
@@ -2968,7 +3031,7 @@ function avanzarTurnoNoSaltado(){
   }
 }
 
-function iniciarPartida(){
+async function iniciarPartida(){
   pararTemporizador();
   enPausa = false;
   document.getElementById("overlayPausa").style.display = "none";
@@ -2994,6 +3057,8 @@ function iniciarPartida(){
 
   // un celular: todo local
   if(!armarPartidaNormal()) return;
+  // La cortesía se gasta aquí, cuando la partida ya va a arrancar.
+  await gastarCortesiasCastigo([castigoPartida]);
   turnoIdx = 0;
   avanzarTurnoNoSaltado();
   faseTurno = "imposicion";
@@ -3062,6 +3127,8 @@ async function publicarSesion(){
 async function crearSesionCompartida(){
   await refrescarUsuarios();
   if(!armarPartidaNormal()) return;
+  // La cortesía se gasta aquí, cuando la partida ya va a arrancar.
+  await gastarCortesiasCastigo([castigoPartida]);
   return publicarSesion();
 }
 
@@ -4108,7 +4175,35 @@ async function entrar(){
   let ok = false;
   try{ ok = await tengoAcceso("castigos"); }catch(e){ ok = false; }
   if(!ok && esInvitadoFlag) ok = true;
-  if(!ok){ ver("vistaBloqueo"); return; }
+  if(!ok){
+    // Cortesía única si venció (igual que Guiadas y Encuentros).
+    try{
+      const lic = leerLicencias()["castigos"];
+      if(lic){
+        const pay = await verificarFirma(lic);
+        if(pay && pay.item === "castigos" && pay.para === miProyecto() && pay.vence && Date.now() > pay.vence){
+          const tdb = getFirestore(appTaq());
+          const snap = await getDocs(query(collection(tdb, "solicitudes"), where("para", "==", miProyecto())));
+          let docGracia = null;
+          snap.forEach(dd=>{
+            const s = dd.data();
+            if(s.item !== "castigos") return;
+            if(String(s.email || "").trim().toLowerCase() !== String(pay.email || "").trim().toLowerCase()) return;
+            if(s.estado !== "aprobado" || s.graciaUsada !== false) return;
+            docGracia = { id: dd.id };
+          });
+          if(docGracia){
+            try{ await setDoc(doc(tdb, "solicitudes", docGracia.id), { graciaUsada: true, graciaFecha: serverTimestamp() }, { merge: true }); }catch(e){}
+            ver("vistaInicio", false);
+            mostrarGracia();
+            return;
+          }
+        }
+      }
+    }catch(e){}
+    ver("vistaBloqueo");
+    return;
+  }
   try{
     const sd = await getDoc(sesionRef());
     if(sd.exists()){

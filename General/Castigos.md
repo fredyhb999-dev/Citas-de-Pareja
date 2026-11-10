@@ -28,7 +28,7 @@ Allí se elige cuántas acciones de cada nivel (básico, medio, avanzado, expert
 
 ## Modales
 
-`modalUnir`, `modalAgregar` (invitado a media partida), `modalQR`, `modalSeguir` (continuar pausada), `modalQuienCastiga`, `modalImposiciones`, `modalPlacer`, `modalMultiConf`, `modalDetalle` (accesorio/medida de una acción).
+`modalGracia` (cortesía de un acceso vencido), `modalUnir`, `modalAgregar` (invitado a media partida), `modalQR`, `modalSeguir` (continuar pausada), `modalQuienCastiga`, `modalImposiciones`, `modalPlacer`, `modalMultiConf`, `modalDetalle` (accesorio/medida de una acción).
 
 ## Colecciones de Firebase
 
@@ -87,6 +87,8 @@ texto suelto: se convierte a esa forma con `accesorio:null` y medida libre.
 - El invitado juega con el acceso del anfitrión (como Encuentros).
 - Oficiales aprobados: `oficialesAprobados()` filtrados por `ruta === "Castigos"`, se muestran con 🏅. Las acciones oficiales se siembran en `nivelesCastigo` si la pareja no tiene acciones escritas (no se sobrescriben si ya hay contenido).
 - `repararOficialCastigo()` recupera las acciones de un oficial si la copia local está vacía.
+- **Cortesía (nov-2026).** Si la licencia del juego base `castigos` venció pero la solicitud aprobada tiene `graciaUsada === false`, al entrar se marca usada, se muestra `modalGracia` ("no les arruinamos su noche") y se deja jugar una última vez. Igual que Guiadas y Encuentros.
+- Los **castigos oficiales** vencidos con cortesía también aparecen con 🏅. Al seleccionarlos (normal o multi) sale el aviso, y la cortesía se gasta al **arrancar la partida**, no al seleccionar. Después desaparecen de la lista y la Tienda deja de ofrecerlos.
 
 ## Modos de juego
 

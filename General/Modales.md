@@ -56,6 +56,7 @@ cierra con el atrás o el atrás se ignora.
 | Roles | `#modalEsp`, `#modalPersonaje`, `#modalMeterInv` | Interna (config/selección) | **Se ignora** | `modalAbierto` |
 | Roles | `#modalImagenCarta` | Interna | **Se ignora** | `modalAbierto` |
 | Roles | `#modalAgregar`, `#modalQR` | Base / interna | **Cierra / se ignora** | `pasoModalBase` / `modalAbierto` |
+| Castigos | `#modalGracia` | Base | **Cierra** | `mostrarModalBase` |
 | Castigos | `#modalSeguir` | Base / interna | **Cierra / se ignora** | `mostrarModalBase` + `cancelarPausaActual` |
 | Castigos | `#modalMultiConf` | Base / interna | **Cierra / se ignora** | `mostrarModalBase` |
 | Castigos | `#modalUnir` | Base / interna | **Cierra / se ignora** | `mostrarModalBase` |

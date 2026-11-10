@@ -117,18 +117,20 @@ No se movieron porque no son solo lectura: dependen del `doc.id` para poder escr
 
 - `oficialesAprobados({ conCortesia: true })` devuelve además los packs **vencidos**
   que tienen cortesía sin usar (`graciaUsada === false`), marcados con
-  `cortesia: true`. Sin la opción sigue devolviendo solo los vigentes (Roles,
-  Castigos y packs de personajes no cambian).
+  `cortesia: true`. Sin la opción sigue devolviendo solo los vigentes (Roles y
+  packs de personajes no cambian).
 - `consumirCortesia(item)` marca `graciaUsada: true` y `graciaFecha`. Es la única
   escritura, y usa solo esos dos campos, como permiten las reglas de la taquilla.
-- **Guiadas y Encuentros** piden los oficiales con cortesía: la actividad se ve y
-  se puede jugar. Al **seleccionarla** —sola o dentro de MultiActividades— sale
-  el mismo aviso de cortesía que al entrar con la licencia vencida ("Su acceso
-  venció… les obsequiamos este último acceso"). Si por alguna ruta no salió al
-  seleccionar, sale al arrancar.
-- La cortesía se gasta al **arrancar la partida** (después de "Aceptar y jugar"),
-  no al abrir la lista, para que no se pierda si se sale antes.
-- Desde ese momento la actividad desaparece de las dos listas, y la Tienda deja de
+- **Guiadas, Encuentros y Castigos** piden los oficiales con cortesía: la
+  actividad se ve y se puede jugar. Al **seleccionarla** —sola o dentro de
+  MultiActividades— sale el mismo aviso de cortesía que al entrar con la licencia
+  vencida ("Su acceso venció… les obsequiamos este último acceso"). Si por alguna
+  ruta no salió al seleccionar, sale al arrancar.
+- La cortesía de un **pack oficial** se gasta al **arrancar la partida**, no al
+  abrir la lista, para que no se pierda si se sale antes.
+- La cortesía del **juego base** de cada pantalla se gasta al **entrar**, como ya
+  hacían Guiadas y Encuentros.
+- Desde que se gasta, la actividad desaparece de las listas y la Tienda deja de
   ofrecer "Abrir última vez" (su `graciaDisponible()` exige `graciaUsada === false`).
 
 ### Detalle de la instancia de Firebase
