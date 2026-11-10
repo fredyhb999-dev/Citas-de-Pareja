@@ -68,3 +68,8 @@ secciones del Centro, y de ahí se entra a ver todo el catálogo.
   actividad. Se reinstala una vez y queda igual en las dos.
 - Si el pack **no trae tomas sugeridas**, se dejan las tomas que la pareja ya
   tenía.
+
+**Pendiente (nov-2026):** un pack vigente con el juego base vencido no se puede
+usar, pero tampoco se borra. Falta decidir si el pack es permanente o
+suscripción, si su vencimiento se alinea con el del base y qué texto muestra la
+Tienda. Detalle en `General/Modulo-Acceso.md`.

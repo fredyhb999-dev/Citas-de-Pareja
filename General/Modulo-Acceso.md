@@ -162,6 +162,22 @@ No se movieron porque no son solo lectura: dependen del `doc.id` para poder escr
   apareciendo con “último acceso” hasta que la cortesía se gaste. Solo se borra
   si la solicitud está **revocada o negada**.
 
+### Pendiente: pack vigente con el juego base vencido (nov-2026)
+
+- Hoy, si el juego base vence y el pack sigue vigente, el pack **no se borra**,
+  pero no se puede usar: la Tienda muestra “Necesitas [juego base]” y el juego
+  bloquea la entrada.
+- **Riesgo:** si el pack también tiene fecha, su reloj sigue corriendo mientras
+  el base está vencido; pueden perder tiempo pagado.
+- **Decisión pendiente:**
+  1. ¿El pack es compra única (permanente) o suscripción?
+  2. Si es suscripción, ¿su vencimiento se alinea con el del juego base?
+  3. ¿La Tienda muestra “Pack vigente, pero necesitas renovar el juego base” en
+     vez del genérico “Necesitas X”?
+  4. Lo mismo aplica a los **packs de personajes**, junto con la decisión de su
+     cortesía.
+- **No se implementa nada hasta decidirlo.**
+
 ### Detalle de la instancia de Firebase
 
 Antes `index.html` usaba el nombre `"taquilla-menu"` y las otras tres páginas `"taquilla"`. Ahora **todas usan `"taquilla"`** (la constante `APP_TAQ` del módulo). Misma configuración, así que es equivalente, pero hay una instancia menos.
