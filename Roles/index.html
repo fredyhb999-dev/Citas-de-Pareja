@@ -76,6 +76,8 @@
     letter-spacing:.1em; text-transform:uppercase; color:var(--fg-muted);
     border:1px solid var(--card-border); border-radius:8px; padding:2px 7px; }
   .selTag.c{ color:var(--teal); border-color:var(--teal); }
+  /* Distintivo de personaje oficial: el mismo 🏅 pequeño de Guiadas y Encuentros. */
+  .oficialTag{ margin-left:4px; font-family:'Inter',sans-serif; font-weight:400; font-size:.8rem; }
   #selCuenta{ font-size:.8rem; color:var(--fg-muted); text-align:center; }
   #selCuenta b{ font-family:'Chakra Petch',sans-serif; }
   #miCuenta{ font-size:.9rem; margin-top:14px; }
@@ -794,7 +796,7 @@ import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot, que
 import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase, cargarUsuarios, leerConfigGuardada, nombrePorId, fijarUsuarios, retirarInvitadosDeUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
-import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, escucharItem } from "../acceso.js";
+import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, escucharItem, oficialesAprobados } from "../acceso.js";
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
 import { encenderFuegos, apagarFuegos } from "../fuegos.js";
 import { confirmar, aviso } from "../confirmar.js";
@@ -802,7 +804,7 @@ import { montarFavor } from "../favor.js";
 // Pantalla despierta mientras hay partida en curso.
 import { mantenerDespierto, soltarDespierto } from "../despierto.js";
 // Packs de personajes: se instalan solos al abrir Roles (perfil base).
-import { instalarPacksPersonajes } from "../packsPersonajes.js";
+import { instalarPacksPersonajes, leerPacksInstalados } from "../packsPersonajes.js";
 try{ montarFavor(); }catch(e){}
 
 function mezclar(a){
@@ -1002,6 +1004,89 @@ function indexarPersonajes(){
 }
 
 function listaSegura(k){ return Array.isArray(personajes[k]) ? personajes[k] : []; }
+
+// ---------- personajes oficiales (packs con licencia) ----------
+// Un personaje es OFICIAL si su pack es oficial, está activo y tiene licencia
+// válida (igual que Guiadas y Encuentros), y el personaje sigue IDÉNTICO al del
+// pack: si la pareja edita cualquier campo, pierde el 🏅. No se guarda nada en
+// el personaje; se calcula al mostrar (General/Roles.md).
+let packsOficialesPersonajes = [];
+let mapaPacksInstalados = {};
+let idsOficiales = new Set();
+let oficialesCargados = false;
+
+const CAMPOS_PERSONAJE = ["personaje", "situacion", "gancho", "derechos", "si_quieres", "imagen"];
+
+function textoPersonaje(p, k){
+  const v = (p && p[k] != null) ? String(p[k]) : "";
+  return v.trim();
+}
+
+function mismoContenidoPersonaje(a, b){
+  if(!a || !b) return false;
+  return CAMPOS_PERSONAJE.every(k=> textoPersonaje(a, k) === textoPersonaje(b, k));
+}
+
+// Rehace el set de ids oficiales con el contenido que hay AHORA en memoria.
+function recalcularOficiales(){
+  idsOficiales = new Set();
+  if(!packsOficialesPersonajes.length) return;
+  packsOficialesPersonajes.forEach(pack=>{
+    const reg = mapaPacksInstalados[pack.id];
+    const slots = (reg && Array.isArray(reg.pares)) ? reg.pares : [];
+    const pares = Array.isArray(pack.pares) ? pack.pares : [];
+    const total = Math.min(slots.length, pares.length);
+    for(let k = 0; k < total; k++){
+      const slot = slots[k] || {};
+      const par = pares[k] || {};
+      const normal = porId.get(String(slot.normalId));
+      const contra = porId.get(String(slot.contraparteId));
+      if(normal && mismoContenidoPersonaje(normal, par.normal)) idsOficiales.add(String(normal.id));
+      if(contra && mismoContenidoPersonaje(contra, par.contraparte)) idsOficiales.add(String(contra.id));
+    }
+  });
+}
+
+function esOficial(p){ return !!(p && idsOficiales.has(String(p.id))); }
+
+// Lee los packs oficiales con licencia y el mapa de instalados. Se llama al
+// entrar y, si todavía no se había leído, al abrir el engrane.
+async function cargarOficiales(){
+  try{
+    const todos = await oficialesAprobados();
+    packsOficialesPersonajes = (todos || []).filter(p=> p && p.tipo === "personajes" && p.activo !== false);
+  }catch(e){ packsOficialesPersonajes = []; }
+  try{ mapaPacksInstalados = await leerPacksInstalados(db); }
+  catch(e){ mapaPacksInstalados = {}; }
+  oficialesCargados = true;
+  recalcularOficiales();
+  // Si la pantalla de selección ya estaba abierta, se repinta con los 🏅 y el
+  // orden nuevo (la carga puede terminar después de que el usuario entre).
+  try{ if(typeof pintarSeleccion === "function" && selCabezas && selCabezas.length) pintarSeleccion(); }catch(e){}
+}
+
+async function asegurarOficiales(){
+  if(!oficialesCargados) await cargarOficiales();
+  else recalcularOficiales();
+}
+
+// Orden de las listas: oficiales primero y, dentro de cada grupo, alfabético
+// sin distinguir mayúsculas ni acentos. No toca el arreglo guardado.
+function ordenPersonajes(a, b){
+  const oa = esOficial(a) ? 0 : 1;
+  const ob = esOficial(b) ? 0 : 1;
+  if(oa !== ob) return oa - ob;
+  return normSel(a && a.personaje).localeCompare(normSel(b && b.personaje), "es");
+}
+
+// El 🏅 pegado al nombre, como en Guiadas y Encuentros.
+function ponerBadgeOficial(el, p){
+  if(!esOficial(p)) return;
+  const tag = document.createElement("small");
+  tag.className = "oficialTag";
+  tag.textContent = "🏅";
+  el.appendChild(tag);
+}
 
 // ¿Ya se leyeron los personajes de la base? El invitado tambien los necesita:
 // sin esto, su pantalla de seleccion salia VACIA ("No hay nada en esta lista"),
@@ -1242,11 +1327,15 @@ async function entrar(){
           const res = await instalarPacksPersonajes(db);
           if(res && res.instalados.length){
             await cargarPersonajes();
+            await cargarOficiales();
             pintarInicio();
             aviso("Se instalaron los personajes de: " + res.instalados.join(", "));
             return;
           }
         }catch(e){}
+        // El 🏅 de las listas necesita saber qué packs siguen con licencia y
+        // qué personajes siguen idénticos a los del pack.
+        try{ await cargarOficiales(); }catch(e){}
         try{ pintarInicio(); }catch(e){}
       }, ()=>{});
     }else{
@@ -1255,6 +1344,7 @@ async function entrar(){
       // El invitado TAMBIEN necesita el contenido: si le toca escoger tarjetas
       // (seleccion), la lista sale de aqui.
       cargarPersonajes();
+      try{ cargarOficiales(); }catch(e){}
     }
     try{ escucharSesion(); }catch(e){}
     try{ escucharSeleccion(); }catch(e){}
@@ -3073,8 +3163,11 @@ function pintarSeleccionDuelo(){
   const box = document.getElementById("selBox");
   box.innerHTML = "";
   const filtroDuelo = normSel(selFiltro);
-  paresDisponibles(selLadoDuelo).forEach(it=>{
-    if(filtroDuelo && normSel(it.o.personaje).indexOf(filtroDuelo) < 0) return;
+  recalcularOficiales();
+  paresDisponibles(selLadoDuelo)
+    .filter(it=> !filtroDuelo || normSel(it.o.personaje).indexOf(filtroDuelo) >= 0)
+    .sort((a, b)=> ordenPersonajes(a.o, b.o))
+    .forEach(it=>{
     const fila = document.createElement("div");
     fila.className = "filaSel";
     const chk = document.createElement("input");
@@ -3087,6 +3180,7 @@ function pintarSeleccionDuelo(){
     const nom = document.createElement("span");
     nom.className = "selNombre";
     nom.textContent = it.o.personaje || "(sin nombre)";
+    ponerBadgeOficial(nom, it.o);
     const tag = document.createElement("span");
     tag.className = "selTag";
     tag.textContent = "Normal";
@@ -3322,8 +3416,11 @@ function pintarSeleccion(){
   const box = document.getElementById("selBox");
   box.innerHTML = "";
   const filtroSel = normSel(selFiltro);
-  selPoolDe(cab).forEach(it=>{
-    if(filtroSel && normSel(it.p.personaje).indexOf(filtroSel) < 0) return;
+  recalcularOficiales();
+  selPoolDe(cab)
+    .filter(it=> !filtroSel || normSel(it.p.personaje).indexOf(filtroSel) >= 0)
+    .sort((a, b)=> ordenPersonajes(a.p, b.p))
+    .forEach(it=>{
     const fila = document.createElement("div");
     fila.className = "filaSel";
     const chk = document.createElement("input");
@@ -3333,6 +3430,7 @@ function pintarSeleccion(){
     const nom = document.createElement("span");
     nom.className = "selNombre";
     nom.textContent = it.p.personaje || "(sin nombre)";
+    ponerBadgeOficial(nom, it.p);
     const tag = document.createElement("span");
     tag.className = "selTag" + (it.c ? " c" : "");
     tag.textContent = it.c ? "Contraparte" : "Normal";
@@ -4121,6 +4219,7 @@ function filaPersonaje(i, p, clave){
   const caja = document.createElement("div");
   caja.className = "optVer";
   caja.textContent = p.personaje || "(sin nombre)";
+  ponerBadgeOficial(caja, p);
   caja.onclick = ()=>{ abrirDetalle(clave, i); };
   fila.appendChild(caja);
   // En contrapartes se ve a cuál personaje pertenece (o que falta asignarla).
@@ -4140,6 +4239,7 @@ function filaPersonaje(i, p, clave){
 }
 function pintarCfg(){
   const clave = claveCfg();
+  recalcularOficiales();
   // Las dos pestañas de arriba son los usuarios. El administrador ve las dos (y
   // con eso cambia de lado); los demás usuarios del grupo solo la suya.
   const puede = puedeVerOtroLado();
@@ -4183,10 +4283,14 @@ function pintarCfg(){
       box.appendChild(filaVariante(i, txt));
     });
   }else{
-    listaSegura(clave).forEach((p, i)=>{
-      if(filtro && String((p && p.personaje) || "").toLowerCase().indexOf(filtro) < 0) return;
-      box.appendChild(filaPersonaje(i, p, clave));
-    });
+    // Oficiales primero y, dentro de cada grupo, alfabéticas. Se ordena una
+    // copia: los índices que se pasan a `filaPersonaje` siguen siendo los de la
+    // lista guardada, así editar y borrar apuntan al personaje correcto.
+    const items = listaSegura(clave)
+      .map((p, i)=>({ p: p, i: i }))
+      .filter(it=> !filtro || String((it.p && it.p.personaje) || "").toLowerCase().indexOf(filtro) >= 0)
+      .sort((a, b)=> ordenPersonajes(a.p, b.p));
+    items.forEach(it=> box.appendChild(filaPersonaje(it.i, it.p, clave)));
   }
   if(!box.children.length){
     const vacio = document.createElement("div");
@@ -4260,14 +4364,17 @@ function llenarSelectPar(valor){
   const sel = document.getElementById("pjPar");
   const dueno = otroLado(detalle.clave.charAt(1));
   sel.innerHTML = "";
+  recalcularOficiales();
   const ninguna = document.createElement("option");
   ninguna.value = "";
   ninguna.textContent = "— sin asignar —";
   sel.appendChild(ninguna);
-  listaSegura("U" + dueno).forEach(n=>{
+  listaSegura("U" + dueno).slice().sort(ordenPersonajes).forEach(n=>{
     const o = document.createElement("option");
     o.value = String(n.id);
-    o.textContent = (n.personaje || "(sin nombre)") + "   (#" + n.id + ")";
+    o.textContent = (n.personaje || "(sin nombre)")
+      + (esOficial(n) ? " 🏅" : "")
+      + "   (#" + n.id + ")";
     sel.appendChild(o);
   });
   sel.value = (valor === null || valor === undefined) ? "" : String(valor);
@@ -4553,7 +4660,7 @@ async function abrirCfg(){
   pintarCfg();
   configVista = true;
   ver("vistaConfig");
-  try{ await cargarPersonajes(); pintarCfg(); }catch(e){}
+  try{ await cargarPersonajes(); await asegurarOficiales(); pintarCfg(); }catch(e){}
 }
 document.getElementById("btnCfg").onclick = ()=>{ abrirCfg(); };
 

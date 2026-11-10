@@ -729,3 +729,20 @@ abajo) y "Toca la foto para ampliar" (boca arriba), en todos los modos.
 - **Un resumen de conversacion no lee estos archivos.** Si una sesion se corta
   por limite de tokens, lo que se pierde es el detalle fino. Este archivo es la
   red de seguridad: cualquier sesion nueva debe empezar leyendolo.
+
+## Personajes oficiales y orden de las listas (nov-2026)
+
+- Un personaje lleva el **🏅** (el mismo emoji pequeño de Guiadas y Encuentros) si
+  su pack es **oficial, activo y con licencia válida**, y el personaje sigue
+  **idéntico al del pack** en nombre, situación, gancho, derechos, si quieres e
+  imagen. Si la pareja edita cualquiera de esos campos, deja de ser oficial; si lo
+  restaura (o reinstala el pack), recupera el 🏅. Cambiar solo el enlace de pareja
+  (`par`) no le quita el 🏅.
+- No se guarda nada en el personaje: se calcula al mostrar con `packsInstalados` y
+  el contenido del pack (de ahí la lectura en Roles).
+- El 🏅 sale **solo en las listas**: engrane (Personajes y Contrapartes),
+  Seleccionar, Duelo de seducción y el desplegable de contraparte. No va en la
+  carta de la partida ni en el formulario de edición.
+- Esas listas se ordenan **oficiales primero** y, dentro de cada grupo,
+  **alfabético** sin distinguir mayúsculas ni acentos. Es solo orden de pantalla:
+  la lista guardada no se reordena ni cambian los ids.

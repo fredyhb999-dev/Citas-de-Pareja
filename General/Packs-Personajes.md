@@ -204,8 +204,8 @@ Campo nuevo, junto a `U1/U2/C1/C2/ESP`:
 - Es lo que permite reinstalar sin adivinar y sin tocar los personajes que la pareja
   agregó por su cuenta.
 - Es pequeño; no afecta el límite de 1 MiB.
-- `packsInstalados` **no** se carga en memoria en Roles; el módulo lee el documento
-  directamente.
+- `packsInstalados` se lee en Roles **solo para mostrar el 🏅** de los personajes
+  oficiales (ver `General/Roles.md`); el resto lo sigue leyendo el módulo.
 
 ### 4.3 Personaje instalado
 
