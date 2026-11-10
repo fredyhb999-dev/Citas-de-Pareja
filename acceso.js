@@ -206,7 +206,9 @@ export function escucharItem(item, hooks){
       try{
         const cod = leerLicencias()[item];
         if(cod){
-          const mio = await verificarCodigo(cod);
+          // `verificarFirma` también detecta códigos vencidos: así una licencia
+          // vencida revocada se quita y dispara el bloqueo de la pantalla.
+          const mio = await verificarFirma(cod);
           if(mio){
             const rev = docs.find(d=>{
               const s = d.data();
@@ -243,7 +245,10 @@ export function escucharItem(item, hooks){
 
 // Revisa TODO el catálogo de una sola vez. Es lo que usan el índice (para
 // quitar la tarjeta del menú) y la Tienda (para marcar "ya tienes").
-//   hooks.cambio(licencias)  → el objeto de códigos cambió: redibujar
+//   hooks.cambio(licencias)  → el catálogo/solicitudes cambió: redibujar
+// Se avisa SIEMPRE: una revocación, una reaprobación o el gasto de una cortesía
+// pueden no cambiar el código local (una licencia vencida no pasa
+// `verificarCodigo`), pero el menú y la Tienda sí tienen que actualizarse.
 export function escucharCatalogo(hooks){
   const h = hooks || {};
   let parar = null;
@@ -265,10 +270,13 @@ export function escucharCatalogo(hooks){
         const s = d.data();
 
         // Revocado/negado: quitar los códigos locales de ese correo+item.
+        // Se usa `verificarFirma` (no `verificarCodigo`) para poder quitar
+        // también los códigos VENCIDOS: si no, la revocación de una licencia
+        // vencida no borraba nada y el menú no se enteraba.
         if((s.estado === "revocado" || s.estado === "negado") && s.email){
           try{
             for(const k of Object.keys(lic)){
-              const pay = await verificarCodigo(lic[k]);
+              const pay = await verificarFirma(lic[k]);
               if(pay && mismoEmail(pay.email, s.email) && pay.item === s.item){
                 delete lic[k];
                 cambio = true;
@@ -289,10 +297,10 @@ export function escucharCatalogo(hooks){
         }
       }
 
-      if(cambio || JSON.stringify(lic) !== antes){
-        guardarLicencias(lic);
-        if(cambio){ try{ h.cambio && h.cambio(lic); }catch(e){} }
-      }
+      if(cambio || JSON.stringify(lic) !== antes) guardarLicencias(lic);
+      // Avisar SIEMPRE: revocar, reaprobar o gastar una cortesía no siempre
+      // cambia el código local, pero el menú y la Tienda sí deben redibujarse.
+      try{ h.cambio && h.cambio(lic); }catch(e){}
     }, ()=>{});
   }catch(e){}
   return function(){ try{ if(parar) parar(); }catch(e){} };

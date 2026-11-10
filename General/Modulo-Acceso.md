@@ -31,7 +31,7 @@ Motivo real del refactor: con la lógica en 8 lugares, cualquier corrección del
 | `oficialesAprobados([opts])` | Packs oficiales autorizados. Con `{ conCortesia: true }` incluye también los vencidos con cortesía sin usar (marcados `cortesia: true`) |
 | `consumirCortesia(item)` | Gasta la cortesía de un item: pone `graciaUsada: true` y `graciaFecha` |
 | `escucharItem(item, hooks)` | Escucha **un** item. `hooks.revocado()` / `hooks.aprobado()`. Devuelve la función para cancelar |
-| `escucharCatalogo(hooks)` | Revisa **todo** el catálogo. `hooks.cambio(licencias)` |
+| `escucharCatalogo(hooks)` | Revisa **todo** el catálogo. Avisa `cambio` cuando cambia el código local **o cualquier estado relevante** de las solicitudes (revocada, negada, aprobada o `graciaUsada`) |
 | `graciasDisponibles()` | Mapa `"item\|email"` → `true` de cortesías sin usar |
 | `nuevosSinPedir(packs)` | Mapa `{idDelPack: true}` de lo que está **nuevo Y sin pedir**. Ver *El aviso de "nuevo"* |
 
@@ -148,6 +148,19 @@ No se movieron porque no son solo lectura: dependen del `doc.id` para poder escr
   validar antes de crear la solicitud.
 - El panel no cambia: si la app no deja pedir, la solicitud no llega. Pueden
   quedar solicitudes viejas pendientes, que se rechazan desde el panel.
+
+### Revocación de licencias vencidas (nov-2026)
+
+- `escucharCatalogo()` y `escucharItem()` usan `verificarFirma` para reconocer
+  también los códigos **vencidos** al revocar o negar. Antes solo miraban los
+  vigentes: una licencia vencida revocada seguía guardada en el teléfono y el
+  menú no se enteraba hasta refrescar.
+- El menú y la Tienda se redibujan con cada cambio de solicitud: revocada,
+  negada, aprobada o con la cortesía gastada. No solo cuando cambia el código
+  local.
+- Un pack **aprobado, vencido y con cortesía sin usar** NO se borra: sigue
+  apareciendo con “último acceso” hasta que la cortesía se gaste. Solo se borra
+  si la solicitud está **revocada o negada**.
 
 ### Detalle de la instancia de Firebase
 
