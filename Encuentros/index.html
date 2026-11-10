@@ -558,6 +558,8 @@ let finMostrado = false;
 let pedidosTomas = null;
 // Actividad que espera a que se acepte el aviso de cortesía para abrir sus tomas.
 let cortesiaTomasPendiente = null;
+// ¿El aviso de cortesía ya salió en este flujo? Evita repetirlo al arrancar.
+let cortesiaAvisada = false;
 // Se pone true cuando la ultima ronda acaba la partida sola, para avisarle a
 // la sala despues de la transaccion (dentro de ella no se puede).
 let terminoLaPartida = false;
@@ -651,9 +653,9 @@ async function chequearPendiente(esMulti, actividad){
 async function iniciarSingle(nombre){
   if(await chequearPendiente(false, nombre)) return;
   // Si es el último acceso, primero sale el aviso; las tomas se abren al aceptar.
-  if(mapaDocs[nombre] && mapaDocs[nombre].cortesia && !mapaDocs[nombre].avisoCortesia){
-    mapaDocs[nombre].avisoCortesia = true;
+  if(mapaDocs[nombre] && mapaDocs[nombre].cortesia){
     cortesiaTomasPendiente = nombre;
+    cortesiaAvisada = true;
     mostrarGracia();
     return;
   }
@@ -1025,9 +1027,6 @@ window.addEventListener("popstate", (e)=>{
     modalPasoId = null;
     const el = id ? document.getElementById(id) : null;
     if(el) el.style.display = "none";
-    if(cortesiaTomasPendiente && mapaDocs[cortesiaTomasPendiente]){
-      mapaDocs[cortesiaTomasPendiente].avisoCortesia = false;
-    }
     cortesiaTomasPendiente = null;
     return;
   }
@@ -1036,6 +1035,7 @@ window.addEventListener("popstate", (e)=>{
   if(tomasHist){
     tomasHist = false;
     cerrarModal("modalTomas");
+    cortesiaAvisada = false;
     return;
   }
   if(modalAbierto()){
@@ -1202,19 +1202,19 @@ async function gastarCortesias(nombres){
     if(!gastada) continue;
     gastadas++;
     info.cortesia = false;
-    // Aviso de último acceso: si no salió al seleccionar, sale aquí.
-    avisarCortesia([nombre]);
     // Que no reaparezca si la lista se repinta desde la copia en memoria.
     if(Array.isArray(cacheActs)) cacheActs = cacheActs.filter(n=> n !== nombre);
   }
+  // Si el aviso no salió al seleccionar (otra ruta), sale aquí.
+  if(gastadas && !cortesiaAvisada) mostrarGracia();
+  cortesiaAvisada = false;
   return gastadas;
 }
-// Muestra el aviso de cortesía una sola vez por actividad en esta sesión.
+// Aviso de último acceso al seleccionar una actividad oficial vencida.
 function avisarCortesia(nombres){
   for(const nombre of (nombres || [])){
-    const info = mapaDocs[nombre];
-    if(!info || info.avisoCortesia) continue;
-    info.avisoCortesia = true;
+    if(!mapaDocs[nombre]) continue;
+    cortesiaAvisada = true;
     mostrarGracia();
     return true;
   }
@@ -1323,18 +1323,16 @@ function multiToggle(nombre, on){
     if(mapaDocs[nombre] && mapaDocs[nombre].cortesia) avisarCortesia([nombre]);
   }else{
     multiSel = multiSel.filter(x=>x !== nombre);
-    // Si la quita y la vuelve a elegir, que el aviso pueda salir otra vez.
-    if(mapaDocs[nombre]) mapaDocs[nombre].avisoCortesia = false;
   }
   multiRefrescar();
 }
 document.getElementById("btnMulti").onclick = async ()=>{
   if(await chequearPendiente(true)) return;
-  multiModo = true; multiSel = []; multiRefrescar();
+  multiModo = true; multiSel = []; cortesiaAvisada = false; multiRefrescar();
   if(cacheActs && cacheConteos) dibujarLista("listaActs", cacheActs, cacheConteos);
 };
 document.getElementById("btnMultiCancel").onclick = ()=>{
-  multiModo = false; multiSel = []; multiRefrescar();
+  multiModo = false; multiSel = []; cortesiaAvisada = false; multiRefrescar();
   if(cacheActs && cacheConteos) dibujarLista("listaActs", cacheActs, cacheConteos);
 };
 document.getElementById("btnMultiGo").onclick = ()=>{
@@ -1674,6 +1672,8 @@ function cerrarTomas(){
   tomasHist = false;
 }
 document.getElementById("btnTomasBack").onclick = ()=>{
+  // Se cancela: el aviso puede volver a salir en la próxima selección.
+  cortesiaAvisada = false;
   cerrarTomas();
   if(pedidosTomas && pedidosTomas.length > 1){ abrirModal("modalMulti2"); }
 };

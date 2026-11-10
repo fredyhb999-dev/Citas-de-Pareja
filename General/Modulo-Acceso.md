@@ -122,10 +122,10 @@ No se movieron porque no son solo lectura: dependen del `doc.id` para poder escr
 - `consumirCortesia(item)` marca `graciaUsada: true` y `graciaFecha`. Es la única
   escritura, y usa solo esos dos campos, como permiten las reglas de la taquilla.
 - **Guiadas y Encuentros** piden los oficiales con cortesía: la actividad se ve y
-  se puede jugar. Al **seleccionarla** sale el mismo aviso de cortesía que al
-  entrar con la licencia vencida ("Su acceso venció… les obsequiamos este último
-  acceso"); si por alguna ruta no salió ahí, sale al arrancar. El aviso es una
-  sola vez por actividad en la sesión.
+  se puede jugar. Al **seleccionarla** —sola o dentro de MultiActividades— sale
+  el mismo aviso de cortesía que al entrar con la licencia vencida ("Su acceso
+  venció… les obsequiamos este último acceso"). Si por alguna ruta no salió al
+  seleccionar, sale al arrancar.
 - La cortesía se gasta al **arrancar la partida** (después de "Aceptar y jugar"),
   no al abrir la lista, para que no se pierda si se sale antes.
 - Desde ese momento la actividad desaparece de las dos listas, y la Tienda deja de

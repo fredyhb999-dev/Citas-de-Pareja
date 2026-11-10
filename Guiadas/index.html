@@ -730,9 +730,6 @@ window.addEventListener("popstate", (e)=>{
     modalPasoId = null;
     const el = id ? document.getElementById(id) : null;
     if(el) el.style.display = "none";
-    if(cortesiaTomasPendiente && mapaDocs[cortesiaTomasPendiente]){
-      mapaDocs[cortesiaTomasPendiente].avisoCortesia = false;
-    }
     cortesiaTomasPendiente = null;
     return;
   }
@@ -742,6 +739,7 @@ window.addEventListener("popstate", (e)=>{
     tomasHist = false;
     document.getElementById("modalTomas").style.display = "none";
     tomasActGuia = null;
+    cortesiaAvisada = false;
     ver("vistaLista", false);
     return;
   }
@@ -934,19 +932,19 @@ async function gastarCortesias(nombres){
     if(!gastada) continue;
     gastadas++;
     info.cortesia = false;
-    // Aviso de último acceso: si no salió al seleccionar, sale aquí.
-    avisarCortesia([nombre]);
     // Que no reaparezca si la lista se repinta desde la copia en memoria.
     if(Array.isArray(cacheActs)) cacheActs = cacheActs.filter(n=> n !== nombre);
   }
+  // Si el aviso no salió al seleccionar (otra ruta), sale aquí.
+  if(gastadas && !cortesiaAvisada) mostrarGracia();
+  cortesiaAvisada = false;
   return gastadas;
 }
-// Muestra el aviso de cortesía una sola vez por actividad en esta sesión.
+// Aviso de último acceso al seleccionar una actividad oficial vencida.
 function avisarCortesia(nombres){
   for(const nombre of (nombres || [])){
-    const info = mapaDocs[nombre];
-    if(!info || info.avisoCortesia) continue;
-    info.avisoCortesia = true;
+    if(!mapaDocs[nombre]) continue;
+    cortesiaAvisada = true;
     mostrarGracia();
     return true;
   }
@@ -1089,9 +1087,9 @@ async function jugarDirecto(nombre){
   }
   // Paso de tomas (normal): siempre pregunta, precargado y editable (igual que Encuentros).
   // Si es el último acceso, primero sale el aviso; las tomas se abren al aceptar.
-  if(mapaDocs[nombre] && mapaDocs[nombre].cortesia && !mapaDocs[nombre].avisoCortesia){
-    mapaDocs[nombre].avisoCortesia = true;
+  if(mapaDocs[nombre] && mapaDocs[nombre].cortesia){
     cortesiaTomasPendiente = nombre;
+    cortesiaAvisada = true;
     mostrarGracia();
     return;
   }
@@ -1116,6 +1114,8 @@ function leerProg(){
 let tomasActGuia = null;
 // Actividad que espera a que se acepte el aviso de cortesía para abrir sus tomas.
 let cortesiaTomasPendiente = null;
+// ¿El aviso de cortesía ya salió en este flujo? Evita repetirlo al arrancar.
+let cortesiaAvisada = false;
 let tomasHist = false;
 function abrirTomasGuia(nombre){
   tomasActGuia = nombre;
@@ -1149,6 +1149,8 @@ function cerrarTomasGuia(){
   ver("vistaLista", false);
 }
 document.getElementById("btnTomasBackGuia").onclick = ()=>{
+  // Se cancela: el aviso puede volver a salir en la próxima selección.
+  cortesiaAvisada = false;
   cerrarTomasGuia();
 };
 document.getElementById("btnTomasOkGuia").onclick = async ()=>{
@@ -1380,8 +1382,6 @@ function multiToggle(nombre, on){
     if(mapaDocs[nombre] && mapaDocs[nombre].cortesia) avisarCortesia([nombre]);
   }else{
     multiSel = multiSel.filter(x=>x !== nombre);
-    // Si la quita y la vuelve a elegir, que el aviso pueda salir otra vez.
-    if(mapaDocs[nombre]) mapaDocs[nombre].avisoCortesia = false;
   }
   multiRefrescar();
 }
@@ -1414,6 +1414,7 @@ async function multiAbrir(){
 async function multiAbrirSel(){
   multiModo = true;
   multiSel = [];
+  cortesiaAvisada = false;
   multiRefrescar();
   if(cacheActs && cacheConteos) dibujarLista("listaActs", "jugar", cacheActs, cacheConteos);
   else await pintarLista("listaActs", "jugar");
@@ -1421,6 +1422,7 @@ async function multiAbrirSel(){
 async function multiSalir(){
   multiModo = false;
   multiSel = [];
+  cortesiaAvisada = false;
   multiRefrescar();
   if(cacheActs && cacheConteos) dibujarLista("listaActs", "jugar", cacheActs, cacheConteos);
   else await pintarLista("listaActs", "jugar");
