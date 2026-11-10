@@ -100,7 +100,7 @@
   <select id="fSeccion" title="Sección del catálogo">
     <option value="experiencias">Sección: Experiencias en Pareja</option>
     <option value="juegos">Sección: Juegos</option>
-    <option value="extras">Sección: Extras</option>
+    <option value="extras">Sección: Expansiones</option>
   </select>
   <input type="date" id="fNuevo">
   <label class="chk"><input type="checkbox" id="fActivo" checked> Activo en catálogo</label>
@@ -180,7 +180,7 @@ function msg(t, ok){
 }
 // Nombre corto de la sección del catálogo, para la lista.
 function nombreSeccion(s){
-  return s === "juegos" ? "Juegos" : (s === "extras" ? "Extras" : "Experiencias");
+  return s === "juegos" ? "Juegos" : (s === "extras" ? "Expansiones" : "Experiencias");
 }
 
 const NIVELES = [
