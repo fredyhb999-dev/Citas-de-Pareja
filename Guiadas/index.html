@@ -272,7 +272,7 @@ import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, migrarActividadesAId, leerDocActividad, nombrePorId, ladoDeUsuario, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
-import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
+import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, consumirCortesia, escucharItem } from "../acceso.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 // Fuegos de celebracion al acabar la cita (igual que Elecciones Peligrosas).
 import { encenderFuegos, apagarFuegos } from "../fuegos.js";
@@ -355,6 +355,8 @@ async function entrar(){
         });
         if(docGracia){
           try{ await updateDoc(doc(tdb, "solicitudes", docGracia.id), { graciaUsada: true, graciaFecha: serverTimestamp() }); }catch(e){}
+          // Siembra el contenido de las oficiales (incluidas las que entran por cortesía).
+          try{ await sincronizarOficiales(); }catch(e){}
           pintarLista("listaActs", "jugar");
           ver("vistaLista", false);
           mostrarGracia();
@@ -535,7 +537,7 @@ async function avanzarSesion(){
 }
 async function iniciarSesionCompartida(datosSesion){
   refrescarMiLado();
-  if(!esAdmin()){ aviso("En 'Cada quien en el suyo' la inicia " + nombreAdmin() + " (administrador)."); return; }
+  if(!esAdmin()){ aviso("En 'Cada quien en el suyo' la inicia " + nombreAdmin() + " (administrador)."); return false; }
   jugandoCompartido = true;
   const lista = datosSesion.lista || [];
   // Se empieza en el paso 0, sea de quien sea: con turnos por persona, saltar
@@ -555,6 +557,9 @@ async function iniciarSesionCompartida(datosSesion){
     actualizadaEn: serverTimestamp()
   };
   try{ await setDoc(sesionRef(), nueva); }catch(e){}
+  // La cortesía se gasta solo si la partida compartida de verdad arrancó
+  // (si no es administrador, ya salió arriba sin gastarla).
+  await gastarCortesias(datosSesion.cortesias);
   listaJuego = lista;
   paso = p;
   actividad = nueva.titulo;
@@ -562,6 +567,7 @@ async function iniciarSesionCompartida(datosSesion){
   document.getElementById("plTitulo").textContent = actividad || "Citas Guiadas";
   sidMostrado = nueva.sid;
   mostrarPlayer();
+  return true;
 }
 async function cerrarSesion(){
   try{ await setDoc(sesionRef(), { activa: false, actualizadaEn: serverTimestamp() }, { merge: true }); }catch(e){}
@@ -817,7 +823,7 @@ function docDe(nombre){
 // oficialesAprobados viene de ../acceso.js.
 async function sincronizarOficiales(){
   try{
-    const ofs = (await oficialesAprobados()).filter(p => p.ruta === "Guiadas");
+    const ofs = (await oficialesAprobados({ conCortesia: true })).filter(p => p.ruta === "Guiadas");
     for(const p of ofs){
       try{
         const ref = doc(db, "nivelesActividad", p.id);
@@ -886,12 +892,12 @@ async function cargarActividades(){
   });
 
   try{
-    const ofs = (await oficialesAprobados()).filter(p => p.ruta === "Guiadas");
+    const ofs = (await oficialesAprobados({ conCortesia: true })).filter(p => p.ruta === "Guiadas");
     const vistos = new Set(base.map(n=>(n || "").toLowerCase()));
     ofs.forEach(p=>{
       const t = (p.titulo || p.id).trim();
       if(t && !vistos.has(t.toLowerCase())){ vistos.add(t.toLowerCase()); base.push(t); }
-      mapaDocs[t] = { docId: p.id, oficial: true };
+      mapaDocs[t] = { docId: p.id, oficial: true, cortesia: !!p.cortesia };
     });
   }catch(e){}
   return base;
@@ -909,6 +915,19 @@ function compararActividades(a, b){
   const ob = (mapaDocs[b] && mapaDocs[b].oficial) ? 0 : 1;
   if(oa !== ob) return oa - ob;
   return normOrdenAct(a).localeCompare(normOrdenAct(b), "es");
+}
+// Gasta la cortesía de las actividades oficiales vencidas que se van a jugar.
+// Se llama al arrancar la partida, no al pintar la lista.
+async function gastarCortesias(nombres){
+  for(const nombre of (nombres || [])){
+    const info = mapaDocs[nombre];
+    if(!info || !info.cortesia || !info.docId) continue;
+    const gastada = await consumirCortesia(info.docId);
+    if(!gastada) continue;
+    info.cortesia = false;
+    // Que no reaparezca si la lista se repinta desde la copia en memoria.
+    if(Array.isArray(cacheActs)) cacheActs = cacheActs.filter(n=> n !== nombre);
+  }
 }
 function dibujarLista(boxId, modo, acts, conteos){
   const box = document.getElementById(boxId);
@@ -1184,9 +1203,11 @@ async function empezarNuevo(){
   }
   paso = 0;
   if(modoJuego === "compartido"){
-    await iniciarSesionCompartida({ modo: "normal", titulo: actividad, lista: listaJuego, paso: 0 });
+    await iniciarSesionCompartida({ modo: "normal", titulo: actividad, lista: listaJuego, paso: 0, cortesias: [actividad] });
     return;
   }
+  // La cortesía se gasta aquí, cuando la partida ya va a arrancar.
+  await gastarCortesias([actividad]);
   guardarProg();
   mostrarPlayer();
 }
@@ -1458,9 +1479,11 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
   multiModo = false; multiSel = [];
   try{ multiRefrescar(); }catch(e){}
   if(modoJuego === "compartido"){
-    await iniciarSesionCompartida({ modo: "multi", titulo: "MultiActividades", lista: listaJuego, paso: 0, actividades: multiActs.slice() });
+    await iniciarSesionCompartida({ modo: "multi", titulo: "MultiActividades", lista: listaJuego, paso: 0, actividades: multiActs.slice(), cortesias: multiActs.slice() });
     return;
   }
+  // La cortesía se gasta aquí, cuando la partida ya va a arrancar.
+  await gastarCortesias(multiActs);
   guardarProg();
   mostrarPlayer();
 };

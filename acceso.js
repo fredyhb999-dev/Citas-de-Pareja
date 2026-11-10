@@ -7,10 +7,10 @@
 //  Este refactor NO cambia el comportamiento: solo-centraliza.
 // =====================================================
 import { initializeApp, getApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-import { getFirestore, collection, getDocs, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, onSnapshot, query, where, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 import firebaseConfigBase from "./firebase-config.js";
 import { resolverFirebase } from "./config.js";
-import { TAQUILLA_FIREBASE, verificarCodigo } from "./taquilla.js";
+import { TAQUILLA_FIREBASE, verificarCodigo, verificarFirma } from "./taquilla.js";
 
 // Clave de localStorage donde viven los códigos firmados, indexados por item.
 export const CLAVE_LIC = "licencias";
@@ -106,10 +106,16 @@ export async function tengoAcceso(item){
 
 // Packs oficiales que esta persona ya tiene autorizados.
 // Se usa para traer actividades oficiales al banco de la pareja.
-export async function oficialesAprobados(){
+// Con `{ conCortesia: true }` también devuelve los packs VENCIDOS que tienen
+// una cortesía sin usar, marcados con `cortesia: true`. Así la actividad oficial
+// se puede ver y jugar una última vez; al arrancar la partida se gasta con
+// `consumirCortesia()` y deja de aparecer (General/Modulo-Acceso.md).
+export async function oficialesAprobados(opts){
   const out = [];
+  const conCortesia = !!(opts && opts.conCortesia);
   try{
     const lic = leerLicencias();
+    const gracias = conCortesia ? await graciasDisponibles() : null;
     const snap = await getDocs(collection(dbTaq(), "packs"));
     for(const d of snap.docs){
       const p = Object.assign({ id: d.id }, d.data());
@@ -117,7 +123,14 @@ export async function oficialesAprobados(){
       const cod = lic[p.id];
       if(!cod) continue;
       const pay = await verificarCodigo(cod);
-      if(pay && pay.item === p.id && pay.para === miProyecto()) out.push(p);
+      if(pay && pay.item === p.id && pay.para === miProyecto()){ out.push(p); continue; }
+      if(!gracias) continue;
+      // Licencia vencida con firma válida: solo entra si la cortesía sigue libre.
+      const pf = await verificarFirma(cod);
+      if(!pf || pf.item !== p.id || pf.para !== miProyecto()) continue;
+      if(!(pf.vence && Date.now() > pf.vence)) continue;
+      if(!gracias[p.id + "|" + String(pf.email || "").toLowerCase()]) continue;
+      out.push(Object.assign({ cortesia: true }, p));
     }
   }catch(e){}
   return out;
@@ -303,4 +316,33 @@ export async function graciasDisponibles(){
     });
   }catch(e){}
   return out;
+}
+
+// Gasta la cortesía de un item: pone `graciaUsada: true` en su solicitud
+// aprobada. Devuelve true si la gastó. Se llama al ARRANCAR la partida, no al
+// abrir la lista, para que no se pierda si se sale antes de jugar.
+// Las reglas de la taquilla solo permiten escribir graciaUsada y graciaFecha.
+export async function consumirCortesia(item){
+  try{
+    const cod = leerLicencias()[item];
+    if(!cod) return false;
+    const pay = await verificarFirma(cod);
+    if(!pay || pay.item !== item || pay.para !== miProyecto()) return false;
+    if(!(pay.vence && Date.now() > pay.vence)) return false;
+    const snap = await getDocs(query(collection(dbTaq(), COLECCION_SOL),
+      where("para", "==", miProyecto())));
+    let docGracia = null;
+    snap.forEach(dd=>{
+      const s = dd.data();
+      if(s.item !== item) return;
+      if(!mismoEmail(s.email, pay.email)) return;
+      if(s.estado !== "aprobado" || s.graciaUsada !== false) return;
+      docGracia = dd.id;
+    });
+    if(!docGracia) return false;
+    await updateDoc(doc(dbTaq(), COLECCION_SOL, docGracia), {
+      graciaUsada: true, graciaFecha: serverTimestamp()
+    });
+    return true;
+  }catch(e){ return false; }
 }

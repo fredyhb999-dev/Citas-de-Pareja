@@ -28,7 +28,8 @@ Motivo real del refactor: con la lógica en 8 lugares, cualquier corrección del
 | `quitarLicencia(item)` | Borra el código de un item, sin tocar los demás |
 | `tieneCodigoValido(item)` | Verifica firma + item + para + vencimiento |
 | `tengoAcceso(item)` | Atajo de `tieneCodigoValido` |
-| `oficialesAprobados()` | Packs oficiales que el usuario ya tiene autorizados |
+| `oficialesAprobados([opts])` | Packs oficiales autorizados. Con `{ conCortesia: true }` incluye también los vencidos con cortesía sin usar (marcados `cortesia: true`) |
+| `consumirCortesia(item)` | Gasta la cortesía de un item: pone `graciaUsada: true` y `graciaFecha` |
 | `escucharItem(item, hooks)` | Escucha **un** item. `hooks.revocado()` / `hooks.aprobado()`. Devuelve la función para cancelar |
 | `escucharCatalogo(hooks)` | Revisa **todo** el catálogo. `hooks.cambio(licencias)` |
 | `graciasDisponibles()` | Mapa `"item\|email"` → `true` de cortesías sin usar |
@@ -111,6 +112,20 @@ Lo que **quedó aquí**: la generación de listas por cabeza, los turnos por ron
 | `Tienda/index.html` | 279 | Evita pedidos duplicados: necesita comparar con las **solicitudes previas** |
 
 No se movieron porque no son solo lectura: dependen del `doc.id` para poder escribir. Centralizarlas exigiría un rediseño (la cola con acuse de `Soluciones.txt`), no un simple traslado.
+
+### Cortesía de las actividades oficiales (nov-2026)
+
+- `oficialesAprobados({ conCortesia: true })` devuelve además los packs **vencidos**
+  que tienen cortesía sin usar (`graciaUsada === false`), marcados con
+  `cortesia: true`. Sin la opción sigue devolviendo solo los vigentes (Roles,
+  Castigos y packs de personajes no cambian).
+- `consumirCortesia(item)` marca `graciaUsada: true` y `graciaFecha`. Es la única
+  escritura, y usa solo esos dos campos, como permiten las reglas de la taquilla.
+- **Guiadas y Encuentros** piden los oficiales con cortesía: la actividad se ve y
+  se puede jugar. La cortesía se gasta al **arrancar la partida** (después de
+  "Aceptar y jugar"), no al abrir la lista, para que no se pierda si se sale antes.
+- Desde ese momento la actividad desaparece de las dos listas, y la Tienda deja de
+  ofrecer "Abrir última vez" (su `graciaDisponible()` exige `graciaUsada === false`).
 
 ### Detalle de la instancia de Firebase
 

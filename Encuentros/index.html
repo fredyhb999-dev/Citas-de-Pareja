@@ -348,7 +348,7 @@ import firebaseConfigBase from "../firebase-config.js";
 import { resolverFirebase, cargarUsuarios, asegurarFabrica, unirConFabrica, leerConfigGuardada, migrarActividadesAId, leerDocActividad, nombrePorId, fijarUsuarios, retirarInvitadosDeUsuarios, ladoDeUsuario, ladoDeInvitado, nombresDeLado } from "../config.js";
 import { verificarCodigo, verificarFirma } from "../taquilla.js";
 // Lógica de licencias compartida con el resto de la app (ver acceso.js).
-import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, escucharItem } from "../acceso.js";
+import { miProyecto, appTaq, leerLicencias, guardarLicencia, quitarLicencia, tengoAcceso, oficialesAprobados, consumirCortesia, escucharItem } from "../acceso.js";
 // Invitados: este juego solo publica y retira su invitación. No sabe nada de la sala.
 import { publicarInvitacion, retirarInvitacion, pausarInvitacion } from "../invitado.js";
 // Fuegos de celebracion al acabar el encuentro (igual que Elecciones Peligrosas).
@@ -1082,7 +1082,7 @@ function docDe(nombre){ return (mapaDocs[nombre] && mapaDocs[nombre].docId) || n
 // oficialesAprobados viene de ../acceso.js.
 async function sincronizarOficiales(){
   try{
-    const ofs = (await oficialesAprobados()).filter(p => p.ruta === "Guiadas");
+    const ofs = (await oficialesAprobados({ conCortesia: true })).filter(p => p.ruta === "Guiadas");
     for(const p of ofs){
       try{
         const ref = doc(db, "nivelesActividad", p.id);
@@ -1151,12 +1151,12 @@ async function cargarActividades(){
   });
 
   try{
-    const ofs = (await oficialesAprobados()).filter(p => p.ruta === "Guiadas");
+    const ofs = (await oficialesAprobados({ conCortesia: true })).filter(p => p.ruta === "Guiadas");
     const vistos = new Set(base.map(n=>(n || "").toLowerCase()));
     ofs.forEach(p=>{
       const t = (p.titulo || p.id).trim();
       if(t && !vistos.has(t.toLowerCase())){ vistos.add(t.toLowerCase()); base.push(t); }
-      mapaDocs[t] = { docId: p.id, oficial: true };
+      mapaDocs[t] = { docId: p.id, oficial: true, cortesia: !!p.cortesia };
     });
   }catch(e){}
   return base;
@@ -1174,6 +1174,19 @@ function compararActividades(a, b){
   const ob = (mapaDocs[b] && mapaDocs[b].oficial) ? 0 : 1;
   if(oa !== ob) return oa - ob;
   return normOrdenAct(a).localeCompare(normOrdenAct(b), "es");
+}
+// Gasta la cortesía de las actividades oficiales vencidas que se van a jugar.
+// Se llama al arrancar la partida, no al pintar la lista.
+async function gastarCortesias(nombres){
+  for(const nombre of (nombres || [])){
+    const info = mapaDocs[nombre];
+    if(!info || !info.cortesia || !info.docId) continue;
+    const gastada = await consumirCortesia(info.docId);
+    if(!gastada) continue;
+    info.cortesia = false;
+    // Que no reaparezca si la lista se repinta desde la copia en memoria.
+    if(Array.isArray(cacheActs)) cacheActs = cacheActs.filter(n=> n !== nombre);
+  }
 }
 function dibujarLista(boxId, acts, conteos){
   const box = document.getElementById(boxId);
@@ -1758,6 +1771,8 @@ async function generarYIniciar(activities, tomas){
     aviso("No se pudieron armar listas parejas: falta surtido de un lado. Prueba otra actividad.");
     return;
   }
+  // La cortesía se gasta aquí, cuando la partida ya va a arrancar.
+  await gastarCortesias(activities);
   const sid = String(Date.now()) + Math.random().toString(36).slice(2, 6);
   const nueva = {
     activa: true,
