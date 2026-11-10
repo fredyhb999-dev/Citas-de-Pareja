@@ -993,7 +993,7 @@ async function cargarActividades(){
     ofs.forEach(p=>{
       const t = (p.titulo || p.id).trim();
       if(t && !vistos.has(t.toLowerCase())){ vistos.add(t.toLowerCase()); base.push(t); }
-      mapaDocs[t] = { docId: p.id, oficial: true, cortesia: !!p.cortesia };
+      mapaDocs[t] = { docId: p.id, oficial: true, cortesia: !!p.cortesia, vigente: !p.cortesia };
     });
   }catch(e){}
   return base;
@@ -1030,6 +1030,13 @@ async function gastarCortesias(nombres){
   if(gastadas && !cortesiaAvisada) mostrarGracia();
   cortesiaAvisada = false;
   return gastadas;
+}
+// ¿Se puede jugar esta actividad? Las locales siempre; las oficiales solo si
+// tienen licencia vigente o si todavía no se gastó su cortesía.
+function puedeJugarActividad(nombre){
+  const info = mapaDocs[nombre];
+  if(!info || !info.oficial) return true;
+  return !!info.cortesia || !!info.vigente;
 }
 // Aviso de último acceso al seleccionar una actividad oficial vencida.
 function avisarCortesia(nombres){
@@ -1138,6 +1145,10 @@ async function pintarLista(boxId, modo){
   dibujarLista(boxId, modo, acts, conteos);
 }
 async function jugarDirecto(nombre){
+  if(!puedeJugarActividad(nombre)){
+    aviso("Ya usaste el último acceso de esta actividad.");
+    return;
+  }
   actividad = nombre;
   docActual = docDe(nombre);
   multiActs = [];
@@ -1320,6 +1331,10 @@ function armarListaLados(fuentePorNivel, tomas){
   return lista;
 }
 async function empezarNuevo(){
+  if(!puedeJugarActividad(actividad)){
+    aviso("Ya usaste el último acceso de esta actividad.");
+    return;
+  }
   const tomas = tomasGuardadas(docActual || actividad);
   listaJuego = armarListaLados(datos, tomas);
   if(!listaJuego.length){
@@ -1469,6 +1484,12 @@ function multiToggle(nombre, on){
       multiRefrescar();
       return;
     }
+    if(!puedeJugarActividad(nombre)){
+      document.querySelectorAll('#listaActs input[type="checkbox"]').forEach(i=>{ if(i.value === nombre) i.checked = false; });
+      aviso("Ya usaste el último acceso de esta actividad.");
+      multiRefrescar();
+      return;
+    }
     multiSel.push(nombre);
     if(mapaDocs[nombre] && mapaDocs[nombre].cortesia) avisarCortesia([nombre]);
   }else{
@@ -1602,6 +1623,13 @@ document.getElementById("btnMulti3Ok").onclick = async ()=>{
     aviso("Sin acciones en esas 3. Elige otras o alimenta en ⚙️.");
     multiActs = [];
     return;
+  }
+  for(const nombre of multiActs){
+    if(!puedeJugarActividad(nombre)){
+      aviso("Ya usaste el último acceso de esta actividad.");
+      multiActs = [];
+      return;
+    }
   }
   paso = 0;
   multiModo = false; multiSel = [];
@@ -1994,7 +2022,11 @@ function exportarActividad(){
 document.getElementById("btnExportarJSON").onclick = ()=>{ exportarActividad(); };
 
 // ---------- player ----------
-document.getElementById("btnJugar").onclick = ()=>{
+document.getElementById("btnJugar").onclick = async ()=>{
+  if(!puedeJugarActividad(actividad)){
+    aviso("Ya usaste el último acceso de esta actividad.");
+    return;
+  }
   const tomas = leerTomas();
   listaJuego = armarListaLados(datos, tomas);
   const msg = document.getElementById("msg");
@@ -2002,6 +2034,8 @@ document.getElementById("btnJugar").onclick = ()=>{
     msg.textContent = "Agrega acciones o sube las tomas.";
     return;
   }
+  // La cortesía se gasta al arrancar, también desde el editor.
+  await gastarCortesias([actividad]);
   paso = 0;
   document.getElementById("plTitulo").textContent = actividad;
   document.getElementById("finMsg").style.display = "none";

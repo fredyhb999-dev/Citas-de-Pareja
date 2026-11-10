@@ -670,6 +670,10 @@ async function chequearPendiente(esMulti, actividad){
   return false;
 }
 async function iniciarSingle(nombre){
+  if(!puedeJugarActividad(nombre)){
+    aviso("Ya usaste el último acceso de esta actividad.");
+    return;
+  }
   if(await chequearPendiente(false, nombre)) return;
   // Si es el último acceso, primero sale el aviso; las tomas se abren al aceptar.
   if(mapaDocs[nombre] && mapaDocs[nombre].cortesia){
@@ -1263,7 +1267,7 @@ async function cargarActividades(){
     ofs.forEach(p=>{
       const t = (p.titulo || p.id).trim();
       if(t && !vistos.has(t.toLowerCase())){ vistos.add(t.toLowerCase()); base.push(t); }
-      mapaDocs[t] = { docId: p.id, oficial: true, cortesia: !!p.cortesia };
+      mapaDocs[t] = { docId: p.id, oficial: true, cortesia: !!p.cortesia, vigente: !p.cortesia };
     });
   }catch(e){}
   return base;
@@ -1300,6 +1304,13 @@ async function gastarCortesias(nombres){
   if(gastadas && !cortesiaAvisada) mostrarGracia();
   cortesiaAvisada = false;
   return gastadas;
+}
+// ¿Se puede jugar esta actividad? Las locales siempre; las oficiales solo si
+// tienen licencia vigente o si todavía no se gastó su cortesía.
+function puedeJugarActividad(nombre){
+  const info = mapaDocs[nombre];
+  if(!info || !info.oficial) return true;
+  return !!info.cortesia || !!info.vigente;
 }
 // Aviso de último acceso al seleccionar una actividad oficial vencida.
 function avisarCortesia(nombres){
@@ -1407,6 +1418,12 @@ function multiToggle(nombre, on){
     if(multiSel.indexOf(nombre) >= 0){ multiRefrescar(); return; }
     if(multiSel.length >= 3){
       document.querySelectorAll('#listaActs input[type="checkbox"]').forEach(i=>{ if(i.value === nombre) i.checked = false; });
+      multiRefrescar();
+      return;
+    }
+    if(!puedeJugarActividad(nombre)){
+      document.querySelectorAll('#listaActs input[type="checkbox"]').forEach(i=>{ if(i.value === nombre) i.checked = false; });
+      aviso("Ya usaste el último acceso de esta actividad.");
       multiRefrescar();
       return;
     }
@@ -1690,6 +1707,10 @@ document.getElementById("btnJugarEd").onclick = async ()=>{
   const tomas = leerTomasEd();
   const nombre = actividadEd;
   if(!nombre) return;
+  if(!puedeJugarActividad(nombre)){
+    aviso("Ya usaste el último acceso de esta actividad.");
+    return;
+  }
   const total = NIVELES.reduce((t, nv)=> t + (tomas[nv.id] || 0), 0);
   if(!total){ document.getElementById("msg").textContent = "Sube las tomas o agrega acciones."; return; }
   await generarYIniciar([nombre], tomas);
@@ -1865,6 +1886,12 @@ function repartirRuedaEnc(bolsas, necesarias){
   return pool.slice(0, necesarias);
 }
 async function generarYIniciar(activities, tomas){
+  for(const nombre of (activities || [])){
+    if(!puedeJugarActividad(nombre)){
+      aviso("Ya usaste el último acceso de esta actividad.");
+      return;
+    }
+  }
   // Si la partida anterior ya termino, se limpian sus invitados antes de armar
   // los turnos. Cubre a quien cerro su celular sin aceptar el aviso: su ficha
   // seguia en la lista y aparecia como un jugador mas.

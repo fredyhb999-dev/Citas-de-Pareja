@@ -127,7 +127,9 @@ No se movieron porque no son solo lectura: dependen del `doc.id` para poder escr
   vencida ("Su acceso venció… les obsequiamos este último acceso"). Si por alguna
   ruta no salió al seleccionar, sale al arrancar.
 - La cortesía de un **pack oficial** se gasta al **arrancar la partida**, no al
-  abrir la lista, para que no se pierda si se sale antes.
+  abrir la lista, para que no se pierda si se sale antes. Cuenta cualquier ruta
+  de arranque, incluido el botón **“Jugar ▶” del editor**; una vez gastada, la
+  actividad queda bloqueada aunque el editor siga abierto.
 - La cortesía del **juego base** de cada pantalla se gasta al **entrar**, como ya
   hacían Guiadas y Encuentros.
 - Desde que se gasta, la actividad desaparece de las listas y la Tienda deja de
