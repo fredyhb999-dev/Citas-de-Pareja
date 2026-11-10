@@ -1,4 +1,135 @@
 {
-  "generado": "",
-  "fotos": []
+  "generado": "2026-11-10",
+  "fotos": [
+    {
+      "lista": "U1",
+      "personaje": "El Médico",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Doctor.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Policía",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Policia.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Bombero",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Bombero.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Empresario Rico",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Empresario.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Mecánico",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Mecanico.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Barman",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Barman.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Entrenador Personal",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Entrenador.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Detective Privado",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Detective.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Fotógrafo",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Fotografo2.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Vecino",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Vecino.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Ladrón",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Ladron.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Secuestrador",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Secuestrador.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Acosador",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Acosador.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Plomero",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Plomero.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Salvavidas",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Salvavidas.png"
+    },
+    {
+      "lista": "U1",
+      "personaje": "El Pandillero",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Pandillero.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Chica del Gimnasio",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Gimnasio.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Azafata de Vuelo",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Azafata.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Enfermera",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Enfermera.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "Víctima de Asalto",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Victima.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "Secuestrada",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Secuestrada.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Masajista",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Masajista.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Bailarina de Salsa",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Bailarina.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Abogada",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Abogada.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Reportera",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Reportera.png"
+    },
+    {
+      "lista": "C1",
+      "personaje": "El Fotógrafo",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Fotografo.png"
+    }
+  ]
 }
