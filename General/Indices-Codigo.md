@@ -135,7 +135,7 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 ---
 
-## `Encuentros/index.html` — 2,358 líneas
+## `Encuentros/index.html` — 2,362 líneas
 
 **Documento de detalle:** `General/Pantallas.md` y `General/Pegamento-y-Citas.md`
 
@@ -146,20 +146,20 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 |---|---|---|
 | Arrancar: normal o directo al juego | `entrar()` / `entrarDirecto()` | 651 / 561 |
 | Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 953 / 989 |
-| Cargar actividades y pintar la lista | `cargarActividades()` / `pintarLista()` / `dibujarLista()` / `filtrar()` | 1110 / 1225 / 1166 / 1240 |
-| Configuración y editor de actividades | `pintarListaCfg()` / `abrirEditor()` / `pintarEditor()` / `guardarEditor()` | 1369 / 1407 / 1425 / 1496 |
-| Tomas de una actividad (modal y base) | `abrirTomas()` / `guardarTomasEnBase()` / `cargarTomasDoc()` | 1590 / 1360 / 1327 |
-| Armar jugadores y repartir | `construirCabezas()` / `generarListas()` / `repartirRuedaEnc()` / `generarYIniciar()` | 1640 / 1651 / 1686 / 1724 |
-| Pintar turno y paso | `pintarTurnoDe()` / `pintarPaso()` | 1881 / 1895 |
+| Cargar actividades y pintar la lista | `cargarActividades()` / `pintarLista()` / `dibujarLista()` / `filtrar()` | 1110 / 1233 / 1178 / 1248 |
+| Configuración y editor de actividades | `pintarListaCfg()` / `abrirEditor()` / `pintarEditor()` / `guardarEditor()` | 1377 / 1411 / 1429 / 1500 |
+| Tomas de una actividad (modal y base) | `abrirTomas()` / `guardarTomasEnBase()` / `cargarTomasDoc()` | 1594 / 1368 / 1335 |
+| Armar jugadores y repartir | `construirCabezas()` / `generarListas()` / `repartirRuedaEnc()` / `generarYIniciar()` | 1644 / 1655 / 1690 / 1728 |
+| Pintar turno y paso | `pintarTurnoDe()` / `pintarPaso()` | 1885 / 1899 |
 | Avanzar local o por sesión | `avanzarLocal()` / `avanzarSesion()` | 798 / 821 |
-| Sala de espera | `pintarSala()` | 1830 |
-| Invitados: agregar y QR | `agregarInvitado()` / `abrirQRInvitacion()` | 2101 / 2172 |
+| Sala de espera | `pintarSala()` | 1834 |
+| Invitados: agregar y QR | `agregarInvitado()` / `abrirQRInvitacion()` | 2105 / 2176 |
 | Sesión: escuchar, saltar turno, cerrar, fin | `escucharSesion()` / `saltarTurno()` / `cerrarSesion()` / `mostrarFin()` | 726 / 851 / 916 / 946 |
-| Entrar al juego siendo invitado | `entrarAlJuego()` | 2284 |
+| Entrar al juego siendo invitado | `entrarAlJuego()` | 2288 |
 
 ---
 
-## `Guiadas/index.html` — 2,059 líneas
+## `Guiadas/index.html` — 2,067 líneas
 
 **Documento de detalle:** `General/Pantallas.md` y `General/Pegamento-y-Citas.md`
 
@@ -170,15 +170,15 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 |---|---|---|
 | Arrancar la página | `entrar()` | 327 |
 | Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 660 / 694 |
-| Cargar actividades y pintar la lista | `cargarActividades()` / `pintarLista()` / `filtrar()` | 845 / 986 / 791 |
-| Jugar directo desde la lista | `jugarDirecto()` | 1001 |
-| Arrancar partida y pintar el paso | `empezarNuevo()` / `mostrarPlayer()` / `pintarPaso()` / `pintarTurnoDe()` | 1170 / 1185 / 1867 / 1858 |
+| Cargar actividades y pintar la lista | `cargarActividades()` / `pintarLista()` / `filtrar()` | 845 / 994 / 791 |
+| Jugar directo desde la lista | `jugarDirecto()` | 1009 |
+| Arrancar partida y pintar el paso | `empezarNuevo()` / `mostrarPlayer()` / `pintarPaso()` / `pintarTurnoDe()` | 1178 / 1193 / 1875 / 1866 |
 | Sesión: avanzar, escuchar, saltar, cerrar, fin | `avanzarSesion()` / `escucharSesion()` / `saltarTurno()` / `cerrarSesion()` / `mostrarFin()` | 517 / 618 / 584 / 566 / 443 |
-| Multi: abrir, refrescar, seleccionar, repartir | `multiAbrir()` / `multiRefrescar()` / `multiAbrirSel()` / `repartirRuedaGuia()` | 1324 / 1300 / 1350 / 1463 |
-| Editor de actividades | `abrirEditor()` / `pintarEditor()` / `guardar()` | 1553 / 1574 / 1645 |
-| Exportar o pegar una actividad | `exportarActividad()` / `pegarActividad()` | 1807 / 1712 |
-| Tomas de la actividad | `abrirTomasGuia()` / `guardarProg()` / `cargarTomasDoc()` | 1061 / 1112 / 1510 |
-| Seguir jugando después de recargar | `seguirEncima()` / `seguirFuera()` | 1044 / 1051 |
+| Multi: abrir, refrescar, seleccionar, repartir | `multiAbrir()` / `multiRefrescar()` / `multiAbrirSel()` / `repartirRuedaGuia()` | 1332 / 1308 / 1358 / 1471 |
+| Editor de actividades | `abrirEditor()` / `pintarEditor()` / `guardar()` | 1561 / 1582 / 1653 |
+| Exportar o pegar una actividad | `exportarActividad()` / `pegarActividad()` | 1815 / 1720 |
+| Tomas de la actividad | `abrirTomasGuia()` / `guardarProg()` / `cargarTomasDoc()` | 1069 / 1120 / 1518 |
+| Seguir jugando después de recargar | `seguirEncima()` / `seguirFuera()` | 1052 / 1059 |
 
 ---
 
@@ -517,57 +517,59 @@ usarArchivoFoto(1396) · usoDe(913) · valor(756) · ver(373)
 ### `Encuentros\index.html`
 
 ```
-abrirAgregar(2079) · abrirEditor(1407) · abrirModal(1564) · abrirQRInvitacion(2172)
-abrirTomas(1590) · acts(1634) · agregar(1454) · agregarInvitado(2101) · agregarItemEd(1501)
-anunciarInvitacion(899) · armando(1837) · avanzarLocal(798) · avanzarSesion(821)
-base(2113) · cab(636) · cabezas(2152) · cabs(1844) · cargarActividades(1110)
-cargarActsParaInvitado(1980) · cargarEnMemoria(565) · cargarIdentidad(498)
-cargarTomasDoc(1327) · cerrarModal(1584) · cerrarSesion(916) · cerrarTomas(1620)
-chequearPartidaEspera(702) · chequearPendiente(621) · companero(2112)
-construirCabezas(1640) · contarNivel(375) · dibujarLista(1166) · disponiblesInvitados(2075)
-docDe(1081) · elegirAccionEnc(2014) · enEspera(1849) · entrar(651) · entrarAlJuego(2284)
-entrarDirecto(561) · esAnfitrion(1811) · escucharAprobacion(457) · escucharGrupo(2306)
-escucharSesion(726) · etiquetaLados(1306) · filtrar(1240) · generarListas(1651)
-generarYIniciar(1724) · guardadas(1596) · guardarEditor(1496) · guardarTomasEnBase(1360)
-iniciarSingle(646) · irAlMenu(979) · item(1937) · leerQuienSoy(495) · leerTomasEd(1523)
-licMsg(487) · limpiarInvitadosDeSesionAnterior(933) · listaConInvitado(2030) · llenar(1854)
-mezclar(380) · migrarTomasDeEsteCelular(1342) · modalAbierto(1003)
-mostrarBotonesAdmin(1812) · mostrarFin(946) · mostrarGracia(396) · multiRefrescar(1251)
-multiToggle(1261) · nivel(2055) · nivelPorNombre(1976) · nombreAdmin(521)
-nombreCabeza(614) · nombreLado(1302) · nombres(719) · normLados(370) · normTomasEnc(1317)
-normTxtEnc(1974) · ofs(1085) · pintarEditor(1425) · pintarLista(1225) · pintarListaCfg(1369)
-pintarPaso(1895) · pintarSala(1830) · pintarSalidas(513) · pintarTurnoDe(1881)
-poolDeAccionesEnc(1995) · quiereCompartido(1779) · quitarItemEd(1514)
-repartirRuedaEnc(1686) · retirarInvitadosDeLaPartida(927) · salirAlMenu(989)
-salirModoInvitado(420) · saltarTurno(851) · sanearSesion(585) · seguirEncima(2230)
-seguirFuera(2235) · sesionRef(527) · sincronizarOficiales(1083) · soyCabeza(577)
-tomasGuardadasEd(1365) · ultimo(1945) · vale(2018) · ver(953)
+abrirAgregar(2083) · abrirEditor(1411) · abrirModal(1568) · abrirQRInvitacion(2176)
+abrirTomas(1594) · acts(1638) · agregar(1458) · agregarInvitado(2105) · agregarItemEd(1505)
+anunciarInvitacion(899) · armando(1841) · avanzarLocal(798) · avanzarSesion(821)
+base(2117) · cab(636) · cabezas(2156) · cabs(1848) · cargarActividades(1110)
+cargarActsParaInvitado(1984) · cargarEnMemoria(565) · cargarIdentidad(498)
+cargarTomasDoc(1335) · cerrarModal(1588) · cerrarSesion(916) · cerrarTomas(1624)
+chequearPartidaEspera(702) · chequearPendiente(621) · companero(2116)
+compararActividades(1172) · construirCabezas(1644) · contarNivel(375) · dibujarLista(1178)
+disponiblesInvitados(2079) · docDe(1081) · elegirAccionEnc(2018) · enEspera(1853)
+entrar(651) · entrarAlJuego(2288) · entrarDirecto(561) · esAnfitrion(1815)
+escucharAprobacion(457) · escucharGrupo(2310) · escucharSesion(726) · etiquetaLados(1314)
+filtrar(1248) · generarListas(1655) · generarYIniciar(1728) · guardadas(1600)
+guardarEditor(1500) · guardarTomasEnBase(1368) · iniciarSingle(646) · irAlMenu(979)
+item(1941) · leerQuienSoy(495) · leerTomasEd(1527) · licMsg(487)
+limpiarInvitadosDeSesionAnterior(933) · listaConInvitado(2034) · llenar(1858) · mezclar(380)
+migrarTomasDeEsteCelular(1350) · modalAbierto(1003) · mostrarBotonesAdmin(1816)
+mostrarFin(946) · mostrarGracia(396) · multiRefrescar(1259) · multiToggle(1269)
+nivel(2059) · nivelPorNombre(1980) · nombreAdmin(521) · nombreCabeza(614) · nombreLado(1310)
+nombres(719) · normLados(370) · normOrdenAct(1169) · normTomasEnc(1325) · normTxtEnc(1978)
+ofs(1085) · pintarEditor(1429) · pintarLista(1233) · pintarListaCfg(1377) · pintarPaso(1899)
+pintarSala(1834) · pintarSalidas(513) · pintarTurnoDe(1885) · poolDeAccionesEnc(1999)
+quiereCompartido(1783) · quitarItemEd(1518) · repartirRuedaEnc(1690)
+retirarInvitadosDeLaPartida(927) · salirAlMenu(989) · salirModoInvitado(420)
+saltarTurno(851) · sanearSesion(585) · seguirEncima(2234) · seguirFuera(2239)
+sesionRef(527) · sincronizarOficiales(1083) · soyCabeza(577) · tomasGuardadasEd(1373)
+ultimo(1949) · vale(2022) · ver(953)
 ```
 
 ### `Guiadas\index.html`
 
 ```
-abrirEditor(1553) · abrirFin(449) · abrirTomasGuia(1061) · agregar(1603) · agregarItem(1650)
-aplicaSesion(610) · armarListaLados(1148) · asignarParaId(1136) · avanzarSesion(517)
-borrarProg(1119) · cargarActividades(845) · cargarIdentidad(462) · cargarTomasDoc(1510)
-cerrarSesion(566) · cerrarTomasGuia(1086) · claveDoc(807) · contarNivel(306)
-dibujarLista(901) · docDe(814) · editorTieneAlgo(1709) · empezarNuevo(1170) · entrar(327)
-esAdmin(477) · escucharAprobacion(387) · escucharSesion(618) · etiquetaLados(505)
-exportarActividad(1807) · filtrar(791) · guardar(1645) · guardarProg(1112)
-guardarTomasEnBase(1543) · iniciarSesionCompartida(536) · irAlMenu(684)
-jugadoresBase(1122) · jugarDirecto(1001) · leerJSONPegado(1696) · leerProg(1054)
-leerQuienSoy(459) · leerTomas(1672) · licMsg(369) · limpiarParaArchivo(1790)
-marcarRadio(513) · mensajeEditor(1686) · mezclar(799) · migrarTomasDeEsteCelular(1525)
-miIdSesion(511) · mismoPaso(496) · modalAbierto(711) · modalBasePaso(1273) · mostrarFin(443)
-mostrarGracia(321) · mostrarModalBase(1291) · mostrarPlayer(1185) · multiAbrir(1324)
-multiAbrirSel(1350) · multiMostrar(1297) · multiRefrescar(1300) · multiSalir(1357)
-multiToggle(1310) · nombreAdmin(478) · nombreDe(483) · nombreDePaso(488) · nombreLado(501)
-normLados(293) · normTomas(298) · ofs(820) · pegarActividad(1712) · pintarEditor(1574)
-pintarLista(986) · pintarPaso(1867) · pintarTurnoDe(1858) · probar(1698) · quienes(1343)
-quitarItem(1663) · refrescarMiLado(470) · repartirRuedaGuia(1463) · salirAlMenu(694)
-saltarTurno(584) · seguirEncima(1044) · seguirFuera(1051) · sesionPausada(572)
-sesionRef(512) · sincronizarOficiales(818) · tomasDePantalla(1798) · tomasGuardadas(1548)
-top(904) · ver(660)
+abrirEditor(1561) · abrirFin(449) · abrirTomasGuia(1069) · agregar(1611) · agregarItem(1658)
+aplicaSesion(610) · armarListaLados(1156) · asignarParaId(1144) · avanzarSesion(517)
+borrarProg(1127) · cargarActividades(845) · cargarIdentidad(462) · cargarTomasDoc(1518)
+cerrarSesion(566) · cerrarTomasGuia(1094) · claveDoc(807) · compararActividades(907)
+contarNivel(306) · dibujarLista(913) · docDe(814) · editorTieneAlgo(1717)
+empezarNuevo(1178) · entrar(327) · esAdmin(477) · escucharAprobacion(387)
+escucharSesion(618) · etiquetaLados(505) · exportarActividad(1815) · filtrar(791)
+guardar(1653) · guardarProg(1120) · guardarTomasEnBase(1551) · iniciarSesionCompartida(536)
+irAlMenu(684) · jugadoresBase(1130) · jugarDirecto(1009) · leerJSONPegado(1704)
+leerProg(1062) · leerQuienSoy(459) · leerTomas(1680) · licMsg(369)
+limpiarParaArchivo(1798) · marcarRadio(513) · mensajeEditor(1694) · mezclar(799)
+migrarTomasDeEsteCelular(1533) · miIdSesion(511) · mismoPaso(496) · modalAbierto(711)
+modalBasePaso(1281) · mostrarFin(443) · mostrarGracia(321) · mostrarModalBase(1299)
+mostrarPlayer(1193) · multiAbrir(1332) · multiAbrirSel(1358) · multiMostrar(1305)
+multiRefrescar(1308) · multiSalir(1365) · multiToggle(1318) · nombreAdmin(478)
+nombreDe(483) · nombreDePaso(488) · nombreLado(501) · normLados(293) · normOrdenAct(904)
+normTomas(298) · ofs(820) · pegarActividad(1720) · pintarEditor(1582) · pintarLista(994)
+pintarPaso(1875) · pintarTurnoDe(1866) · probar(1706) · quienes(1351) · quitarItem(1671)
+refrescarMiLado(470) · repartirRuedaGuia(1471) · salirAlMenu(694) · saltarTurno(584)
+seguirEncima(1052) · seguirFuera(1059) · sesionPausada(572) · sesionRef(512)
+sincronizarOficiales(818) · tomasDePantalla(1806) · tomasGuardadas(1556) · top(916)
+ver(660)
 ```
 
 ### `Retos\index.html`

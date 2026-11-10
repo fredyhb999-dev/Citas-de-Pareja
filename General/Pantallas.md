@@ -181,6 +181,15 @@ h1  +  p.desc
 
 **El ✕ no borra de una:** abre el detalle para **editar, activar y borrar**, y ahí se pregunta con `confirmar()`. Un ✕ que borra sin avisar es una trampa.
 
+### Orden de las listas: oficiales primero, luego alfabético
+
+Las listas de **actividades** (Guiadas y Encuentros) y de **personajes** (Roles) se
+ordenan **oficiales primero** y, dentro de cada grupo, **alfabético** sin distinguir
+mayúsculas ni acentos ("Ánimo" ordena como "Animo"). Los oficiales llevan 🏅.
+
+Es **solo orden de pantalla**: la lista guardada no se reordena, no cambian los ids y
+el buscador sigue ocultando por el texto visible. Se ordena siempre sobre una copia.
+
 ### Molde B — el de `Citas/`, `Retos/` y `Opciones/`
 
 Una sola vista, con `#app` + `#encabezado` (saludo con degradado + fecha) + `#contenido` (`max-width:560px`). **Solo se usa si la pantalla es de una sola vista.** Si tiene varias, es el molde A.

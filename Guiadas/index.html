@@ -898,16 +898,24 @@ async function cargarActividades(){
 }
 let cacheActs = null;
 let cacheConteos = null;
+// Orden de las listas: oficiales primero y, dentro de cada grupo, alfabético
+// sin distinguir mayúsculas ni acentos. Es solo orden de pantalla: la lista
+// guardada no se reordena ni cambian los ids.
+function normOrdenAct(t){
+  return String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+function compararActividades(a, b){
+  const oa = (mapaDocs[a] && mapaDocs[a].oficial) ? 0 : 1;
+  const ob = (mapaDocs[b] && mapaDocs[b].oficial) ? 0 : 1;
+  if(oa !== ob) return oa - ob;
+  return normOrdenAct(a).localeCompare(normOrdenAct(b), "es");
+}
 function dibujarLista(boxId, modo, acts, conteos){
   const box = document.getElementById(boxId);
   const scroller = document.getElementById("cajaActs");
   const top = (boxId === "listaActs" && scroller) ? scroller.scrollTop : 0;
   box.innerHTML = "";
-  const ordenadas = acts.slice().sort((a, b)=>{
-    const oa = (mapaDocs[a] && mapaDocs[a].oficial) ? 0 : 1;
-    const ob = (mapaDocs[b] && mapaDocs[b].oficial) ? 0 : 1;
-    return oa - ob;
-  });
+  const ordenadas = acts.slice().sort(compararActividades);
   ordenadas.forEach(nombre=>{
     const c = conteos[docDe(nombre)] || conteos[nombre] || 0;
     const esOf = !!(mapaDocs[nombre] && mapaDocs[nombre].oficial);
