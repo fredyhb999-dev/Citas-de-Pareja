@@ -83,6 +83,11 @@
     },
     {
       "lista": "U2",
+      "personaje": "La Modelo",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Modelo.png"
+    },
+    {
+      "lista": "U2",
       "personaje": "La Chica del Gimnasio",
       "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Gimnasio.png"
     },
@@ -98,6 +103,56 @@
     },
     {
       "lista": "U2",
+      "personaje": "La Barista/Camarera",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Bartender.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Universitaria",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Universitaria.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Exnovia",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Exnovia.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Jefasa",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Jefa.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Tía Madura",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Madura.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Stripper",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Striper.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Profesora",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Profesora.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Sexoservidora",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Sexoservidora.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Hermana de mi Pareja",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/HermanaPareja.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "Mi Mejor Amiga",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/MejorAmigaElla.png"
+    },
+    {
+      "lista": "U2",
       "personaje": "Víctima de Asalto",
       "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Victima.png"
     },
@@ -108,8 +163,33 @@
     },
     {
       "lista": "U2",
+      "personaje": "Acosada",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Acosada.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "Contratadora de Servicios",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Recibidora.png"
+    },
+    {
+      "lista": "U2",
       "personaje": "La Masajista",
       "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Masajista.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Instructora de Yoga",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Yoga.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Estilista",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Estilista.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Camarera de Hotel",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Camarera.png"
     },
     {
       "lista": "U2",
@@ -127,9 +207,44 @@
       "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Reportera.png"
     },
     {
+      "lista": "U2",
+      "personaje": "La Vendedora de Lencería",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Vendedora.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Compañera de Oficina",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Compañera.png"
+    },
+    {
       "lista": "C1",
       "personaje": "El Fotógrafo",
       "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Fotografo.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Paciente",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Paciente.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Detenida",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Detenida.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Rescatada",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Rescatada.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Aspirante",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Aspirante.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Conductora",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Conductora.png"
     }
   ]
 }
