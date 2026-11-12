@@ -365,6 +365,33 @@
      se lea, y el resto de la pantalla deja pasar el toque que lanza mas fuegos. */
   #modalFin{ z-index:80; background:transparent; pointer-events:none; }
   #modalFin .caja{ pointer-events:auto; }
+  /* ---------- Galería de personajes (nov-2026) ----------
+     Solo para ver. Dos columnas para que la foto 16/9 se vea completa. */
+  #vistaGaleria .galGrid{ display:grid; grid-template-columns:1fr 1fr; gap:10px;
+    width:100%; margin-top:12px; }
+  #vistaGaleria .galGrid .vacio{ grid-column:1 / -1; }
+  #vistaGaleria .galItem{ display:flex; flex-direction:column; gap:6px; width:100%;
+    background:var(--card); border:1px solid var(--card-border); border-radius:14px;
+    padding:8px; cursor:pointer; text-align:center; color:var(--fg); font:inherit; }
+  #vistaGaleria .galItem:active{ transform:scale(.97); }
+  #vistaGaleria .galFoto{ width:100%; aspect-ratio:16/9; overflow:hidden;
+    border-radius:10px; background:var(--bg-2); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:2px; color:var(--fg-muted);
+    font-size:.72rem; }
+  #vistaGaleria .galFoto img{ width:100%; height:100%; object-fit:contain; display:block; }
+  #vistaGaleria .galFoto span{ font-size:1.7rem; opacity:.6; }
+  #vistaGaleria .galNombre{ font-family:'Chakra Petch',sans-serif; font-weight:600;
+    font-size:.9rem; line-height:1.2; }
+  #vistaGaleria .galNombre.u{ color:var(--coral); }
+  #vistaGaleria .galNombre.c{ color:var(--teal); }
+  #vistaGaleria .galTag{ align-self:center; font-family:'Chakra Petch',sans-serif;
+    font-size:.6rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--teal); border:1px solid var(--teal); border-radius:8px; padding:2px 6px; }
+  #vistaGaleria .galLegend{ display:flex; flex-wrap:wrap; justify-content:center;
+    gap:6px 16px; margin-top:8px; font-size:.72rem; color:var(--fg-muted); }
+  #vistaGaleria .galLegend b{ font-weight:600; }
+  #vistaGaleria .galLegend .u{ color:var(--coral); }
+  #vistaGaleria .galLegend .c{ color:var(--teal); }
 </style>
 </head>
 <body>
@@ -452,7 +479,28 @@
        de elegir. Es el mismo botón (y el mismo QR) que está dentro del juego.
        "Agregar invitado" NO va aquí: en el inicio todavía no hay partida, y los
        invitados que ya están registrados entran solos al empezar. -->
-  <button class="btnSec" id="btnQRInicio" type="button" style="margin-top:2px; padding:8px;">QR Invita a Alguien</button>
+  <!-- Galería y QR en el MISMO renglón: la pantalla de inicio ya está justa de
+       alto y no conviene agregar otra línea. -->
+  <div class="filaBotones" style="margin-top:2px;">
+    <button class="btnSec" id="btnGaleria" type="button" style="padding:8px; font-size:.8rem;">Galería 👀</button>
+    <button class="btnSec" id="btnQRInicio" type="button" style="padding:8px; font-size:.8rem;">QR Invita a Alguien</button>
+  </div>
+</div>
+
+<!-- ============ GALERÍA DE PERSONAJES (nov-2026) ============
+     Solo para ver: no edita ni guarda nada. Dos pestañas, una por lado; cada
+     una muestra los personajes de ese usuario (U) y las contrapartes de SUS
+     propios personajes (C): lado A = U1 + C2, lado B = U2 + C1. El color del
+     nombre distingue: coral = personaje, turquesa = contraparte. -->
+<div class="vista" id="vistaGaleria">
+  <h1>Galería</h1>
+  <p class="desc">Toca una foto para verla en grande.</p>
+  <div class="tabs" id="galTabs" style="margin-top:12px;"></div>
+  <div class="galLegend">
+    <span><b class="u">●</b> Personajes</span>
+    <span><b class="c">●</b> Contrapartes</span>
+  </div>
+  <div class="galGrid" id="galGrid"></div>
 </div>
 
 <!-- ============ SELECCIÓN DE TARJETAS (modo "seleccionar") ============ -->
@@ -537,13 +585,8 @@
   <!-- Texto de estado debajo de la carta (tapada / descubierta) -->
   <div id="textoEstadoCarta" style="font-size:.85rem;color:var(--fg-muted);text-align:center;margin-top:8px;min-height:1.2em;"></div>
 
-  <!-- ============ MODAL: IMAGEN GRANDE DEL PERSONAJE ============ -->
-  <div id="modalImagenCarta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;align-items:center;justify-content:center;padding:20px;">
-    <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:20px;text-align:center;">
-      <img id="imagenCartaGrande" src="" style="width:100%;height:auto;border-radius:16px;object-fit:contain;cursor:pointer;">
-      <div style="margin-top:14px;font-size:.85rem;color:var(--fg-muted);">Toca para Cerrar</div>
-    </div>
-  </div>
+  <!-- La ventana de imagen grande (`#modalImagenCarta`) se movió al nivel de
+       la página, después de esta vista, porque también la usa la galería. -->
   <!-- La carta de DOS CARAS del duelo "Juntos" en un solo celular: una cara es el
        original y, al tocarla, aparece su contraparte cruzada. Es UN solo objeto que
        se voltea, no dos cartas. Nace oculta: solo se usa en ese camino. -->
@@ -579,6 +622,16 @@
       <h4>En el juego <b id="juegoCount">0</b></h4>
       <div class="chips" id="juegoLista"></div>
     </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: IMAGEN GRANDE DEL PERSONAJE ============
+     Vive al nivel de la página (no dentro de una vista) porque la usan la
+     partida y la galería. Tocar la imagen la cierra. -->
+<div id="modalImagenCarta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:380px;background:var(--card);border:1px solid var(--teal);border-radius:18px;padding:20px;text-align:center;">
+    <img id="imagenCartaGrande" src="" style="width:100%;height:auto;border-radius:16px;object-fit:contain;cursor:pointer;">
+    <div style="margin-top:14px;font-size:.85rem;color:var(--fg-muted);">Toca para Cerrar</div>
   </div>
 </div>
 
@@ -1397,9 +1450,109 @@ async function entrar(){
   escucharAprobacion();
 }
 
+// ---------- Galería de personajes (nov-2026) ----------
+// Solo lectura. Cada pestaña es un lado y muestra los personajes de ese
+// usuario (U) más las contrapartes de SUS propios personajes (C): el enlace
+// real es U1 <-> C2 y U2 <-> C1 (campo `par`). El nombre va en coral para los
+// personajes y en turquesa para las contrapartes.
+let galLado = "1";
+function abrirGaleria(){
+  if(esInvitadoFlag) return;
+  galLado = ladoAnatomiaCfg();   // abre en el lado de quien la usa
+  pintarGaleria();
+  ver("vistaGaleria");
+  // Si el contenido todavía no llegó, se repinta en cuanto esté.
+  asegurarPersonajes().then(()=>{
+    const v = document.getElementById("vistaGaleria");
+    if(v && v.classList.contains("ver")) pintarGaleria();
+  }, ()=>{});
+}
+function ponerSinFotoGaleria(caja){
+  caja.innerHTML = "";
+  const s = document.createElement("span");
+  s.textContent = "🖼️";
+  const sm = document.createElement("small");
+  sm.textContent = "Sin foto";
+  caja.appendChild(s); caja.appendChild(sm);
+}
+function pintarFotoGaleria(caja, p){
+  const url = (p && p.imagen) ? String(p.imagen).trim() : "";
+  caja.innerHTML = "";
+  if(!url){ ponerSinFotoGaleria(caja); return; }
+  const img = document.createElement("img");
+  img.loading = "lazy";
+  img.alt = (p && p.personaje) || "Imagen del personaje";
+  img.addEventListener("error", ()=>{ if(img.dataset.url === url) ponerSinFotoGaleria(caja); });
+  img.dataset.url = url;
+  img.src = url;
+  caja.appendChild(img);
+}
+function pintarGaleria(){
+  const tabs = document.getElementById("galTabs");
+  const grid = document.getElementById("galGrid");
+  if(!tabs || !grid) return;
+  // El 🏅 y el orden dependen de los oficiales; se recalculan al pintar,
+  // igual que en la selección.
+  recalcularOficiales();
+  tabs.innerHTML = "";
+  ["1", "2"].forEach(n=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "tab" + (galLado === n ? " activo" : "");
+    b.textContent = nombreDeLado(n) || ("Lado " + n);
+    b.onclick = ()=>{ galLado = n; pintarGaleria(); };
+    tabs.appendChild(b);
+  });
+  // Lado A = U1 + C2; lado B = U2 + C1. Primero personajes y luego
+  // contrapartes; dentro de cada grupo, oficiales primero y alfabético.
+  const uKey = "U" + galLado;
+  const cKey = "C" + otroLado(galLado);
+  const items = [];
+  listaSegura(uKey).forEach(p=> items.push({ p: p, c: false }));
+  listaSegura(cKey).forEach(p=> items.push({ p: p, c: true }));
+  items.sort((a, b)=> (a.c === b.c ? 0 : (a.c ? 1 : -1)) || ordenPersonajes(a.p, b.p));
+  grid.innerHTML = "";
+  items.forEach(it=>{
+    const p = it.p || {};
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "galItem";
+    const foto = document.createElement("div");
+    foto.className = "galFoto";
+    pintarFotoGaleria(foto, p);
+    item.appendChild(foto);
+    const nom = document.createElement("div");
+    nom.className = "galNombre " + (it.c ? "c" : "u");
+    nom.textContent = p.personaje || "(sin nombre)";
+    ponerBadgeOficial(nom, p);
+    item.appendChild(nom);
+    if(it.c){
+      const tag = document.createElement("span");
+      tag.className = "galTag";
+      tag.textContent = "Contraparte";
+      item.appendChild(tag);
+    }
+    const url = (p && p.imagen) ? String(p.imagen).trim() : "";
+    if(url) item.onclick = ()=> abrirModalImagen(url);
+    else item.style.cursor = "default";
+    grid.appendChild(item);
+  });
+  if(!items.length){
+    const v = document.createElement("div");
+    v.className = "vacio";
+    v.textContent = "No hay personajes de este lado todavía.";
+    grid.appendChild(v);
+  }
+}
+
 function pintarInicio(){
   pintarModo();
   pintarEspecial();
+  // Si la galería está abierta cuando llega el contenido, se refresca sola.
+  try{
+    const g = document.getElementById("vistaGaleria");
+    if(g && g.classList.contains("ver")) pintarGaleria();
+  }catch(e){}
 }
 // Las CUATRO pestañas del modo base.
 function pintarModo(){
@@ -1416,6 +1569,8 @@ document.getElementById("tabDuelo").onclick = ()=>{ modoBaseCfg = MODO_DUELO; pi
 // El remate de abajo ("Personaliza tu experiencia en... ⚙️") lleva al engrane
 // de ESTA pantalla. Es lo mismo que apretar el engrane de arriba.
 document.getElementById("btnIrCfg").onclick = ()=>{ abrirCfg(); };
+// La galería se abre desde el inicio; es solo para ver.
+document.getElementById("btnGaleria").onclick = ()=>{ abrirGaleria(); };
 // Botones de modo: cada uno abre su ventana y de ahi arranca la partida.
 let modoPendiente = "multi";
 // Quiénes juegan: Pareja o Multijugador. "Jugar solo" se quitó (oct-2026).
@@ -5038,6 +5193,7 @@ document.getElementById("lnkInicio").addEventListener("click", (e)=>{
   const id = v ? v.id : "";
   // En las pantallas de adentro el enlace NO navega: se regresa a la anterior.
   if(id === "vistaConfig"){ e.preventDefault(); entrar(); return; }
+  if(id === "vistaGaleria"){ e.preventDefault(); history.back(); return; }
   if(id === "vistaSeleccion"){ e.preventDefault(); document.getElementById("btnSelVolver").onclick(); return; }
   // Pantalla base: salir al menú deshaciendo los pasos de esta página.
   e.preventDefault();

@@ -777,3 +777,30 @@ persona tenga que importar cuatro archivos.
   para no pisar un cambio hecho al mismo tiempo.
 - **PENDIENTE:** se quita antes de vender y con el cambio de arquitectura, junto con
   `Roles/fotos.json`. Ver `GUIA.md` → *Otros pendientes*.
+
+## Galería de personajes (nov-2026)
+
+Pantalla **solo para ver**: no edita, no agrega, no borra y no toca la base. Se
+abre desde el botón **«Galería 👀»** de la pantalla de inicio, en el **mismo
+renglón del QR** (el inicio ya está justo de alto).
+
+- **Dos pestañas, una por lado**, con el nombre real de quien lo usa
+  (`nombreDeLado`); si no hay nadie, «Sin usar».
+- **Cada pestaña muestra los personajes de ese usuario y las contrapartes de SUS
+  propios personajes:** lado A = `U1 + C2`, lado B = `U2 + C1` (el enlace real
+  es `par`: `U1 ↔ C2`, `U2 ↔ C1`). **Ojo:** es distinto del engrane, que bajo el
+  lado A muestra `C1` (las contrapartes que ese lado juega).
+- **Cuadrícula de 2 por renglón**, con la foto completa (16/9) y el nombre
+  debajo. Los que no tienen foto salen con 🖼️ y su nombre.
+- **Color del nombre:** coral = personaje, turquesa = contraparte. Las
+  contrapartes llevan además la etiqueta «Contraparte» y hay una leyenda debajo
+  de las pestañas. No es solo color: la etiqueta lo dice con palabras.
+- **Orden:** personajes primero, luego contrapartes; dentro de cada grupo,
+  oficiales 🏅 y después alfabético (`ordenPersonajes`).
+- **Reutiliza la ventana de imagen grande** (`#modalImagenCarta`), que se movió
+  al nivel de la página para que funcione también fuera de la partida. Tocar la
+  foto la abre y tocarla otra vez la cierra.
+- **El invitado no la ve** (`abrirGaleria()` lo bloquea y su pantalla es la de
+  espera). El «‹ Volver» regresa al inicio; es un paso real del historial.
+- Si el contenido llega después de abrirla, la galería se repinta sola
+  (`asegurarPersonajes()` y `pintarInicio()`).
