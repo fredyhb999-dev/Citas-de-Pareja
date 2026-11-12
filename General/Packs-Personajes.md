@@ -406,13 +406,14 @@ No cambia: ya usa `contraparteDe`.
 
 ### 7.4 Caminos del mismo lado (A+A reales)
 
-Hoy usan `C<n>` fijo. Con la instalación canónica, la contraparte de `U1` está en `C2` y
-la de `U2` en `C1`. Por eso:
+Los caminos de pareja usan la búsqueda por `par`. Con la instalación canónica, la
+contraparte de `U1` está en `C2` y la de `U2` en `C1`. Por eso:
 
 - `poolsEspejoMismo()`: el admin recibe `U<n>`; el resto, **las contrapartes de esas `U`
   por `par`** (no `C<n>`).
 - `listaDeCabezaPara()`: la misma regla.
-- `selPoolDe(cab)`: `U<n>` + **contrapartes de esas `U` por `par`** (no `C<n>`).
+- `selPoolDe(cab)`: **no es un camino de pareja**: es la lista completa del mismo
+  lado, `U<n> + C<n>`, igual que el engrane y la galería.
 - `avisosCorrespondencia()`: comprobar con `contraparteDe`; avisar si un original no
   tiene exactamente una contraparte.
 

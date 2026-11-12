@@ -489,9 +489,9 @@
 
 <!-- ============ GALERÍA DE PERSONAJES (nov-2026) ============
      Solo para ver: no edita ni guarda nada. Dos pestañas, una por lado; cada
-     una muestra los personajes de ese usuario (U) y las contrapartes de SUS
-     propios personajes (C): lado A = U1 + C2, lado B = U2 + C1. El color del
-     nombre distingue: coral = personaje, turquesa = contraparte. -->
+     una muestra los personajes de ese lado y sus contrapartes, igual que el
+     engrane: lado A = U1 + C1, lado B = U2 + C2. El color del nombre
+     distingue: coral = personaje, turquesa = contraparte. -->
 <div class="vista" id="vistaGaleria">
   <h1>Galería</h1>
   <p class="desc">Toca una foto para verla en grande.</p>
@@ -1451,10 +1451,10 @@ async function entrar(){
 }
 
 // ---------- Galería de personajes (nov-2026) ----------
-// Solo lectura. Cada pestaña es un lado y muestra los personajes de ese
-// usuario (U) más las contrapartes de SUS propios personajes (C): el enlace
-// real es U1 <-> C2 y U2 <-> C1 (campo `par`). El nombre va en coral para los
-// personajes y en turquesa para las contrapartes.
+// Solo lectura. Cada pestaña es un lado y muestra los personajes de ese lado
+// (U) y sus contrapartes (C), igual que el engrane: lado A = U1 + C1, lado B =
+// U2 + C2. El nombre va en coral para los personajes y en turquesa para las
+// contrapartes.
 let galLado = "1";
 function abrirGaleria(){
   if(esInvitadoFlag) return;
@@ -1503,10 +1503,10 @@ function pintarGaleria(){
     b.onclick = ()=>{ galLado = n; pintarGaleria(); };
     tabs.appendChild(b);
   });
-  // Lado A = U1 + C2; lado B = U2 + C1. Primero personajes y luego
+  // Lado A = U1 + C1; lado B = U2 + C2. Primero personajes y luego
   // contrapartes; dentro de cada grupo, oficiales primero y alfabético.
   const uKey = "U" + galLado;
-  const cKey = "C" + otroLado(galLado);
+  const cKey = "C" + galLado;
   const items = [];
   listaSegura(uKey).forEach(p=> items.push({ p: p, c: false }));
   listaSegura(cKey).forEach(p=> items.push({ p: p, c: true }));
@@ -3256,18 +3256,14 @@ function selEsCompartida(){ return !!selCompartida; }
 // De donde se leen las marcas: el doc compartido, o la memoria del celular.
 function selFuente(){ return selEsCompartida() ? (selDoc || {}) : { sel: selLocal }; }
 function selMarcosDe(id){ return (selFuente().sel || {})[id] || []; }
-// El pool de un jugador: sus normales y las contrapartes DE ESOS normales,
-// buscadas por `par` (con los packs, la de U1 vive en C2, no en C1).
+// El pool de un jugador en "Seleccionar": la lista COMPLETA de su lado, igual
+// que el engrane, la galería y `listaDeLado`: los normales (U<n>) y las
+// contrapartes de ESE mismo lado (C<n>). Aquí NO se busca por `par`: eso es del
+// Duelo y de Cambia de Bando, donde se reparten parejas original/contraparte.
 function selPoolDe(cab){
   const n = (cab.lado === "A") ? "1" : "2";
-  const normales = listaSegura("U" + n);
-  const contrarios = [];
-  normales.forEach(p=>{
-    const c = contraparteDe(p && p.id);
-    if(c && contrarios.indexOf(c) < 0) contrarios.push(c);
-  });
-  return normales.map(p=> ({ p: p, c: false }))
-         .concat(contrarios.map(p=> ({ p: p, c: true })));
+  return listaSegura("U" + n).map(p=> ({ p: p, c: false }))
+    .concat(listaSegura("C" + n).map(p=> ({ p: p, c: true })));
 }
 function selTodosListos(){
   return selCabezas.length > 0 && selCabezas.every(c=> selMarcosDe(c.id).length === selR);

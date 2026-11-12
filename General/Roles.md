@@ -223,9 +223,12 @@ viejos (mismo lado) y los nuevos (cruzados).
 - **Solo C1/C2 cuentan como contrapartes.** El `par` que traiga un personaje normal
   (U1/U2) es un dato viejo de alguna importación y se ignora: antes se contaba y
   marcaba parejas ambiguas.
-- `poolsEspejoMismo()`, `listaDeCabezaPara()` y `selPoolDe()` ya **no usan `C<n>`
-  fijo**: toman las contrapartes **por `par`** de las `U` del lado. Con la
-  instalación canónica da lo mismo; con packs, manda el `par`.
+- `poolsEspejoMismo()` y `listaDeCabezaPara()` toman las contrapartes **por
+  `par`** de las `U` del lado (es el reparto de Cambia de Bando cuando todos
+  están en el mismo lado).
+- `selPoolDe()` usa la lista **completa del lado**, `U<n> + C<n>`, igual que el
+  engrane y la galería: en **Seleccionar** cada quien escoge de lo suyo y no hay
+  emparejamiento por `par` (eso es del Duelo).
 - `avisosCorrespondencia()` comprueba con `contraparteDe` y avisa si un original no
   tiene exactamente una.
 - `dueloMismoLado` **sigue existiendo, pero solo decide el reparto de roles** (el
@@ -786,10 +789,10 @@ renglón del QR** (el inicio ya está justo de alto).
 
 - **Dos pestañas, una por lado**, con el nombre real de quien lo usa
   (`nombreDeLado`); si no hay nadie, «Sin usar».
-- **Cada pestaña muestra los personajes de ese usuario y las contrapartes de SUS
-  propios personajes:** lado A = `U1 + C2`, lado B = `U2 + C1` (el enlace real
-  es `par`: `U1 ↔ C2`, `U2 ↔ C1`). **Ojo:** es distinto del engrane, que bajo el
-  lado A muestra `C1` (las contrapartes que ese lado juega).
+- **Cada pestaña muestra el lado igual que el engrane:** lado A = `U1 + C1`,
+  lado B = `U2 + C2`. (El enlace por `par` sigue siendo cruzado para el juego:
+  `U1 ↔ C2`, `U2 ↔ C1`; la galería agrupa por lo que se juega en cada lado, no
+  por el dueño del `par`.)
 - **Cuadrícula de 2 por renglón**, con la foto completa (16/9) y el nombre
   debajo. Los que no tienen foto salen con 🖼️ y su nombre.
 - **Color del nombre:** coral = personaje, turquesa = contraparte. Las
