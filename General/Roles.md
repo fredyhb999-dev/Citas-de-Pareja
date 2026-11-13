@@ -617,14 +617,15 @@ No romper:**
       si queda vacío cae a `usuario1` / `usuario2`). Ejemplo:
       `roles-Fredy-personajes.json`.
     Con lista vacía **no baja nada**: avisa con `aviso()`.
-  - **La foto del editor solo acepta enlaces que se vean** (nov-2026): al guardar
-    un personaje con enlace de imagen, la app lo prueba; si no carga, **no se
-    guarda** y avisa. Los enlaces de **Google Drive** (`/file/d/ID/view`,
-    `open?id=`, `uc?id=`, `thumbnail?id=`) se convierten solos al enlace directo
-    (`lh3.googleusercontent.com/d/ID=w1600`). Los de **Google Photos** no se
-    aceptan (no tienen enlace directo): se pide descargar la foto y subirla a
-    Drive. Los enlaces de otros servicios se prueban tal cual. El campo vacío sí
-    se permite (personaje sin foto).
+  - **La foto del editor: Drive se convierte y se comprueba; lo demás se acepta
+    como antes** (nov-2026). Al guardar un personaje con enlace de imagen, los
+    enlaces de **Google Drive** (`/file/d/ID/view`, `open?id=`, `uc?id=`,
+    `thumbnail?id=`) se convierten solos al enlace directo
+    (`lh3.googleusercontent.com/d/ID=w1600`) y se prueba que cargue; si no,
+    **no se guarda** y avisa. Los de **Google Photos** no se aceptan (no tienen
+    enlace directo). Los enlaces de otros servicios se guardan tal cual, como
+    antes: si no son imágenes directas, se guardan pero no se verán. El campo
+    vacío sí se permite (personaje sin foto).
   - **Las contrapartes van CRUZADAS** (decisión de Fredy, oct-2026): la lista de
     contrapartes de un usuario son las contrapartes de los personajes **del otro**.
     O sea, **`C1` ↔ `U2`** y **`C2` ↔ `U1`**. Por eso el desplegable "Contraparte

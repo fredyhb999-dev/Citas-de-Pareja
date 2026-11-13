@@ -4572,8 +4572,8 @@ function cerrarDetalle(){ detalle = null; cerrarModal("modalPersonaje"); }
 // ---------- Enlaces de imagen del editor (solo Google Drive, nov-2026) ----------
 // El campo "Imagen (por enlace)" guarda una URL directa a la imagen. Los enlaces
 // de Drive que la gente copia son páginas (`/file/d/ID/view`), no imágenes, así
-// que aquí se convierten al enlace directo antes de guardar. Nada se guarda si
-// la imagen no carga: la puerta queda cerrada a enlaces rotos.
+// que aquí se convierten al enlace directo antes de guardar. Solo Drive se
+// convierte y se comprueba; los demás enlaces se aceptan tal cual, como antes.
 function esEnlaceGooglePhotos(url){
   return /(?:^https?:\/\/)?(?:photos\.google\.com|photos\.app\.goo\.gl|goo\.gl\/photos)/i.test(url);
 }
@@ -4616,18 +4616,22 @@ function probarImagen(url, ms){
     img.src = url;
   });
 }
-// Devuelve {ok:true, url:<la que sí carga>} o {ok:false, motivo:"..."}.
+// Devuelve {ok:true, url:<la que se guarda>} o {ok:false, motivo:"..."}.
 async function resolverEnlaceImagen(url){
   const original = String(url || "").trim();
   if(!original) return { ok: true, url: "" };
   if(/^(data|blob|file):/i.test(original)) return { ok: false, motivo: "esquema" };
   if(esEnlaceGooglePhotos(original)) return { ok: false, motivo: "photos" };
   const drive = datosDrive(original);
-  const candidatos = drive ? candidatosImagenDrive(drive) : [original];
+  // Solo Drive se convierte y se comprueba. Los demás enlaces se aceptan tal
+  // cual, como antes: pueden ser imágenes directas o páginas (si son páginas,
+  // se guardan pero no se verán).
+  if(!drive) return { ok: true, url: original };
+  const candidatos = candidatosImagenDrive(drive);
   for(let i = 0; i < candidatos.length; i++){
     if(await probarImagen(candidatos[i], 10000)) return { ok: true, url: candidatos[i] };
   }
-  return { ok: false, motivo: drive ? "drive" : "general" };
+  return { ok: false, motivo: "drive" };
 }
 function mensajeEnlaceInvalido(motivo){
   if(motivo === "photos")
