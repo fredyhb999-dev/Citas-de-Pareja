@@ -1,5 +1,5 @@
 {
-  "generado": "2026-11-10",
+  "generado": "2026-11-12",
   "fotos": [
     {
       "lista": "U1",
@@ -105,6 +105,11 @@
       "lista": "U2",
       "personaje": "La Barista",
       "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Barista.png"
+    },
+    {
+      "lista": "U2",
+      "personaje": "La Vecina",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Vecina.png"
     },
     {
       "lista": "U2",
@@ -245,6 +250,126 @@
       "lista": "C2",
       "personaje": "La Conductora",
       "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Conductora.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Última Clienta",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Ultima Clienta.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Alumna",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Alumna.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Sospechosa",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Sospechosa.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Recluta",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Recluta.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Clienta Dos",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Clienta Dos.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Dueña",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Dueña.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Lectora",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Lectora.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Alumna dos",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Alumna dos.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Modelo",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/Modelo.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Deudora",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Deudora.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Cuñada",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Cuñada.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Esposa del Amigo",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Esposa del Amigo.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Mejor Amiga",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Mejor Amiga.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Dueña de la casa",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Dueña de la casa.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Secuestrada",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Secuestrada.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Acosada",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Acosada.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Clienta",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Clienta.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Bañista",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Bañista.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Protegida",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Protegida.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Acusada",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Acusada.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Deudora Dos",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Deudora Dos.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Pasajera",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Pasajera.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Clienta Tres",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Clienta Tres.png"
+    },
+    {
+      "lista": "C2",
+      "personaje": "La Niña Fresa",
+      "imagen": "https://fredyhb999-dev.github.io/Citas-de-Pareja/Imagenes-app/La Niña Fresa.png"
     }
   ]
 }
