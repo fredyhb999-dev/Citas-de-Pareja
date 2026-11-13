@@ -4560,17 +4560,115 @@ function abrirDetalle(clave, i){
   llenarSelectPar(p ? p.par : null);
   // El botón de borrar solo existe si hay algo que borrar.
   document.getElementById("btnPjBorrar").style.display = (i >= 0) ? "block" : "none";
+  // Si se cerró el editor mientras se comprobaba una imagen, el botón pudo
+  // quedar deshabilitado con el texto "Comprobando imagen…". Al abrir otro
+  // personaje vuelve a la normalidad.
+  const btnPj = document.getElementById("btnPjGuardar");
+  btnPj.disabled = false;
+  btnPj.textContent = "Guardar";
   abrirModal("modalPersonaje");
 }
 function cerrarDetalle(){ detalle = null; cerrarModal("modalPersonaje"); }
+// ---------- Enlaces de imagen del editor (solo Google Drive, nov-2026) ----------
+// El campo "Imagen (por enlace)" guarda una URL directa a la imagen. Los enlaces
+// de Drive que la gente copia son páginas (`/file/d/ID/view`), no imágenes, así
+// que aquí se convierten al enlace directo antes de guardar. Nada se guarda si
+// la imagen no carga: la puerta queda cerrada a enlaces rotos.
+function esEnlaceGooglePhotos(url){
+  return /(?:^https?:\/\/)?(?:photos\.google\.com|photos\.app\.goo\.gl|goo\.gl\/photos)/i.test(url);
+}
+function datosDrive(url){
+  let u;
+  try{ u = new URL(url); }catch(e){ return null; }
+  if(u.hostname.toLowerCase() !== "drive.google.com") return null;
+  let id = "";
+  const m = u.pathname.match(/\/file\/d\/([A-Za-z0-9_-]+)/);
+  if(m) id = m[1];
+  if(!id && /^\/(open|uc|thumbnail)$/i.test(u.pathname)){
+    id = u.searchParams.get("id") || "";
+  }
+  if(!id) return null;
+  return { id: id, resourcekey: u.searchParams.get("resourcekey") || "" };
+}
+function candidatosImagenDrive(d){
+  const out = ["https://lh3.googleusercontent.com/d/" + d.id + "=w1600"];
+  const rk = d.resourcekey ? ("&resourcekey=" + encodeURIComponent(d.resourcekey)) : "";
+  out.push("https://drive.google.com/thumbnail?id=" + encodeURIComponent(d.id) + "&sz=w1600" + rk);
+  return out;
+}
+// Prueba que una URL se pueda mostrar como imagen, igual que la mostrará la app.
+function probarImagen(url, ms){
+  return new Promise(function(resolve){
+    let listo = false;
+    let t = 0;
+    const img = new Image();
+    function terminar(ok){
+      if(listo) return;
+      listo = true;
+      clearTimeout(t);
+      img.onload = null;
+      img.onerror = null;
+      resolve(ok);
+    }
+    t = setTimeout(function(){ terminar(false); }, ms || 10000);
+    img.onload = function(){ terminar(true); };
+    img.onerror = function(){ terminar(false); };
+    img.src = url;
+  });
+}
+// Devuelve {ok:true, url:<la que sí carga>} o {ok:false, motivo:"..."}.
+async function resolverEnlaceImagen(url){
+  const original = String(url || "").trim();
+  if(!original) return { ok: true, url: "" };
+  if(/^(data|blob|file):/i.test(original)) return { ok: false, motivo: "esquema" };
+  if(esEnlaceGooglePhotos(original)) return { ok: false, motivo: "photos" };
+  const drive = datosDrive(original);
+  const candidatos = drive ? candidatosImagenDrive(drive) : [original];
+  for(let i = 0; i < candidatos.length; i++){
+    if(await probarImagen(candidatos[i], 10000)) return { ok: true, url: candidatos[i] };
+  }
+  return { ok: false, motivo: drive ? "drive" : "general" };
+}
+function mensajeEnlaceInvalido(motivo){
+  if(motivo === "photos")
+    return "Los enlaces de Google Photos no se pueden usar. Descarga la foto y súbela a Google Drive u otro servicio con enlace directo. Corrige el enlace o bórralo para guardar.";
+  if(motivo === "drive")
+    return "No se pudo cargar la imagen de Drive. Revisa que el archivo sea una imagen, que esté compartido como «Cualquier persona con el enlace» y que tengas conexión. Corrige el enlace o bórralo para guardar.";
+  if(motivo === "esquema")
+    return "Ese tipo de enlace no se puede guardar. Usa un enlace directo a una imagen (JPG, PNG o WEBP).";
+  return "El enlace de la imagen no funciona. Debe ser un enlace directo a una imagen (JPG, PNG o WEBP) que se abra sin iniciar sesión. Corrige el enlace o bórralo para guardar.";
+}
 async function guardarDetalle(){
   if(!detalle) return;
   const nombre = (document.getElementById("pjPersonaje").value || "").trim();
   if(!nombre){ aviso("El personaje necesita un nombre."); return; }
-  const clave = detalle.clave;
+  // La imagen se comprueba ANTES de tocar la lista: si el enlace no carga, el
+  // editor se queda abierto y no se guarda nada.
+  const detalleGuardado = detalle;
+  const imagenRaw = (document.getElementById("pjImagen").value || "").trim();
+  let imagen = "";
+  if(imagenRaw){
+    const btn = document.getElementById("btnPjGuardar");
+    const btnTexto = btn ? btn.textContent : "";
+    if(btn){ btn.disabled = true; btn.textContent = "Comprobando imagen…"; }
+    let res;
+    try{ res = await resolverEnlaceImagen(imagenRaw); }
+    catch(e){ res = { ok: false, motivo: "general" }; }
+    finally{
+      // Solo se restaura si sigue siendo el mismo editor; si se cerró o se
+      // abrió otro personaje, `abrirDetalle()` ya dejó el botón listo.
+      if(detalle === detalleGuardado && btn){ btn.disabled = false; btn.textContent = btnTexto; }
+    }
+    // Si mientras se comprobaba se cerró el editor o se abrió otro personaje,
+    // no se guarda nada.
+    if(detalle !== detalleGuardado) return;
+    if(!res.ok){ aviso(mensajeEnlaceInvalido(res.motivo)); return; }
+    imagen = res.url;
+  }
+  const clave = detalleGuardado.clave;
   if(!Array.isArray(personajes[clave])) personajes[clave] = [];
   const parRaw = document.getElementById("pjPar").value;
-  const i = detalle.i;
+  const i = detalleGuardado.i;
   const p = {
     id: (i >= 0) ? listaSegura(clave)[i].id : idSiguiente++,
     par: (clave.charAt(0) === "C" && parRaw !== "") ? parseInt(parRaw, 10) : null,
@@ -4579,7 +4677,7 @@ async function guardarDetalle(){
     gancho: (document.getElementById("pjGancho").value || "").trim(),
     derechos: (document.getElementById("pjDerechos").value || "").trim(),
     si_quieres: (document.getElementById("pjSiQuiero").value || "").trim(),
-    imagen: (document.getElementById("pjImagen").value || "").trim()
+    imagen: imagen
   };
   if(i >= 0) personajes[clave][i] = p;
   else personajes[clave].push(p);
