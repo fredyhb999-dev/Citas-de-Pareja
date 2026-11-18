@@ -4,7 +4,7 @@ Movido de `General/GUIA.md`. Contiene el detalle del módulo de favores expresos
 
 ---
 
-**Qué es:** uno le pide un favor al otro **en el momento**, con un precio en puntos, y el otro decide. Se pide desde un **botón flotante 🛎️** que está en las pantallas de la pareja, no desde el menú. Vive en **`favor.js`** (módulo de la raíz, como `fuegos.js` y `confirmar.js`): en cada pantalla es un import y `try{ montarFavor(); }catch(e){}`.
+**Qué es:** uno le pide un favor al otro **en el momento**, con un precio en puntos, y el otro decide. Se pide desde un **botón flotante 🛎️** que está en **todas** las pantallas de la pareja (menú, Citas, Retos, Chat, los juegos —Encuentros, Guiadas, Roles, Opciones, Lencería y El Precio del Placer— y también sus vistas de engrane), no desde el menú. Vive en **`favor.js`** (módulo de la raíz, como `fuegos.js` y `confirmar.js`): en cada pantalla es un import y `try{ montarFavor(); }catch(e){}`.
 
 **La diferencia con los retos de la IA, que es la razón de que exista:** el reto de la IA **no se puede rechazar**; el Favor Express **sí**. Ese "ella decide" es lo que lo hace un favor y no un menú.
 

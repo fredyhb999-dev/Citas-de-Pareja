@@ -642,6 +642,10 @@ import { miProyecto, appTaq, leerLicencias, tengoAcceso, oficialesAprobados, con
 import { verificarFirma } from "../taquilla.js";
 // Pantalla despierta mientras hay partida en curso.
 import { mantenerDespierto, soltarDespierto } from "../despierto.js";
+// Botón flotante del Favor Express (🛎️). Va en todas las pantallas de la pareja,
+// también en las vistas del engrane, porque el botón vive fuera de las vistas.
+import { montarFavor } from "../favor.js";
+try{ montarFavor(); }catch(e){}
 
 const firebaseConfig = resolverFirebase(firebaseConfigBase);
 const app = initializeApp(firebaseConfig);

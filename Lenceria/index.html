@@ -369,6 +369,10 @@ import { soyInvitado, CLAVE_LOCAL } from "../invitado.js";
 import { confirmar, aviso } from "../confirmar.js";
 import { avisarTelegram } from "../telegram.js";
 import { vigilarInvitaciones } from "../pestana.js";
+// Botón flotante del Favor Express (🛎️). Va en todas las pantallas de la pareja,
+// también en las vistas del engrane, porque el botón vive fuera de las vistas.
+import { montarFavor } from "../favor.js";
+try{ montarFavor(); }catch(e){}
 
 const app = initializeApp(resolverFirebase(firebaseConfigBase));
 const db = getFirestore(app);
