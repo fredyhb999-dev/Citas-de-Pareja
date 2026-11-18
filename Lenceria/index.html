@@ -68,8 +68,13 @@
   .usoTexto{ font-size:.78rem; color:var(--fg-muted); margin:0 0 8px; }
   /* En estas dos pantallas la página mide exactamente la pantalla, así el
      recuadro puede ENCOGERSE y el botón de abajo nunca se sale. Las demás
-     vistas siguen con scroll normal. */
-  body.sinScroll{ height:100dvh; }
+     vistas siguen con scroll normal.
+     El aire de abajo es a propósito (56px): en varios celulares la barra del
+     navegador o el botón de gestos se comen una franja y el botón quedaba a
+     medias. Subiéndolo un poco se ve completo aunque el navegador descuente
+     mal esa franja. */
+  body.sinScroll{ height:100dvh;
+    padding-bottom:max(56px, calc(env(safe-area-inset-bottom) + 28px)); }
   #vistaPlanes.ver, #vistaConfig.ver, #vistaElegir.ver, #vistaPedido.ver{ flex:1; min-height:0; }
   #vistaPlanes .desc, #vistaConfig .desc{ margin-bottom:12px; }
   .ccBox{ width:100%; flex:1; min-height:0; display:flex; flex-direction:column;
