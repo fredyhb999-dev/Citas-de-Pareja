@@ -182,7 +182,7 @@ entregar**. No se rompe nada, pero puede haber un pedido de un deseo que ya no
 está.
 
 **El botón "Comprar" NO sale si no hay saldo.** A diferencia de los Favores
-Express (ver `GUIA.md`, *Favores Express (`favor.js`)*), donde **el botón siempre
+Express (ver `Favores-Express.md`), donde **el botón siempre
 aparece y se avisa que no alcanza**. Son reglas **distintas a propósito** (decisión
 de Fredy, oct-2026): aquí no se compra "a debt", y ni se ofrece la opción. Que
 nadie "arregle" uno para que sea igual que el otro sin preguntar.

@@ -274,7 +274,7 @@ No usa `vista…`: muestra la pantalla de identidad o la app.
 
 ---
 
-## `favor.js` — 1,235 líneas
+## `favor.js` — 1,253 líneas
 
 **Documento de detalle:** `General/Favores-Express.md`
 
@@ -282,16 +282,16 @@ Es un módulo, no una pantalla: dibuja la caja del favor encima de la app.
 
 | Para... | Función | Línea |
 |---|---|---|
-| Pintar el precio del favor | `pintarPrecio()` | 220 |
-| Preparar la caja del favor | `preparar()` | 258 |
+| Pintar el precio del favor | `pintarPrecio()` | 223 |
+| Preparar la caja del favor | `preparar()` | 261 |
 | Quién soy y si hay favor vivo | `yoLocal()` / `hayFavorVivo()` | 115 / 138 |
-| A quién le toca responder | `leTocaResponder()` | 506 |
-| Escuchar respuestas y mostrarlas | `escucharRespuestas()` / `mostrarRespuesta()` | 512 / 647 |
-| Responder y avisar al otro | `responder()` / `avisarAlOtro()` | 770 / 808 |
-| Capa propia y espera | `laCapaPropia()` / `mostrarPropio()` / `pintarEspera()` | 859 / 897 / 932 |
-| Encolar y pintar | `encolarPropios()` / `pintar()` | 981 / 943 |
-| Precio, castigo y minutos | `precio()` / `castigoDe()` / `minutosDe()` | 1050 / 1047 / 1040 |
-| Pagar, cobrar el castigo, cerrar y liquidar vencidos | `pagarFavor()` / `cobrarCastigo()` / `cerrarFavor()` / `liquidarVencidos()` | 1080 / 1133 / 1185 / 1058 |
+| A quién le toca responder | `leTocaResponder()` | 514 |
+| Escuchar respuestas y mostrarlas | `escucharRespuestas()` / `mostrarRespuesta()` | 520 / 655 |
+| Responder y avisar al otro | `responder()` / `avisarAlOtro()` | 778 / 816 |
+| Capa propia y espera | `laCapaPropia()` / `mostrarPropio()` / `pintarEspera()` | 867 / 905 / 940 |
+| Encolar y pintar | `encolarPropios()` / `pintar()` | 994 / 951 |
+| Precio, castigo y minutos | `precio()` / `castigoDe()` / `minutosDe()` | 1068 / 1065 / 1058 |
+| Pagar, cobrar el castigo, cerrar y liquidar vencidos | `pagarFavor()` / `cobrarCastigo()` / `cerrarFavor()` / `liquidarVencidos()` | 1098 / 1151 / 1203 / 1076 |
 
 ---
 
@@ -668,16 +668,16 @@ suprimir(372) · verVestuarioDeLaCita(758)
 ### `favor.js`
 
 ```
-aPagar(1084) · avisarAlOtro(808) · barrerAvisoHuerfano(602) · castigoDe(1047) · cents(665)
-cerrar(215) · cerrarFavor(1185) · cerrarRespondida(450) · cobrarCastigo(1133)
-cuandoMil(474) · descartar(466) · encolarPropios(981) · escucharRespuestas(512)
-esReciente(405) · faltaEn(890) · fueDescartado(462) · hayCajaAbierta(60) · hayFavorVivo(138)
-laCapaPropia(859) · laCapaRespuesta(562) · leTocaResponder(506) · liquidarVencidos(1058)
-marcarAvisosVistos(626) · marcarAvisoVisto(643) · milisRestantes(882) · minutosDe(1040)
-mostrarPropio(897) · mostrarRespuesta(647) · olvidarDescartados(469) · pagarFavor(1080)
-pintar(943) · pintarEspera(932) · pintarPrecio(220) · ponerEstilo(81) · precio(1050)
-preparar(258) · responder(770) · saldoParaAntes(1095) · siguiente(483)
-siguienteEstado(748) · siguientePropio(846) · textoParaElOtro(762) · veces(164)
+aPagar(1102) · avisarAlOtro(816) · barrerAvisoHuerfano(610) · castigoDe(1065) · cents(673)
+cerrar(218) · cerrarFavor(1203) · cerrarRespondida(458) · cobrarCastigo(1151)
+cuandoMil(482) · descartar(474) · encolarPropios(994) · escucharRespuestas(520)
+esReciente(408) · faltaEn(898) · fueDescartado(470) · hayCajaAbierta(60) · hayFavorVivo(138)
+laCapaPropia(867) · laCapaRespuesta(570) · leTocaResponder(514) · liquidarVencidos(1076)
+marcarAvisosVistos(634) · marcarAvisoVisto(651) · milisRestantes(890) · minutosDe(1058)
+mostrarPropio(905) · mostrarRespuesta(655) · olvidarDescartados(477) · pagarFavor(1098)
+pintar(951) · pintarEspera(940) · pintarPrecio(223) · ponerEstilo(81) · precio(1068)
+preparar(261) · responder(778) · saldoParaAntes(1113) · siguiente(491)
+siguienteEstado(756) · siguientePropio(854) · textoParaElOtro(770) · veces(167)
 yoLocal(115)
 ```
 

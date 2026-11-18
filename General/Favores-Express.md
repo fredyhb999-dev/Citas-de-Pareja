@@ -35,7 +35,9 @@ Movido de `General/GUIA.md`. Contiene el detalle del módulo de favores expresos
 - **La sanción descuenta hasta donde alcance** y si no da, queda en cero.
 - **El contra-precio es UNA ida y una vuelta, no un ciclo:** ella contraoferta, él acepta, vuelve a ella y **ahí se decide**. Si alguien no acepta en cualquier paso, el favor muere y no pasa nada.
 - **Quién pidió no toca el precio**; **quien cumple sí** (hacia arriba, o hasta 0 si lo regala). Así nadie puede bajar el precio y ganar algo.
-- **Un solo favor VIVO a la vez.** Se revisa al abrir el formulario **y otra vez al mandar** (`hayFavorVivo()`), para que no se cuele uno mientras escribes. No es un capricho: el aviso de la campana es **un hueco por persona** (`invitosFavor/{id de quien manda}`), así que dos favores vivos **se pisarían el aviso** y uno de los dos se quedaría sin ver el suyo. Los ya cerrados no cuentan.
+- **Un solo favor VIVO a la vez.** Se revisa al abrir el formulario **y otra vez al mandar** (`hayFavorVivo()`), para que no se cuele uno mientras escribes. No es un capricho: el aviso de la campana es **un hueco por persona** (`invitosFavor/{id de quien manda}`), así que dos favores vivos **se pisarían el aviso** y uno de los dos se quedaría sin ver el suyo. Los ya cerrados no cuentan, y **un `vencido` tampoco**: ya no está en curso, solo espera el castigo o el perdón.
+- **Un favor sin responder NO vence solo.** Se queda pendiente hasta que quien lo pidió lo **cancele desde el Centro → Favores** (o desde su aviso). No hay cancelación automática ni castigo por un favor que nadie aceptó: el castigo solo empieza al aceptar.
+- **El `vencido` se cierra a mano.** Quien pidió elige **"Cobrar el castigo"** o **"Dejarlo pasar"**; el castigo nunca se descuenta solo. Mientras tanto no bloquea pedir otro, y sigue en el historial del Centro.
 
 **Dos cosas quedaron SIN decidir** (venían del plan de desarrollo, que ya se borró; si algún día se deciden, se anotan aquí y se quitan de esta lista):
 

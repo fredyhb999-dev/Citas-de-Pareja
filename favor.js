@@ -143,7 +143,10 @@ async function hayFavorVivo(db, yo, pareja){
     mias.forEach(ds=>{
       const d = ds.data();
       if(!d || !d.para || d.para.id !== pareja.id) return;
-      if(FINALES.indexOf(d.estado) < 0) vivo = true;
+      // Un favor "vencido" ya NO esta en curso: solo espera que quien lo pidio
+      // cobre el castigo o lo perdone. No debe bloquear uno nuevo (lo reporto
+      // Fredy, nov-2026: con el ultimo "No lo cumplio" ya no lo dejaba pedir).
+      if(FINALES.indexOf(d.estado) < 0 && d.estado !== "vencido") vivo = true;
     });
     return vivo;
   }catch(e){
@@ -427,7 +430,12 @@ export function abrirVentanaFavor(id){
   if(ESTADOS_VIVOS.indexOf(f.d.estado) >= 0 && leTocaResponder(f.d, yo.id)){
     mostrarRespuesta(f); return true;
   }
-  if(f.d.de && f.d.de.id === yo.id && ["enCurso","vencido"].indexOf(f.d.estado) >= 0){
+  if(f.d.de && f.d.de.id === yo.id
+     && ["pedido","esperando","enCurso","vencido"].indexOf(f.d.estado) >= 0){
+    // Tambien los pendientes ("pedido"/"esperando"): asi el que los pidio puede
+    // CANCELARLOS desde el Centro -> Favores o desde el aviso. Antes solo se
+    // abrian los que ya estaban en curso o vencidos, y un pendiente viejo
+    // quedaba invisible y bloqueando.
     mostrarPropio(f); return true;
   }
   return false;
@@ -959,11 +967,16 @@ function mostrarPropio(f){
     ok.onclick = async ()=>{ ok.disabled = true; const r = await cobrarCastigo(dbBase, f); ok.disabled = false; if(r) cerrar(); };
     sec.onclick = async ()=>{ sec.disabled = true; const r = await cerrarFavor(dbBase, f, "perdonado", {}); sec.disabled = false; if(r) cerrar(); };
   }else{
-    // Todavia no lo ha aceptado: se puede cancelar.
+    // Todavia no esta en curso: se puede cancelar. En "esperando" ya acepte su
+    // contra-precio y falta que la otra persona confirme, asi que el texto no
+    // puede decir "todavia no lo acepta" (antes ese estado no se abria aqui).
     ok.style.display = "none"; sec.style.display = "none"; btnCancelar.style.display = "block";
     $("vpTitulo").textContent = "Esperando a " + otro.nombre;
-    $("vpPrecio").textContent = "Le pediste: " + (d.texto || "") + " \u00b7 " + cents(d.precio)
-      + ". Todav\u00eda no lo acepta.";
+    $("vpPrecio").textContent = (d.estado === "esperando")
+      ? "Aceptaste su precio de " + cents(d.precio) + " por: " + (d.texto || "")
+        + ". Falta que confirme."
+      : "Le pediste: " + (d.texto || "") + " \u00b7 " + cents(d.precio)
+        + ". Todav\u00eda no lo acepta.";
     btnCancelar.onclick = async ()=>{
       btnCancelar.disabled = true;
       const r = await cerrarFavor(dbBase, f, "cancelado", {});
@@ -1019,7 +1032,12 @@ export function abrirFavorPendiente(favorId){
   if(ESTADOS_VIVOS.indexOf(f.d.estado) >= 0 && leTocaResponder(f.d, yo.id)){
     mostrarRespuesta(f); return true;
   }
-  if(f.d.de && f.d.de.id === yo.id && ["enCurso","vencido"].indexOf(f.d.estado) >= 0){
+  if(f.d.de && f.d.de.id === yo.id
+     && ["pedido","esperando","enCurso","vencido"].indexOf(f.d.estado) >= 0){
+    // Tambien los pendientes ("pedido"/"esperando"): asi el que los pidio puede
+    // CANCELARLOS desde el Centro -> Favores o desde el aviso. Antes solo se
+    // abrian los que ya estaban en curso o vencidos, y un pendiente viejo
+    // quedaba invisible y bloqueando.
     mostrarPropio(f); return true;
   }
   return false;
