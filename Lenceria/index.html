@@ -485,6 +485,22 @@ function ladoDePersona(id){
   const u = usuariosLista.find(x => x && x.id === id);
   return u ? ladoDeUsuario(u) : miLado;
 }
+// Lado según el id del dueño, o "" si no se reconoce.
+function ladoDeUsuarioId(id){
+  if(!id) return "";
+  if(id === miId) return miLado;
+  if(id === otroId) return otroLado;
+  const u = usuariosLista.find(x => x && x.id === id);
+  return u ? ladoDeUsuario(u) : "";
+}
+// El `lado` de una prenda según su dueño. Si el dueño no se reconoce, se usa
+// el guardado (dato viejo). La exportación usa esto: el `lado` guardado no
+// debe decidir a quién se le asigna la prenda en la otra instalación.
+function ladoDePrenda(p){
+  const delDueno = ladoDeUsuarioId(p && p.duenoId);
+  if(delDueno) return delDueno;
+  return (p && p.lado === "B") ? "B" : "A";
+}
 function prendasDePersona(id){
   const lado = ladoDePersona(id);
   return prendas.filter(p => p && (p.duenoId ? p.duenoId === id : p.lado === lado));
@@ -864,6 +880,7 @@ function siguienteRef(tipoId, excluirId, reservadas){
 // una importación): a la que no tiene se le pone la siguiente de su tipo y, de las
 // repetidas, conserva la referencia la más antigua.
 let refsRevisadas = false;
+let ladosRevisados = false;
 
 async function asegurarRefs(forzar){
   if(refsRevisadas && !forzar) return;
@@ -903,6 +920,48 @@ async function asegurarRefs(forzar){
   aviso(hechas === 1
     ? "Se corrigió 1 referencia que estaba vacía o repetida."
     : "Se corrigieron " + hechas + " referencias que estaban vacías o repetidas.");
+}
+
+// La pantalla manda por `duenoId`, pero la exportación viaja por `lado`. Si el
+// `lado` guardado quedó desfasado (datos viejos), se corrige una vez al abrir.
+// Solo prendas: en los planes ese campo no decide de quién son.
+async function asegurarLados(){
+  if(ladosRevisados) return;
+  ladosRevisados = true;
+  if(!prendas.length) return;
+
+  const cambios = [];
+  let sinDueno = 0;
+  prendas.forEach(p => {
+    if(!p) return;
+    const guardado = p.lado === "B" ? "B" : "A";
+    const delDueno = ladoDeUsuarioId(p.duenoId);
+    if(!delDueno){ if(p.duenoId) sinDueno++; return; }
+    if(delDueno !== guardado) cambios.push({ prenda: p, lado: delDueno });
+  });
+  if(!cambios.length && !sinDueno) return;
+
+  let hechas = 0;
+  for(const c of cambios){
+    try{
+      await setDoc(doc(db, "lenceriaPrendas", c.prenda.id), { lado: c.lado }, { merge: true });
+      c.prenda.lado = c.lado;
+      hechas++;
+    }catch(e){}
+  }
+  if(hechas){
+    pintarConfig();
+    pintarPlanes();
+  }
+
+  let msg = "";
+  if(hechas) msg = hechas === 1
+    ? "Se corrigió 1 lado que no coincidía con el dueño."
+    : "Se corrigieron " + hechas + " lados que no coincidían con el dueño.";
+  if(sinDueno) msg += (msg ? " " : "") + (sinDueno === 1
+    ? "1 prenda tiene un dueño que no existe aquí; se dejó como estaba."
+    : sinDueno + " prendas tienen un dueño que no existe aquí; se dejaron como estaban.");
+  aviso(msg);
 }
 
 function nombreDe(grupo, id){
@@ -2427,7 +2486,7 @@ function abrirDatos(accion, tipo){
         fecha: new Date().toISOString(),
         prendas: prendas.map(p => ({
           id: p.id,
-          lado: p.lado === "B" ? "B" : "A",
+          lado: ladoDePrenda(p),
           zonaId: p.zonaId || "", estiloId: p.estiloId || "",
           tipoId: p.tipoId || "", colorId: p.colorId || "",
           ref: p.ref || "",
@@ -2731,6 +2790,7 @@ async function arrancar(){
   escuchar();
   // Las referencias se revisan después de pintar, sin frenar el arranque.
   asegurarRefs().catch(()=>{});
+  asegurarLados().catch(()=>{});
   aplicarEntradaCita();
 
   vigilarInvitaciones(db, { tipo: "lenceria", esEsta: true, alTerminar: ()=> ver("vistaPlanes") });

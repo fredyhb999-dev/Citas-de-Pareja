@@ -237,7 +237,7 @@ esquema en las cuatro:
 
 | Campo | Tipo | Qué es |
 |---|---|---|
-| `lado` | `"A"` \| `"B"` | Para mostrar y agrupar |
+| `lado` | `"A"` \| `"B"` | Solo el contenido. De quién es, lo dice `duenoId` |
 | `duenoId` | string | Id del usuario dueño. **Manda sobre `lado`** |
 | `zonaId`, `estiloId`, `tipoId`, `colorId` | string | Ids de las clasificaciones |
 | `ref` | string | Referencia corta y automática (máx. 8): `top-1`, `ves-1`. **Única en la pareja y nunca vacía** |
@@ -489,6 +489,13 @@ con **cinco toques seguidos en el rótulo "LENCERÍA"**, arriba de la pantalla.
 - Si alguna clasificación usada no existe en esta base, avisa al terminar: es la
   señal de que las listas no quedaron iguales.
 - Se puede correr varias veces: lo que ya está se sobrescribe, no se duplica.
+- **El lado sale del dueño, no del campo guardado.** Al exportar, cada prenda va
+  como A o B según la **anatomía de su dueño** (`duenoId`); si el dueño no se
+  reconoce, se usa el `lado` guardado.
+- **Al abrir la pantalla se corrigen los lados desfasados**: si el `lado` guardado
+  no coincide con la anatomía del dueño, se corrige una vez y se avisa cuántas.
+  Las de dueño desconocido no se tocan. Los **planes** no se tocan, porque ahí el
+  `lado` no decide de quién son.
 - **No borra** lo que sobre en la base destino: si allá existe algo que aquí ya
   no, se queda. Para igualar borrando haría falta otro modo, y no está hecho.
 

@@ -105,7 +105,7 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 ---
 
-## `Lenceria/index.html` — 2,742 líneas
+## `Lenceria/index.html` — 2,802 líneas
 
 **Documento de detalle:** `General/Catalogo-Lenceria.md`
 
@@ -115,23 +115,23 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 | Para... | Función | Línea |
 |---|---|---|
 | Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 373 / 398 |
-| Cargar todo y escuchar cambios | `cargarTodo()` / `escuchar()` | 2634 / 2346 |
-| Cargar prendas, planes y pedidos | `cargarPrendas()` / `cargarPlanes()` / `cargarPedidos()` | 2317 / 2324 / 2331 |
-| Configuración: clasificaciones y prendas | `pintarConfig()` / `bloqueClasif()` / `bloquePrendas()` | 930 / 948 / 1114 |
-| Clasificación: abrir, pintar, guardar, borrar | `abrirClasif()` / `pintarClasifVista()` / `guardarClasif()` / `borrarClasif()` | 1026 / 1034 / 1059 / 1083 |
-| Prenda: tarjeta, abrir, guardar, borrar | `tarjetaPrenda()` / `abrirPrenda()` / `guardarPrenda()` / `borrarPrenda()` | 1168 / 1255 / 1432 / 1491 |
-| Fotos: elegir archivo, procesar, lupa | `usarArchivoFoto()` / `procesarFoto()` / `abrirLupa()` | 1396 / 1353 / 1230 |
-| Planes: pintar, tarjeta y separador | `pintarPlanes()` / `tarjetaPlan()` / `separadorPlanes()` | 1587 / 1671 / 1572 |
-| Orden de la cuadrícula (nunca usadas y referencia) | `ordenPrendas()` / `ordenRef()` / `compararRef()` / `claveRef()` | 820 / 815 / 806 / 800 |
-| Referencias: la siguiente libre y corregir vacías o repetidas | `siguienteRef()` / `asegurarRefs()` | 839 / 868 |
-| Texto de uso en la tarjeta | `textoUso()` / `diasDesdeUso()` | 785 / 776 |
-| Vestidor: elegir y contar | `abrirElegir()` / `pintarVestidor()` / `alternarSeleccion()` / `pintarContador()` | 1865 / 1899 / 1918 / 1964 |
-| Guardar plan, fijarlo o borrarlo | `guardarPlan()` / `alternarFijo()` / `borrarPlan()` | 1977 / 2031 / 2040 |
-| "Sorpréndeme" | `sorprendeme()` | 2243 |
-| Pedidos: proponer, abrir, aceptar, rechazar, cancelar | `mandarPropuesta()` / `abrirPedido()` / `aceptarPedido()` / `rechazarPedido()` / `cancelarPedido()` | 2056 / 2102 / 2143 / 2205 / 2230 |
-| Contador de usos | `liquidarUsos()` | 2283 |
-| Exportar / importar prendas | `abrirDatos()` / `aplicarImportacion()` | 2400 / 2465 |
-| Entrar desde una cita | `aplicarEntradaCita()` | 2648 |
+| Cargar todo y escuchar cambios | `cargarTodo()` / `escuchar()` | 2693 / 2405 |
+| Cargar prendas, planes y pedidos | `cargarPrendas()` / `cargarPlanes()` / `cargarPedidos()` | 2376 / 2383 / 2390 |
+| Configuración: clasificaciones y prendas | `pintarConfig()` / `bloqueClasif()` / `bloquePrendas()` | 989 / 1007 / 1173 |
+| Clasificación: abrir, pintar, guardar, borrar | `abrirClasif()` / `pintarClasifVista()` / `guardarClasif()` / `borrarClasif()` | 1085 / 1093 / 1118 / 1142 |
+| Prenda: tarjeta, abrir, guardar, borrar | `tarjetaPrenda()` / `abrirPrenda()` / `guardarPrenda()` / `borrarPrenda()` | 1227 / 1314 / 1491 / 1550 |
+| Fotos: elegir archivo, procesar, lupa | `usarArchivoFoto()` / `procesarFoto()` / `abrirLupa()` | 1455 / 1412 / 1289 |
+| Planes: pintar, tarjeta y separador | `pintarPlanes()` / `tarjetaPlan()` / `separadorPlanes()` | 1646 / 1730 / 1631 |
+| Orden de la cuadrícula (nunca usadas y referencia) | `ordenPrendas()` / `ordenRef()` / `compararRef()` / `claveRef()` | 836 / 831 / 822 / 816 |
+| Referencias: la siguiente libre y corregir vacías o repetidas | `siguienteRef()` / `asegurarRefs()` | 855 / 885 |
+| Texto de uso en la tarjeta | `textoUso()` / `diasDesdeUso()` | 801 / 792 |
+| Vestidor: elegir y contar | `abrirElegir()` / `pintarVestidor()` / `alternarSeleccion()` / `pintarContador()` | 1924 / 1958 / 1977 / 2023 |
+| Guardar plan, fijarlo o borrarlo | `guardarPlan()` / `alternarFijo()` / `borrarPlan()` | 2036 / 2090 / 2099 |
+| "Sorpréndeme" | `sorprendeme()` | 2302 |
+| Pedidos: proponer, abrir, aceptar, rechazar, cancelar | `mandarPropuesta()` / `abrirPedido()` / `aceptarPedido()` / `rechazarPedido()` / `cancelarPedido()` | 2115 / 2161 / 2202 / 2264 / 2289 |
+| Contador de usos | `liquidarUsos()` | 2342 |
+| Exportar / importar prendas | `abrirDatos()` / `aplicarImportacion()` | 2459 / 2524 |
+| Entrar desde una cita | `aplicarEntradaCita()` | 2707 |
 
 ---
 
@@ -498,31 +498,32 @@ verMenu(1357) · verPaso(600) · volverSiInvitadoSinPartida(1175)
 ### `Lenceria\index.html`
 
 ```
-abrirClasif(1026) · abrirDatos(2400) · abrirElegir(1865) · abrirLupa(1230)
-abrirPedido(2102) · abrirPrenda(1255) · aceptarPedido(2143) · agregarClasif(1008)
-alternarFijo(2031) · alternarSeleccion(1918) · aplicarEntradaCita(2648)
-aplicarImportacion(2465) · arrancar(2702) · asegurarRefs(868) · bloqueClasif(948)
-bloquePrendas(1114) · borrarClasif(1083) · borrarPlan(2040) · borrarPrenda(1491)
-botonPasados(1579) · cancelarPedido(2230) · cargarClasificaciones(732) · cargarPedidos(2331)
-cargarPlanes(2324) · cargarPrendas(2317) · cargarTodo(2634) · cerrarLupa(1236)
-claveRef(800) · compararRef(806) · construirFiltros(582) · conTiempo(2627)
-desplegableFiltro(629) · diasDesdeUso(776) · escribirAviso(2093) · escuchar(2346)
-esMia(1597) · extra(704) · fechaAObjeto(521) · fechaDeUso(764) · fechaLarga(526)
-guardarClasif(1059) · guardarPlan(1977) · guardarPrenda(1432) · hoyTexto(515)
-idDeLado(1109) · irAlMenu(391) · lado(2513) · ladoDePersona(482) · leerImagen(1334)
-limpiarFiltros(570) · limpiarPedidosVencidos(1831) · liquidarUsos(2283) · llenarSelect(1244)
-mandarPropuesta(2056) · miniatura(1728) · mismoConjunto(2137) · modalAbierto(410)
-mostrarFoto(1311) · nombreDe(908) · nombreLado(474) · nombrePersona(478) · normTexto(534)
-ordenarClasif(749) · ordenPrendas(820) · ordenRef(815) · pasaFiltro(574)
-pedidoVencido(1745) · pintarClasifVista(1034) · pintarConfig(930) · pintarContador(1964)
-pintarPedido(2126) · pintarPlanes(1587) · pintarVestidor(1899) · planDePersona(508)
-planesDe(1561) · planesDePersona(492) · planesDePersonaPorFecha(505) · planesPorFecha(496)
-pref(2657) · prendaEnUsoFuturo(1326) · prendasDeLado(1105) · prendasDePersona(488)
-procesarFoto(1353) · quedan(1514) · rechazarPedido(2205) · salirAlMenu(398)
-sembrarClasificaciones(659) · separadorPlanes(1572) · siguienteRef(839) · sorprendeme(2243)
-tarjetaPedidoEnviado(1799) · tarjetaPedidoRecibido(1750) · tarjetaPlan(1671)
-tarjetaPrenda(1168) · textoUso(785) · tipoCubreTodo(832) · tsUso(771)
-usarArchivoFoto(1396) · usoDe(913) · valor(756) · ver(373)
+abrirClasif(1085) · abrirDatos(2459) · abrirElegir(1924) · abrirLupa(1289)
+abrirPedido(2161) · abrirPrenda(1314) · aceptarPedido(2202) · agregarClasif(1067)
+alternarFijo(2090) · alternarSeleccion(1977) · aplicarEntradaCita(2707)
+aplicarImportacion(2524) · arrancar(2761) · asegurarLados(928) · asegurarRefs(885)
+bloqueClasif(1007) · bloquePrendas(1173) · borrarClasif(1142) · borrarPlan(2099)
+borrarPrenda(1550) · botonPasados(1638) · cancelarPedido(2289) · cargarClasificaciones(748)
+cargarPedidos(2390) · cargarPlanes(2383) · cargarPrendas(2376) · cargarTodo(2693)
+cerrarLupa(1295) · claveRef(816) · compararRef(822) · construirFiltros(598)
+conTiempo(2686) · desplegableFiltro(645) · diasDesdeUso(792) · escribirAviso(2152)
+escuchar(2405) · esMia(1656) · extra(720) · fechaAObjeto(537) · fechaDeUso(780)
+fechaLarga(542) · guardarClasif(1118) · guardarPlan(2036) · guardarPrenda(1491)
+hoyTexto(531) · idDeLado(1168) · irAlMenu(391) · lado(2572) · ladoDePersona(482)
+ladoDePrenda(499) · ladoDeUsuarioId(489) · leerImagen(1393) · limpiarFiltros(586)
+limpiarPedidosVencidos(1890) · liquidarUsos(2342) · llenarSelect(1303)
+mandarPropuesta(2115) · miniatura(1787) · mismoConjunto(2196) · modalAbierto(410)
+mostrarFoto(1370) · nombreDe(967) · nombreLado(474) · nombrePersona(478) · normTexto(550)
+ordenarClasif(765) · ordenPrendas(836) · ordenRef(831) · pasaFiltro(590)
+pedidoVencido(1804) · pintarClasifVista(1093) · pintarConfig(989) · pintarContador(2023)
+pintarPedido(2185) · pintarPlanes(1646) · pintarVestidor(1958) · planDePersona(524)
+planesDe(1620) · planesDePersona(508) · planesDePersonaPorFecha(521) · planesPorFecha(512)
+pref(2716) · prendaEnUsoFuturo(1385) · prendasDeLado(1164) · prendasDePersona(504)
+procesarFoto(1412) · quedan(1573) · rechazarPedido(2264) · salirAlMenu(398)
+sembrarClasificaciones(675) · separadorPlanes(1631) · siguienteRef(855) · sorprendeme(2302)
+tarjetaPedidoEnviado(1858) · tarjetaPedidoRecibido(1809) · tarjetaPlan(1730)
+tarjetaPrenda(1227) · textoUso(801) · tipoCubreTodo(848) · tsUso(787)
+usarArchivoFoto(1455) · usoDe(972) · valor(772) · ver(373)
 ```
 
 ### `Encuentros\index.html`
