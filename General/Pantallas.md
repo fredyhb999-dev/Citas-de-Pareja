@@ -402,6 +402,45 @@ flujo del invitado** en Encuentros, Opciones, Roles y Castigos.
 
 Los `h1` llevan `width:fit-content`. Sin eso la caja ocupa todo el ancho y el degradado de 90° solo pinta una franja sobre las letras, que se ve clarita y sin color.
 
+## El remate al engrane (estándar)
+
+Es el letrero con **degradado coral→turquesa solo en el texto** que abre el engrane de
+la pantalla en la que estás. **No es un enlace**: es un `<button>` y hace lo mismo que
+el engrane de arriba. El **⚙️ va fuera** del degradado, porque con
+`background-clip:text` el emoji también saldría transparente.
+
+Mismas clases en todas las pantallas (cada archivo lleva su copia en su único
+`<style>`):
+
+```html
+<button class="remateCfg" id="btnIrCfg" type="button">
+  <span class="remateTexto">Texto de esa pantalla...</span>
+  <span>⚙️</span>
+</button>
+```
+
+```css
+.remateCfg{ width:100%; background:none; border:none; padding:6px 4px; margin:8px 0 10px;
+  font-family:'Chakra Petch',sans-serif; font-size:.8rem; cursor:pointer; text-align:center; }
+.remateCfg .remateTexto{ display:inline-block; font-weight:600;
+  background:linear-gradient(90deg, var(--coral), var(--teal));
+  -webkit-background-clip:text; background-clip:text; color:transparent; }
+```
+
+| Pantalla | Texto | Dónde va | A dónde lleva |
+|---|---|---|---|
+| Menú principal | `Configura tus Preferencias...` | En el hero, debajo de la fecha | `#gearBtn` (engrane del menú) |
+| Experiencias en Pareja | `Personaliza tus Actividades...` | En el hero, debajo de la fecha | `Citas/actividades.html` |
+| Citas Guiadas | `Personaliza tus acciones...` | Entre "¿Qué vas a jugar hoy?" y el buscador | Su engrane (`#btnCfg`) |
+| Encuentros | `Personaliza tus acciones...` | Entre "Diviértete a tu modo y a tu manera." y el buscador | Su engrane (`#btnCfg`) |
+| Lencería | `Personaliza tu Deseo Visual...` | Entre "Planifica y da vida a tu ilusión." y las pestañas | Su engrane (`#btnCfg`) |
+| El Precio del Placer (Castigos) | `Personaliza tu lado Oscuro...` | Entre "Elige tus opciones de juego" y "¿Quién juega hoy?" | Su engrane (`#btnCfg`) |
+| Juego de Roles | `Personaliza tu experiencia en...` | Debajo de "Diviértete más" y del número de rondas | Su engrane (`#btnCfg`) |
+| Elecciones Peligrosas (Opciones) | `Personaliza tu experiencia en...` | Abajo de todo, antes del QR | Su engrane (`#btnCfg`) |
+
+**No va donde no hay engrane:** en los submenús **Juegos**, **Retos** y
+**Comunicaciones** del menú principal el remate se oculta (`remateHero("oculto")`).
+
 ## Botones de volver y de esquina
 
 El estándar está arriba, en las decisiones de navegación, y también en `AGENTS.md`.

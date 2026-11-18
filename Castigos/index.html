@@ -236,6 +236,13 @@
   #modalQR #qrCajaJuego{ background:#fff;padding:12px;border-radius:14px;display:none;justify-content:center;margin:0 auto 12px;width:fit-content;}
   #modalQR #qrMsg{ font-size:.82rem;color:var(--rojo);min-height:18px; }
   @media (max-width:420px){ #salaPanel{ grid-template-columns:1fr; } }
+  /* Remate al engrane: mismo estilo en todas las pantallas. El degradado va
+     SOLO en el texto; el emoji queda fuera para que no salga transparente. */
+  .remateCfg{ width:100%; background:none; border:none; padding:6px 4px; margin:8px 0 10px;
+    font-family:'Chakra Petch',sans-serif; font-size:.8rem; cursor:pointer; text-align:center; }
+  .remateCfg .remateTexto{ display:inline-block; font-weight:600;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
 </style>
 </head>
 <body>
@@ -268,6 +275,12 @@
 <div class="vista" id="vistaInicio">
   <h1>El Precio del Placer</h1>
   <p class="desc">Elige tus opciones de juego</p>
+
+  <!-- Remate al engrane de esta pantalla. El degradado va solo en el texto. -->
+  <button class="remateCfg" id="btnIrCfg" type="button">
+    <span class="remateTexto">Personaliza tu lado Oscuro...</span>
+    <span>⚙️</span>
+  </button>
 
   <div style="width:100%;">
     <div style="font-family:'Chakra Petch',sans-serif;font-weight:700;text-align:center;margin:14px 0 8px;">¿Quién juega hoy?</div>
@@ -1216,6 +1229,11 @@ try{
 document.getElementById("btnCfg").onclick = ()=>{
   pintarCastigos();
   ver("vistaConfig");
+};
+// El remate ("Personaliza tu lado Oscuro... ⚙️") lleva al mismo lugar que el
+// engrane de arriba: la configuración de esta pantalla.
+document.getElementById("btnIrCfg").onclick = ()=>{
+  document.getElementById("btnCfg").click();
 };
 // El "← Volver" (arriba a la derecha) regresa a la pantalla anterior del juego:
 // del editor a Configuración (guardando), y de Configuración/Tomas al inicio.

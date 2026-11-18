@@ -104,6 +104,13 @@
     border:1px solid var(--card-border); border-radius:24px; width:100%;
     box-shadow:0 14px 44px rgba(0,0,0,.45), 0 0 34px rgba(47,217,199,.12); }
   #finMsg{ font-size:1.1rem; text-align:center; margin:20px 0; }
+  /* Remate al engrane: mismo estilo en todas las pantallas. El degradado va
+     SOLO en el texto; el emoji queda fuera para que no salga transparente. */
+  .remateCfg{ width:100%; background:none; border:none; padding:6px 4px; margin:8px 0 10px;
+    font-family:'Chakra Petch',sans-serif; font-size:.8rem; cursor:pointer; text-align:center; }
+  .remateCfg .remateTexto{ display:inline-block; font-weight:600;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
 </style>
 </head>
 <body>
@@ -148,6 +155,11 @@
 <div class="vista" id="vistaLista">
   <h1 id="tituloLista">Elige actividad</h1>
   <p class="desc" id="descLista">¿Qué vas a jugar hoy?</p>
+  <!-- Remate al engrane de esta pantalla. El degradado va solo en el texto. -->
+  <button class="remateCfg" id="btnIrCfg" type="button">
+    <span class="remateTexto">Personaliza tus acciones...</span>
+    <span>⚙️</span>
+  </button>
   <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar actividad..." autocomplete="off">
   <!-- La caja de actividades era tan alta que en el celular había que bajar para
        ver el botón de jugar. Se le quitaron DOS renglones (oct-2026, lo pidió
@@ -805,6 +817,11 @@ try{
 document.getElementById("btnCfg").onclick = ()=>{
   pintarLista("listaActsCfg", "editar");
   ver("vistaConfig");
+};
+// El remate ("Personaliza tus acciones... ⚙️") lleva al mismo lugar que el
+// engrane de arriba: la lista de configurar de esta pantalla.
+document.getElementById("btnIrCfg").onclick = ()=>{
+  document.getElementById("btnCfg").click();
 };
 // El "← Volver" (arriba a la derecha) regresa a la pantalla ANTERIOR de
 // Guiadas, no al menú: del editor a la lista de configurar, y de ahí a la lista

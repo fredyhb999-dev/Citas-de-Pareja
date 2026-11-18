@@ -182,6 +182,13 @@
   .zoomCam .zoomVal{ min-width:42px; text-align:right; font-size:.8rem; color:var(--fg-muted); }
   #pantallaInvitado select{ color-scheme:dark; }
   #pantallaInvitado select option{ background:var(--card); color:var(--fg); }
+  /* Remate al engrane: mismo estilo en todas las pantallas. El degradado va
+     SOLO en el texto; el emoji queda fuera para que no salga transparente. */
+  .remateCfg{ width:100%; background:none; border:none; padding:6px 4px; margin:8px 0 10px;
+    font-family:'Chakra Petch',sans-serif; font-size:.8rem; cursor:pointer; text-align:center; }
+  .remateCfg .remateTexto{ display:inline-block; font-weight:600;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
 </style>
 </head>
 <body>
@@ -444,8 +451,10 @@
   <img class="heroLogo" src="icon-192.png" alt="Complicidad en Pareja">
   <div class="hola">Hola, <span id="quienNombre"></span> 💛</div>
   <div class="fecha" id="heroFecha"></div>
-  <a class="fecha" id="linkActividades" href="Citas/actividades.html"
-     style="display:inline-block;text-decoration:none;margin-top:8px;">⚙️ Personaliza tus Actividades</a>
+  <button class="remateCfg" id="linkActividades" type="button" style="margin-top:8px;">
+    <span class="remateTexto" id="remateHrefTexto">Configura tus Preferencias...</span>
+    <span>⚙️</span>
+  </button>
 </div>
 
 <div id="vistaMenu">
@@ -632,6 +641,28 @@ function iconoMenu(modo){
     b.classList.toggle("conNuevo", hayNuevosCarrito);
   }
 }
+// El remate del hero es el mismo en toda la app, pero cambia de texto y de
+// destino: en el menú abre el engrane; en Experiencias lleva a Actividades; en
+// Juegos no va (ahí no hay engrane).
+function remateHero(modo){
+  const b = document.getElementById("linkActividades");
+  if(!b) return;
+  if(modo === "oculto"){ b.style.display = "none"; return; }
+  b.style.display = "";
+  const enMenu = (modo === "menu");
+  document.getElementById("remateHrefTexto").textContent =
+    enMenu ? "Configura tus Preferencias..." : "Personaliza tus Actividades...";
+  b.dataset.destino = enMenu ? "gear" : "acts";
+}
+document.getElementById("linkActividades").onclick = ()=>{
+  const b = document.getElementById("linkActividades");
+  if(b.dataset.destino === "gear"){
+    const g = document.getElementById("gearBtn");
+    if(g) g.click();
+    return;
+  }
+  location.href = "Citas/actividades.html";
+};
 function mostrarMenu(nombre){
   document.getElementById("quienNombre").textContent = nombre;
   try{
@@ -1366,6 +1397,8 @@ function verMenu(){
   document.getElementById("gearBtn").style.display = "";
   document.getElementById("menuBtn").style.display = "";
   iconoMenu("menu");
+  // El remate del hero en el menú: abre el engrane de esta pantalla.
+  remateHero("menu");
   // El puntito del engrane, por si el aviso llegó mientras estabas en otra
   // pantalla. Si no hay nada, se apaga solo.
   try{ actualizarAvisoPropuestas(); }catch(e){}
@@ -1406,6 +1439,8 @@ function abrirExp(){
   document.getElementById("vistaExp").style.display = "block";
   document.getElementById("gearBtn").style.display = "none";
   iconoMenu("exp");
+  // En Experiencias el remate lleva a Configurar Actividades.
+  remateHero("exp");
   // Chorro de pegamento: a los 20 segundos sin tocar nada cae, y se apaga solo
   // con el primer toque. Aqui se queda escuchando (oct-2026).
   try{ glueSiEstaQuieto(20); }catch(e){}
@@ -1421,6 +1456,8 @@ function abrirJuegos(){
   document.getElementById("vistaJuegos").style.display = "block";
   document.getElementById("gearBtn").style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
+  // En Juegos no hay engrane: el remate no va.
+  remateHero("oculto");
 }
 function cerrarJuegos(){
   cerrarSub();
@@ -1432,6 +1469,8 @@ function abrirRetos(){
   // El carrito tampoco va aquí: en los submenús solo vive el "Volver".
   // (Y como el "Volver" está arriba a la derecha, lo tapaba.)
   document.getElementById("menuBtn").style.display = "none";
+  // Retos tampoco tiene engrane propio: el remate se oculta.
+  remateHero("oculto");
 }
 function cerrarRetos(){
   cerrarSub();
@@ -1450,6 +1489,8 @@ function abrirCom(){
   document.getElementById("vistaCom").style.display = "block";
   document.getElementById("gearBtn").style.display = "none";
   document.getElementById("menuBtn").style.display = "none";
+  // Comunicaciones tampoco tiene engrane propio: el remate se oculta.
+  remateHero("oculto");
 }
 function cerrarCom(){
   cerrarSub();

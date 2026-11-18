@@ -18,7 +18,7 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 ---
 
-## `Roles/index.html` — 5,353 líneas
+## `Roles/index.html` — 5,360 líneas
 
 **Documento de detalle:** `General/Roles.md`
 
@@ -27,33 +27,33 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 | Para... | Función | Línea |
 |---|---|---|
-| Arrancar la página: identidad, licencia y estado guardado | `entrar()` | 1372 |
-| Cambiar de vista y guardar el paso del historial | `ver()` | 5187 |
-| Volver al menú deshaciendo los pasos | `salirAlMenu()` | 5217 |
-| Pintar la tarjeta de inicio (modo y "Jugar") | `pintarInicio()` | 1548 |
-| Pantalla de modo (Clásico, Cambia de Bando, Seleccionar, Duelo) | `pintarModo()` | 1558 |
-| Modal del duelo | `pintarModalDuelo()` / `abrirModalDuelo()` | 1600 / 1616 |
-| Quiénes juegan y de qué lado | `construirCabezas()` | 1024 |
-| Pool de personajes: cargar, sembrar, guardar | `cargarPersonajes()` / `asegurarPersonajes()` / `guardarPersonajes()` | 1164 / 1183 / 1187 |
-| Buscar personaje o su contraparte | `buscarPersonaje()` / `contraparteDe()` | 1240 / 1266 |
-| Repartir tarjetas y preparar la partida | `repartirTarjetas()` / `preparar()` / `prepararDuelo()` | 3010 / 3039 / 3070 |
-| Arrancar la partida normal | `iniciar()` | 3097 |
-| Modo Seleccionar: pintar, abrir y arrancar | `pintarSeleccion()` / `abrirSeleccionLocal()` / `abrirSeleccionCompartida()` / `arrancarSeleccion()` | 3548 / 3668 / 3683 / 3724 |
-| Escuchar la selección compartida | `escucharSeleccion()` | 3771 |
-| Sala de espera (anfitrión e invitado) | `pintarSala()` | 2010 |
-| Pintar la partida: tarjeta, paso, duelo | `pintarTarjeta()` / `pintarPaso()` / `pintarCaraDuelo()` / `pintarPasoDueloJuntos()` | 2171 / 2395 / 2218 / 2319 |
-| Pasar turno o saltarlo | `siguienteTurno()` / `avanzarTarjeta()` / `siguienteSesion()` / `saltarTurno()` | 1346 / 1361 / 1879 / 1906 |
-| Terminar la partida | `abrirFin()` / `finPartida()` | 2490 / 2497 |
-| Sesión multijugador | `escucharSesion()` | 1824 |
-| Configuración: pintar, abrir, filas y editor | `pintarCfg()` / `abrirCfg()` / `filaPersonaje()` / `agregarPersonaje()` | 4405 / 5167 / 4381 / 4303 |
-| Exportar la lista de personajes | `exportarLista()` | 4870 |
-| Invitado: entrar, continuar, salir | `entrarAlJuego()` / `continuarPartida()` / `salirModoInvitado()` | 4022 / 3964 / 4087 |
-| QR de invitación | `abrirQR()` | 2942 |
-| Modales chicos | `abrirModal()` / `cerrarModal()` | 4116 / 4133 |
+| Arrancar la página: identidad, licencia y estado guardado | `entrar()` | 1379 |
+| Cambiar de vista y guardar el paso del historial | `ver()` | 5194 |
+| Volver al menú deshaciendo los pasos | `salirAlMenu()` | 5224 |
+| Pintar la tarjeta de inicio (modo y "Jugar") | `pintarInicio()` | 1555 |
+| Pantalla de modo (Clásico, Cambia de Bando, Seleccionar, Duelo) | `pintarModo()` | 1565 |
+| Modal del duelo | `pintarModalDuelo()` / `abrirModalDuelo()` | 1607 / 1623 |
+| Quiénes juegan y de qué lado | `construirCabezas()` | 1031 |
+| Pool de personajes: cargar, sembrar, guardar | `cargarPersonajes()` / `asegurarPersonajes()` / `guardarPersonajes()` | 1171 / 1190 / 1194 |
+| Buscar personaje o su contraparte | `buscarPersonaje()` / `contraparteDe()` | 1247 / 1273 |
+| Repartir tarjetas y preparar la partida | `repartirTarjetas()` / `preparar()` / `prepararDuelo()` | 3017 / 3046 / 3077 |
+| Arrancar la partida normal | `iniciar()` | 3104 |
+| Modo Seleccionar: pintar, abrir y arrancar | `pintarSeleccion()` / `abrirSeleccionLocal()` / `abrirSeleccionCompartida()` / `arrancarSeleccion()` | 3555 / 3675 / 3690 / 3731 |
+| Escuchar la selección compartida | `escucharSeleccion()` | 3778 |
+| Sala de espera (anfitrión e invitado) | `pintarSala()` | 2017 |
+| Pintar la partida: tarjeta, paso, duelo | `pintarTarjeta()` / `pintarPaso()` / `pintarCaraDuelo()` / `pintarPasoDueloJuntos()` | 2178 / 2402 / 2225 / 2326 |
+| Pasar turno o saltarlo | `siguienteTurno()` / `avanzarTarjeta()` / `siguienteSesion()` / `saltarTurno()` | 1353 / 1368 / 1886 / 1913 |
+| Terminar la partida | `abrirFin()` / `finPartida()` | 2497 / 2504 |
+| Sesión multijugador | `escucharSesion()` | 1831 |
+| Configuración: pintar, abrir, filas y editor | `pintarCfg()` / `abrirCfg()` / `filaPersonaje()` / `agregarPersonaje()` | 4412 / 5174 / 4388 / 4310 |
+| Exportar la lista de personajes | `exportarLista()` | 4877 |
+| Invitado: entrar, continuar, salir | `entrarAlJuego()` / `continuarPartida()` / `salirModoInvitado()` | 4029 / 3971 / 4094 |
+| QR de invitación | `abrirQR()` | 2949 |
+| Modales chicos | `abrirModal()` / `cerrarModal()` | 4123 / 4140 |
 
 ---
 
-## `Castigos/index.html` — 4,389 líneas
+## `Castigos/index.html` — 4,407 líneas
 
 **Documento de detalle:** `General/Castigos.md`
 
@@ -62,27 +62,27 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 | Para... | Función | Línea |
 |---|---|---|
-| Cargar todo: identidad, castigos, accesorios, imposiciones, usuarios | `cargarTodo()` | 767 |
-| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 1050 / 1139 |
-| Panel de configuración | `mostrarPanel()` | 1246 |
-| Lista y edición de castigos | `pintarCastigos()` / `abrirEditor()` / `pintarEditor()` / `guardarCastigoDatos()` | 1264 / 1347 / 1396 / 1599 |
-| Tomas de cada castigo | `pintarTomas()` | 1501 |
-| Accesorios e imposiciones | `pintarAccesorios()` / `pintarImposiciones()` | 1743 / 1866 |
-| Pantalla de inicio y castigo elegido | `pintarListaInicio()` / `seleccionarCastigo()` / `actualizarInicio()` | 1970 / 2237 / 2301 |
-| Pasos antes de jugar: quién castiga, modo, multi, imposiciones, placer | `preguntarQuienCastiga()` / `elegirModo()` / `toggleMulti()` / `preguntarImposicionesPor3()` / `preguntarNivelesPlacer()` | 2330 / 2341 / 2394 / 2489 / 2549 |
-| Armar y arrancar: normal y multi | `armarPartidaNormal()` / `iniciarPartida()` / `iniciarPartidaMulti()` | 2616 / 3146 / 2877 |
-| Repartir turnos y rueda | `repartirRueda()` / `generarTurnos()` / `generarTurnosMulti()` | 2940 / 2784 / 2985 |
-| Pintar turno, sala y fin | `pintarTurno()` / `pintarSala()` / `mostrarFin()` | 3528 / 3411 / 3457 |
-| Pausa: pausar, continuar, descartar | `pausarPartida()` / `continuarPausa()` / `descartarPausa()` | 2111 / 2196 / 2183 |
-| Sesión compartida: publicar y escuchar | `publicarSesion()` / `escucharSesionCompartida()` | 3186 / 3270 |
-| Turnos remotos y saltar turno remoto | `avanzarTurnoRemoto()` / `saltarTurnoRemoto()` / `escribirImposicionRemoto()` | 3679 / 3742 / 3660 |
-| Cronómetro | `pintarCrono()` / `iniciarTemporizadorDesde()` | 3103 / 3109 |
-| Invitados: QR y agregar a la partida | `abrirQRJuego()` / `agregarInvitadoAPartida()` | 3956 / 4194 |
-| Importar acciones | `parsearImportacion()` / `normalizarAccionImport()` | 1665 / 1701 |
+| Cargar todo: identidad, castigos, accesorios, imposiciones, usuarios | `cargarTodo()` | 780 |
+| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 1063 / 1152 |
+| Panel de configuración | `mostrarPanel()` | 1264 |
+| Lista y edición de castigos | `pintarCastigos()` / `abrirEditor()` / `pintarEditor()` / `guardarCastigoDatos()` | 1282 / 1365 / 1414 / 1617 |
+| Tomas de cada castigo | `pintarTomas()` | 1519 |
+| Accesorios e imposiciones | `pintarAccesorios()` / `pintarImposiciones()` | 1761 / 1884 |
+| Pantalla de inicio y castigo elegido | `pintarListaInicio()` / `seleccionarCastigo()` / `actualizarInicio()` | 1988 / 2255 / 2319 |
+| Pasos antes de jugar: quién castiga, modo, multi, imposiciones, placer | `preguntarQuienCastiga()` / `elegirModo()` / `toggleMulti()` / `preguntarImposicionesPor3()` / `preguntarNivelesPlacer()` | 2348 / 2359 / 2412 / 2507 / 2567 |
+| Armar y arrancar: normal y multi | `armarPartidaNormal()` / `iniciarPartida()` / `iniciarPartidaMulti()` | 2634 / 3164 / 2895 |
+| Repartir turnos y rueda | `repartirRueda()` / `generarTurnos()` / `generarTurnosMulti()` | 2958 / 2802 / 3003 |
+| Pintar turno, sala y fin | `pintarTurno()` / `pintarSala()` / `mostrarFin()` | 3546 / 3429 / 3475 |
+| Pausa: pausar, continuar, descartar | `pausarPartida()` / `continuarPausa()` / `descartarPausa()` | 2129 / 2214 / 2201 |
+| Sesión compartida: publicar y escuchar | `publicarSesion()` / `escucharSesionCompartida()` | 3204 / 3288 |
+| Turnos remotos y saltar turno remoto | `avanzarTurnoRemoto()` / `saltarTurnoRemoto()` / `escribirImposicionRemoto()` | 3697 / 3760 / 3678 |
+| Cronómetro | `pintarCrono()` / `iniciarTemporizadorDesde()` | 3121 / 3127 |
+| Invitados: QR y agregar a la partida | `abrirQRJuego()` / `agregarInvitadoAPartida()` | 3974 / 4212 |
+| Importar acciones | `parsearImportacion()` / `normalizarAccionImport()` | 1683 / 1719 |
 
 ---
 
-## `index.html` — 2,893 líneas (pantalla inicial)
+## `index.html` — 2,934 líneas (pantalla inicial)
 
 **Documento de detalle:** `General/Pantallas.md` y `General/Usuarios.md`
 
@@ -91,21 +91,21 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 | Para... | Función | Línea |
 |---|---|---|
-| Mostrar el menú y sus dos botones de esquina | `mostrarMenu()` / `verMenu()` | 635 / 1357 |
-| Dibujar las tarjetas del catálogo | `tarjetaPack()` / `renderPacks()` / `renderPacksDeVerdad()` | 733 / 769 / 794 |
-| Punto del carrito | `actualizarPuntoCarrito()` | 907 |
-| Submenús: hash, abrir y cerrar | `hashActual()` / `abrirSegunHash()` / `abrirSub()` / `cerrarSub()` | 1375 / 1379 / 1387 / 1397 |
-| Cada submenú | `abrirExp()` / `abrirJuegos()` / `abrirRetos()` / `abrirCom()` | 1404 / 1419 / 1428 / 1448 |
-| Engrane: abrir, cerrar, cambiar usuario | `mostrarGear()` / `cerrarGear()` / `abrirCambiarUsu()` | 2497 / 2509 / 2517 |
-| Telegram | `pintarTelegram()` | 2585 |
-| Usuarios: anatomía y lista | `pintarInvUsuarios()` / `guardarAnatomiaUsuario()` / `abrirEdUsuarios()` | 1510 / 1485 / 2268 |
-| Puntos e historial de movimientos | `abrirPuntos()` / `abrirHistorial()` | 1615 / 1652 |
-| Propuestas de precios: pintar, abrir, aceptar, rechazar | `pintarPropuestas()` / `abrirPropuestas()` / `aceptarPropuesta()` / `rechazarPropuesta()` | 1972 / 2045 / 2080 / 2132 |
-| Invitado: volver solo y escanear QR | `volverSiInvitadoSinPartida()` / `iniciarScan()` | 1175 / 1310 |
+| Mostrar el menú y sus dos botones de esquina | `mostrarMenu()` / `verMenu()` | 666 / 1388 |
+| Dibujar las tarjetas del catálogo | `tarjetaPack()` / `renderPacks()` / `renderPacksDeVerdad()` | 764 / 800 / 825 |
+| Punto del carrito | `actualizarPuntoCarrito()` | 938 |
+| Submenús: hash, abrir y cerrar | `hashActual()` / `abrirSegunHash()` / `abrirSub()` / `cerrarSub()` | 1408 / 1412 / 1420 / 1430 |
+| Cada submenú | `abrirExp()` / `abrirJuegos()` / `abrirRetos()` / `abrirCom()` | 1437 / 1454 / 1465 / 1487 |
+| Engrane: abrir, cerrar, cambiar usuario | `mostrarGear()` / `cerrarGear()` / `abrirCambiarUsu()` | 2538 / 2550 / 2558 |
+| Telegram | `pintarTelegram()` | 2626 |
+| Usuarios: anatomía y lista | `pintarInvUsuarios()` / `guardarAnatomiaUsuario()` / `abrirEdUsuarios()` | 1551 / 1526 / 2309 |
+| Puntos e historial de movimientos | `abrirPuntos()` / `abrirHistorial()` | 1656 / 1693 |
+| Propuestas de precios: pintar, abrir, aceptar, rechazar | `pintarPropuestas()` / `abrirPropuestas()` / `aceptarPropuesta()` / `rechazarPropuesta()` | 2013 / 2086 / 2121 / 2173 |
+| Invitado: volver solo y escanear QR | `volverSiInvitadoSinPartida()` / `iniciarScan()` | 1206 / 1341 |
 
 ---
 
-## `Lenceria/index.html` — 2,806 líneas
+## `Lenceria/index.html` — 2,821 líneas
 
 **Documento de detalle:** `General/Catalogo-Lenceria.md`
 
@@ -114,28 +114,28 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 | Para... | Función | Línea |
 |---|---|---|
-| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 373 / 398 |
-| Cargar todo y escuchar cambios | `cargarTodo()` / `escuchar()` | 2697 / 2408 |
-| Cargar prendas, planes y pedidos | `cargarPrendas()` / `cargarPlanes()` / `cargarPedidos()` | 2379 / 2386 / 2393 |
-| Configuración: clasificaciones y prendas | `pintarConfig()` / `bloqueClasif()` / `bloquePrendas()` | 992 / 1010 / 1176 |
-| Clasificación: abrir, pintar, guardar, borrar | `abrirClasif()` / `pintarClasifVista()` / `guardarClasif()` / `borrarClasif()` | 1088 / 1096 / 1121 / 1145 |
-| Prenda: tarjeta, abrir, guardar, borrar | `tarjetaPrenda()` / `abrirPrenda()` / `guardarPrenda()` / `borrarPrenda()` | 1230 / 1317 / 1494 / 1553 |
-| Fotos: elegir archivo, procesar, lupa | `usarArchivoFoto()` / `procesarFoto()` / `abrirLupa()` | 1458 / 1415 / 1292 |
-| Planes: pintar, tarjeta y separador | `pintarPlanes()` / `tarjetaPlan()` / `separadorPlanes()` | 1649 / 1733 / 1634 |
-| Orden de la cuadrícula (nunca usadas y referencia) | `ordenPrendas()` / `ordenRef()` / `compararRef()` / `claveRef()` | 836 / 831 / 822 / 816 |
-| Referencias: la siguiente libre y corregir vacías o repetidas | `siguienteRef()` / `asegurarRefs()` | 855 / 885 |
-| Texto de uso en la tarjeta | `textoUso()` / `diasDesdeUso()` | 801 / 792 |
-| Vestidor: elegir y contar | `abrirElegir()` / `pintarVestidor()` / `alternarSeleccion()` / `pintarContador()` | 1927 / 1961 / 1980 / 2026 |
-| Guardar plan, fijarlo o borrarlo | `guardarPlan()` / `alternarFijo()` / `borrarPlan()` | 2039 / 2093 / 2102 |
-| "Sorpréndeme" | `sorprendeme()` | 2305 |
-| Pedidos: proponer, abrir, aceptar, rechazar, cancelar | `mandarPropuesta()` / `abrirPedido()` / `aceptarPedido()` / `rechazarPedido()` / `cancelarPedido()` | 2118 / 2164 / 2205 / 2267 / 2292 |
-| Contador de usos | `liquidarUsos()` | 2345 |
-| Exportar / importar prendas | `abrirDatos()` / `aplicarImportacion()` | 2463 / 2528 |
-| Entrar desde una cita | `aplicarEntradaCita()` | 2711 |
+| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 385 / 410 |
+| Cargar todo y escuchar cambios | `cargarTodo()` / `escuchar()` | 2712 / 2423 |
+| Cargar prendas, planes y pedidos | `cargarPrendas()` / `cargarPlanes()` / `cargarPedidos()` | 2394 / 2401 / 2408 |
+| Configuración: clasificaciones y prendas | `pintarConfig()` / `bloqueClasif()` / `bloquePrendas()` | 1007 / 1025 / 1191 |
+| Clasificación: abrir, pintar, guardar, borrar | `abrirClasif()` / `pintarClasifVista()` / `guardarClasif()` / `borrarClasif()` | 1103 / 1111 / 1136 / 1160 |
+| Prenda: tarjeta, abrir, guardar, borrar | `tarjetaPrenda()` / `abrirPrenda()` / `guardarPrenda()` / `borrarPrenda()` | 1245 / 1332 / 1509 / 1568 |
+| Fotos: elegir archivo, procesar, lupa | `usarArchivoFoto()` / `procesarFoto()` / `abrirLupa()` | 1473 / 1430 / 1307 |
+| Planes: pintar, tarjeta y separador | `pintarPlanes()` / `tarjetaPlan()` / `separadorPlanes()` | 1664 / 1748 / 1649 |
+| Orden de la cuadrícula (nunca usadas y referencia) | `ordenPrendas()` / `ordenRef()` / `compararRef()` / `claveRef()` | 851 / 846 / 837 / 831 |
+| Referencias: la siguiente libre y corregir vacías o repetidas | `siguienteRef()` / `asegurarRefs()` | 870 / 900 |
+| Texto de uso en la tarjeta | `textoUso()` / `diasDesdeUso()` | 816 / 807 |
+| Vestidor: elegir y contar | `abrirElegir()` / `pintarVestidor()` / `alternarSeleccion()` / `pintarContador()` | 1942 / 1976 / 1995 / 2041 |
+| Guardar plan, fijarlo o borrarlo | `guardarPlan()` / `alternarFijo()` / `borrarPlan()` | 2054 / 2108 / 2117 |
+| "Sorpréndeme" | `sorprendeme()` | 2320 |
+| Pedidos: proponer, abrir, aceptar, rechazar, cancelar | `mandarPropuesta()` / `abrirPedido()` / `aceptarPedido()` / `rechazarPedido()` / `cancelarPedido()` | 2133 / 2179 / 2220 / 2282 / 2307 |
+| Contador de usos | `liquidarUsos()` | 2360 |
+| Exportar / importar prendas | `abrirDatos()` / `aplicarImportacion()` | 2478 / 2543 |
+| Entrar desde una cita | `aplicarEntradaCita()` | 2726 |
 
 ---
 
-## `Encuentros/index.html` — 2,531 líneas
+## `Encuentros/index.html` — 2,548 líneas
 
 **Documento de detalle:** `General/Pantallas.md` y `General/Pegamento-y-Citas.md`
 
@@ -144,22 +144,22 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 | Para... | Función | Línea |
 |---|---|---|
-| Arrancar: normal o directo al juego | `entrar()` / `entrarDirecto()` | 688 / 587 |
-| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 990 / 1026 |
-| Cargar actividades y pintar la lista | `cargarActividades()` / `pintarLista()` / `dibujarLista()` / `filtrar()` | 1221 / 1380 / 1325 / 1395 |
-| Configuración y editor de actividades | `pintarListaCfg()` / `abrirEditor()` / `pintarEditor()` / `guardarEditor()` | 1531 / 1565 / 1583 / 1654 |
-| Tomas de una actividad (modal y base) | `abrirTomas()` / `guardarTomasEnBase()` / `cargarTomasDoc()` | 1752 / 1522 / 1489 |
-| Armar jugadores y repartir | `construirCabezas()` / `generarListas()` / `repartirRuedaEnc()` / `generarYIniciar()` | 1804 / 1815 / 1850 / 1888 |
-| Pintar turno y paso | `pintarTurnoDe()` / `pintarPaso()` | 2053 / 2067 |
-| Avanzar local o por sesión | `avanzarLocal()` / `avanzarSesion()` | 835 / 858 |
-| Sala de espera | `pintarSala()` | 2002 |
-| Invitados: agregar y QR | `agregarInvitado()` / `abrirQRInvitacion()` | 2273 / 2344 |
-| Sesión: escuchar, saltar turno, cerrar, fin | `escucharSesion()` / `saltarTurno()` / `cerrarSesion()` / `mostrarFin()` | 763 / 888 / 953 / 983 |
-| Entrar al juego siendo invitado | `entrarAlJuego()` | 2456 |
+| Arrancar: normal o directo al juego | `entrar()` / `entrarDirecto()` | 700 / 599 |
+| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 1002 / 1038 |
+| Cargar actividades y pintar la lista | `cargarActividades()` / `pintarLista()` / `dibujarLista()` / `filtrar()` | 1233 / 1392 / 1337 / 1407 |
+| Configuración y editor de actividades | `pintarListaCfg()` / `abrirEditor()` / `pintarEditor()` / `guardarEditor()` | 1543 / 1577 / 1595 / 1666 |
+| Tomas de una actividad (modal y base) | `abrirTomas()` / `guardarTomasEnBase()` / `cargarTomasDoc()` | 1769 / 1534 / 1501 |
+| Armar jugadores y repartir | `construirCabezas()` / `generarListas()` / `repartirRuedaEnc()` / `generarYIniciar()` | 1821 / 1832 / 1867 / 1905 |
+| Pintar turno y paso | `pintarTurnoDe()` / `pintarPaso()` | 2070 / 2084 |
+| Avanzar local o por sesión | `avanzarLocal()` / `avanzarSesion()` | 847 / 870 |
+| Sala de espera | `pintarSala()` | 2019 |
+| Invitados: agregar y QR | `agregarInvitado()` / `abrirQRInvitacion()` | 2290 / 2361 |
+| Sesión: escuchar, saltar turno, cerrar, fin | `escucharSesion()` / `saltarTurno()` / `cerrarSesion()` / `mostrarFin()` | 775 / 900 / 965 / 995 |
+| Entrar al juego siendo invitado | `entrarAlJuego()` | 2473 |
 
 ---
 
-## `Guiadas/index.html` — 2,253 líneas
+## `Guiadas/index.html` — 2,270 líneas
 
 **Documento de detalle:** `General/Pantallas.md` y `General/Pegamento-y-Citas.md`
 
@@ -168,17 +168,17 @@ busca una función. Aquí se encuentra la zona y el nombre, y se va directo a la
 
 | Para... | Función | Línea |
 |---|---|---|
-| Arrancar la página | `entrar()` | 349 |
-| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 688 / 722 |
-| Cargar actividades y pintar la lista | `cargarActividades()` / `pintarLista()` / `filtrar()` | 947 / 1132 / 821 |
-| Jugar directo desde la lista | `jugarDirecto()` | 1147 |
-| Arrancar partida y pintar el paso | `empezarNuevo()` / `mostrarPlayer()` / `pintarPaso()` / `pintarTurnoDe()` | 1333 / 1354 / 2060 / 2051 |
-| Sesión: avanzar, escuchar, saltar, cerrar, fin | `avanzarSesion()` / `escucharSesion()` / `saltarTurno()` / `cerrarSesion()` / `mostrarFin()` | 541 / 646 / 612 / 594 / 467 |
-| Multi: abrir, refrescar, seleccionar, repartir | `multiAbrir()` / `multiRefrescar()` / `multiAbrirSel()` / `repartirRuedaGuia()` | 1500 / 1469 / 1526 / 1650 |
-| Editor de actividades | `abrirEditor()` / `pintarEditor()` / `guardar()` | 1740 / 1761 / 1832 |
-| Exportar o pegar una actividad | `exportarActividad()` / `pegarActividad()` | 1994 / 1899 |
-| Tomas de la actividad | `abrirTomasGuia()` / `guardarProg()` / `cargarTomasDoc()` | 1222 / 1275 / 1697 |
-| Seguir jugando después de recargar | `seguirEncima()` / `seguirFuera()` | 1201 / 1208 |
+| Arrancar la página | `entrar()` | 361 |
+| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 700 / 734 |
+| Cargar actividades y pintar la lista | `cargarActividades()` / `pintarLista()` / `filtrar()` | 964 / 1149 / 838 |
+| Jugar directo desde la lista | `jugarDirecto()` | 1164 |
+| Arrancar partida y pintar el paso | `empezarNuevo()` / `mostrarPlayer()` / `pintarPaso()` / `pintarTurnoDe()` | 1350 / 1371 / 2077 / 2068 |
+| Sesión: avanzar, escuchar, saltar, cerrar, fin | `avanzarSesion()` / `escucharSesion()` / `saltarTurno()` / `cerrarSesion()` / `mostrarFin()` | 553 / 658 / 624 / 606 / 479 |
+| Multi: abrir, refrescar, seleccionar, repartir | `multiAbrir()` / `multiRefrescar()` / `multiAbrirSel()` / `repartirRuedaGuia()` | 1517 / 1486 / 1543 / 1667 |
+| Editor de actividades | `abrirEditor()` / `pintarEditor()` / `guardar()` | 1757 / 1778 / 1849 |
+| Exportar o pegar una actividad | `exportarActividad()` / `pegarActividad()` | 2011 / 1916 |
+| Tomas de la actividad | `abrirTomasGuia()` / `guardarProg()` / `cargarTomasDoc()` | 1239 / 1292 / 1714 |
+| Seguir jugando después de recargar | `seguirEncima()` / `seguirFuera()` | 1218 / 1225 |
 
 ---
 
@@ -344,247 +344,248 @@ No usa `vista…`: cambia de modo con `actualizarModo()`.
 ### `Roles\index.html`
 
 ```
-abrirAgregar(2658) · abrirCfg(5167) · abrirDetalle(4547) · abrirFin(2490)
-abrirGaleria(1459) · abrirMeterInvitado(2868) · abrirModal(4116) · abrirModalDuelo(1616)
-abrirModalImagen(2112) · abrirQR(2942) · abrirSeleccionCompartida(3683)
-abrirSeleccionDueloCompartida(3510) · abrirSeleccionDueloLocal(3493)
-abrirSeleccionLocal(3668) · abrirVentanaEspecial(1674) · actualizarFotos(4971)
-actualizarTextoEstadoCarta(2106) · adminDe(2976) · agregarDesdeInput(4323)
-agregarEspecial(4314) · agregarInvitado(2737) · agregarPersonaje(4303)
-anunciarInvitacion(1957) · armando(2024) · arrancarSeleccion(3724) · asegurarOficiales(1135)
-asegurarPersonajes(1183) · avanzarDueloJuntosLocal(2521) · avanzarTarjeta(1361)
-avisoJSONMalo(4215) · avisosCorrespondencia(4484) · bajarArchivo(4918)
-baseConfigurada(4909) · borrarDetalle(4692) · buscarPersonaje(1240) · cabezas(2019)
-cabs(2809) · cambiarMarca(3642) · cambiarMarcaDuelo(3409) · candidatosImagenDrive(4593)
-cargarEstado(1734) · cargarIdentidad(993) · cargarOficiales(1121) · cargarPersonajes(1164)
-cerrarDetalle(4571) · cerrarModal(4133) · cerrarModalImagen(2120) · cerrarSesion(1972)
-chequearPartidaEspera(1800) · claveCfg(4154) · confirmarArranqueDuelo(3305)
-conPendiente(3938) · construirCabezas(1024) · construirCabezasModo(2969)
-continuarPartida(3964) · continuarPartidaLocal(3987) · contraDeRonda(2720)
-contraparteDe(1266) · datosDrive(4580) · deck(2787) · deshacerFotos(5076)
-disponiblesInvitados(2654) · dueloEsJuntos(2698) · dueloLadoDePartida(2688)
-dueloMismoLadoDePartida(1235) · dueloModalidadDePartida(2693) · elegirAzarDuelo(3432)
-elegirAzarSeleccion(3448) · elegirTentacion(3472) · enEspera(2031) · entrar(1372)
-entrarAlJuego(4022) · entrarDirecto(1332) · esAnfitrion(1979) · esClaveLista(4158)
-escucharAprobacion(963) · escucharGrupo(5306) · escucharSeleccion(3771)
-escucharSesion(1824) · esDueloJuntos(2746) · esEnlaceGooglePhotos(4577) · esModoDuelo(2685)
-esOficial(1117) · especialDe(1763) · especialDeLado(2211) · especialK(1638)
-especialPendido(1637) · exportarFotos(4933) · exportarLista(4870) · fechaCorta(4913)
-filaPersonaje(4381) · filaVariante(4348) · filtro(4444) · finPartida(2497)
-guardarDetalle(4645) · guardarEdit(4355) · guardarLocalGuardada(925)
-guardarPersonajes(1187) · hostNombre(3524) · idLibre(4174) · indexarPersonajes(1052)
-iniciar(3097) · iniciarEstado(1338) · irAlMenu(5207) · lado(2726) · ladoAnatomiaCfg(4150)
-ladoDeCabeza(2700) · ladoDuelo(2770) · ladoOriginal(2728) · leerJSONPegado(4192)
-leerLocalGuardada(939) · leerQuienSoy(990) · leerSnapshotFotos(4960) · licMsg(982)
-limpiarFiltro(4165) · limpiarFiltroSel(3277) · limpiarLocalGuardada(949)
-limpiarParaArchivo(4856) · listaDeCabezaPara(2999) · listaDeLado(1216) · listaSegura(1073)
-llenar(2036) · llenarSelectPar(4528) · marcas(2894) · mensajeEnlaceInvalido(4636)
-meterInvitado(2889) · mezclar(877) · miLado(4151) · mismoContenidoPersonaje(1092)
-mismosLados(2973) · modalAbierto(5230) · modalidad(3072) · modoAdmiteInvitados(1985)
-modoBaseDePartida(2679) · mostrarBotonesAdmin(1986) · mostrarCaraDuelo(2305)
-mostrarGracia(953) · nombreAdmin(1010) · nombreArchivoExport(4865) · nombreCabeza(1020)
-nombreDeLado(4152) · nombreDeLista(4159) · nombreHostSeleccion(3287) · nombreLado(1016)
-nombres(1817) · normSel(3274) · ordenPersonajes(1142) · otroLado(4483) · otroLadoDuelo(1228)
-parejaAcepto(3297) · parejaAEsperar(3293) · pares(2723) · paresDisponibles(1281)
-parsePegadoPersonajes(4230) · parsePegadoTextos(4257) · pedirCartasInvitado(2831)
-pegarLista(4718) · personajeDe(4282) · personajesRef(910) · pintarAvisosCfg(4505)
-pintarBotonDeshacerFotos(4966) · pintarCaraDuelo(2218) · pintarCfg(4405)
-pintarDueloPar(2277) · pintarDueloTentacion(2291) · pintarEspecial(1646)
-pintarFaseDuelo(2071) · pintarFoto(2170) · pintarFotoEn(2138) · pintarFotoGaleria(1478)
-pintarGaleria(1490) · pintarInicio(1548) · pintarMeterInvitado(2877)
-pintarModalDuelo(1600) · pintarModo(1558) · pintarModoPartida(2707) · pintarPaso(2395)
-pintarPasoDueloJuntos(2319) · pintarSala(2010) · pintarSalidas(1003) · pintarSeleccion(3548)
-pintarSeleccionDuelo(3317) · pintarTarjeta(2171) · pintarVolteo(2080)
-ponerBadgeOficial(1150) · ponerSinFotoGaleria(1470) · poolsDuelo(1295)
-poolsEspejoMismo(2982) · preparar(3039) · prepararDuelo(3070) · probar(4194)
-probarImagen(4600) · puedeVerOtroLado(4147) · quienes(2713) · recalcularOficiales(1098)
-reiniciarVariantes(1710) · repartirEspeciales(1720) · repartirTarjetas(3010)
-resetCarta(2127) · resolverEnlaceImagen(4620) · retirarInvitadosDeLaPartida(914)
-revisarEspecial(3086) · ronda(2742) · salirAlMenu(5217) · salirModoInvitado(4087)
-saltarTurno(1906) · sanearSesion(1767) · seguirEncima(3927) · seguirFuera(3932)
-seleccionRef(3254) · selEsCompartida(3255) · selFuente(3257) · selMarcosDe(3258)
-selPoolDe(3263) · selTodosListos(3268) · sesionRef(911) · siguienteDueloJuntos(2538)
-siguienteSesion(1879) · siguienteTurno(1346) · sinDuplicados(885) · soyCabeza(1336)
-terminar(4605) · textoPersonaje(1087) · traePar(4713) · url(2140) · ver(5187)
-vistaDeInicio(5199) · voltear(2079) · voltearDuelo(2312) · yaExiste(4168)
+abrirAgregar(2665) · abrirCfg(5174) · abrirDetalle(4554) · abrirFin(2497)
+abrirGaleria(1466) · abrirMeterInvitado(2875) · abrirModal(4123) · abrirModalDuelo(1623)
+abrirModalImagen(2119) · abrirQR(2949) · abrirSeleccionCompartida(3690)
+abrirSeleccionDueloCompartida(3517) · abrirSeleccionDueloLocal(3500)
+abrirSeleccionLocal(3675) · abrirVentanaEspecial(1681) · actualizarFotos(4978)
+actualizarTextoEstadoCarta(2113) · adminDe(2983) · agregarDesdeInput(4330)
+agregarEspecial(4321) · agregarInvitado(2744) · agregarPersonaje(4310)
+anunciarInvitacion(1964) · armando(2031) · arrancarSeleccion(3731) · asegurarOficiales(1142)
+asegurarPersonajes(1190) · avanzarDueloJuntosLocal(2528) · avanzarTarjeta(1368)
+avisoJSONMalo(4222) · avisosCorrespondencia(4491) · bajarArchivo(4925)
+baseConfigurada(4916) · borrarDetalle(4699) · buscarPersonaje(1247) · cabezas(2026)
+cabs(2816) · cambiarMarca(3649) · cambiarMarcaDuelo(3416) · candidatosImagenDrive(4600)
+cargarEstado(1741) · cargarIdentidad(1000) · cargarOficiales(1128) · cargarPersonajes(1171)
+cerrarDetalle(4578) · cerrarModal(4140) · cerrarModalImagen(2127) · cerrarSesion(1979)
+chequearPartidaEspera(1807) · claveCfg(4161) · confirmarArranqueDuelo(3312)
+conPendiente(3945) · construirCabezas(1031) · construirCabezasModo(2976)
+continuarPartida(3971) · continuarPartidaLocal(3994) · contraDeRonda(2727)
+contraparteDe(1273) · datosDrive(4587) · deck(2794) · deshacerFotos(5083)
+disponiblesInvitados(2661) · dueloEsJuntos(2705) · dueloLadoDePartida(2695)
+dueloMismoLadoDePartida(1242) · dueloModalidadDePartida(2700) · elegirAzarDuelo(3439)
+elegirAzarSeleccion(3455) · elegirTentacion(3479) · enEspera(2038) · entrar(1379)
+entrarAlJuego(4029) · entrarDirecto(1339) · esAnfitrion(1986) · esClaveLista(4165)
+escucharAprobacion(970) · escucharGrupo(5313) · escucharSeleccion(3778)
+escucharSesion(1831) · esDueloJuntos(2753) · esEnlaceGooglePhotos(4584) · esModoDuelo(2692)
+esOficial(1124) · especialDe(1770) · especialDeLado(2218) · especialK(1645)
+especialPendido(1644) · exportarFotos(4940) · exportarLista(4877) · fechaCorta(4920)
+filaPersonaje(4388) · filaVariante(4355) · filtro(4451) · finPartida(2504)
+guardarDetalle(4652) · guardarEdit(4362) · guardarLocalGuardada(932)
+guardarPersonajes(1194) · hostNombre(3531) · idLibre(4181) · indexarPersonajes(1059)
+iniciar(3104) · iniciarEstado(1345) · irAlMenu(5214) · lado(2733) · ladoAnatomiaCfg(4157)
+ladoDeCabeza(2707) · ladoDuelo(2777) · ladoOriginal(2735) · leerJSONPegado(4199)
+leerLocalGuardada(946) · leerQuienSoy(997) · leerSnapshotFotos(4967) · licMsg(989)
+limpiarFiltro(4172) · limpiarFiltroSel(3284) · limpiarLocalGuardada(956)
+limpiarParaArchivo(4863) · listaDeCabezaPara(3006) · listaDeLado(1223) · listaSegura(1080)
+llenar(2043) · llenarSelectPar(4535) · marcas(2901) · mensajeEnlaceInvalido(4643)
+meterInvitado(2896) · mezclar(884) · miLado(4158) · mismoContenidoPersonaje(1099)
+mismosLados(2980) · modalAbierto(5237) · modalidad(3079) · modoAdmiteInvitados(1992)
+modoBaseDePartida(2686) · mostrarBotonesAdmin(1993) · mostrarCaraDuelo(2312)
+mostrarGracia(960) · nombreAdmin(1017) · nombreArchivoExport(4872) · nombreCabeza(1027)
+nombreDeLado(4159) · nombreDeLista(4166) · nombreHostSeleccion(3294) · nombreLado(1023)
+nombres(1824) · normSel(3281) · ordenPersonajes(1149) · otroLado(4490) · otroLadoDuelo(1235)
+parejaAcepto(3304) · parejaAEsperar(3300) · pares(2730) · paresDisponibles(1288)
+parsePegadoPersonajes(4237) · parsePegadoTextos(4264) · pedirCartasInvitado(2838)
+pegarLista(4725) · personajeDe(4289) · personajesRef(917) · pintarAvisosCfg(4512)
+pintarBotonDeshacerFotos(4973) · pintarCaraDuelo(2225) · pintarCfg(4412)
+pintarDueloPar(2284) · pintarDueloTentacion(2298) · pintarEspecial(1653)
+pintarFaseDuelo(2078) · pintarFoto(2177) · pintarFotoEn(2145) · pintarFotoGaleria(1485)
+pintarGaleria(1497) · pintarInicio(1555) · pintarMeterInvitado(2884)
+pintarModalDuelo(1607) · pintarModo(1565) · pintarModoPartida(2714) · pintarPaso(2402)
+pintarPasoDueloJuntos(2326) · pintarSala(2017) · pintarSalidas(1010) · pintarSeleccion(3555)
+pintarSeleccionDuelo(3324) · pintarTarjeta(2178) · pintarVolteo(2087)
+ponerBadgeOficial(1157) · ponerSinFotoGaleria(1477) · poolsDuelo(1302)
+poolsEspejoMismo(2989) · preparar(3046) · prepararDuelo(3077) · probar(4201)
+probarImagen(4607) · puedeVerOtroLado(4154) · quienes(2720) · recalcularOficiales(1105)
+reiniciarVariantes(1717) · repartirEspeciales(1727) · repartirTarjetas(3017)
+resetCarta(2134) · resolverEnlaceImagen(4627) · retirarInvitadosDeLaPartida(921)
+revisarEspecial(3093) · ronda(2749) · salirAlMenu(5224) · salirModoInvitado(4094)
+saltarTurno(1913) · sanearSesion(1774) · seguirEncima(3934) · seguirFuera(3939)
+seleccionRef(3261) · selEsCompartida(3262) · selFuente(3264) · selMarcosDe(3265)
+selPoolDe(3270) · selTodosListos(3275) · sesionRef(918) · siguienteDueloJuntos(2545)
+siguienteSesion(1886) · siguienteTurno(1353) · sinDuplicados(892) · soyCabeza(1343)
+terminar(4612) · textoPersonaje(1094) · traePar(4720) · url(2147) · ver(5194)
+vistaDeInicio(5206) · voltear(2086) · voltearDuelo(2319) · yaExiste(4175)
 ```
 
 ### `Castigos\index.html`
 
 ```
-abortarPlacer(2605) · abrirDetalle(1569) · abrirEditor(1347) · abrirQRJuego(3956)
-accesorioEnUso(1829) · accionDeNivel(2776) · accionesModeloPorRonda(4113)
-accionVacia(1381) · actualizar(2498) · actualizarBotonJugar(1493) · actualizarInicio(2301)
-agregar(1459) · agregarInvitadoAPartida(4194) · agregarInvitadoLocal(4179)
-ajustarAltoCampo(1391) · anunciarinvitacion(3251) · armando(3418)
-armarBolsasImposicion(2746) · armarPartidaNormal(2616) · asignarImposicionesAlAzar(2757)
-avanzarSaltadoRemoto(3711) · avanzarTurnoNoSaltado(3140) · avanzarTurnoRemoto(3679)
-bolsasEnMemoria(4021) · bolsasParaInvitado(4055) · borrarAcceso(1811) · borrarAccion(1516)
-borrarCastigo(1329) · borrarImp(1898) · cargarAccesorios(811) · cargarCastigos(775)
-cargarDatosCastigo(1908) · cargarIdentidad(715) · cargarImposiciones(824)
-cargarSesionEnMemoria(3342) · cargarTodo(767) · cerrar(2169) · chequearConexion(4281)
-chequearPartidaEspera(3391) · clave(4100) · colorAccion(3563) · conGente(3414)
-construirNivelesOficial(850) · contarAccionesCastigos(1953) · continuarPausa(2196)
-continuarSeleccionCastigo(2247) · controlesAnfitrionVisible(3498)
-crearSesionCompartida(3243) · descartarPausa(2183) · descripcionPausa(2158) · destino(1203)
-elegirAccionInvitado(4096) · elegirCastigoParaJugar(2624) · elegirModo(2341)
-enEspera(3422) · enfocarAccion(1481) · enJuego(1042) · entrar(4287)
-entrarAlJuegoCompartida(3379) · escribirImposicionRemoto(3660) · escucharGrupo(734)
-escucharSesionCompartida(3270) · esSoloPuro(3499) · estadoPartidaLocal(2038)
-esUnCelular(3573) · etiquetaLados(759) · filtro(1268) · finVisible(1036) · fraseAccion(3513)
-gastarCortesiasCastigo(2283) · generarJugadores(2724) · generarTurnos(2784)
-generarTurnosMulti(2985) · guardarCastigoDatos(1599) · guardarImposiciones(1905)
-idVigente(651) · iniciarPartida(3146) · iniciarPartidaMulti(2877)
-iniciarTemporizadorDesde(3109) · irAlMenu(1129) · ladoDe(4115) · ladoInv(4182)
-ladosParticipantes(2573) · leerNivelesCastigo(4028) · leerPausa(2126) · leerQuienSoy(711)
-llenar(3426) · mezclar(1382) · modalAbierto(1150) · modalBasePaso(1078)
-mostrarBotonAccion(3089) · mostrarFin(3457) · mostrarGracia(1103) · mostrarModalBase(1096)
-mostrarPanel(1246) · msg(1242) · msgTomas(1243) · nivel(4152) · nombreDeLado(755)
-normalizaAcc(1523) · normalizarAccionImport(1701) · normalizarAccionOficial(838)
-normalizarNivelesPlacer(2543) · normTxt(4019) · overlayReinstalar(977)
-pararTemporizador(3085) · parsearImportacion(1665) · partes(4257) · partes2(4267)
-pausarPartida(2111) · pintarAccesorios(1743) · pintarAccesoriosDetalle(1525)
-pintarCastigos(1264) · pintarCrono(3103) · pintarEditor(1396) · pintarImposiciones(1866)
-pintarListaInicio(1970) · pintarSala(3411) · pintarSalidas(1040) · pintarTomas(1501)
-pintarTomasJugar(2659) · pintarTomasJugarMulti(2673) · pintarTurno(3528)
-placerAccionesEnNiveles(2582) · placerAlcanzaMulti(2595) · placerAlcanzaNormal(2591)
-poolDeAcciones(4076) · preguntarImposicionesPor3(2489) · preguntarNivelesPlacer(2549)
-preguntarPausa(2165) · preguntarQuienCastiga(2330) · promptTexto(1932)
-publicarSesion(3186) · puedeJugarCastigo(2277) · quitarAccesorioDeTodas(1845)
-reanudarCronoRemotoSiHaceFalta(3130) · recalcularSaltadoPorRevivir(3075)
-refrescarUsuarios(728) · reinstalarOficialDesdeUrl(990) · renombrarAcceso(1777)
-renombrarCastigo(1313) · repararOficialCastigo(939) · repartirRueda(2940)
-resetearInicioMulti(3902) · restaurarPartidaLocal(2069) · retirarInvitadosDeLaPartida(2718)
-salirAlMenu(1139) · salirModoInvitado(3930) · saltado(2860) · saltarTurnoRemoto(3742)
-seleccionarCastigo(2237) · sesionRef(2713) · setHowTabs(2365) · setModTabs(2358)
-setTipoTabs(2387) · sincronizarOficialesCastigos(867) · soyCabeza(3388)
-tieneAcciones(4050) · toggleMulti(2394) · tomarImposicion(2749) · totalAccionesDatos(935)
-totalAccionesEditor(1486) · turnosConInvitado(4133) · vaciaDatos(1376) · vale(4101)
-ver(1050) · vistaActual(1032) · volverConHistorial(1114) · volverDePartida(3919)
-volverTiendaReinstalar(966)
+abortarPlacer(2623) · abrirDetalle(1587) · abrirEditor(1365) · abrirQRJuego(3974)
+accesorioEnUso(1847) · accionDeNivel(2794) · accionesModeloPorRonda(4131)
+accionVacia(1399) · actualizar(2516) · actualizarBotonJugar(1511) · actualizarInicio(2319)
+agregar(1477) · agregarInvitadoAPartida(4212) · agregarInvitadoLocal(4197)
+ajustarAltoCampo(1409) · anunciarinvitacion(3269) · armando(3436)
+armarBolsasImposicion(2764) · armarPartidaNormal(2634) · asignarImposicionesAlAzar(2775)
+avanzarSaltadoRemoto(3729) · avanzarTurnoNoSaltado(3158) · avanzarTurnoRemoto(3697)
+bolsasEnMemoria(4039) · bolsasParaInvitado(4073) · borrarAcceso(1829) · borrarAccion(1534)
+borrarCastigo(1347) · borrarImp(1916) · cargarAccesorios(824) · cargarCastigos(788)
+cargarDatosCastigo(1926) · cargarIdentidad(728) · cargarImposiciones(837)
+cargarSesionEnMemoria(3360) · cargarTodo(780) · cerrar(2187) · chequearConexion(4299)
+chequearPartidaEspera(3409) · clave(4118) · colorAccion(3581) · conGente(3432)
+construirNivelesOficial(863) · contarAccionesCastigos(1971) · continuarPausa(2214)
+continuarSeleccionCastigo(2265) · controlesAnfitrionVisible(3516)
+crearSesionCompartida(3261) · descartarPausa(2201) · descripcionPausa(2176) · destino(1216)
+elegirAccionInvitado(4114) · elegirCastigoParaJugar(2642) · elegirModo(2359)
+enEspera(3440) · enfocarAccion(1499) · enJuego(1055) · entrar(4305)
+entrarAlJuegoCompartida(3397) · escribirImposicionRemoto(3678) · escucharGrupo(747)
+escucharSesionCompartida(3288) · esSoloPuro(3517) · estadoPartidaLocal(2056)
+esUnCelular(3591) · etiquetaLados(772) · filtro(1286) · finVisible(1049) · fraseAccion(3531)
+gastarCortesiasCastigo(2301) · generarJugadores(2742) · generarTurnos(2802)
+generarTurnosMulti(3003) · guardarCastigoDatos(1617) · guardarImposiciones(1923)
+idVigente(664) · iniciarPartida(3164) · iniciarPartidaMulti(2895)
+iniciarTemporizadorDesde(3127) · irAlMenu(1142) · ladoDe(4133) · ladoInv(4200)
+ladosParticipantes(2591) · leerNivelesCastigo(4046) · leerPausa(2144) · leerQuienSoy(724)
+llenar(3444) · mezclar(1400) · modalAbierto(1163) · modalBasePaso(1091)
+mostrarBotonAccion(3107) · mostrarFin(3475) · mostrarGracia(1116) · mostrarModalBase(1109)
+mostrarPanel(1264) · msg(1260) · msgTomas(1261) · nivel(4170) · nombreDeLado(768)
+normalizaAcc(1541) · normalizarAccionImport(1719) · normalizarAccionOficial(851)
+normalizarNivelesPlacer(2561) · normTxt(4037) · overlayReinstalar(990)
+pararTemporizador(3103) · parsearImportacion(1683) · partes(4275) · partes2(4285)
+pausarPartida(2129) · pintarAccesorios(1761) · pintarAccesoriosDetalle(1543)
+pintarCastigos(1282) · pintarCrono(3121) · pintarEditor(1414) · pintarImposiciones(1884)
+pintarListaInicio(1988) · pintarSala(3429) · pintarSalidas(1053) · pintarTomas(1519)
+pintarTomasJugar(2677) · pintarTomasJugarMulti(2691) · pintarTurno(3546)
+placerAccionesEnNiveles(2600) · placerAlcanzaMulti(2613) · placerAlcanzaNormal(2609)
+poolDeAcciones(4094) · preguntarImposicionesPor3(2507) · preguntarNivelesPlacer(2567)
+preguntarPausa(2183) · preguntarQuienCastiga(2348) · promptTexto(1950)
+publicarSesion(3204) · puedeJugarCastigo(2295) · quitarAccesorioDeTodas(1863)
+reanudarCronoRemotoSiHaceFalta(3148) · recalcularSaltadoPorRevivir(3093)
+refrescarUsuarios(741) · reinstalarOficialDesdeUrl(1003) · renombrarAcceso(1795)
+renombrarCastigo(1331) · repararOficialCastigo(952) · repartirRueda(2958)
+resetearInicioMulti(3920) · restaurarPartidaLocal(2087) · retirarInvitadosDeLaPartida(2736)
+salirAlMenu(1152) · salirModoInvitado(3948) · saltado(2878) · saltarTurnoRemoto(3760)
+seleccionarCastigo(2255) · sesionRef(2731) · setHowTabs(2383) · setModTabs(2376)
+setTipoTabs(2405) · sincronizarOficialesCastigos(880) · soyCabeza(3406)
+tieneAcciones(4068) · toggleMulti(2412) · tomarImposicion(2767) · totalAccionesDatos(948)
+totalAccionesEditor(1504) · turnosConInvitado(4151) · vaciaDatos(1394) · vale(4119)
+ver(1063) · vistaActual(1045) · volverConHistorial(1127) · volverDePartida(3937)
+volverTiendaReinstalar(979)
 ```
 
 ### `index.html`
 
 ```
-abrirCambiarUsu(2517) · abrirCom(1448) · abrirEdUsuarios(2268) · abrirExp(1404)
-abrirHistorial(1652) · abrirJuegos(1419) · abrirPanelUsuarios(2693) · abrirPropuestas(2045)
-abrirPuntos(1615) · abrirRetos(1428) · abrirSegunHash(1379) · abrirSub(1387)
-aceptarPropuesta(2080) · actualizarAvisoPropuestas(1892) · actualizarPuntoCarrito(907)
-adminId(1088) · agregarFila(1016) · aplicar(1277) · armarFilas(1011)
-cancelarPropuesta(2155) · cerrar(2237) · cerrarCom(1454) · cerrarEdUsuarios(2352)
-cerrarExp(1413) · cerrarGear(2509) · cerrarHistorial(1707) · cerrarJuegos(1425)
-cerrarOverlaysInv(2487) · cerrarPropuestas(2054) · cerrarPuntos(1634) · cerrarRetos(1436)
-cerrarSub(1397) · conTiempo(582) · crearFilaProp(1938) · detenerScan(1206)
-detenerScanInv(2746) · entrar(1115) · etiqueta(1262) · etiquetaAnatomia(1479)
-etiquetaProp(1969) · formatearFechaMov(1643) · guardarAnatomiaUsuario(1485)
-hashActual(1375) · hashTexto(2216) · iconoMenu(611) · iniciar(1138)
-iniciarPropuestas(1918) · iniciarScan(1310) · invModoScan(2524) · invMsg(1462)
-invRefrescar(1467) · invVer(2447) · irPaso3(996) · lado(1482) · leerGuardado(606)
-mostrarGear(2497) · mostrarIdentidad(924) · mostrarMenu(635) · msg(577) · msgQR(1212)
-nombreParejaMenu(782) · normalizaNombre(2822) · overlayInvAbierto(2484) · overlaysInv(2481)
-parsearFB(589) · pedirPin(2226) · pintarInvUsuarios(1510) · pintarPropuestas(1972)
-pintarTelegram(2585) · ponerZoom(1229) · probar(1270) · propuestasAbiertas(1934)
-propuestasMiasPendientes(1866) · propuestasParaMi(1860) · propuestasResultadosNuevos(1872)
-propuestasResultadosVisibles(1880) · ptsRaw(2364) · quitarZoom(1219) · recargar(942)
-rechazarPropuesta(2132) · renderPacks(769) · renderPacksDeVerdad(794)
-renumerarRadios(1068) · resolverTodasPropuestas(2178) · salirSinHaberEntrado(2535)
-tarjetaPack(733) · textoDestinoProp(1853) · textoValorProp(1742) · tgApi(2602)
-tgEstado(2580) · tgGuardado(2566) · tgTarjeta(2573) · titulo(1986) · todos(2277)
-usuariosEfectivos(964) · valorEfectivoProp(1727) · valorPropValido(1734) · verHist(1558)
-verMenu(1357) · verPaso(600) · volverSiInvitadoSinPartida(1175)
+abrirCambiarUsu(2558) · abrirCom(1487) · abrirEdUsuarios(2309) · abrirExp(1437)
+abrirHistorial(1693) · abrirJuegos(1454) · abrirPanelUsuarios(2734) · abrirPropuestas(2086)
+abrirPuntos(1656) · abrirRetos(1465) · abrirSegunHash(1412) · abrirSub(1420)
+aceptarPropuesta(2121) · actualizarAvisoPropuestas(1933) · actualizarPuntoCarrito(938)
+adminId(1119) · agregarFila(1047) · aplicar(1308) · armarFilas(1042)
+cancelarPropuesta(2196) · cerrar(2278) · cerrarCom(1495) · cerrarEdUsuarios(2393)
+cerrarExp(1448) · cerrarGear(2550) · cerrarHistorial(1748) · cerrarJuegos(1462)
+cerrarOverlaysInv(2528) · cerrarPropuestas(2095) · cerrarPuntos(1675) · cerrarRetos(1475)
+cerrarSub(1430) · conTiempo(591) · crearFilaProp(1979) · detenerScan(1237)
+detenerScanInv(2787) · entrar(1146) · etiqueta(1293) · etiquetaAnatomia(1520)
+etiquetaProp(2010) · formatearFechaMov(1684) · guardarAnatomiaUsuario(1526)
+hashActual(1408) · hashTexto(2257) · iconoMenu(620) · iniciar(1169)
+iniciarPropuestas(1959) · iniciarScan(1341) · invModoScan(2565) · invMsg(1503)
+invRefrescar(1508) · invVer(2488) · irPaso3(1027) · lado(1523) · leerGuardado(615)
+mostrarGear(2538) · mostrarIdentidad(955) · mostrarMenu(666) · msg(586) · msgQR(1243)
+nombreParejaMenu(813) · normalizaNombre(2863) · overlayInvAbierto(2525) · overlaysInv(2522)
+parsearFB(598) · pedirPin(2267) · pintarInvUsuarios(1551) · pintarPropuestas(2013)
+pintarTelegram(2626) · ponerZoom(1260) · probar(1301) · propuestasAbiertas(1975)
+propuestasMiasPendientes(1907) · propuestasParaMi(1901) · propuestasResultadosNuevos(1913)
+propuestasResultadosVisibles(1921) · ptsRaw(2405) · quitarZoom(1250) · recargar(973)
+rechazarPropuesta(2173) · remateHero(647) · renderPacks(800) · renderPacksDeVerdad(825)
+renumerarRadios(1099) · resolverTodasPropuestas(2219) · salirSinHaberEntrado(2576)
+tarjetaPack(764) · textoDestinoProp(1894) · textoValorProp(1783) · tgApi(2643)
+tgEstado(2621) · tgGuardado(2607) · tgTarjeta(2614) · titulo(2027) · todos(2318)
+usuariosEfectivos(995) · valorEfectivoProp(1768) · valorPropValido(1775) · verHist(1599)
+verMenu(1388) · verPaso(609) · volverSiInvitadoSinPartida(1206)
 ```
 
 ### `Lenceria\index.html`
 
 ```
-abrirClasif(1088) · abrirDatos(2463) · abrirElegir(1927) · abrirLupa(1292)
-abrirPedido(2164) · abrirPrenda(1317) · aceptarPedido(2205) · agregarClasif(1070)
-alternarFijo(2093) · alternarSeleccion(1980) · aplicarEntradaCita(2711)
-aplicarImportacion(2528) · arrancar(2765) · asegurarLados(928) · asegurarRefs(885)
-bloqueClasif(1010) · bloquePrendas(1176) · borrarClasif(1145) · borrarPlan(2102)
-borrarPrenda(1553) · botonPasados(1641) · cancelarPedido(2292) · cargarClasificaciones(748)
-cargarPedidos(2393) · cargarPlanes(2386) · cargarPrendas(2379) · cargarTodo(2697)
-cerrarLupa(1298) · claveRef(816) · compararRef(822) · construirFiltros(598)
-conTiempo(2690) · desplegableFiltro(645) · diasDesdeUso(792) · escribirAviso(2155)
-escuchar(2408) · esMia(1659) · extra(720) · fechaAObjeto(537) · fechaDeUso(780)
-fechaLarga(542) · guardarClasif(1121) · guardarPlan(2039) · guardarPrenda(1494)
-hoyTexto(531) · idDeLado(1171) · irAlMenu(391) · lado(2576) · ladoDePersona(482)
-ladoDePrenda(499) · ladoDeUsuarioId(489) · leerImagen(1396) · limpiarFiltros(586)
-limpiarPedidosVencidos(1893) · liquidarUsos(2345) · llenarSelect(1306)
-mandarPropuesta(2118) · miniatura(1790) · mismoConjunto(2199) · modalAbierto(410)
-mostrarFoto(1373) · nombreDe(970) · nombreLado(474) · nombrePersona(478) · normTexto(550)
-ordenarClasif(765) · ordenPrendas(836) · ordenRef(831) · pasaFiltro(590)
-pedidoVencido(1807) · pintarClasifVista(1096) · pintarConfig(992) · pintarContador(2026)
-pintarPedido(2188) · pintarPlanes(1649) · pintarVestidor(1961) · planDePersona(524)
-planesDe(1623) · planesDePersona(508) · planesDePersonaPorFecha(521) · planesPorFecha(512)
-pref(2720) · prendaEnUsoFuturo(1388) · prendasDeLado(1167) · prendasDePersona(504)
-procesarFoto(1415) · quedan(1576) · rechazarPedido(2267) · salirAlMenu(398)
-sembrarClasificaciones(675) · separadorPlanes(1634) · siguienteRef(855) · sorprendeme(2305)
-tarjetaPedidoEnviado(1861) · tarjetaPedidoRecibido(1812) · tarjetaPlan(1733)
-tarjetaPrenda(1230) · textoUso(801) · tipoCubreTodo(848) · tsUso(787)
-usarArchivoFoto(1458) · usoDe(975) · valor(772) · ver(373)
+abrirClasif(1103) · abrirDatos(2478) · abrirElegir(1942) · abrirLupa(1307)
+abrirPedido(2179) · abrirPrenda(1332) · aceptarPedido(2220) · agregarClasif(1085)
+alternarFijo(2108) · alternarSeleccion(1995) · aplicarEntradaCita(2726)
+aplicarImportacion(2543) · arrancar(2780) · asegurarLados(943) · asegurarRefs(900)
+bloqueClasif(1025) · bloquePrendas(1191) · borrarClasif(1160) · borrarPlan(2117)
+borrarPrenda(1568) · botonPasados(1656) · cancelarPedido(2307) · cargarClasificaciones(763)
+cargarPedidos(2408) · cargarPlanes(2401) · cargarPrendas(2394) · cargarTodo(2712)
+cerrarLupa(1313) · claveRef(831) · compararRef(837) · construirFiltros(613)
+conTiempo(2705) · desplegableFiltro(660) · diasDesdeUso(807) · escribirAviso(2170)
+escuchar(2423) · esMia(1674) · extra(735) · fechaAObjeto(552) · fechaDeUso(795)
+fechaLarga(557) · guardarClasif(1136) · guardarPlan(2054) · guardarPrenda(1509)
+hoyTexto(546) · idDeLado(1186) · irAlMenu(403) · lado(2591) · ladoDePersona(497)
+ladoDePrenda(514) · ladoDeUsuarioId(504) · leerImagen(1411) · limpiarFiltros(601)
+limpiarPedidosVencidos(1908) · liquidarUsos(2360) · llenarSelect(1321)
+mandarPropuesta(2133) · miniatura(1805) · mismoConjunto(2214) · modalAbierto(422)
+mostrarFoto(1388) · nombreDe(985) · nombreLado(489) · nombrePersona(493) · normTexto(565)
+ordenarClasif(780) · ordenPrendas(851) · ordenRef(846) · pasaFiltro(605)
+pedidoVencido(1822) · pintarClasifVista(1111) · pintarConfig(1007) · pintarContador(2041)
+pintarPedido(2203) · pintarPlanes(1664) · pintarVestidor(1976) · planDePersona(539)
+planesDe(1638) · planesDePersona(523) · planesDePersonaPorFecha(536) · planesPorFecha(527)
+pref(2735) · prendaEnUsoFuturo(1403) · prendasDeLado(1182) · prendasDePersona(519)
+procesarFoto(1430) · quedan(1591) · rechazarPedido(2282) · salirAlMenu(410)
+sembrarClasificaciones(690) · separadorPlanes(1649) · siguienteRef(870) · sorprendeme(2320)
+tarjetaPedidoEnviado(1876) · tarjetaPedidoRecibido(1827) · tarjetaPlan(1748)
+tarjetaPrenda(1245) · textoUso(816) · tipoCubreTodo(863) · tsUso(802)
+usarArchivoFoto(1473) · usoDe(990) · valor(787) · ver(385)
 ```
 
 ### `Encuentros\index.html`
 
 ```
-abrirAgregar(2251) · abrirEditor(1565) · abrirModal(1726) · abrirQRInvitacion(2344)
-abrirTomas(1752) · acts(1798) · agregar(1612) · agregarInvitado(2273) · agregarItemEd(1659)
-anunciarInvitacion(936) · armando(2009) · avanzarLocal(835) · avanzarSesion(858)
-avisarCortesia(1316) · base(2203) · cab(662) · cabezas(2324) · cabs(2016)
-cargarActividades(1221) · cargarActsParaInvitado(2152) · cargarEnMemoria(591)
-cargarIdentidad(520) · cargarTomasDoc(1489) · cerrarModal(1746) · cerrarSesion(953)
-cerrarTomas(1782) · chequearPartidaEspera(739) · chequearPendiente(647) · companero(2284)
-compararActividades(1283) · construirCabezas(1804) · contarNivel(394) · dibujarLista(1325)
-disponiblesInvitados(2247) · docDe(1120) · elegirAccionEnc(2186) · enEspera(2021)
-entrar(688) · entrarAlJuego(2456) · entrarDirecto(587) · esAnfitrion(1983)
-escucharAprobacion(479) · escucharGrupo(2478) · escucharSesion(763) · etiquetaLados(1468)
-filtrar(1395) · gastarCortesias(1291) · generarListas(1815) · generarYIniciar(1888)
-guardadas(1758) · guardarEditor(1654) · guardarTomasEnBase(1522) · iniciarSingle(672)
-irAlMenu(1016) · item(2109) · leerQuienSoy(517) · leerTomasEd(1681) · licMsg(509)
-limpiarInvitadosDeSesionAnterior(970) · listaConInvitado(2202) · llenar(2026) · mezclar(399)
-migrarTomasDeEsteCelular(1504) · modalAbierto(1040) · mostrarBotonesAdmin(1984)
-mostrarFin(983) · mostrarGracia(415) · multiRefrescar(1406) · multiToggle(1416)
-nivel(2227) · nivelPorNombre(2148) · nombreAdmin(543) · nombreCabeza(640) · nombreLado(1464)
-nombres(756) · normLados(389) · normOrdenAct(1280) · normTomasEnc(1479) · normTxtEnc(2146)
-ofs(1124) · overlayReinstalar(1165) · pintarEditor(1583) · pintarLista(1380)
-pintarListaCfg(1531) · pintarPaso(2067) · pintarSala(2002) · pintarSalidas(535)
-pintarTurnoDe(2053) · poolDeAccionesEnc(2167) · puedeJugarActividad(1310)
-quiereCompartido(1951) · quitarItemEd(1672) · reinstalarOficialDesdeUrl(1178)
-repartirRuedaEnc(1850) · retirarInvitadosDeLaPartida(964) · salirAlMenu(1026)
-salirModoInvitado(442) · saltarTurno(888) · sanearSesion(611) · seguirEncima(2402)
-seguirFuera(2407) · sesionRef(549) · sincronizarOficiales(1122) · soyCabeza(603)
-tomasGuardadasEd(1527) · ultimo(2117) · vale(2190) · ver(990) · volverTiendaReinstalar(1154)
+abrirAgregar(2268) · abrirEditor(1577) · abrirModal(1743) · abrirQRInvitacion(2361)
+abrirTomas(1769) · acts(1815) · agregar(1624) · agregarInvitado(2290) · agregarItemEd(1671)
+anunciarInvitacion(948) · armando(2026) · avanzarLocal(847) · avanzarSesion(870)
+avisarCortesia(1328) · base(2220) · cab(674) · cabezas(2341) · cabs(2033)
+cargarActividades(1233) · cargarActsParaInvitado(2169) · cargarEnMemoria(603)
+cargarIdentidad(532) · cargarTomasDoc(1501) · cerrarModal(1763) · cerrarSesion(965)
+cerrarTomas(1799) · chequearPartidaEspera(751) · chequearPendiente(659) · companero(2301)
+compararActividades(1295) · construirCabezas(1821) · contarNivel(406) · dibujarLista(1337)
+disponiblesInvitados(2264) · docDe(1132) · elegirAccionEnc(2203) · enEspera(2038)
+entrar(700) · entrarAlJuego(2473) · entrarDirecto(599) · esAnfitrion(2000)
+escucharAprobacion(491) · escucharGrupo(2495) · escucharSesion(775) · etiquetaLados(1480)
+filtrar(1407) · gastarCortesias(1303) · generarListas(1832) · generarYIniciar(1905)
+guardadas(1775) · guardarEditor(1666) · guardarTomasEnBase(1534) · iniciarSingle(684)
+irAlMenu(1028) · item(2126) · leerQuienSoy(529) · leerTomasEd(1693) · licMsg(521)
+limpiarInvitadosDeSesionAnterior(982) · listaConInvitado(2219) · llenar(2043) · mezclar(411)
+migrarTomasDeEsteCelular(1516) · modalAbierto(1052) · mostrarBotonesAdmin(2001)
+mostrarFin(995) · mostrarGracia(427) · multiRefrescar(1418) · multiToggle(1428)
+nivel(2244) · nivelPorNombre(2165) · nombreAdmin(555) · nombreCabeza(652) · nombreLado(1476)
+nombres(768) · normLados(401) · normOrdenAct(1292) · normTomasEnc(1491) · normTxtEnc(2163)
+ofs(1136) · overlayReinstalar(1177) · pintarEditor(1595) · pintarLista(1392)
+pintarListaCfg(1543) · pintarPaso(2084) · pintarSala(2019) · pintarSalidas(547)
+pintarTurnoDe(2070) · poolDeAccionesEnc(2184) · puedeJugarActividad(1322)
+quiereCompartido(1968) · quitarItemEd(1684) · reinstalarOficialDesdeUrl(1190)
+repartirRuedaEnc(1867) · retirarInvitadosDeLaPartida(976) · salirAlMenu(1038)
+salirModoInvitado(454) · saltarTurno(900) · sanearSesion(623) · seguirEncima(2419)
+seguirFuera(2424) · sesionRef(561) · sincronizarOficiales(1134) · soyCabeza(615)
+tomasGuardadasEd(1539) · ultimo(2134) · vale(2207) · ver(1002)
+volverTiendaReinstalar(1166)
 ```
 
 ### `Guiadas\index.html`
 
 ```
-abrirEditor(1740) · abrirFin(473) · abrirTomasGuia(1222) · agregar(1790) · agregarItem(1837)
-aplicaSesion(638) · armarListaLados(1311) · asignarParaId(1299) · avanzarSesion(541)
-avisarCortesia(1042) · borrarProg(1282) · cargarActividades(947) · cargarIdentidad(486)
-cargarTomasDoc(1697) · cerrarSesion(594) · cerrarTomasGuia(1247) · claveDoc(837)
-compararActividades(1009) · contarNivel(325) · dibujarLista(1051) · docDe(844)
-editorTieneAlgo(1896) · empezarNuevo(1333) · entrar(349) · esAdmin(501)
-escucharAprobacion(411) · escucharSesion(646) · etiquetaLados(529) · exportarActividad(1994)
-filtrar(821) · gastarCortesias(1017) · guardar(1832) · guardarProg(1275)
-guardarTomasEnBase(1730) · iniciarSesionCompartida(560) · irAlMenu(712)
-jugadoresBase(1285) · jugarDirecto(1147) · leerJSONPegado(1883) · leerProg(1211)
-leerQuienSoy(483) · leerTomas(1859) · licMsg(393) · limpiarParaArchivo(1977)
-marcarRadio(537) · mensajeEditor(1873) · mezclar(829) · migrarTomasDeEsteCelular(1712)
-miIdSesion(535) · mismoPaso(520) · modalAbierto(739) · modalBasePaso(1442) · mostrarFin(467)
-mostrarGracia(340) · mostrarModalBase(1460) · mostrarPlayer(1354) · multiAbrir(1500)
-multiAbrirSel(1526) · multiMostrar(1466) · multiRefrescar(1469) · multiSalir(1534)
-multiToggle(1479) · nombreAdmin(502) · nombreDe(507) · nombreDePaso(512) · nombreLado(525)
-normLados(312) · normOrdenAct(1006) · normTomas(317) · ofs(850) · overlayReinstalar(891)
-pegarActividad(1899) · pintarEditor(1761) · pintarLista(1132) · pintarPaso(2060)
-pintarTurnoDe(2051) · probar(1885) · puedeJugarActividad(1036) · quienes(1519)
-quitarItem(1850) · refrescarMiLado(494) · reinstalarOficialDesdeUrl(904)
-repartirRuedaGuia(1650) · salirAlMenu(722) · saltarTurno(612) · seguirEncima(1201)
-seguirFuera(1208) · sesionPausada(600) · sesionRef(536) · sincronizarOficiales(848)
-tomasDePantalla(1985) · tomasGuardadas(1735) · top(1054) · ver(688)
-volverTiendaReinstalar(880)
+abrirEditor(1757) · abrirFin(485) · abrirTomasGuia(1239) · agregar(1807) · agregarItem(1854)
+aplicaSesion(650) · armarListaLados(1328) · asignarParaId(1316) · avanzarSesion(553)
+avisarCortesia(1059) · borrarProg(1299) · cargarActividades(964) · cargarIdentidad(498)
+cargarTomasDoc(1714) · cerrarSesion(606) · cerrarTomasGuia(1264) · claveDoc(854)
+compararActividades(1026) · contarNivel(337) · dibujarLista(1068) · docDe(861)
+editorTieneAlgo(1913) · empezarNuevo(1350) · entrar(361) · esAdmin(513)
+escucharAprobacion(423) · escucharSesion(658) · etiquetaLados(541) · exportarActividad(2011)
+filtrar(838) · gastarCortesias(1034) · guardar(1849) · guardarProg(1292)
+guardarTomasEnBase(1747) · iniciarSesionCompartida(572) · irAlMenu(724)
+jugadoresBase(1302) · jugarDirecto(1164) · leerJSONPegado(1900) · leerProg(1228)
+leerQuienSoy(495) · leerTomas(1876) · licMsg(405) · limpiarParaArchivo(1994)
+marcarRadio(549) · mensajeEditor(1890) · mezclar(846) · migrarTomasDeEsteCelular(1729)
+miIdSesion(547) · mismoPaso(532) · modalAbierto(751) · modalBasePaso(1459) · mostrarFin(479)
+mostrarGracia(352) · mostrarModalBase(1477) · mostrarPlayer(1371) · multiAbrir(1517)
+multiAbrirSel(1543) · multiMostrar(1483) · multiRefrescar(1486) · multiSalir(1551)
+multiToggle(1496) · nombreAdmin(514) · nombreDe(519) · nombreDePaso(524) · nombreLado(537)
+normLados(324) · normOrdenAct(1023) · normTomas(329) · ofs(867) · overlayReinstalar(908)
+pegarActividad(1916) · pintarEditor(1778) · pintarLista(1149) · pintarPaso(2077)
+pintarTurnoDe(2068) · probar(1902) · puedeJugarActividad(1053) · quienes(1536)
+quitarItem(1867) · refrescarMiLado(506) · reinstalarOficialDesdeUrl(921)
+repartirRuedaGuia(1667) · salirAlMenu(734) · saltarTurno(624) · seguirEncima(1218)
+seguirFuera(1225) · sesionPausada(612) · sesionRef(548) · sincronizarOficiales(865)
+tomasDePantalla(2002) · tomasGuardadas(1752) · top(1071) · ver(700)
+volverTiendaReinstalar(897)
 ```
 
 ### `Retos\index.html`

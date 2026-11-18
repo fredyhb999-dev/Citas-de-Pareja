@@ -392,6 +392,13 @@
   #vistaGaleria .galLegend b{ font-weight:600; }
   #vistaGaleria .galLegend .u{ color:var(--coral); }
   #vistaGaleria .galLegend .c{ color:var(--teal); }
+  /* Remate al engrane: mismo estilo en todas las pantallas. El degradado va
+     SOLO en el texto; el emoji queda fuera para que no salga transparente. */
+  .remateCfg{ width:100%; background:none; border:none; padding:6px 4px; margin:8px 0 10px;
+    font-family:'Chakra Petch',sans-serif; font-size:.8rem; cursor:pointer; text-align:center; }
+  .remateCfg .remateTexto{ display:inline-block; font-weight:600;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
 </style>
 </head>
 <body>
@@ -424,14 +431,24 @@
   <!-- El ORDEN de arriba hacia abajo (decisión de Fredy; la primera vez oct-2026,
        el rediseño completo el 17-oct-2026):
        1. NÚMERO DE RONDAS   (tarjeta de la mitad de ancho, centrada)
-       2. MODO DE JUEGO      (las cuatro pestañas en 2x2 + su descripción)
-       3. VARIANTES PICANTES (EN MEDA: sin recuadro y sin su título)
-       4. ¿CÓMO VAS A JUGAR? (Jugar con Pareja / Multijugador)
-       Abajo: el engrane y, debajo de él, el QR. -->
+       2. REMATE DEL ENGRANE (debajo de las rondas, 18-nov-2026)
+       3. MODO DE JUEGO      (las cuatro pestañas en 2x2 + su descripción)
+       4. VARIANTES PICANTES (EN MEDA: sin recuadro y sin su título)
+       5. ¿CÓMO VAS A JUGAR? (Jugar con Pareja / Multijugador)
+       Al final: Galería y el QR. -->
   <div class="caja" id="cajaRondas">
     <div class="cajaTitulo">Número de rondas</div>
     <input type="number" id="rondas" class="rondasInput" min="2" max="50" value="3" inputmode="numeric">
   </div>
+  <!-- Remate de la pantalla. Va aquí, debajo de "Diviértete más" y del número
+       de rondas (18-nov-2026; antes iba hasta abajo). Es un BOTON (no un
+       enlace): al tocarlo abre el engrane de esta misma pantalla. El degradado va
+       SOLO en el texto, porque con background-clip:text el emoji tambien sale
+       transparente. -->
+  <button class="remateCfg" id="btnIrCfg" type="button">
+    <span class="remateTexto">Personaliza tu experiencia en...</span>
+    <span>⚙️</span>
+  </button>
   <div class="caja" id="cajaModos">
     <div class="cajaTitulo">Elige Tu Modo de Juego</div>
     <div class="tabs tabsModos" style="margin-top:10px;">
@@ -465,16 +482,6 @@
       <button class="btnPri" id="btnMulti" style="margin-bottom:0;">Multijugador</button>
     </div>
   </div>
-  <!-- Remate de la pantalla. Va PRIMERO y el QR queda ABAJO de el (se cambió el
-       orden, 17-oct-2026). Es un BOTON (no un enlace): al tocarlo abre el
-       engrane de esta misma pantalla. El degradado va SOLO en el texto, porque
-       con background-clip:text el emoji tambien sale transparente. -->
-  <button class="btnSec" id="btnIrCfg" type="button" style="margin-top:12px; font-size:.8rem; text-decoration:none; padding:4px;">
-    <span style="display:inline-block; font-family:'Chakra Petch',sans-serif; font-weight:600;
-      background:linear-gradient(90deg, var(--coral), var(--teal)); -webkit-background-clip:text;
-      background-clip:text; color:transparent;">Personaliza tu experiencia en...</span>
-    <span>⚙️</span>
-  </button>
   <!-- Registrar invitados SIN tener que entrar a la partida: aquí mismo, antes
        de elegir. Es el mismo botón (y el mismo QR) que está dentro del juego.
        "Agregar invitado" NO va aquí: en el inicio todavía no hay partida, y los

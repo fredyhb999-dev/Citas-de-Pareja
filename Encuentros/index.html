@@ -139,6 +139,13 @@
   .ficha.inv{ border-style:dashed; color:var(--fg-muted); }
   .ficha.vacia{ border:none; background:none; color:var(--fg-muted); font-weight:500; padding-left:0; }
   @media (max-width:420px){ #salaPanel{ grid-template-columns:1fr; } }
+  /* Remate al engrane: mismo estilo en todas las pantallas. El degradado va
+     SOLO en el texto; el emoji queda fuera para que no salga transparente. */
+  .remateCfg{ width:100%; background:none; border:none; padding:6px 4px; margin:8px 0 10px;
+    font-family:'Chakra Petch',sans-serif; font-size:.8rem; cursor:pointer; text-align:center; }
+  .remateCfg .remateTexto{ display:inline-block; font-weight:600;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
 </style>
 </head>
 <body>
@@ -182,7 +189,12 @@
 <!-- ============ LISTA (admin elige actividad) ============ -->
 <div class="vista" id="vistaLista">
   <h1 id="tituloLista">Elige actividad</h1>
-  <p class="desc" id="descLista">Se generará una lista para cada quien.</p>
+  <p class="desc" id="descLista">Diviértete a tu modo y a tu manera.</p>
+  <!-- Remate al engrane de esta pantalla. El degradado va solo en el texto. -->
+  <button class="remateCfg" id="btnIrCfg" type="button">
+    <span class="remateTexto">Personaliza tus acciones...</span>
+    <span>⚙️</span>
+  </button>
   <input class="buscar" id="buscarLista" type="text" placeholder="🔍 Buscar actividad..." autocomplete="off">
   <div id="cajaActs" style="width:100%;max-height:35.75dvh;overflow-y:auto;border:1px solid var(--card-border);border-radius:16px;padding:10px;background:var(--bg-2);">
     <div id="listaActs" style="width:100%"></div>
@@ -1405,7 +1417,7 @@ let multiSel = [];
 let multiModo = false;
 function multiRefrescar(){
   document.getElementById("tituloLista").textContent = multiModo ? "Selecciona 3 para combinar" : "Elige actividad";
-  document.getElementById("descLista").textContent = multiModo ? ("Llevas " + multiSel.length + "/3") : "Se generará una lista para cada quien.";
+  document.getElementById("descLista").textContent = multiModo ? ("Llevas " + multiSel.length + "/3") : "Diviértete a tu modo y a tu manera.";
   document.getElementById("btnMulti").style.display = multiModo ? "none" : "";
   document.getElementById("filaMultiSel").style.display = multiModo ? "flex" : "none";
   const go = document.getElementById("btnMultiGo");
@@ -1690,6 +1702,11 @@ function leerTomasEd(){
 document.getElementById("btnCfg").onclick = ()=>{
   pintarListaCfg();
   ver("vistaConfig");
+};
+// El remate ("Personaliza tus acciones... ⚙️") lleva al mismo lugar que el
+// engrane de arriba: la lista de configurar de esta pantalla.
+document.getElementById("btnIrCfg").onclick = ()=>{
+  document.getElementById("btnCfg").click();
 };
 // El "← Volver" (arriba a la derecha) regresa a la pantalla ANTERIOR de
 // Encuentros, no al inicio: del editor a la lista de configurar, y de ahi a

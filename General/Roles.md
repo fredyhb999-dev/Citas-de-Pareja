@@ -39,15 +39,15 @@ objeto `personaje` completo. Modes: **Clásico** (sale de `U1`/`U2`), **Cambia
   de su anatomía y el administrador tiene un botón para ver el del otro; dentro, dos
 sub-pestañas Personajes / Contrapartes; y una tercera, **Variantes Picantes**, que
 es común. **El orden de la pantalla de inicio (decisión de Fredy, oct-2026;
-     rediseño completo el 17-oct-2026):** arriba **Número de rondas**, luego la
+     rediseño completo el 17-oct-2026; remate movido el 18-nov-2026):** arriba
+     **"Diviértete más"** y **Número de rondas**, luego **el remate del engrane**
+     ("Personaliza tu experiencia en... ⚙️"), después la
      caja **"Elige Tu Modo de Juego"** (las cuatro pestañas en 2x2, con la
      descripción del modo debajo), **luego en medio el interruptor de
      Variantes Picantes**, y después **"¿Cómo vas a jugar hoy?"** con los **solo
-    dos** botones —**Jugar con Pareja** y **Multijugador**, en el mismo
-    renglón—. Abajo de todo el remate del engrane y, **debajo de él**, el botón
-    del QR (el orden de esos dos se invirtió el 17-oct-2026: antes el QR iba
-    primero). El detalle del modelo y de las tres
-    colecciones está en **`General/Modelo-Datos.md`**, sección **1**, *Juegos y sesiones*.
+     dos** botones —**Jugar con Pareja** y **Multijugador**, en el mismo
+     renglón—. Al final, el botón del QR. El detalle del modelo y de las tres
+     colecciones está en **`General/Modelo-Datos.md`**, sección **1**, *Juegos y sesiones*.
 
   - **El rediseño de la pantalla de inicio de `Roles/` (17-oct-2026, aprobado por
     Fredy):** se armó primero en **una maqueta suelta fuera del repo** (una sola
@@ -666,10 +666,12 @@ No romper:**
   `/Roles//`; con `Roles/index.html`, se abre el archivo). Un fallo de carga de
   módulo **no lo ve `window.onerror`**: hay que escuchar el `error` del elemento
   `<script>`.
-- **El QR y el remate del engrane, en la pantalla de inicio (oct-2026):** en
-  **`Roles/` y en `Opciones/`** la pantalla de inicio ahora trae, abajo de todo,
-  un botón **"QR Invita a Alguien"** y el remate **"Personaliza tu experiencia
-  en... ⚙️"** (que **abre el engrane de esa misma pantalla**). Sirve para
+- **El QR y el remate del engrane, en la pantalla de inicio (oct-2026; remate
+  movido el 18-nov-2026):** en **`Roles/` y en `Opciones/`** la pantalla de inicio
+  trae el remate **"Personaliza tu experiencia en... ⚙️"** (que **abre el engrane
+  de esa misma pantalla**). En `Roles/` va **debajo de "Diviértete más" y del
+  número de rondas**; en `Opciones/` sigue abajo de todo. Al final de `Roles/`
+  queda el botón **"QR Invita a Alguien"**. Sirve para
   registrar invitados **sin tener que entrar a la partida**. El QR es **una sola
   función** (`abrirQR()`), la usan el botón de adentro del juego y el del inicio:
   no está copiada. **"Agregar invitado" NO se puso ahí**: en el inicio todavía no
