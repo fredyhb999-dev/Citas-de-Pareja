@@ -927,8 +927,8 @@ async function asegurarRefs(forzar){
 // Solo prendas: en los planes ese campo no decide de quién son.
 async function asegurarLados(){
   if(ladosRevisados) return;
+  if(!prendas.length) return;   // se reintenta cuando terminen de cargar
   ladosRevisados = true;
-  if(!prendas.length) return;
 
   const cambios = [];
   let sinDueno = 0;
@@ -941,13 +941,13 @@ async function asegurarLados(){
   });
   if(!cambios.length && !sinDueno) return;
 
-  let hechas = 0;
+  let hechas = 0, fallos = 0;
   for(const c of cambios){
     try{
       await setDoc(doc(db, "lenceriaPrendas", c.prenda.id), { lado: c.lado }, { merge: true });
       c.prenda.lado = c.lado;
       hechas++;
-    }catch(e){}
+    }catch(e){ fallos++; }
   }
   if(hechas){
     pintarConfig();
@@ -958,6 +958,9 @@ async function asegurarLados(){
   if(hechas) msg = hechas === 1
     ? "Se corrigió 1 lado que no coincidía con el dueño."
     : "Se corrigieron " + hechas + " lados que no coincidían con el dueño.";
+  if(fallos) msg += (msg ? " " : "") + (fallos === 1
+    ? "No se pudo corregir 1."
+    : "No se pudieron corregir " + fallos + ".");
   if(sinDueno) msg += (msg ? " " : "") + (sinDueno === 1
     ? "1 prenda tiene un dueño que no existe aquí; se dejó como estaba."
     : sinDueno + " prendas tienen un dueño que no existe aquí; se dejaron como estaban.");
@@ -2406,6 +2409,7 @@ function escuchar(){
   try{
     onSnapshot(collection(db, "lenceriaPrendas"), (snap)=>{
       prendas = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      asegurarLados().catch(()=>{});
       if(document.activeElement && document.activeElement.tagName === "INPUT") return;
       pintarConfig();
       pintarPlanes();
