@@ -11,30 +11,31 @@
 ### Chorro de pegamento si te quedas quieto (`glue.js`, oct-2026)
 
 **Modulo en la raiz**, igual que `fuegos.js`. Si alguien entra al submenú
-**Experiencias en Pareja** y se queda **15 segundos sin tocar nada**, cae un chorro
+**Experiencias en Pareja** y se queda **20 segundos sin tocar nada**, cae un chorro
 de pegamento encima de la pantalla y se va llenando de charcos. **Al primer toque
 se apaga al instante** y no queda rastro.
 
 ```js
 import { glueSiEstaQuieto, glueOlvidado } from "./glue.js";
-glueSiEstaQuieto(15);   // abre la espera; en cerrarExp() va glueOlvidado()
+glueSiEstaQuieto(20);   // abre la espera; en cerrarExp() va glueOlvidado()
 ```
 
-**Ajuste (oct-2026):** la espera bajo a **15 segundos**, y los chorros ahora
-salen **a la mitad de seguido** (uno cada .56–1.2 s) y **mas delgados** que antes:
-la gota se quedo a la **mitad entre lo original (16–30) y la version delgada
-(8–15)**, o sea **12–22**. El ajuste siguiente puede mover ese rango, es una
-sola linea en `makeDrop` (la gota) y en el `trail` (las gotitas del rastro).
+**Espera actual: 20 segundos (nov-2026; antes 15).** Los chorros salen **a la mitad
+de seguido** (uno cada .56–1.2 s) y **mas delgados** que antes: la gota se quedo a la
+**mitad entre lo original (16–30) y la version delgada (8–15)**, o sea **12–22**.
+El ajuste siguiente puede mover ese rango, es una sola linea en `makeDrop` (la gota)
+y en el `trail` (las gotitas del rastro).
 
 **El comportamiento exacto (decidido por Fredy, oct-2026):**
 
 | Que | Como |
 |---|---|
-| Cuando cae | A los **15 segundos sin interactuar**. Cualquier toque, scroll o tecla **reinicia** la cuenta |
+| Cuando cae | A los **20 segundos sin interactuar**. Cualquier toque, scroll o tecla **reinicia** la cuenta |
 | Ciclo | El chorro **se mantiene solo en bucle**, todo el tiempo que haga falta |
 | Cuando se para | **Al primer toque**, en cualquier parte. Se borra el lienzo y ya |
-| Si vuelve a pasar | Si se queda quieto otros 15 segundos, **vuelve a caer**. La espera se rearma sola en cada toque |
-| Cuándo se para solo | Si se cambia de pestaña (`visibilitychange`): no gasta batería |
+| Si vuelve a pasar | Si se queda quieto otros 20 segundos, **vuelve a caer**. La espera se rearma sola en cada toque |
+| Cuándo se para solo | Si se cambia de pestaña (`visibilitychange`): no gasta batería, y el reloj se detiene |
+| Al volver de otra pantalla | La cuenta **empieza de cero**. El reloj se apaga al salir y se rearma al volver (`pageshow`), para que el chorro no caiga apenas se regresa de Lencería o de un juego |
 
 **Lo importante para que no rompa nada:**
 
@@ -77,7 +78,9 @@ solo sale una gota menos por tanda cuando el celular va lento. **Por eso puede c
 todo el rato sin arrastrar la pantalla.**
 
 **Verificado:** sintaxis OK en `glue.js` e `index.html`; `glue.js` quedó registrado
-en `herramientas/sintaxis/extract.py`. **PROBADO EN VIVO (Fredy, oct-2026).**
+en `herramientas/sintaxis/extract.py`. **PROBADO EN VIVO (Fredy, oct-2026).** La
+espera de 20 s y el reinicio al volver de otra pantalla quedan **pendientes de
+probar a mano** (nov-2026).
 
 ### Una cita no se agenda en el pasado (oct-2026)
 

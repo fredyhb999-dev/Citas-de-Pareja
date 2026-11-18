@@ -429,9 +429,21 @@ export function glueSiEstaQuieto(segundos = 30){
   ["pointerdown", "touchstart", "keydown", "wheel", "scroll"].forEach(ev=>{
     document.addEventListener(ev, hayMovimiento, { passive: true });
   });
-  // Si se cambia de pestana se apaga sola: no gasta bateria.
+  // Si se cambia de pestana se apaga sola: no gasta bateria. Y al volver se
+  // vuelve a contar desde cero: si el reloj sigue corriendo fuera de la pantalla,
+  // el chorro cae apenas se regresa (pasaba al volver de Lenceria).
   document.addEventListener("visibilitychange", ()=>{
-    if(document.hidden) apagarGlue();
+    if(document.hidden){
+      apagarGlue();
+      clearTimeout(temporizador);
+    }else{
+      hayMovimiento();
+    }
+  });
+  // Volver desde otra pagina: el navegador restaura esta con sus escuchas y el
+  // reloj viejo. `pageshow` con `persisted` rearma la espera desde cero.
+  window.addEventListener("pageshow", (e)=>{
+    if(e.persisted) hayMovimiento();
   });
   hayMovimiento();
 }
