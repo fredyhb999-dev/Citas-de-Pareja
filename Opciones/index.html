@@ -145,6 +145,13 @@
      se lea, y el resto de la pantalla deja pasar el toque que lanza mas fuegos. */
   #modalFin{ z-index:80; background:transparent; pointer-events:none; }
   #modalFin .caja{ pointer-events:auto; }
+  /* Remate al engrane: mismo estilo en todas las pantallas. El degradado va
+     SOLO en el texto; el emoji queda fuera para que no salga transparente. */
+  .remateCfg{ width:100%; background:none; border:none; padding:6px 4px; margin:8px 0 10px;
+    font-family:'Chakra Petch',sans-serif; font-size:.8rem; cursor:pointer; text-align:center; }
+  .remateCfg .remateTexto{ display:inline-block; font-weight:600;
+    background:linear-gradient(90deg, var(--coral), var(--teal));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
 </style>
 </head>
 <body>
@@ -173,7 +180,15 @@
 <!-- ============ INICIO (admin prepara) ============ -->
 <div class="vista" id="vistaInicio">
   <h1>Elecciones Peligrosas</h1>
-  <p class="desc">Elijan sus Opciones</p>
+  <p class="desc">Elijan sus opciones</p>
+  <!-- Remate de la pantalla. Va aquí, entre el subtítulo y el número de rondas
+       (18-nov-2026; antes iba hasta abajo). Es un BOTON (no un enlace): al
+       tocarlo abre el engrane de esta misma pantalla. El degradado va SOLO en el
+       texto, porque con background-clip:text el emoji tambien sale transparente. -->
+  <button class="remateCfg" id="btnIrCfg" type="button">
+    <span class="remateTexto">Personaliza tu experiencia en...</span>
+    <span>⚙️</span>
+  </button>
   <div class="caja">
     <div class="cajaTitulo">Número de rondas</div>
     <input type="number" id="rondas" class="rondasInput" min="2" max="50" value="3" inputmode="numeric">
@@ -187,15 +202,6 @@
   <!-- Registrar invitados SIN tener que entrar a la partida: aquí mismo, antes
        de elegir. Es el mismo botón (y el mismo QR) que está dentro del juego. -->
   <button class="btnSec" id="btnQRInicio" type="button" style="margin-top:14px;">QR Invita a Alguien</button>
-  <!-- Remate de la pantalla. Es un BOTON (no un enlace): al tocarlo abre el
-       engrane de esta misma pantalla. El degradado va SOLO en el texto, porque
-       con background-clip:text el emoji tambien sale transparente. -->
-  <button class="btnSec" id="btnIrCfg" type="button" style="margin-top:16px; font-size:.8rem; text-decoration:none; padding:6px;">
-    <span style="display:inline-block; font-family:'Chakra Petch',sans-serif; font-weight:600;
-      background:linear-gradient(90deg, var(--coral), var(--teal)); -webkit-background-clip:text;
-      background-clip:text; color:transparent;">Personaliza tu experiencia en...</span>
-    <span>⚙️</span>
-  </button>
 </div>
 
 <!-- ============ ESPERA (pareja / invitado) ============ -->

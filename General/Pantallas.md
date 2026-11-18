@@ -436,7 +436,7 @@ Mismas clases en todas las pantallas (cada archivo lleva su copia en su único
 | Lencería | `Personaliza tu Deseo Visual...` | Entre "Planifica y da vida a tu ilusión." y las pestañas | Su engrane (`#btnCfg`) |
 | El Precio del Placer (Castigos) | `Personaliza tu lado Oscuro...` | Entre "Elige tus opciones de juego" y "¿Quién juega hoy?" | Su engrane (`#btnCfg`) |
 | Juego de Roles | `Personaliza tu experiencia en...` | Debajo de "Diviértete más" y del número de rondas | Su engrane (`#btnCfg`) |
-| Elecciones Peligrosas (Opciones) | `Personaliza tu experiencia en...` | Abajo de todo, antes del QR | Su engrane (`#btnCfg`) |
+| Elecciones Peligrosas (Opciones) | `Personaliza tu experiencia en...` | Entre "Elijan sus opciones" y el número de rondas | Su engrane (`#btnCfg`) |
 
 **No va donde no hay engrane:** en los submenús **Juegos**, **Retos** y
 **Comunicaciones** del menú principal el remate se oculta (`remateHero("oculto")`).

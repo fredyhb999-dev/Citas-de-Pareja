@@ -206,7 +206,7 @@ No usa `vista…`: muestra la pantalla de identidad o la app con
 
 ---
 
-## `Opciones/index.html` — 1,655 líneas
+## `Opciones/index.html` — 1,661 líneas
 
 **Documento de detalle:** `General/Opciones.md`
 
@@ -215,19 +215,19 @@ No usa `vista…`: muestra la pantalla de identidad o la app con
 
 | Para... | Función | Línea |
 |---|---|---|
-| Arrancar: normal o directo | `entrar()` / `entrarDirecto()` | 597 / 536 |
-| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 1499 / 1526 |
-| Cargar, guardar y repartir opciones | `cargarOpciones()` / `guardarOpciones()` / `repartirOpciones()` | 503 / 515 / 1167 |
-| Quiénes juegan y de qué lado | `construirCabezas()` / `construirCabezasModo()` | 489 / 1160 |
-| Arrancar la partida | `iniciar()` | 1190 |
-| Pintar inicio, sala y paso | `pintarInicio()` / `pintarSala()` / `pintarPaso()` | 653 / 904 / 951 |
-| Turnos y elección | `iniciarEstado()` / `siguienteTurno()` / `aplicarPick()` / `pickSesion()` | 550 / 564 / 578 / 795 |
-| Sesión: escuchar, saltar, cerrar, fin | `escucharSesion()` / `saltarTurno()` / `cerrarSesion()` / `finPartida()` | 744 / 818 / 871 / 1036 |
-| Invitados: agregar y QR | `agregarInvitado()` / `abrirQR()` | 1089 / 1134 |
-| Invitado: entrar o continuar | `entrarAlJuego()` / `continuarPartida()` | 1325 / 1294 |
-| Configuración: pintar y abrir | `pintarCfg()` / `abrirCfg()` | 1418 / 1482 |
-| Agregar o editar opciones | `agregarOpcion()` / `guardarEdit()` / `agregarDesdeInput()` | 1411 / 1434 / 1460 |
-| Seguir después de recargar | `seguirEncima()` | 1268 |
+| Arrancar: normal o directo | `entrar()` / `entrarDirecto()` | 603 / 542 |
+| Cambiar de vista y volver al menú | `ver()` / `salirAlMenu()` | 1505 / 1532 |
+| Cargar, guardar y repartir opciones | `cargarOpciones()` / `guardarOpciones()` / `repartirOpciones()` | 509 / 521 / 1173 |
+| Quiénes juegan y de qué lado | `construirCabezas()` / `construirCabezasModo()` | 495 / 1166 |
+| Arrancar la partida | `iniciar()` | 1196 |
+| Pintar inicio, sala y paso | `pintarInicio()` / `pintarSala()` / `pintarPaso()` | 659 / 910 / 957 |
+| Turnos y elección | `iniciarEstado()` / `siguienteTurno()` / `aplicarPick()` / `pickSesion()` | 556 / 570 / 584 / 801 |
+| Sesión: escuchar, saltar, cerrar, fin | `escucharSesion()` / `saltarTurno()` / `cerrarSesion()` / `finPartida()` | 750 / 824 / 877 / 1042 |
+| Invitados: agregar y QR | `agregarInvitado()` / `abrirQR()` | 1095 / 1140 |
+| Invitado: entrar o continuar | `entrarAlJuego()` / `continuarPartida()` | 1331 / 1300 |
+| Configuración: pintar y abrir | `pintarCfg()` / `abrirCfg()` | 1424 / 1488 |
+| Agregar o editar opciones | `agregarOpcion()` / `guardarEdit()` / `agregarDesdeInput()` | 1417 / 1440 / 1466 |
+| Seguir después de recargar | `seguirEncima()` | 1274 |
 
 ---
 
@@ -610,25 +610,25 @@ validarFormulario(831)
 ### `Opciones\index.html`
 
 ```
-abrirAgregar(1070) · abrirCfg(1482) · abrirFin(1029) · abrirModal(1386) · abrirQR(1134)
-agregarDesdeInput(1460) · agregarInvitado(1089) · agregarOpcion(1411)
-anunciarInvitacion(856) · aplicarPick(578) · armando(918) · cabezas(913) · cabs(1117)
-cargarEstado(672) · cargarIdentidad(458) · cargarOpciones(503) · cerrarModal(1403)
-cerrarSesion(871) · chequearPartidaEspera(720) · conPendiente(1278) · construirCabezas(489)
-construirCabezasModo(1160) · continuarPartida(1294) · disponiblesInvitados(1066)
-enEspera(925) · entrar(597) · entrarAlJuego(1325) · entrarDirecto(536) · esAnfitrion(878)
-escucharAprobacion(428) · escucharGrupo(1608) · escucharSesion(744) · filtro(1425)
-finPartida(1036) · fuente(1096) · guardarEdit(1434) · guardarOpciones(515) · iniciar(1190)
-iniciarEstado(550) · irAlMenu(1516) · leerQuienSoy(455) · licMsg(447) · llenar(930)
-mezclar(368) · modalAbierto(1539) · modoAdmiteInvitados(884) · mostrarBotonesAdmin(885)
-mostrarGracia(418) · nombreAdmin(475) · nombreCabeza(485) · nombreLado(481) · nombres(737)
-opcionesRef(409) · parDe(542) · parseLista(390) · pick(1043) · pickSesion(795)
-pintarCfg(1418) · pintarInicio(653) · pintarPaso(951) · pintarSala(904) · pintarSalidas(468)
-quiereCompartido(1211) · quitar(581) · repartirOpciones(1167) · restantes(994)
-retirarInvitadosDeLaPartida(413) · ronda(1093) · rondaActual(995) · salirAlMenu(1526)
-salirModoInvitado(1356) · saltarTurno(818) · sanearSesion(687) · seguirEncima(1268)
-seguirFuera(1273) · sesionRef(410) · siguienteTurno(564) · sinDuplicados(376)
-soyCabeza(540) · ver(1499)
+abrirAgregar(1076) · abrirCfg(1488) · abrirFin(1035) · abrirModal(1392) · abrirQR(1140)
+agregarDesdeInput(1466) · agregarInvitado(1095) · agregarOpcion(1417)
+anunciarInvitacion(862) · aplicarPick(584) · armando(924) · cabezas(919) · cabs(1123)
+cargarEstado(678) · cargarIdentidad(464) · cargarOpciones(509) · cerrarModal(1409)
+cerrarSesion(877) · chequearPartidaEspera(726) · conPendiente(1284) · construirCabezas(495)
+construirCabezasModo(1166) · continuarPartida(1300) · disponiblesInvitados(1072)
+enEspera(931) · entrar(603) · entrarAlJuego(1331) · entrarDirecto(542) · esAnfitrion(884)
+escucharAprobacion(434) · escucharGrupo(1614) · escucharSesion(750) · filtro(1431)
+finPartida(1042) · fuente(1102) · guardarEdit(1440) · guardarOpciones(521) · iniciar(1196)
+iniciarEstado(556) · irAlMenu(1522) · leerQuienSoy(461) · licMsg(453) · llenar(936)
+mezclar(374) · modalAbierto(1545) · modoAdmiteInvitados(890) · mostrarBotonesAdmin(891)
+mostrarGracia(424) · nombreAdmin(481) · nombreCabeza(491) · nombreLado(487) · nombres(743)
+opcionesRef(415) · parDe(548) · parseLista(396) · pick(1049) · pickSesion(801)
+pintarCfg(1424) · pintarInicio(659) · pintarPaso(957) · pintarSala(910) · pintarSalidas(474)
+quiereCompartido(1217) · quitar(587) · repartirOpciones(1173) · restantes(1000)
+retirarInvitadosDeLaPartida(419) · ronda(1099) · rondaActual(1001) · salirAlMenu(1532)
+salirModoInvitado(1362) · saltarTurno(824) · sanearSesion(693) · seguirEncima(1274)
+seguirFuera(1279) · sesionRef(416) · siguienteTurno(570) · sinDuplicados(382)
+soyCabeza(546) · ver(1505)
 ```
 
 ### `Diablitos\index.html`
